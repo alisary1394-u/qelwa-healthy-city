@@ -52,8 +52,10 @@
 
 ### Railway (مختصر)
 
+- **يفضّل استخدام الـ Dockerfile:** إذا وُجد ملف `Dockerfile` في جذر المشروع، تستخدم Railway البناء عبر Docker تلقائياً (لا حاجة لضبط Build/Start في الإعدادات). هذا يعطي بيئة ثابتة ويدعم المكتبات الأصلية مثل `better-sqlite3`.
+
 1. اربط المشروع من GitHub واختر الفرع (مثلاً `main` أو `master`).
-2. في **Settings** للخدمة:
+2. إن لم تستخدم Dockerfile، في **Settings** للخدمة:
    - **Build Command:** `npm install && npm run build`
    - **Start Command:** `npm start` (أو `node server/index.js`)
    - **Root Directory:** اتركه فارغاً.
