@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:host": "vite --host",
+    "start": "node server/index.js",
+    "postinstall": "cd server && npm install",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",

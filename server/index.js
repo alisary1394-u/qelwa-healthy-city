@@ -165,7 +165,8 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(PORT, () => {
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT);
   console.log('قاعدة البيانات:', db.getDb().name);
 });
