@@ -166,7 +166,7 @@ export async function runSeed() {
 
   if (db.list('budget').length === 0) {
     const y = new Date().getFullYear();
-    const b1 = db.create('budget', null, {
+    db.create('budget', null, {
       name: `ميزانية ${y - 1}`,
       fiscal_year: String(y - 1),
       total_budget: 500000,
@@ -179,6 +179,47 @@ export async function runSeed() {
       total_budget: 800000,
       status: 'active',
       remaining_budget: 800000,
+    });
+  }
+
+  // مهام نموذجية (نفس قائمة المهام في seedCommitteesTeamInitiativesTasks)
+  const tasksNow = db.list('task');
+  const membersForTasks = db.list('team_member').filter((m) =>
+    ['coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor', 'member'].includes(m.role)
+  );
+  if (tasksNow.length === 0 && membersForTasks.length > 0) {
+    const baseDate = new Date();
+    const formatDate = (d) => d.toISOString().split('T')[0];
+    const taskList = [
+      { title: 'إعداد تقرير الربع الأول للمحور الأول', priority: 'high', status: 'in_progress', daysFromNow: 7 },
+      { title: 'مراجعة مستندات معيار م1-2', priority: 'medium', status: 'pending', daysFromNow: 14 },
+      { title: 'تنظيم ورشة المشاركة المجتمعية', priority: 'urgent', status: 'pending', daysFromNow: 5 },
+      { title: 'متابعة مؤشرات مبادرة البيئة', priority: 'medium', status: 'in_progress', daysFromNow: 10 },
+      { title: 'جمع أدلة معيار م3-1 (النظافة والمساحات الخضراء)', priority: 'high', status: 'pending', daysFromNow: 21 },
+      { title: 'تحديث خطة اللجنة للشهر القادم', priority: 'low', status: 'pending', daysFromNow: 30 },
+      { title: 'اجتماع تنسيق اللجان الفرعية', priority: 'high', status: 'pending', daysFromNow: 3 },
+      { title: 'إعداد عرض تقديمي لاجتماع المحافظ', priority: 'urgent', status: 'in_progress', daysFromNow: 4 },
+      { title: 'مسح ميداني للمعايير الصحية', priority: 'medium', status: 'pending', daysFromNow: 14 },
+      { title: 'مراجعة الميزانية التقديرية للجنة', priority: 'high', status: 'pending', daysFromNow: 21 },
+      { title: 'تقرير مؤشرات الأداء الشهرية', priority: 'medium', status: 'pending', daysFromNow: 10 },
+      { title: 'متابعة تنفيذ مبادرة النقل الآمن', priority: 'high', status: 'in_progress', daysFromNow: 7 },
+      { title: 'تحضير ورشة التوعية بالصحة المدرسية', priority: 'medium', status: 'pending', daysFromNow: 18 },
+      { title: 'جمع تواقيع الشركاء على اتفاقيات التعاون', priority: 'low', status: 'pending', daysFromNow: 45 },
+    ];
+    taskList.forEach((t, i) => {
+      const due = new Date(baseDate);
+      due.setDate(due.getDate() + t.daysFromNow);
+      const assigned = membersForTasks[i % membersForTasks.length];
+      db.create('task', null, {
+        title: t.title,
+        description: `مهمة تجريبية - معينة لـ ${assigned?.full_name || 'الفريق'}.`,
+        status: t.status,
+        priority: t.priority,
+        assigned_to: assigned?.id,
+        assigned_to_name: assigned?.full_name,
+        due_date: formatDate(due),
+        created_date: formatDate(baseDate),
+      });
     });
   }
 
