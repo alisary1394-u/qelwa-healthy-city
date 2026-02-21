@@ -20,6 +20,8 @@ const AXES = [
   'الحوكمة والشراكات', 'المشاركة المجتمعية', 'البيئة والاستدامة', 'الصحة والرعاية',
   'النقل والتنقل', 'الإسكان والخدمات', 'التعليم والثقافة', 'الاقتصاد والتشغيل', 'السلامة والعدالة'
 ];
+/** عدد المعايير لكل محور وفق دليل منظمة الصحة العالمية (المجموع 80) */
+const AXIS_COUNTS = [9, 9, 9, 9, 9, 9, 9, 9, 8];
 
 function id() {
   return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
@@ -49,14 +51,16 @@ export async function runSeed() {
   const axes = db.list('axis');
   if (db.list('standard').length === 0 && axes.length > 0) {
     axes.forEach((axis, idx) => {
-      for (let i = 1; i <= 3; i++) {
+      const count = AXIS_COUNTS[idx] ?? 9;
+      for (let i = 1; i <= count; i++) {
         const code = `م${idx + 1}-${i}`;
         db.create('standard', null, {
           code,
           title: `معيار ${axis.name} ${code}`,
-          description: `وصف ${code}`,
+          description: `معيار من دليل منظمة الصحة العالمية للمدينة الصحية — المحور: ${axis.name}.`,
           axis_id: axis.id,
           axis_name: axis.name,
+          required_evidence: 'أدلة ومستندات تدعم تحقيق المعيار',
           required_documents: '[]',
           kpis: '[]',
           status: 'not_started',
