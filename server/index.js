@@ -15,7 +15,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import * as db from './db.js';
+// عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -24,10 +24,22 @@ const PORT = process.env.PORT || 3001;
 const sessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
 
+let dbModule = null;
+async function getDb() {
+  if (dbModule) return dbModule;
+  try {
+    dbModule = await import('./db.js');
+    return dbModule;
+  } catch (e) {
+    console.error('فشل تحميل قاعدة البيانات:', e);
+    throw e;
+  }
+}
+
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// نقطة فحص الصحة (للمنصات مثل Railway)
+// نقطة فحص الصحة (للمنصات مثل Railway) — لا تحتاج قاعدة بيانات
 app.get('/api/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
@@ -42,24 +54,32 @@ function getAuthUser(req) {
 }
 
 // تسجيل الدخول
-app.post('/api/auth/login', (req, res) => {
-  const { national_id, password } = req.body || {};
-  const members = db.list('team_member');
-  const member = members.find((m) => m.national_id === String(national_id));
-  if (!member) {
-    return res.status(401).json({ error: 'رقم الهوية غير مسجل' });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { national_id, password } = req.body || {};
+    const members = db.list('team_member');
+    const member = members.find((m) => m.national_id === String(national_id));
+    if (!member) {
+      return res.status(401).json({ error: 'رقم الهوية غير مسجل' });
+    }
+    if (member.password !== password) {
+      return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+    }
+    const user = {
+      email: member.email || 'admin@local',
+      full_name: member.full_name || 'المشرف',
+      user_role: member.role === 'governor' ? 'admin' : 'user',
+    };
+    const token = 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
+    sessions.set(token, user);
+    res.json({ user, token });
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
   }
-  if (member.password !== password) {
-    return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
-  }
-  const user = {
-    email: member.email || 'admin@local',
-    full_name: member.full_name || 'المشرف',
-    user_role: member.role === 'governor' ? 'admin' : 'user',
-  };
-  const token = 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
-  sessions.set(token, user);
-  res.json({ user, token });
 });
 
 app.get('/api/auth/me', (req, res) => {
@@ -69,10 +89,11 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 // كيانات: list, get, create, update, delete
-app.get('/api/entities/:name', (req, res) => {
-  const table = entityToTable(req.params.name);
-  if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+app.get('/api/entities/:name', async (req, res) => {
   try {
+    const db = await getDb();
+    const table = entityToTable(req.params.name);
+    if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     let list = db.list(table);
     const orderBy = req.query.orderBy;
     if (orderBy && typeof orderBy === 'string') {
@@ -89,51 +110,83 @@ app.get('/api/entities/:name', (req, res) => {
     }
     res.json(list);
   } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
     res.status(500).json({ error: e.message });
   }
 });
 
-app.get('/api/entities/:name/:id', (req, res) => {
-  const table = entityToTable(req.params.name);
-  if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
-  const row = db.get(table, req.params.id);
-  if (!row) return res.status(404).json({ error: 'غير موجود' });
-  res.json(row);
+app.get('/api/entities/:name/:id', async (req, res) => {
+  try {
+    const db = await getDb();
+    const table = entityToTable(req.params.name);
+    if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    const row = db.get(table, req.params.id);
+    if (!row) return res.status(404).json({ error: 'غير موجود' });
+    res.json(row);
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/entities/:name', (req, res) => {
-  const table = entityToTable(req.params.name);
-  if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
-  const data = req.body || {};
-  const id = data.id || null;
-  const body = { ...data };
-  delete body.id;
+app.post('/api/entities/:name', async (req, res) => {
   try {
+    const db = await getDb();
+    const table = entityToTable(req.params.name);
+    if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    const data = req.body || {};
+    const id = data.id || null;
+    const body = { ...data };
+    delete body.id;
     const record = db.create(table, id, body);
     res.status(201).json(record);
   } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
     res.status(500).json({ error: e.message });
   }
 });
 
-app.patch('/api/entities/:name/:id', (req, res) => {
-  const table = entityToTable(req.params.name);
-  if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
-  const updated = db.update(table, req.params.id, req.body || {});
-  if (!updated) return res.status(404).json({ error: 'غير موجود' });
-  res.json(updated);
+app.patch('/api/entities/:name/:id', async (req, res) => {
+  try {
+    const db = await getDb();
+    const table = entityToTable(req.params.name);
+    if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    const updated = db.update(table, req.params.id, req.body || {});
+    if (!updated) return res.status(404).json({ error: 'غير موجود' });
+    res.json(updated);
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/entities/:name/:id', (req, res) => {
-  const table = entityToTable(req.params.name);
-  if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
-  db.remove(table, req.params.id);
-  res.status(204).send();
+app.delete('/api/entities/:name/:id', async (req, res) => {
+  try {
+    const db = await getDb();
+    const table = entityToTable(req.params.name);
+    if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    db.remove(table, req.params.id);
+    res.status(204).send();
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // بذر البيانات (للتجربة). ?clear=1 يمسح الجداول أولاً ثم يبذر
 app.post('/api/seed', async (req, res) => {
   try {
+    const db = await getDb();
     if (req.query.clear === '1') {
       db.TABLES.forEach((t) => db.clearTable(t));
     }
@@ -141,6 +194,9 @@ app.post('/api/seed', async (req, res) => {
     await runSeed();
     res.json({ ok: true, message: 'تم تنفيذ البذرة' });
   } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
     res.status(500).json({ error: e.message });
   }
 });
