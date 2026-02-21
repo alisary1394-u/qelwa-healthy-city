@@ -2,6 +2,14 @@
  * سيرفر المدينة الصحية — Express + SQLite (قاعدة بيانات محلية)
  * يعمل محلياً وعند النشر على السيرفر
  */
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled rejection at', p, 'reason:', reason);
+});
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -178,11 +186,7 @@ if (fs.existsSync(distPath)) {
 }
 
 const HOST = process.env.HOST || '0.0.0.0';
+// عدم استدعاء قاعدة البيانات عند البدء — حتى لا يتعطل السيرفر إن فشل SQLite (مثلاً على Railway)
 app.listen(PORT, HOST, () => {
-  console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT);
-  try {
-    console.log('قاعدة البيانات:', db.getDb().name);
-  } catch (e) {
-    console.error('تحذير عند تهيئة قاعدة البيانات:', e.message);
-  }
+  console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT, '(استماع على', HOST + ')');
 });

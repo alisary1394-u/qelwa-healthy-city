@@ -61,9 +61,9 @@
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
 4. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
 5. إن ظهرت "Application failed to respond":
-   - تأكد أن آخر تعديلات الكود (بما فيها إصلاح جدول `transaction` في `server/db.js`) مرفوعة إلى GitHub.
-   - من **Deployments** افتح آخر نشر ثم **View Logs** — يجب أن ترى: `سيرفر المدينة الصحية يعمل على المنفذ ...` دون أخطاء حمراء بعدها.
-   - إن وُجد خطأ SQLite أو أي استثناء، انسخه وحاول إصلاحه أو اطلب المساعدة.
+   - تأكد أن آخر تعديلات الكود مرفوعة إلى GitHub (بما فيها ملف `railway.json` وإصلاحات `server/db.js` و`server/index.js`).
+   - من **Deployments** → آخر نشر → **View Logs**: انسخ السجلات بالكامل. إن ظهرت `سيرفر المدينة الصحية يعمل على المنفذ ...` فالسيرفر بدأ؛ إن ظهر قبلها `Uncaught exception:` أو خطأ أحمر، فالمشكلة من ذلك الخطأ (مثلاً فشل تحميل `better-sqlite3` على بيئة Railway).
+   - إن لم يظهر أي سطر بعد البناء: تحقق من **Build Command** أنّه `npm install && npm run build` وأن **Start Command** هو `npm start`. يمكن ضبط ذلك من لوحة Railway أو عبر ملف `railway.json` في جذر المشروع.
 
 ---
 
