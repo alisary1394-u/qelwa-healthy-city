@@ -61,14 +61,20 @@
    - **Root Directory:** اتركه فارغاً.
 3. في **Settings → Networking** (إن وُجد):
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
-4. **التحقق بالبريد الإلكتروني (رمز التحقق):** لإرسال رمز التحقق من **admin@qeelwah.com**، أضف في Railway → الخدمة → **Variables**:
-   - **بريد GoDaddy (qeelwah.com):**
+4. **التحقق بالبريد الإلكتروني (رمز التحقق):** أضف في Railway → الخدمة → **Variables** حسب نوع بريدك:
+   - **بريد GoDaddy مع Microsoft 365 (Office 365) — موصى به:**
+     - `SMTP_HOST` = `smtp.office365.com`
+     - `SMTP_PORT` = `587`
+     - `SMTP_SECURE` = لا تضبطه أو ضع `false` (التشفير STARTTLS يُفعّل تلقائياً على 587)
+     - `SMTP_USER` = عنوان بريدك الكامل (مثل `admin@qeelwah.com`)
+     - `SMTP_PASS` = كلمة مرور البريد الإلكتروني في GoDaddy
+     - تأكد أن **مصادقة SMTP (SMTP Authentication)** مفعّلة في إعدادات البريد.
+   - **بريد GoDaddy الأصلي (smtpout.secureserver.net):**
      - `SMTP_HOST` = `smtpout.secureserver.net`
-     - `SMTP_PORT` = `465`
-     - `SMTP_SECURE` = `true`
+     - `SMTP_PORT` = `587` (يفضّل على 465 من Railway)
+     - `SMTP_SECURE` = `false` أو احذفه
      - `SMTP_USER` = `admin@qeelwah.com`
-     - `SMTP_PASS` = كلمة مرور بريد admin@qeelwah.com (من لوحة GoDaddy)
-     - `MAIL_FROM` = `admin@qeelwah.com` (اختياري — الافتراضي في التطبيق هو هذا)
+     - `SMTP_PASS` = كلمة مرور البريد
    - **أو Gmail:** `SMTP_HOST`=smtp.gmail.com، `SMTP_PORT`=587، `SMTP_USER`=بريدك، `SMTP_PASS`=كلمة مرور التطبيق.
    بعد إضافتها أعد النشر. إن لم تُضبط، ستظهر رسالة "إعداد البريد الإلكتروني مطلوب" عند طلب رمز التحقق.
    - **إذا ظهرت "فشل إرسال البريد" أو خطأ SMTP:**

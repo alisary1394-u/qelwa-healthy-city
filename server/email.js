@@ -1,6 +1,7 @@
 /**
  * إرسال البريد الإلكتروني عبر SMTP (عند ضبط المتغيرات في البيئة)
- * المرسل الافتراضي: admin@qeelwah.com — المتغيرات في Railway: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS، واختياري: MAIL_FROM
+ * يدعم: GoDaddy مع Microsoft 365 (smtp.office365.com:587 STARTTLS)، GoDaddy الأصلي، Gmail.
+ * المتغيرات: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS؛ اختياري: MAIL_FROM, SMTP_SECURE
  */
 import nodemailer from 'nodemailer';
 
@@ -21,7 +22,8 @@ function getTransporter() {
     port,
     secure,
     auth: { user, pass },
-    // للمنافذ 587 مع TLS (مثل GoDaddy)
+    connectionTimeout: 20000,
+    greetingTimeout: 15000,
     ...(port === 587 && !secure && { requireTLS: true }),
   });
   return transporter;
