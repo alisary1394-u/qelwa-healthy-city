@@ -17,7 +17,9 @@ RUN cd server && npm ci 2>/dev/null || npm install
 # نسخ الكود المصدري
 COPY . .
 
-# بناء الواجهة الأمامية
+# الدومين الرسمي (ليظهر qeelwah.com فقط) — أضف في Railway Variables: VITE_CANONICAL_URL=https://qeelwah.com
+ARG VITE_CANONICAL_URL
+ENV VITE_CANONICAL_URL=$VITE_CANONICAL_URL
 ENV NODE_ENV=production
 RUN npm run build
 

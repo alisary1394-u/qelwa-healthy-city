@@ -191,12 +191,16 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
   }
 });
 
-// بذر البيانات (للتجربة). ?clear=1 يمسح الجداول أولاً ثم يبذر
+// بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط (لا يمسح المهام والأدلة والإشعارات التي أضافها المستخدم)
+const TABLES_CLEAR_ON_RESEED = [
+  'committee', 'team_member', 'axis', 'standard', 'initiative', 'initiative_kpi',
+  'budget', 'budget_allocation', 'transaction'
+];
 app.post('/api/seed', async (req, res) => {
   try {
     const db = await getDb();
     if (req.query.clear === '1') {
-      db.TABLES.forEach((t) => db.clearTable(t));
+      TABLES_CLEAR_ON_RESEED.forEach((t) => db.clearTable(t));
     }
     const { runSeed } = await import('./seed.js');
     await runSeed();
@@ -209,13 +213,30 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
-app.post('/api/functions/sendVerificationCode', (req, res) => {
+app.post('/api/functions/sendVerificationCode', async (req, res) => {
   const email = req.body?.email;
   if (!email) return res.status(400).json({ success: false, message: 'البريد مطلوب' });
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   verificationCodes.set(email.toLowerCase(), { code, expires_at: Date.now() + 5 * 60 * 1000 });
+
+  const { isEmailConfigured, sendVerificationEmail } = await import('./email.js');
+  if (isEmailConfigured()) {
+    try {
+      const result = await sendVerificationEmail(email, code);
+      if (!result.ok) {
+        return res.json({ success: false, message: result.error || 'فشل إرسال البريد' });
+      }
+      return res.json({ success: true, message: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني' });
+    } catch (e) {
+      console.error('إرسال رمز التحقق:', e.message);
+      return res.json({ success: false, message: 'فشل إرسال البريد. تحقق من إعدادات SMTP.' });
+    }
+  }
   console.log('[رمز التحقق]', email, ':', code);
-  res.json({ success: true, message: 'تم إعداد رمز التحقق', code });
+  return res.json({
+    success: false,
+    message: 'إعداد البريد الإلكتروني مطلوب. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في إعدادات Railway (Variables).',
+  });
 });
 
 app.post('/api/functions/verifyCode', (req, res) => {

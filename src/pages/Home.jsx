@@ -91,9 +91,11 @@ export default function Home() {
 
       // Send verification code
       setMemberEmail(member.email);
-      await sendVerificationCodeEmail(member.email);
-      setStep(2);
-      setResendTimer(60);
+      const codeSent = await sendVerificationCodeEmail(member.email);
+      if (codeSent) {
+        setStep(2);
+        setResendTimer(60);
+      }
       setLoading(false);
     } catch (err) {
       setError('حدث خطأ. يرجى المحاولة مرة أخرى.');
@@ -103,15 +105,17 @@ export default function Home() {
 
   const sendVerificationCodeEmail = async (email) => {
     setDisplayedVerificationCode('');
+    setError('');
     try {
       const result = await base44.functions.sendVerificationCode({ email });
       if (!result.success) {
         setError(result.message || 'فشل إرسال رمز التحقق');
-      } else if (result.code) {
-        setDisplayedVerificationCode(result.code);
+        return false;
       }
+      return true;
     } catch (err) {
       setError('فشل إرسال رمز التحقق. يرجى المحاولة مرة أخرى.');
+      return false;
     }
   };
 
