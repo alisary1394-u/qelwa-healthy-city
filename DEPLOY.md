@@ -71,12 +71,24 @@
      - `MAIL_FROM` = `admin@qeelwah.com` (اختياري — الافتراضي في التطبيق هو هذا)
    - **أو Gmail:** `SMTP_HOST`=smtp.gmail.com، `SMTP_PORT`=587، `SMTP_USER`=بريدك، `SMTP_PASS`=كلمة مرور التطبيق.
    بعد إضافتها أعد النشر. إن لم تُضبط، ستظهر رسالة "إعداد البريد الإلكتروني مطلوب" عند طلب رمز التحقق.
+   - **إذا ظهرت "فشل إرسال البريد" أو خطأ SMTP:**
+     - **GoDaddy:** تأكد من تفعيل **SMTP Authentication** في إعدادات البريد (لوحة GoDaddy → البريد → الإعدادات المتقدمة). استخدم البريد الكامل كـ `SMTP_USER` وكلمة مرور البريد نفسها في `SMTP_PASS`.
+     - جرّب المنفذ **587** بدل 465: `SMTP_PORT`=587، `SMTP_SECURE`=false (أو احذف SMTP_SECURE). التطبيق يدعم كلا المنفذين.
+     - من Railway → Deployments → View Logs ابحث عن `[SMTP]` لرؤية رسالة الخطأ الفعلية من الخادم.
+     - **لرؤية سبب الفشل مباشرة:** بعد النشر افتح في المتصفح: `https://www.qeelwah.com/api/email-check` (أو رابط سيرفرك + `/api/email-check`). يعيد النص الفعلي لخطأ SMTP (مثل Invalid login أو Connection timeout).
 6. **الدومين الرسمي (اختياري):** لظهور العنوان فقط كـ qeelwah.com (بدون www)، أضف في Variables: `VITE_CANONICAL_URL=https://qeelwah.com` ثم أعد البناء والنشر. سيُوجّه تلقائياً من رابط Railway ومن www.qeelwah.com إلى https://qeelwah.com.
-7. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
-8. إن ظهرت "Application failed to respond":
+7. **ربط الواجهة بالسيرفر:** الواجهة تتصل تلقائياً بنفس النطاق (مثلاً `https://qeelwah.com` أو `https://xxx.railway.app`). **لا تضبط** `VITE_API_URL` في Railway إلا إذا كانت الواجهة تُعرض من نطاق مختلف عن السيرفر. إضافة البريد الإلكتروني (التحقق) لا تغيّر هذا الربط — كل الطلبات تبقى إلى نفس السيرفر.
+8. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
+9. إن ظهرت "Application failed to respond":
    - **تجربة خادم بسيط:** في Railway → الخدمة → **Settings** → **Deploy** (أو **Build & Deploy**) → **Start Command** غيّره إلى: `node server/railway-minimal.cjs` ثم **Redeploy**. إن فتح الرابط وظهرت كلمة "OK" فالمشكلة من التطبيق الرئيسي وليس من المنصة. بعدها أرجع **Start Command** إلى `npm start` أو اتركه فارغاً لاستخدام أوامر الـ Dockerfile.
    - من **Deployments** → آخر نشر → **View Logs**: ابحث عن `[Qelwa] Container CMD starting` أو `[Qelwa] Process starting` أو `سيرفر المدينة الصحية يعمل على المنفذ`. إن ظهر بعدها `Uncaught exception:` أو خطأ أحمر فانسخه للمساعدة في التشخيص. إن لم يظهر أي من ذلك فالبناء أو بدء الحاوية قد يكون فاشلاً.
    - تأكد أن آخر تعديلات الكود (بما فيها `Dockerfile` و`server/index.js`) مرفوعة إلى GitHub.
+10. **التحديثات لا تظهر على Railway بعد الـ push:**
+   - **الفرع (Branch):** في Railway → مشروعك → الخدمة → **Settings** → **Build & Deploy** (أو **Source**) تحقق من **Branch**. يجب أن يكون نفس الفرع الذي ترفع إليه (غالباً `main` أو `master`). إذا كنت ترفع إلى `main` وRailway يراقب `master` (أو العكس) فلن يحدث نشر.
+   - **ربط المستودع:** من **Settings** → **Source** تأكد أن الخدمة مرتبطة بالمستودع الصحيح على GitHub (نفس المستودع الذي تنفّذ منه `git push`).
+   - **الرفع ناجح:** في الطرفية نفّذ `git status` ثم `git push`. تأكد أن الـ push ينجح ولا يظهر "failed" أو "rejected". إذا رفعت إلى فرع آخر (مثلاً `dev`) فلن يبني Railway إلا إذا كان مراقباً لهذا الفرع.
+   - **نشر يدوي:** من Railway → الخدمة → **Deployments** → زر **Deploy** أو **Redeploy** لنشر آخر commit من الفرع المربوط.
+   - **سجلات البناء:** من **Deployments** → آخر نشر → **View Logs** تحقق إن كان البناء فشل (Build Failed). إن فشل البناء فلن تظهر "تحديث" ناجح.
 
 ---
 

@@ -8,6 +8,7 @@ const { appId, token, functionsVersion, appBaseUrl, useLocalBackend, useSupabase
 
 let base44;
 
+// الربط بالسيرفر: عند وجود apiUrl (أو نفس النطاق في الإنتاج) نستخدم سيرفر التطبيق (apiBackend)
 if (apiUrl) {
   base44 = apiBackend;
 } else if (useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey) {

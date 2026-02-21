@@ -50,7 +50,8 @@ const getAppParams = () => {
 		useSupabaseBackend: import.meta.env.VITE_USE_SUPABASE_BACKEND === 'true',
 		supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
 		supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-		// في الإنتاج: إن لم يُضبط VITE_API_URL نستخدم نفس النطاق (مثلاً على Railway)
+		// في الإنتاج: إن لم يُضبط VITE_API_URL نستخدم نفس النطاق (الواجهة والسيرفر معاً على Railway)
+		// لا تضبط VITE_API_URL في Railway إلا إذا كانت الواجهة على نطاق مختلف عن السيرفر
 		apiUrl: (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') ||
 			(import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : ''),
 	}

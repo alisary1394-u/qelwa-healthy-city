@@ -52,6 +52,21 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// فحص إعدادات البريد (للتشخيص) — يعيد سبب الفشل إن وُجد
+app.get('/api/email-check', async (req, res) => {
+  try {
+    const { isEmailConfigured, verifySmtpConnection } = await import('./email.js');
+    const configured = isEmailConfigured();
+    if (!configured) {
+      return res.json({ configured: false, ok: false, error: 'SMTP غير مضبوط. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في Railway → Variables.' });
+    }
+    const result = await verifySmtpConnection();
+    res.json({ configured: true, ok: result.ok, error: result.error || null });
+  } catch (e) {
+    res.json({ configured: true, ok: false, error: e.message || String(e) });
+  }
+});
+
 function entityToTable(name) {
   return name.replace(/([A-Z])/g, (_, c) => '_' + c.toLowerCase()).replace(/^_/, '');
 }
@@ -221,16 +236,11 @@ app.post('/api/functions/sendVerificationCode', async (req, res) => {
 
   const { isEmailConfigured, sendVerificationEmail } = await import('./email.js');
   if (isEmailConfigured()) {
-    try {
-      const result = await sendVerificationEmail(email, code);
-      if (!result.ok) {
-        return res.json({ success: false, message: result.error || 'فشل إرسال البريد' });
-      }
-      return res.json({ success: true, message: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني' });
-    } catch (e) {
-      console.error('إرسال رمز التحقق:', e.message);
-      return res.json({ success: false, message: 'فشل إرسال البريد. تحقق من إعدادات SMTP.' });
+    const result = await sendVerificationEmail(email, code);
+    if (!result.ok) {
+      return res.json({ success: false, message: result.error || 'فشل إرسال البريد' });
     }
+    return res.json({ success: true, message: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني' });
   }
   console.log('[رمز التحقق]', email, ':', code);
   return res.json({
