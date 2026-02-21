@@ -1,0 +1,26 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "title": "معاملة مالية",
+  "description": "معاملات مالية (إيرادات ومصروفات)",
+  "properties": {
+    "transaction_number": { "type": "string", "maxLength": 50 },
+    "type": { "type": "string", "enum": ["income", "expense"] },
+    "category": { "type": "string", "maxLength": 100 },
+    "amount": { "type": "number", "default": 0 },
+    "description": { "type": "string", "maxLength": 500 },
+    "date": { "type": "string", "format": "date" },
+    "committee_id": { "type": "string", "maxLength": 100 },
+    "committee_name": { "type": "string", "maxLength": 200 },
+    "axis_id": { "type": "string", "maxLength": 100 },
+    "axis_name": { "type": "string", "maxLength": 200 },
+    "payment_method": { "type": "string", "maxLength": 50 },
+    "receipt_number": { "type": "string", "maxLength": 50 },
+    "beneficiary": { "type": "string", "maxLength": 200 },
+    "attachment_url": { "type": "string", "maxLength": 500 },
+    "notes": { "type": "string", "maxLength": 1000 },
+    "status": { "type": "string", "enum": ["pending", "paid"], "default": "pending" }
+  },
+  "required": ["type", "amount"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

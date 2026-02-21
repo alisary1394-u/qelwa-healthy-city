@@ -1,0 +1,13 @@
+{
+  "name": "Settings",
+  "type": "object",
+  "title": "إعدادات المدينة",
+  "description": "إعدادات المدينة الصحية (شعار، اسم، موقع)",
+  "properties": {
+    "city_name": { "type": "string", "maxLength": 200 },
+    "city_location": { "type": "string", "maxLength": 200 },
+    "logo_text": { "type": "string", "maxLength": 20 },
+    "logo_url": { "type": "string", "maxLength": 500 }
+  },
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "FileUpload",
+  "type": "object",
+  "title": "ملف مرفوع",
+  "description": "ملفات مرفوعة من الفريق",
+  "properties": {
+    "title": { "type": "string", "maxLength": 300 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "file_url": { "type": "string", "maxLength": 500 },
+    "file_type": { "type": "string", "enum": ["image", "document", "report", "other"], "default": "other" },
+    "committee_id": { "type": "string", "maxLength": 100 },
+    "committee_name": { "type": "string", "maxLength": 200 },
+    "uploaded_by_name": { "type": "string", "maxLength": 200 },
+    "uploaded_by_role": { "type": "string", "maxLength": 50 },
+    "status": { "type": "string", "enum": ["pending_supervisor", "pending_chairman", "approved", "rejected", "returned"], "default": "pending_supervisor" },
+    "supervisor_approval": { "type": "object", "properties": { "approved_by": { "type": "string" }, "approved_at": { "type": "string" } } },
+    "chairman_approval": { "type": "object", "properties": { "approved_by": { "type": "string" }, "approved_at": { "type": "string" } } },
+    "rejection_reason": { "type": "string", "maxLength": 500 }
+  },
+  "required": ["title"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

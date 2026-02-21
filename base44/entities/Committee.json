@@ -1,0 +1,12 @@
+{
+  "name": "Committee",
+  "type": "object",
+  "title": "لجنة",
+  "description": "لجان برنامج المدينة الصحية",
+  "properties": {
+    "name": { "type": "string", "maxLength": 200 },
+    "description": { "type": "string", "maxLength": 2000 }
+  },
+  "required": ["name"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

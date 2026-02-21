@@ -1,0 +1,28 @@
+{
+  "name": "TeamMember",
+  "type": "object",
+  "title": "عضو الفريق",
+  "description": "أعضاء فريق المدينة الصحية",
+  "properties": {
+    "full_name": { "type": "string", "maxLength": 200 },
+    "national_id": { "type": "string", "maxLength": 50 },
+    "password": { "type": "string", "maxLength": 200 },
+    "email": { "type": "string", "format": "email", "maxLength": 200 },
+    "phone": { "type": "string", "maxLength": 20 },
+    "role": {
+      "type": "string",
+      "enum": ["governor", "coordinator", "committee_head", "member", "volunteer", "budget_manager", "accountant", "financial_officer"],
+      "default": "volunteer"
+    },
+    "committee_id": { "type": "string", "maxLength": 100 },
+    "committee_name": { "type": "string", "maxLength": 200 },
+    "specialization": { "type": "string", "maxLength": 200 },
+    "department": { "type": "string", "maxLength": 200 },
+    "supervisor_id": { "type": "string", "maxLength": 100 },
+    "status": { "type": "string", "enum": ["active", "inactive"], "default": "active" },
+    "join_date": { "type": "string", "format": "date" },
+    "notes": { "type": "string", "maxLength": 2000 }
+  },
+  "required": ["full_name"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

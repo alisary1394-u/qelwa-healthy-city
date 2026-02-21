@@ -1,0 +1,6 @@
+{
+  "name": "qelwa-healthy-city",
+  "description": "المدينة الصحية - محافظة قلوة",
+  "entitiesDir": "./entities",
+  "functionsDir": "./functions"
+}

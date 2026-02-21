@@ -1,0 +1,13 @@
+{
+  "name": "Axis",
+  "type": "object",
+  "title": "محور",
+  "description": "محاور معايير منظمة الصحة العالمية",
+  "properties": {
+    "name": { "type": "string", "maxLength": 200 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "order": { "type": "integer", "default": 1 }
+  },
+  "required": ["name"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

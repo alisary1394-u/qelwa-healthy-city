@@ -1,0 +1,23 @@
+{
+  "name": "Task",
+  "type": "object",
+  "title": "مهمة",
+  "description": "مهام فريق المدينة الصحية",
+  "properties": {
+    "title": { "type": "string", "maxLength": 300 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "assigned_to": { "type": "string", "maxLength": 100 },
+    "assigned_to_name": { "type": "string", "maxLength": 200 },
+    "assigned_by": { "type": "string", "maxLength": 200 },
+    "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"], "default": "medium" },
+    "status": { "type": "string", "enum": ["pending", "in_progress", "completed"], "default": "pending" },
+    "category": { "type": "string", "enum": ["field_work", "meeting", "report", "survey", "training", "other"], "default": "other" },
+    "due_date": { "type": "string", "format": "date" },
+    "reminder_date": { "type": "string", "format": "date-time" },
+    "reminder_sent": { "type": "boolean", "default": false },
+    "completion_date": { "type": "string", "format": "date" },
+    "notes": { "type": "string", "maxLength": 2000 }
+  },
+  "required": ["title"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

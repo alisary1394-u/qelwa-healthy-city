@@ -1,0 +1,18 @@
+{
+  "name": "BudgetAllocation",
+  "type": "object",
+  "title": "تخصيص ميزانية",
+  "description": "تخصيصات الميزانية للجان والمحاور",
+  "properties": {
+    "budget_id": { "type": "string", "maxLength": 100 },
+    "budget_name": { "type": "string", "maxLength": 200 },
+    "committee_id": { "type": "string", "maxLength": 100 },
+    "committee_name": { "type": "string", "maxLength": 200 },
+    "axis_id": { "type": "string", "maxLength": 100 },
+    "axis_name": { "type": "string", "maxLength": 200 },
+    "category": { "type": "string", "maxLength": 100 },
+    "allocated_amount": { "type": "number", "default": 0 },
+    "notes": { "type": "string", "maxLength": 500 }
+  },
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "InitiativeKPI",
+  "type": "object",
+  "title": "مؤشر أداء المبادرة",
+  "description": "مؤشرات أداء المبادرات",
+  "properties": {
+    "initiative_id": { "type": "string", "maxLength": 100 },
+    "initiative_title": { "type": "string", "maxLength": 300 },
+    "kpi_name": { "type": "string", "maxLength": 200 },
+    "description": { "type": "string", "maxLength": 1000 },
+    "target_value": { "type": "number", "default": 0 },
+    "current_value": { "type": "number", "default": 0 },
+    "unit": { "type": "string", "maxLength": 50 },
+    "measurement_frequency": { "type": "string", "maxLength": 50 },
+    "status": { "type": "string", "enum": ["behind", "at_risk", "on_track", "achieved"], "default": "behind" },
+    "last_updated": { "type": "string", "format": "date" },
+    "notes": { "type": "string", "maxLength": 1000 }
+  },
+  "required": ["initiative_id", "kpi_name"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

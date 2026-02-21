@@ -1,0 +1,14 @@
+{
+  "name": "VerificationCode",
+  "type": "object",
+  "title": "رمز التحقق",
+  "description": "رموز التحقق بالبريد (تُستخدم من دوال الخادم فقط - asServiceRole)",
+  "properties": {
+    "email": { "type": "string", "format": "email", "maxLength": 200 },
+    "code": { "type": "string", "maxLength": 10 },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "verified": { "type": "boolean", "default": false }
+  },
+  "required": ["email", "code"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}
