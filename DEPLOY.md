@@ -50,6 +50,23 @@
 
 ## 2. النشر على سيرفر (VPS / استضافة Node)
 
+### Railway (مختصر)
+
+1. اربط المشروع من GitHub واختر الفرع (مثلاً `main` أو `master`).
+2. في **Settings** للخدمة:
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start` (أو `node server/index.js`)
+   - **Root Directory:** اتركه فارغاً.
+3. في **Settings → Networking** (إن وُجد):
+   - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
+4. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
+5. إن ظهرت "Application failed to respond":
+   - تأكد أن آخر تعديلات الكود (بما فيها إصلاح جدول `transaction` في `server/db.js`) مرفوعة إلى GitHub.
+   - من **Deployments** افتح آخر نشر ثم **View Logs** — يجب أن ترى: `سيرفر المدينة الصحية يعمل على المنفذ ...` دون أخطاء حمراء بعدها.
+   - إن وُجد خطأ SQLite أو أي استثناء، انسخه وحاول إصلاحه أو اطلب المساعدة.
+
+---
+
 1. ارفع مجلد المشروع إلى السيرفر (أو استخدم Git).
 2. على السيرفر:
    ```bash

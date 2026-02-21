@@ -19,6 +19,11 @@ const verificationCodes = new Map(); // email -> { code, expires_at }
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
+// نقطة فحص الصحة (للمنصات مثل Railway)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 function entityToTable(name) {
   return name.replace(/([A-Z])/g, (_, c) => '_' + c.toLowerCase()).replace(/^_/, '');
 }
@@ -163,10 +168,21 @@ if (fs.existsSync(distPath)) {
       res.sendFile(path.join(distPath, 'index.html'));
     }
   });
+} else {
+  // عند عدم وجود dist (مثلاً على السيرفر قبل البناء): استجابة للجذر حتى يعمل فحص الصحة
+  app.get('/', (req, res) => {
+    res.type('html').status(200).send(
+      '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>المدينة الصحية</title></head><body><h1>سيرفر المدينة الصحية يعمل</h1><p><a href="/api/health">/api/health</a></p></body></html>'
+    );
+  });
 }
 
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT);
-  console.log('قاعدة البيانات:', db.getDb().name);
+  try {
+    console.log('قاعدة البيانات:', db.getDb().name);
+  } catch (e) {
+    console.error('تحذير عند تهيئة قاعدة البيانات:', e.message);
+  }
 });
