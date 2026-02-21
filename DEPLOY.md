@@ -61,8 +61,19 @@
    - **Root Directory:** اتركه فارغاً.
 3. في **Settings → Networking** (إن وُجد):
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
-4. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
-5. إن ظهرت "Application failed to respond":
+4. **التحقق بالبريد الإلكتروني (رمز التحقق):** لإرسال رمز التحقق من **admin@qeelwah.com**، أضف في Railway → الخدمة → **Variables**:
+   - **بريد GoDaddy (qeelwah.com):**
+     - `SMTP_HOST` = `smtpout.secureserver.net`
+     - `SMTP_PORT` = `465`
+     - `SMTP_SECURE` = `true`
+     - `SMTP_USER` = `admin@qeelwah.com`
+     - `SMTP_PASS` = كلمة مرور بريد admin@qeelwah.com (من لوحة GoDaddy)
+     - `MAIL_FROM` = `admin@qeelwah.com` (اختياري — الافتراضي في التطبيق هو هذا)
+   - **أو Gmail:** `SMTP_HOST`=smtp.gmail.com، `SMTP_PORT`=587، `SMTP_USER`=بريدك، `SMTP_PASS`=كلمة مرور التطبيق.
+   بعد إضافتها أعد النشر. إن لم تُضبط، ستظهر رسالة "إعداد البريد الإلكتروني مطلوب" عند طلب رمز التحقق.
+6. **الدومين الرسمي (اختياري):** لظهور العنوان فقط كـ qeelwah.com (بدون www)، أضف في Variables: `VITE_CANONICAL_URL=https://qeelwah.com` ثم أعد البناء والنشر. سيُوجّه تلقائياً من رابط Railway ومن www.qeelwah.com إلى https://qeelwah.com.
+7. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
+8. إن ظهرت "Application failed to respond":
    - **تجربة خادم بسيط:** في Railway → الخدمة → **Settings** → **Deploy** (أو **Build & Deploy**) → **Start Command** غيّره إلى: `node server/railway-minimal.cjs` ثم **Redeploy**. إن فتح الرابط وظهرت كلمة "OK" فالمشكلة من التطبيق الرئيسي وليس من المنصة. بعدها أرجع **Start Command** إلى `npm start` أو اتركه فارغاً لاستخدام أوامر الـ Dockerfile.
    - من **Deployments** → آخر نشر → **View Logs**: ابحث عن `[Qelwa] Container CMD starting` أو `[Qelwa] Process starting` أو `سيرفر المدينة الصحية يعمل على المنفذ`. إن ظهر بعدها `Uncaught exception:` أو خطأ أحمر فانسخه للمساعدة في التشخيص. إن لم يظهر أي من ذلك فالبناء أو بدء الحاوية قد يكون فاشلاً.
    - تأكد أن آخر تعديلات الكود (بما فيها `Dockerfile` و`server/index.js`) مرفوعة إلى GitHub.
