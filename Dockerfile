@@ -24,5 +24,5 @@ RUN npm run build
 # Railway يضبط PORT تلقائياً (غالباً 8080)؛ التطبيق يستمع على 0.0.0.0
 EXPOSE 8080
 
-# تشغيل عبر shell لطباعة سطر عند البدء (لتشخيص السجلات)
-CMD ["sh", "-c", "echo '[Qelwa] Container CMD starting' && exec node server/index.js"]
+# Custom Start Command على Railway = npm start
+CMD ["npm", "start"]

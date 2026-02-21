@@ -35,7 +35,7 @@ export default function Layout({ children }) {
 
   const isActive = (pageName) => currentPath === createPageUrl(pageName);
 
-  const base44Ready = appParams.useLocalBackend || isBase44Configured();
+  const base44Ready = appParams.useLocalBackend || appParams.apiUrl || appParams.useSupabaseBackend || isBase44Configured();
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
