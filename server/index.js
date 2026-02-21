@@ -40,6 +40,12 @@ async function getDb() {
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+// رؤوس أمان للتطبيق المنشور (مثل qilwah.up.railway.app)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  next();
+});
 
 // نقطة فحص الصحة (للمنصات مثل Railway) — لا تحتاج قاعدة بيانات
 app.get('/api/health', (req, res) => {
