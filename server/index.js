@@ -2,6 +2,8 @@
  * سيرفر المدينة الصحية — Express + SQLite (قاعدة بيانات محلية)
  * يعمل محلياً وعند النشر على السيرفر
  */
+console.log('[Qelwa] Process starting, PORT=', process.env.PORT);
+
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
   process.exit(1);
@@ -19,7 +21,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 const sessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }

@@ -15,7 +15,7 @@
      ```
   3. في `.env.local` ضع:
      ```
-     VITE_API_URL=http://localhost:3001
+     VITE_API_URL=http://localhost:8080
      ```
   4. تشغيل الواجهة:
      ```bash
@@ -32,18 +32,18 @@
      ```bash
      npm run server
      ```
-  3. افتح المتصفح على `http://localhost:3001`.
+  3. افتح المتصفح على `http://localhost:8080`.
 
 ### بذر البيانات
 
 - من الواجهة: زر **«تحميل/تحديث بيانات التجربة»** أو **«مسح البيانات وإعادة تحميل»** (حسب الصفحة).
 - أو استدعاء API:
   ```bash
-  curl -X POST http://localhost:3001/api/seed
+  curl -X POST http://localhost:8080/api/seed
   ```
 - مسح ثم بذر من جديد:
   ```bash
-  curl -X POST "http://localhost:3001/api/seed?clear=1"
+  curl -X POST "http://localhost:8080/api/seed?clear=1"
   ```
 
 ---
@@ -63,9 +63,9 @@
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
 4. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
 5. إن ظهرت "Application failed to respond":
-   - تأكد أن آخر تعديلات الكود مرفوعة إلى GitHub (بما فيها ملف `railway.json` وإصلاحات `server/db.js` و`server/index.js`).
-   - من **Deployments** → آخر نشر → **View Logs**: انسخ السجلات بالكامل. إن ظهرت `سيرفر المدينة الصحية يعمل على المنفذ ...` فالسيرفر بدأ؛ إن ظهر قبلها `Uncaught exception:` أو خطأ أحمر، فالمشكلة من ذلك الخطأ (مثلاً فشل تحميل `better-sqlite3` على بيئة Railway).
-   - إن لم يظهر أي سطر بعد البناء: تحقق من **Build Command** أنّه `npm install && npm run build` وأن **Start Command** هو `npm start`. يمكن ضبط ذلك من لوحة Railway أو عبر ملف `railway.json` في جذر المشروع.
+   - **تجربة خادم بسيط:** في Railway → الخدمة → **Settings** → **Deploy** (أو **Build & Deploy**) → **Start Command** غيّره إلى: `node server/railway-minimal.cjs` ثم **Redeploy**. إن فتح الرابط وظهرت كلمة "OK" فالمشكلة من التطبيق الرئيسي وليس من المنصة. بعدها أرجع **Start Command** إلى `npm start` أو اتركه فارغاً لاستخدام أوامر الـ Dockerfile.
+   - من **Deployments** → آخر نشر → **View Logs**: ابحث عن `[Qelwa] Container CMD starting` أو `[Qelwa] Process starting` أو `سيرفر المدينة الصحية يعمل على المنفذ`. إن ظهر بعدها `Uncaught exception:` أو خطأ أحمر فانسخه للمساعدة في التشخيص. إن لم يظهر أي من ذلك فالبناء أو بدء الحاوية قد يكون فاشلاً.
+   - تأكد أن آخر تعديلات الكود (بما فيها `Dockerfile` و`server/index.js`) مرفوعة إلى GitHub.
 
 ---
 
@@ -78,13 +78,13 @@
    ```
 3. شغّل السيرفر (يفضّل باستخدام process manager مثل pm2):
    ```bash
-   PORT=3001 node server/index.js
+   PORT=8080 node server/index.js
    ```
    أو مع pm2:
    ```bash
-   pm2 start server/index.js --name qelwa --env PORT=3001
+   pm2 start server/index.js --name qelwa --env PORT=8080
    ```
-4. اضبط الـ reverse proxy (Nginx أو غيره) ليربط النطاق مع المنفذ 3001.
+4. اضبط الـ reverse proxy (Nginx أو غيره) ليربط النطاق مع المنفذ 8080.
 5. في الواجهة (أو عند البناء) اجعل `VITE_API_URL` يشير إلى عنوان السيرفر، مثلاً:
    ```
    VITE_API_URL=https://your-domain.com
