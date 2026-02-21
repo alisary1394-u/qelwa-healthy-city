@@ -17,6 +17,11 @@ const TABLES = [
 
 let db = null;
 
+/** اسم الجدول بين علامتي اقتباس لتفادي كلمات SQL محجوزة (مثل transaction) */
+function quoted(table) {
+  return '"' + table.replace(/"/g, '""') + '"';
+}
+
 export function getDb() {
   if (db) return db;
   const dir = path.dirname(DB_PATH);
@@ -25,7 +30,7 @@ export function getDb() {
   db.pragma('journal_mode = WAL');
   TABLES.forEach((name) => {
     db.exec(`
-      CREATE TABLE IF NOT EXISTS ${name} (
+      CREATE TABLE IF NOT EXISTS ${quoted(name)} (
         id TEXT PRIMARY KEY,
         body TEXT NOT NULL DEFAULT '{}'
       )
@@ -42,13 +47,13 @@ export function entityToTable(entityName) {
 
 export function list(table) {
   const d = getDb();
-  const rows = d.prepare(`SELECT id, body FROM ${table}`).all();
+  const rows = d.prepare(`SELECT id, body FROM ${quoted(table)}`).all();
   return rows.map((r) => ({ id: r.id, ...JSON.parse(r.body || '{}') }));
 }
 
 export function get(table, id) {
   const d = getDb();
-  const row = d.prepare(`SELECT id, body FROM ${table} WHERE id = ?`).get(id);
+  const row = d.prepare(`SELECT id, body FROM ${quoted(table)} WHERE id = ?`).get(id);
   if (!row) return null;
   return { id: row.id, ...JSON.parse(row.body || '{}') };
 }
@@ -60,28 +65,28 @@ function generateId() {
 export function create(table, id, body) {
   const d = getDb();
   const finalId = id || generateId();
-  d.prepare(`INSERT INTO ${table} (id, body) VALUES (?, ?)`).run(finalId, JSON.stringify(body));
+  d.prepare(`INSERT INTO ${quoted(table)} (id, body) VALUES (?, ?)`).run(finalId, JSON.stringify(body));
   return { id: finalId, ...body };
 }
 
 export function update(table, id, body) {
   const d = getDb();
-  const row = d.prepare(`SELECT id, body FROM ${table} WHERE id = ?`).get(id);
+  const row = d.prepare(`SELECT id, body FROM ${quoted(table)} WHERE id = ?`).get(id);
   if (!row) return null;
   const merged = { ...JSON.parse(row.body || '{}'), ...body };
   delete merged.id;
-  d.prepare(`UPDATE ${table} SET body = ? WHERE id = ?`).run(JSON.stringify(merged), id);
+  d.prepare(`UPDATE ${quoted(table)} SET body = ? WHERE id = ?`).run(JSON.stringify(merged), id);
   return { id, ...merged };
 }
 
 export function remove(table, id) {
   const d = getDb();
-  d.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
+  d.prepare(`DELETE FROM ${quoted(table)} WHERE id = ?`).run(id);
 }
 
 export function clearTable(table) {
   const d = getDb();
-  d.prepare(`DELETE FROM ${table}`).run();
+  d.prepare(`DELETE FROM ${quoted(table)}`).run();
 }
 
 export { TABLES };
