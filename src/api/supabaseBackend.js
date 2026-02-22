@@ -220,9 +220,10 @@ const functions = {
 function buildUserFromMember(member) {
   if (!member) return null;
   return {
-    email: member.email || 'admin@qeelwah.com',
+    email: member.email || (member.role === 'governor' ? 'admin@qeelwah.com' : `member-${member.national_id}@local`),
     full_name: member.full_name || 'المشرف',
     user_role: member.role === 'governor' ? 'admin' : 'user',
+    national_id: member.national_id,
   };
 }
 

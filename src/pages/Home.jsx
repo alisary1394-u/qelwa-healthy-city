@@ -141,7 +141,8 @@ export default function Home() {
             base44.auth.setUser({
               email: member.email,
               full_name: member.full_name,
-              user_role: member.role === 'governor' ? 'admin' : 'user'
+              user_role: member.role === 'governor' ? 'admin' : 'user',
+              national_id: member.national_id,
             });
             window.location.href = createPageUrl(firstPage);
           } else {

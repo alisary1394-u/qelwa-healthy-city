@@ -96,9 +96,10 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
     }
     const user = {
-      email: member.email || 'admin@qeelwah.com',
+      email: member.email || (member.role === 'governor' ? 'admin@qeelwah.com' : `member-${member.national_id}@local`),
       full_name: member.full_name || 'المشرف',
       user_role: member.role === 'governor' ? 'admin' : 'user',
+      national_id: member.national_id,
     };
     const token = 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
     sessions.set(token, user);
