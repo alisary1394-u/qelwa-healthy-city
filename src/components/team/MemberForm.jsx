@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
-const roles = [
+const ALL_ROLES = [
   { value: "governor", label: "المشرف العام (المحافظ)" },
   { value: "coordinator", label: "منسق المدينة الصحية" },
   { value: "committee_head", label: "رئيس لجنة" },
@@ -55,7 +55,8 @@ const DEPARTMENT_OPTIONS = [
 
 const OTHER_DEPARTMENT_VALUE = '__other__';
 
-export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [] }) {
+export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], disallowGovernorRole = false }) {
+  const roles = disallowGovernorRole ? ALL_ROLES.filter((r) => r.value !== 'governor') : ALL_ROLES;
   const [formData, setFormData] = useState({
     full_name: '',
     national_id: '',

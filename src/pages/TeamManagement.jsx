@@ -102,7 +102,10 @@ export default function TeamManagement() {
   });
 
   const { permissions } = usePermissions();
-  const canEdit = permissions.canManageTeam;
+  const canAdd = permissions.canAddTeamMember !== false;
+  const canEdit = permissions.canEditTeamMember === true;
+  const canDelete = permissions.canDeleteTeamMember === true;
+  const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
 
   if (!permissions.canSeeTeam) {
     return (
@@ -295,13 +298,15 @@ export default function TeamManagement() {
               className="pr-10"
             />
           </div>
-          <Button 
-            onClick={() => { setEditingMember(null); setFormOpen(true); }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <UserPlus className="w-5 h-5 ml-2" />
-            إضافة عضو جديد
-          </Button>
+          {canAdd && (
+            <Button 
+              onClick={() => { setEditingMember(null); setFormOpen(true); }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <UserPlus className="w-5 h-5 ml-2" />
+              إضافة عضو جديد
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -333,13 +338,15 @@ export default function TeamManagement() {
             <CardContent>
               <Users className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               <p className="text-gray-500">لا يوجد أعضاء</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => { setEditingMember(null); setFormOpen(true); }}
-              >
-                إضافة عضو جديد
-              </Button>
+              {canAdd && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => { setEditingMember(null); setFormOpen(true); }}
+                >
+                  إضافة عضو جديد
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -351,6 +358,7 @@ export default function TeamManagement() {
                 onEdit={handleEdit}
                 onDelete={(m) => setDeleteDialog({ open: true, member: m })}
                 canEdit={canEdit}
+                canDelete={canDelete}
               />
             ))}
           </div>
@@ -367,6 +375,7 @@ export default function TeamManagement() {
         committees={committees}
         selectedCommitteeId={activeCommittee}
         existingDepartments={[...new Set((members || []).map(m => m.department).filter(Boolean))]}
+        disallowGovernorRole={!canAddOrEditGovernor}
       />
 
       {/* Delete Confirmation */}

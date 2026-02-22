@@ -32,7 +32,8 @@ const roleColors = {
   financial_officer: "bg-teal-100 text-teal-800 border-teal-200"
 };
 
-export default function MemberCard({ member, onEdit, onDelete, canEdit }) {
+export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }) {
+  const showActions = (canEdit || canDelete) && (onEdit || onDelete);
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
@@ -48,14 +49,18 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit }) {
               </Badge>
             </div>
           </div>
-          {canEdit && (
+          {showActions && (
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
-                <Edit className="w-4 h-4 text-blue-600" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => onDelete(member)}>
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </Button>
+              {canEdit && onEdit && (
+                <Button variant="ghost" size="icon" onClick={() => onEdit(member)}>
+                  <Edit className="w-4 h-4 text-blue-600" />
+                </Button>
+              )}
+              {canDelete && onDelete && (
+                <Button variant="ghost" size="icon" onClick={() => onDelete(member)}>
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </Button>
+              )}
             </div>
           )}
         </div>
