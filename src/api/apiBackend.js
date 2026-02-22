@@ -154,7 +154,7 @@ async function seedDefaultGovernorIfNeeded() {
   const governor = after.find((m) => m.role === 'governor' || m.national_id === '1');
   if (governor) {
     const user = { email: governor.email, full_name: governor.full_name, user_role: governor.role === 'governor' ? 'admin' : 'user' };
-    auth.setUser(user);
+    // لا نفعّل دخولاً تلقائياً — الدخول فقط عبر صفحة تسجيل الدخول
     return user;
   }
   return null;

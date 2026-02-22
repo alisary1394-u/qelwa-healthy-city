@@ -28,27 +28,23 @@ export const AuthProvider = ({ children }) => {
       if (useLocalOrServerDb) {
         setAppPublicSettings({});
         setIsLoadingPublicSettings(false);
-        let seededUser = null;
+        // تشغيل البذر فقط (بدون دخول تلقائي لأي مشرف أو عضو)
         try {
-          seededUser = await Promise.resolve(base44.seedDefaultGovernorIfNeeded?.() ?? null);
+          await Promise.resolve(base44.seedDefaultGovernorIfNeeded?.() ?? null);
           await Promise.resolve(base44.seedAxesAndStandardsIfNeeded?.());
           await Promise.resolve(base44.seedCommitteesTeamInitiativesTasksIfNeeded?.());
         } catch (e) {
           if (typeof console !== 'undefined') console.warn('Seed failed:', e);
         }
-        if (seededUser) {
-          setUser(seededUser);
+        // الدخول فقط عبر نموذج تسجيل الدخول أو جلسة محفوظة سابقاً (لا دخول تلقائي)
+        try {
+          const currentUser = await base44.auth.me();
+          setUser(currentUser);
           setIsAuthenticated(true);
-        } else {
-          try {
-            const currentUser = await base44.auth.me();
-            setUser(currentUser);
-            setIsAuthenticated(true);
-          } catch {
-            setUser(null);
-            setIsAuthenticated(false);
-            setAuthError({ type: 'auth_required', message: 'Authentication required' });
-          }
+        } catch {
+          setUser(null);
+          setIsAuthenticated(false);
+          setAuthError({ type: 'auth_required', message: 'Authentication required' });
         }
         setIsLoadingAuth(false);
         return;

@@ -219,16 +219,15 @@ function buildUserFromMember(member) {
   };
 }
 
-/** إنشاء مشرف افتراضي وتسجيل الدخول تلقائياً إن لم يوجد أي أعضاء */
+/** إنشاء مشرف افتراضي عند الحاجة (بدون دخول تلقائي — الدخول عبر صفحة تسجيل الدخول فقط) */
 export function seedDefaultGovernorIfNeeded() {
   if (typeof localStorage === 'undefined') return null;
   const members = getStore('TeamMember');
   const existing = getCurrentUser();
-
   if (existing) return existing;
 
   if (members.length === 0) {
-    const defaultGovernor = entities.TeamMember.create({
+    entities.TeamMember.create({
       full_name: 'المشرف',
       national_id: DEFAULT_NATIONAL_ID,
       password: DEFAULT_PASSWORD,
@@ -236,17 +235,8 @@ export function seedDefaultGovernorIfNeeded() {
       role: 'governor',
       status: 'active',
     });
-    const user = buildUserFromMember(defaultGovernor);
-    setCurrentUser(user);
     localStorage.setItem(SEEDED_KEY, '1');
-    return user;
-  }
-
-  const defaultMember = members.find((m) => m.national_id === DEFAULT_NATIONAL_ID || m.role === 'governor');
-  if (defaultMember) {
-    const user = buildUserFromMember(defaultMember);
-    setCurrentUser(user);
-    return user;
+    return null;
   }
   return null;
 }
