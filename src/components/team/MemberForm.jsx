@@ -243,9 +243,11 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 type="password"
                 value={formData.password || ''}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                placeholder="اختر كلمة مرور قوية"
+                placeholder={member ? 'اتركه فارغاً للإبقاء على كلمة المرور الحالية' : 'اختر كلمة مرور قوية'}
               />
-              <p className="text-xs text-gray-500">يستخدم رقم الهوية وكلمة المرور لتسجيل الدخول</p>
+              <p className="text-xs text-gray-500">
+                {member ? 'لا تُرسل كلمة مرور جديدة إن تركت الحقل فارغاً.' : 'يستخدم رقم الهوية وكلمة المرور لتسجيل الدخول'}
+              </p>
             </div>
             
             <div className="space-y-2">

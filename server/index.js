@@ -186,7 +186,11 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
     const db = await getDb();
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
-    const updated = db.update(table, req.params.id, req.body || {});
+    let body = { ...(req.body || {}) };
+    if (table === 'team_member' && (body.password === '' || body.password == null)) {
+      delete body.password;
+    }
+    const updated = db.update(table, req.params.id, body);
     if (!updated) return res.status(404).json({ error: 'غير موجود' });
     res.json(updated);
   } catch (e) {

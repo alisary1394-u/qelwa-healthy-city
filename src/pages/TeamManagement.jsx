@@ -163,6 +163,9 @@ export default function TeamManagement() {
     if (!payload.supervisor_id || payload.supervisor_id === 'null') {
       delete payload.supervisor_id;
     }
+    if (editingMember && (payload.password === '' || payload.password == null)) {
+      delete payload.password;
+    }
     try {
       if (editingMember) {
         await updateMutation.mutateAsync({ id: editingMember.id, data: payload });
