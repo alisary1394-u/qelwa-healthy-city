@@ -50,10 +50,12 @@ const getAppParams = () => {
 		useSupabaseBackend: import.meta.env.VITE_USE_SUPABASE_BACKEND === 'true',
 		supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
 		supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+		// دوال الخلفية (Backend Functions): عند وجود apiUrl نستخدم سيرفر التطبيق (sendVerificationCode, verifyCode, createFirstGovernor...)
 		// في الإنتاج: إن لم يُضبط VITE_API_URL نستخدم نفس النطاق (الواجهة والسيرفر معاً على Railway)
-		// لا تضبط VITE_API_URL في Railway إلا إذا كانت الواجهة على نطاق مختلف عن السيرفر
+		// لضمان التفعيل على Railway: لا تضبط VITE_API_URL أو اضبط VITE_USE_BACKEND_FUNCTIONS=true
 		apiUrl: (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') ||
-			(import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : ''),
+			(import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : '') ||
+			(import.meta.env.VITE_USE_BACKEND_FUNCTIONS === 'true' && typeof window !== 'undefined' && window.location ? window.location.origin : ''),
 	}
 }
 

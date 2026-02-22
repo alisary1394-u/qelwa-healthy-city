@@ -52,18 +52,24 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-// فحص إعدادات البريد (للتشخيص) — يعيد سبب الفشل إن وُجد
+// فحص إعدادات البريد (للتشخيص)
 app.get('/api/email-check', async (req, res) => {
   try {
-    const { isEmailConfigured, verifySmtpConnection } = await import('./email.js');
-    const configured = isEmailConfigured();
+    const emailMod = await import('./email.js');
+    const configured = emailMod.isEmailConfigured();
     if (!configured) {
-      return res.json({ configured: false, ok: false, error: 'SMTP غير مضبوط. أضف SMTP_HOST و SMTP_USER و SMTP_PASS في Railway → Variables.' });
+      return res.json({
+        configured: false,
+        ok: false,
+        method: null,
+        error: 'أضف إما RESEND_API_KEY (موصى به على Railway) أو SMTP_HOST و SMTP_USER و SMTP_PASS في Variables.',
+      });
     }
-    const result = await verifySmtpConnection();
-    res.json({ configured: true, ok: result.ok, error: result.error || null });
+    const result = await emailMod.verifySmtpConnection();
+    const method = process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim() ? 'resend' : 'smtp';
+    res.json({ configured: true, ok: result.ok, method, error: result.error || null });
   } catch (e) {
-    res.json({ configured: true, ok: false, error: e.message || String(e) });
+    res.json({ configured: true, ok: false, method: 'smtp', error: e.message || String(e) });
   }
 });
 

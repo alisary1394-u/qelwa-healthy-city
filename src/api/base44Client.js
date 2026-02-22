@@ -8,7 +8,7 @@ const { appId, token, functionsVersion, appBaseUrl, useLocalBackend, useSupabase
 
 let base44;
 
-// الربط بالسيرفر: عند وجود apiUrl (أو نفس النطاق في الإنتاج) نستخدم سيرفر التطبيق (apiBackend)
+// دوال الخلفية (Backend Functions): عند وجود apiUrl نستخدم سيرفر التطبيق (apiBackend) — sendVerificationCode, verifyCode, createFirstGovernor...
 if (apiUrl) {
   base44 = apiBackend;
 } else if (useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey) {
@@ -30,6 +30,11 @@ if (apiUrl) {
     requiresAuth: false,
     appBaseUrl: hasValidBase ? appBaseUrl : undefined
   });
+}
+
+/** تحقق أن دوال الخلفية (سيرفر التطبيق) مفعلة — sendVerificationCode, verifyCode, createFirstGovernor */
+export function isBackendFunctionsEnabled() {
+  return base44 === apiBackend;
 }
 
 export { base44 };
