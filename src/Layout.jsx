@@ -15,11 +15,13 @@ import { LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle } from "luc
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBase44Configured, appParams } from '@/lib/app-params';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
   const { navItems, isGovernor } = usePermissions();
+  const { logout } = useAuth();
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -119,7 +121,7 @@ export default function Layout({ children }) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="flex items-center gap-2 text-red-600"
-                      onClick={() => base44.auth.logout()}
+                      onClick={() => logout(true)}
                     >
                       <LogOut className="w-4 h-4" />
                       <span>تسجيل الخروج</span>
