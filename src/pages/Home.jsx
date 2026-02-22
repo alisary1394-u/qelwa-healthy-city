@@ -352,39 +352,6 @@ export default function Home() {
                 </p>
               </CardHeader>
               <CardContent className="p-6">
-                {(appParams.useLocalBackend || appParams.useSupabaseBackend || appParams.apiUrl) && typeof base44.seedCommitteesTeamInitiativesTasksIfNeeded === 'function' && (
-                  <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm font-semibold text-amber-900 mb-2">
-                      {appParams.apiUrl ? 'بيانات التجربة (سيرفر التطبيق)' : appParams.useSupabaseBackend ? 'بيانات التجربة (قاعدة Supabase)' : 'بيانات التجربة (الخلفية المحلية)'}
-                    </p>
-                    <p className="text-xs text-amber-800 mb-3">إذا لم تظهر اللجان أو الفريق أو المبادرات أو المهام أو الميزانيات، اضغط أحد الأزرار أدناه ثم أعد تحميل الصفحة.</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="border-amber-500 text-amber-700 hover:bg-amber-100"
-                        onClick={async () => {
-                          await Promise.resolve(base44.seedCommitteesTeamInitiativesTasksIfNeeded?.());
-                          window.location.reload();
-                        }}
-                      >
-                        تحميل/تحديث بيانات التجربة
-                      </Button>
-                      {typeof base44.clearLocalDataAndReseed === 'function' && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="border-red-300 text-red-700 hover:bg-red-50"
-                          onClick={() => base44.clearLocalDataAndReseed()}
-                        >
-                          مسح كل البيانات وإعادة تحميل
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
                 {step === 1 ? (
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
