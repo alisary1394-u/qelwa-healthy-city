@@ -55,8 +55,8 @@ const DEPARTMENT_OPTIONS = [
 
 const OTHER_DEPARTMENT_VALUE = '__other__';
 
-export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], disallowGovernorRole = false }) {
-  const roles = disallowGovernorRole ? ALL_ROLES.filter((r) => r.value !== 'governor') : ALL_ROLES;
+export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], restrictedRoles = [] }) {
+  const roles = (restrictedRoles && restrictedRoles.length) ? ALL_ROLES.filter((r) => !restrictedRoles.includes(r.value)) : ALL_ROLES;
   const [formData, setFormData] = useState({
     full_name: '',
     national_id: '',

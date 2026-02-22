@@ -101,11 +101,15 @@ export default function TeamManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
-  const { permissions } = usePermissions();
+  const { permissions, role: userRole } = usePermissions();
   const canAdd = permissions.canAddTeamMember !== false;
   const canEdit = permissions.canEditTeamMember === true;
   const canDelete = permissions.canDeleteTeamMember === true;
   const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
+  const canAddOrEditCoordinator = permissions.canAddOrEditCoordinator === true;
+  const isGovernor = userRole === 'governor' || userRole === 'admin';
+  const canEditMember = (member) => canEdit && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
+  const canDeleteMember = (member) => canDelete && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
 
   if (!permissions.canSeeTeam) {
     return (
@@ -357,8 +361,8 @@ export default function TeamManagement() {
                 member={member}
                 onEdit={handleEdit}
                 onDelete={(m) => setDeleteDialog({ open: true, member: m })}
-                canEdit={canEdit}
-                canDelete={canDelete}
+                canEdit={canEditMember(member)}
+                canDelete={canDeleteMember(member)}
               />
             ))}
           </div>
@@ -375,7 +379,7 @@ export default function TeamManagement() {
         committees={committees}
         selectedCommitteeId={activeCommittee}
         existingDepartments={[...new Set((members || []).map(m => m.department).filter(Boolean))]}
-        disallowGovernorRole={!canAddOrEditGovernor}
+        restrictedRoles={[!(canAddOrEditGovernor) && 'governor', !(canAddOrEditCoordinator) && 'coordinator'].filter(Boolean)}
       />
 
       {/* Delete Confirmation */}
