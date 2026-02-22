@@ -159,32 +159,39 @@ export default function Reports() {
     link.click();
   };
 
-  // Export to PDF
+  // Export to PDF (قد يستغرق 15–60 ثانية لتقرير منظمة الصحة حسب حجم المحتوى وجهازك)
   const exportToPDF = async (elementId = 'reports-content', filename = 'تقرير-التحليلات.pdf') => {
     setExportingPDF(true);
-    const element = document.getElementById(elementId);
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/png');
-    
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+    try {
+      const element = document.getElementById(elementId);
+      if (!element) {
+        setExportingPDF(false);
+        return;
+      }
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
 
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(filename);
+    } finally {
+      setExportingPDF(false);
     }
-    
-    pdf.save(filename);
-    setExportingPDF(false);
   };
 
   return (
@@ -379,14 +386,17 @@ export default function Reports() {
                   <Download className="w-4 h-4 ml-2" />
                   تصدير CSV
                 </Button>
-                <Button 
-                  onClick={() => exportToPDF('who-report', 'تقرير-معايير-منظمة-الصحة-العالمية.pdf')}
-                  disabled={exportingPDF}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Award className="w-4 h-4 ml-2" />
-                  {exportingPDF ? 'جاري التصدير...' : 'تقرير منظمة الصحة PDF'}
-                </Button>
+                <div>
+                  <Button 
+                    onClick={() => exportToPDF('who-report', 'تقرير-معايير-منظمة-الصحة-العالمية.pdf')}
+                    disabled={exportingPDF}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Award className="w-4 h-4 ml-2" />
+                    {exportingPDF ? 'جاري التصدير...' : 'تقرير منظمة الصحة PDF'}
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-1">قد يستغرق 15–60 ثانية حسب حجم التقرير</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
