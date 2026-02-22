@@ -352,11 +352,6 @@ export default function Home() {
                 </p>
               </CardHeader>
               <CardContent className="p-6">
-                {typeof base44.getDefaultLocalCredentials === 'function' && (
-                  <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800 text-center">
-                    <strong>وضع محلي:</strong> يمكنك الدخول برقم الهوية <strong>1</strong> وكلمة المرور <strong>123456</strong>
-                  </div>
-                )}
                 {(appParams.useLocalBackend || appParams.useSupabaseBackend || appParams.apiUrl) && typeof base44.seedCommitteesTeamInitiativesTasksIfNeeded === 'function' && (
                   <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-sm font-semibold text-amber-900 mb-2">
