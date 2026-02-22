@@ -67,7 +67,17 @@ export async function verifySmtpConnection() {
   }
 }
 
+function isValidEmail(str) {
+  if (!str || typeof str !== 'string') return false;
+  const t = str.trim();
+  return t.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
+
 async function sendViaResend(to, from, subject, text, html) {
+  const toClean = typeof to === 'string' ? to.trim() : '';
+  if (!isValidEmail(toClean)) {
+    throw new Error('عنوان البريد المرسل إليه غير صالح. يجب أن يكون بصيغة مثال@نطاق.كوم');
+  }
   const key = process.env.RESEND_API_KEY.trim();
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -77,7 +87,7 @@ async function sendViaResend(to, from, subject, text, html) {
     },
     body: JSON.stringify({
       from: `"المدينة الصحية - قلوة" <${from}>`,
-      to: [to],
+      to: [toClean],
       subject,
       text,
       html,

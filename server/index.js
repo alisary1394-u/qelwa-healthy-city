@@ -234,11 +234,21 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+function isValidEmail(str) {
+  if (!str || typeof str !== 'string') return false;
+  const trimmed = str.trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+}
+
 app.post('/api/functions/sendVerificationCode', async (req, res) => {
-  const email = req.body?.email;
+  let email = req.body?.email;
   if (!email) return res.status(400).json({ success: false, message: 'البريد مطلوب' });
+  email = String(email).trim().toLowerCase();
+  if (!isValidEmail(email)) {
+    return res.json({ success: false, message: 'عنوان البريد غير صالح. يرجى تصحيح البريد في بيانات العضو (يجب أن يكون بصيغة مثال@نطاق.كوم).' });
+  }
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  verificationCodes.set(email.toLowerCase(), { code, expires_at: Date.now() + 5 * 60 * 1000 });
+  verificationCodes.set(email, { code, expires_at: Date.now() + 5 * 60 * 1000 });
 
   const { isEmailConfigured, sendVerificationEmail } = await import('./email.js');
   if (isEmailConfigured()) {
