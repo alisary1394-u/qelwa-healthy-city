@@ -96,7 +96,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
     }
     const user = {
-      email: member.email || 'admin@local',
+      email: member.email || 'admin@qeelwah.com',
       full_name: member.full_name || 'المشرف',
       user_role: member.role === 'governor' ? 'admin' : 'user',
     };
@@ -245,7 +245,7 @@ app.post('/api/functions/sendVerificationCode', async (req, res) => {
   if (!email) return res.status(400).json({ success: false, message: 'البريد مطلوب' });
   email = String(email).trim().toLowerCase();
   if (!isValidEmail(email)) {
-    return res.json({ success: false, message: 'عنوان البريد غير صالح. يرجى تصحيح البريد في بيانات العضو (يجب أن يكون بصيغة مثال@نطاق.كوم).' });
+    return res.json({ success: false, message: 'عنوان البريد غير صالح. يرجى تصحيح البريد في بيانات العضو (يجب أن يكون بصيغة مثال@نطاق.كوم). لا يتم حذف أي بيانات.' });
   }
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   verificationCodes.set(email, { code, expires_at: Date.now() + 5 * 60 * 1000 });

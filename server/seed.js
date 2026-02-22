@@ -35,7 +35,7 @@ export async function runSeed() {
       full_name: 'المشرف',
       national_id: '1',
       password: PASS,
-      email: 'admin@local',
+      email: 'admin@qeelwah.com',
       role: 'governor',
       status: 'active',
       join_date: baseDate,

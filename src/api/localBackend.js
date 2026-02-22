@@ -213,7 +213,7 @@ const DEFAULT_PASSWORD = '123456';
 function buildUserFromMember(member) {
   if (!member) return null;
   return {
-    email: member.email || 'admin@local',
+    email: member.email || 'admin@qeelwah.com',
     full_name: member.full_name || 'المشرف',
     user_role: member.role === 'governor' ? 'admin' : 'user',
   };
@@ -231,7 +231,7 @@ export function seedDefaultGovernorIfNeeded() {
       full_name: 'المشرف',
       national_id: DEFAULT_NATIONAL_ID,
       password: DEFAULT_PASSWORD,
-      email: 'admin@local',
+      email: 'admin@qeelwah.com',
       role: 'governor',
       status: 'active',
     });
