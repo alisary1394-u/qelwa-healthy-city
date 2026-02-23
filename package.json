@@ -17,7 +17,8 @@
     "server:dev": "node --watch server/index.js",
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
-    "cap:android": "npm run cap:sync && npx cap open android"
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "permissions-xlsx": "node scripts/generate-permissions-xlsx.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.18",
@@ -92,6 +93,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "xlsx": "^0.18.5",
     "@capacitor/cli": "^6.0.0",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",

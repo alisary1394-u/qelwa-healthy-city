@@ -20,13 +20,13 @@ export const ROLE_LABELS = {
 };
 
 /**
- * مصفوفة الصلاحيات لكل دور.
- * يمكن استخدامها في واجهة "مراجعة الصلاحيات" أو التوثيق.
+ * مصفوفة الصلاحيات لكل دور — مطابقة لجدول "مراجعة الصلاحيات حسب المنصب".
+ * الأعمدة العشرة: إعدادات المدينة، إدارة الفريق، إدارة المعايير، إدارة الميزانية، اعتماد معاملات،
+ * إنشاء معاملات، عرض المالية، إدارة اللجان، إدارة المبادرات، التحقق من الاستبيانات.
  */
 export const PERMISSIONS_BY_ROLE = {
   governor: {
     label: ROLE_LABELS.governor,
-    // إدارة النظام والمدينة
     canManageSettings: true,
     canManageTeam: true,
     canAddTeamMember: true,
@@ -35,22 +35,18 @@ export const PERMISSIONS_BY_ROLE = {
     canAddOrEditGovernor: true,
     canAddOrEditCoordinator: true,
     canManageCommittees: true,
-    // المعايير والأدلة
     canManageStandards: true,
     canApproveEvidence: true,
-    // الميزانية والمالية
     canManageBudget: true,
     canApproveTransactions: true,
     canCreateTransactions: true,
     canViewFinancials: true,
-    // المحتوى والتقارير
     canManageInitiatives: true,
     canVerifySurvey: true,
     canViewReports: true,
     canManageTasks: true,
     canViewFiles: true,
     canUploadFiles: true,
-    // القائمة
     canSeeDashboard: true,
     canSeeReports: true,
     canSeeStandards: true,
