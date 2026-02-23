@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import MemberCard from "@/components/team/MemberCard";
 import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
-import { PERMISSIONS_BY_ROLE, ROLE_LABELS } from '@/lib/permissions';
+import { PERMISSIONS_BY_ROLE } from '@/lib/permissions';
 
 const roleLabels = {
   all: "الجميع",
