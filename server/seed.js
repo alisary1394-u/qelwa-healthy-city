@@ -81,6 +81,7 @@ export async function runSeed() {
   const used = membersNow.map((m) => m.national_id);
   while (used.includes(String(nextId))) nextId++;
 
+  // إضافة منسق افتراضي فقط عند عدم وجود أي منسق — لا نعدّل ولا نستبدل أي عضو موجود أبداً
   if (!membersNow.some((m) => m.role === 'coordinator')) {
     db.create('team_member', null, {
       full_name: 'منسق المدينة الصحية',

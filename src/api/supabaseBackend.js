@@ -318,8 +318,9 @@ export async function seedCommitteesTeamInitiativesTasksIfNeeded() {
 
 export async function clearLocalDataAndReseed() {
   const sb = getSupabase();
-  const tables = ENTITY_NAMES.map(entityToTable);
-  for (const table of tables) {
+  // لا نمسح أعضاء الفريق أبداً — حماية لبيانات الأعضاء التي عدّلها المستخدم
+  const tablesToClear = ENTITY_NAMES.filter((n) => n !== 'TeamMember').map(entityToTable);
+  for (const table of tablesToClear) {
     try {
       await sb.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
     } catch (e) {

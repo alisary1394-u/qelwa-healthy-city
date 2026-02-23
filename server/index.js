@@ -217,16 +217,19 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
   }
 });
 
-// بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط — ولا نمسح team_member أبداً حتى لا تُستبدل بيانات الأعضاء التي عدّلها المستخدم (بريد، اسم، إلخ).
+// بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط.
+// لا نمسح team_member أبداً — حماية نهائية لبيانات الأعضاء (بريد، هاتف، إلخ) حتى مع الاستخدام الفعلي.
 const TABLES_CLEAR_ON_RESEED = [
   'committee', 'axis', 'standard', 'initiative', 'initiative_kpi',
   'budget', 'budget_allocation', 'transaction'
 ];
+const NEVER_CLEAR_TABLES = ['team_member'];
+
 app.post('/api/seed', async (req, res) => {
   try {
     const db = await getDb();
     if (req.query.clear === '1') {
-      TABLES_CLEAR_ON_RESEED.forEach((t) => db.clearTable(t));
+      TABLES_CLEAR_ON_RESEED.filter((t) => !NEVER_CLEAR_TABLES.includes(t)).forEach((t) => db.clearTable(t));
     }
     const { runSeed } = await import('./seed.js');
     await runSeed();

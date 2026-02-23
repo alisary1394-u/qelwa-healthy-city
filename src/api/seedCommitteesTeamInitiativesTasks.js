@@ -66,6 +66,7 @@ export async function seedTeamMembers(ctx) {
   const hasRoleInCommitteeAfterAdd = (role, committeeId, added) =>
     hasRoleInCommittee(role, committeeId) || added.some((m) => m.role === role && m.committee_id === committeeId);
 
+  // إضافة منسق افتراضي فقط عند عدم وجود أي منسق — لا نعدّل ولا نستبدل أي عضو موجود أبداً
   if (!members.some((m) => m.role === 'coordinator')) {
     toCreate.push({
       full_name: 'منسق المدينة الصحية',
