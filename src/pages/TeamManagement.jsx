@@ -56,6 +56,10 @@ const PERMISSION_SUMMARY_KEYS = [
   { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات' },
 ];
 
+function isBlankValue(value) {
+  return value == null || (typeof value === 'string' && value.trim() === '');
+}
+
 export default function TeamManagement() {
   const [activeRole, setActiveRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,6 +170,14 @@ export default function TeamManagement() {
     if (editingMember && (payload.password === '' || payload.password == null)) {
       delete payload.password;
     }
+    if (editingMember) {
+      // حماية بيانات التواصل: عند تعديل المنصب/الصلاحيات لا نسمح بمسح البريد أو الهاتف بقيمة فارغة بالخطأ.
+      ['email', 'phone'].forEach((field) => {
+        if (isBlankValue(payload[field]) && !isBlankValue(editingMember?.[field])) {
+          delete payload[field];
+        }
+      });
+    }
     try {
       if (editingMember) {
         await updateMutation.mutateAsync({ id: editingMember.id, data: payload });
@@ -186,9 +198,15 @@ export default function TeamManagement() {
     }
   };
 
-  const handleEdit = (member) => {
+  const handleEdit = async (member) => {
     setEditingMember(member);
     setFormOpen(true);
+    try {
+      const fullMember = await api.entities.TeamMember.get(member.id);
+      if (fullMember) setEditingMember(fullMember);
+    } catch (_) {
+      // نتابع ببيانات القائمة عند تعذر جلب التفاصيل.
+    }
   };
 
   const handleDelete = async () => {
