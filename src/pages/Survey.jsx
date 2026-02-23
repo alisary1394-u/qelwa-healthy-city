@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,26 +136,26 @@ export default function Survey() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: surveys = [], isLoading } = useQuery({
     queryKey: ['surveys'],
-    queryFn: () => base44.entities.FamilySurvey.list('-created_date')
+    queryFn: () => api.entities.FamilySurvey.list('-created_date')
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.FamilySurvey.create(data),
+    mutationFn: (data) => api.entities.FamilySurvey.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['surveys'] })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.FamilySurvey.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.FamilySurvey.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['surveys'] })
   });
 

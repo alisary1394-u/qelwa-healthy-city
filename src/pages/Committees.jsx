@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,31 +25,31 @@ export default function Committees() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: committees = [], isLoading } = useQuery({
     queryKey: ['committees'],
-    queryFn: () => base44.entities.Committee.list()
+    queryFn: () => api.entities.Committee.list()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Committee.create(data),
+    mutationFn: (data) => api.entities.Committee.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Committee.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Committee.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Committee.delete(id),
+    mutationFn: (id) => api.entities.Committee.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 

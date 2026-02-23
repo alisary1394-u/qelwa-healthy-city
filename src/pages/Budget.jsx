@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,37 +80,37 @@ export default function Budget() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
-    queryFn: () => base44.entities.Transaction.list('-date')
+    queryFn: () => api.entities.Transaction.list('-date')
   });
 
   const { data: budgets = [] } = useQuery({
     queryKey: ['budgets'],
-    queryFn: () => base44.entities.Budget.list('-created_date')
+    queryFn: () => api.entities.Budget.list('-created_date')
   });
 
   const { data: allocations = [] } = useQuery({
     queryKey: ['allocations'],
-    queryFn: () => base44.entities.BudgetAllocation.list()
+    queryFn: () => api.entities.BudgetAllocation.list()
   });
 
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
-    queryFn: () => base44.entities.Committee.list()
+    queryFn: () => api.entities.Committee.list()
   });
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => base44.entities.Axis.list()
+    queryFn: () => api.entities.Axis.list()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { permissions, role, currentMember } = usePermissions();
@@ -122,7 +122,7 @@ export default function Budget() {
   const showBudgetManagement = canManageBudget && memberRole !== 'accountant' && memberRole !== 'financial_officer';
 
   const createTransactionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create(data),
+    mutationFn: (data) => api.entities.Transaction.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       setTransactionFormOpen(false);
@@ -131,7 +131,7 @@ export default function Budget() {
   });
 
   const createBudgetMutation = useMutation({
-    mutationFn: (data) => base44.entities.Budget.create(data),
+    mutationFn: (data) => api.entities.Budget.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setBudgetFormOpen(false);
@@ -141,7 +141,7 @@ export default function Budget() {
   });
 
   const updateBudgetMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Budget.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Budget.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setBudgetFormOpen(false);
@@ -151,7 +151,7 @@ export default function Budget() {
   });
 
   const createAllocationMutation = useMutation({
-    mutationFn: (data) => base44.entities.BudgetAllocation.create(data),
+    mutationFn: (data) => api.entities.BudgetAllocation.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allocations'] });
       setAllocationFormOpen(false);
@@ -160,7 +160,7 @@ export default function Budget() {
   });
 
   const updateTransactionMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Transaction.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
   });
 
@@ -335,7 +335,7 @@ export default function Budget() {
     if (!file) return;
 
     setUploadingFile(true);
-    const result = await base44.integrations.Core.UploadFile({ file });
+    const result = await api.integrations.Core.UploadFile({ file });
     setTransactionForm({ ...transactionForm, attachment_url: result.file_url });
     setUploadingFile(false);
   };

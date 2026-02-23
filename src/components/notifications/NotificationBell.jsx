@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,18 +17,18 @@ export default function NotificationBell({ userEmail }) {
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', userEmail],
-    queryFn: () => base44.entities.Notification.filter({ user_email: userEmail }, '-created_date', 50),
+    queryFn: () => api.entities.Notification.filter({ user_email: userEmail }, '-created_date', 50),
     enabled: !!userEmail,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   const markAsReadMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notification.update(id, { is_read: true }),
+    mutationFn: (id) => api.entities.Notification.update(id, { is_read: true }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', userEmail] })
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notification.delete(id),
+    mutationFn: (id) => api.entities.Notification.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', userEmail] })
   });
 

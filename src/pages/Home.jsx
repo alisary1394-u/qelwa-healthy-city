@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,18 +32,18 @@ export default function Home() {
 
   const { data: isAuth } = useQuery({
     queryKey: ['isAuth'],
-    queryFn: () => base44.auth.isAuthenticated()
+    queryFn: () => api.auth.isAuthenticated()
   });
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: () => api.auth.me(),
     enabled: isAuth === true
   });
 
   const { data: settings = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list()
   });
 
   const currentSetting = settings[0] || {};
@@ -64,7 +64,7 @@ export default function Home() {
 
     try {
       // Get all team members
-      const members = await base44.entities.TeamMember.list();
+      const members = await api.entities.TeamMember.list();
       
       // Find member with matching national ID
       const member = members.find(m => m.national_id === nationalId);
@@ -107,7 +107,7 @@ export default function Home() {
     setDisplayedVerificationCode('');
     setError('');
     try {
-      const result = await base44.functions.sendVerificationCode({ email });
+      const result = await api.functions.sendVerificationCode({ email });
       if (!result.success) {
         setError(result.message || 'فشل إرسال رمز التحقق');
         return false;
@@ -125,20 +125,20 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const result = await base44.functions.verifyCode({ 
+      const result = await api.functions.verifyCode({ 
         email: memberEmail, 
         code: verificationCode 
       });
 
       if (result.success) {
-        const members = await base44.entities.TeamMember.list();
+        const members = await api.entities.TeamMember.list();
         const member = members.find(m => m.national_id === nationalId);
 
         if (member && member.email) {
           const navItems = getNavItemsForRole(member.role || 'volunteer');
           const firstPage = navItems[0]?.name || 'Dashboard';
-          if (typeof base44.auth.setUser === 'function') {
-            base44.auth.setUser({
+          if (typeof api.auth.setUser === 'function') {
+            api.auth.setUser({
               email: member.email,
               full_name: member.full_name,
               user_role: member.role === 'governor' ? 'admin' : 'user',
@@ -146,7 +146,7 @@ export default function Home() {
             });
             window.location.href = createPageUrl(firstPage);
           } else {
-            base44.auth.redirectToLogin(createPageUrl(firstPage));
+            api.auth.redirectToLogin(createPageUrl(firstPage));
           }
         } else {
           setError('المستخدم غير مسجل. يرجى التواصل مع الإدارة.');
@@ -193,7 +193,7 @@ export default function Home() {
     };
 
     try {
-      const res = await base44.functions.invoke('createFirstGovernor', payload);
+      const res = await api.functions.invoke('createFirstGovernor', payload);
       const result = res?.data ?? res;
       if (result?.success) {
         onSuccess();
@@ -203,11 +203,11 @@ export default function Home() {
       setError(result?.message || 'فشل التسجيل');
     } catch (err) {
       if (typeof console !== 'undefined' && console.error) console.error('createFirstGovernor error:', err);
-      // بديل: إنشاء العضو مباشرة إن لم يكن هناك أعضاء (قد يعمل حسب صلاحيات Base44)
+      // بديل: إنشاء العضو مباشرة إن لم يكن هناك أعضاء
       try {
-        const members = await base44.entities.TeamMember.list();
+        const members = await api.entities.TeamMember.list();
         if (members.length === 0) {
-          await base44.entities.TeamMember.create({
+          await api.entities.TeamMember.create({
             ...payload,
             role: 'governor',
             status: 'active',
@@ -220,9 +220,9 @@ export default function Home() {
       const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
       const status = err?.response?.status;
       const detail = status === 404
-        ? 'الدالة غير منشورة على هذا التطبيق. انشر الدوال: من مجلد المشروع نفّذ run-base44-deploy.bat أو: npx base44@latest functions deploy --yes'
+        ? 'الدالة غير منشورة على هذا التطبيق. انشر الدوال من مجلد المشروع ثم أعد المحاولة.'
         : status === 403
-          ? 'الطلب مرفوض. جرّب الطريقة اليدوية أدناه (إضافة سجل من لوحة Base44).'
+          ? 'الطلب مرفوض. جرّب الطريقة اليدوية أدناه (إضافة سجل من لوحة الإدارة).'
           : msg || 'فشل التسجيل. جرّب الطريقة اليدوية أدناه.';
       setError(detail);
     }
@@ -438,9 +438,9 @@ export default function Home() {
                             تسجيلني كمشرف
                           </Button>
                           <div className="mt-3 pt-3 border-t border-amber-200 text-xs text-amber-900">
-                            <p className="font-semibold mb-1">إن لم ينجح: أضف نفسك من لوحة Base44</p>
+                            <p className="font-semibold mb-1">إن لم ينجح: أضف نفسك من لوحة الإدارة</p>
                             <ol className="list-decimal list-inside space-y-0.5 pr-1">
-                              <li>ادخل إلى <a href="https://base44.app" target="_blank" rel="noreferrer" className="underline">base44.app</a> وافتح تطبيقك.</li>
+                              <li>ادخل إلى لوحة الإدارة وافتح تطبيقك.</li>
                               <li>من القائمة: Data (البيانات) → TeamMember.</li>
                               <li>Add row / إضافة سطر.</li>
                               <li>املأ: full_name، national_id، email، password، role = governor، status = active.</li>

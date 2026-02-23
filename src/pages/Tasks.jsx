@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,31 +23,31 @@ export default function Tasks() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date')
+    queryFn: () => api.entities.Task.list('-created_date')
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
+    mutationFn: (data) => api.entities.Task.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Task.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Task.delete(id),
+    mutationFn: (id) => api.entities.Task.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
   });
 
@@ -92,7 +92,7 @@ export default function Tasks() {
       // Create notification for assigned user
       const assignedMember = members.find(m => m.id === data.assigned_to);
       if (assignedMember?.email) {
-        await base44.entities.Notification.create({
+        await api.entities.Notification.create({
           user_email: assignedMember.email,
           title: 'مهمة جديدة',
           message: `تم تعيين مهمة جديدة لك: ${data.title}`,
@@ -182,7 +182,7 @@ export default function Tasks() {
             />
           </div>
           <a 
-            href={base44.agents?.getWhatsAppConnectURL?.('tasks_assistant')} 
+            href={api.agents?.getWhatsAppConnectURL?.('tasks_assistant')} 
             target="_blank"
             rel="noopener noreferrer"
           >

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,36 +83,36 @@ export default function Initiatives() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: initiatives = [], isLoading } = useQuery({
     queryKey: ['initiatives'],
-    queryFn: () => base44.entities.Initiative.list('-created_date')
+    queryFn: () => api.entities.Initiative.list('-created_date')
   });
 
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
-    queryFn: () => base44.entities.Committee.list()
+    queryFn: () => api.entities.Committee.list()
   });
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => base44.entities.Axis.list()
+    queryFn: () => api.entities.Axis.list()
   });
 
   const { data: standards = [] } = useQuery({
     queryKey: ['standards'],
-    queryFn: () => base44.entities.Standard.list()
+    queryFn: () => api.entities.Standard.list()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Initiative.create(data),
+    mutationFn: (data) => api.entities.Initiative.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['initiatives'] });
       setFormOpen(false);
@@ -121,7 +121,7 @@ export default function Initiatives() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Initiative.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Initiative.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['initiatives'] });
       setViewOpen(false);
@@ -207,7 +207,7 @@ export default function Initiatives() {
                        percentage >= 75 ? 'on_track' :
                        percentage >= 50 ? 'at_risk' : 'behind';
         
-        await base44.entities.InitiativeKPI.create({
+        await api.entities.InitiativeKPI.create({
           ...kpi,
           initiative_id: newInitiative.id,
           initiative_title: formData.title,

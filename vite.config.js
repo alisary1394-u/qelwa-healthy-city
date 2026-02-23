@@ -7,11 +7,11 @@ import { createRequire } from 'module'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
 
-// إضافة Base44 إن وُجد (اختياري للتشغيل المحلي)
-let base44Plugin = []
+// إضافة إضافية إن وُجدت (اختياري للتشغيل المحلي)
+let extraPlugin = []
 try {
-  const base44 = require('@base44/vite-plugin')
-  base44Plugin = [base44({
+  const pkg = require('@base44/vite-plugin')
+  extraPlugin = [pkg({
     legacySDKImports: process.env.BASE44_LEGACY_SDK_IMPORTS === 'true',
     hmrNotifier: true,
     navigationNotifier: true,
@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    ...base44Plugin,
+    ...extraPlugin,
     react(),
   ]
 })

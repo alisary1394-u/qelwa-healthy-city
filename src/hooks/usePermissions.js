@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { getPermissions, getNavItemsForRole } from '@/lib/permissions';
 import {
   LayoutDashboard,
@@ -28,18 +28,18 @@ const ICON_MAP = {
 
 /**
  * خطاف صلاحيات المستخدم الحالي.
- * يعتمد على currentUser (Base44) و currentMember (TeamMember المطابق للبريد).
+ * يعتمد على currentUser و currentMember (TeamMember المطابق للبريد).
  * @returns {{ role: string, permissions: Object, navItems: Array, isGovernor: boolean, currentMember: Object|null }}
  */
 export function usePermissions() {
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: () => api.auth.me(),
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list(),
+    queryFn: () => api.entities.TeamMember.list(),
   });
 
   const currentMember = (currentUser?.national_id != null

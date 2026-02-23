@@ -379,7 +379,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
 };
 
-// admin (Base44) يُعامل كـ governor
+// admin يُعامل كـ governor
 PERMISSIONS_BY_ROLE.admin = PERMISSIONS_BY_ROLE.governor;
 
 /**

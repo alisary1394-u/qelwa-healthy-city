@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI } from '@/api/standardsFromPdf';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -55,51 +55,51 @@ export default function Standards() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: axes = [], isLoading: loadingAxes } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => base44.entities.Axis.list('order')
+    queryFn: () => api.entities.Axis.list('order')
   });
 
   const { data: standards = [], isLoading: loadingStandards } = useQuery({
     queryKey: ['standards'],
-    queryFn: () => base44.entities.Standard.list('code')
+    queryFn: () => api.entities.Standard.list('code')
   });
 
   const { data: evidence = [] } = useQuery({
     queryKey: ['evidence'],
-    queryFn: () => base44.entities.Evidence.list('-created_date')
+    queryFn: () => api.entities.Evidence.list('-created_date')
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const createAxisMutation = useMutation({
-    mutationFn: (data) => base44.entities.Axis.create(data),
+    mutationFn: (data) => api.entities.Axis.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['axes'] })
   });
 
   const createStandardMutation = useMutation({
-    mutationFn: (data) => base44.entities.Standard.create(data),
+    mutationFn: (data) => api.entities.Standard.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
   const updateStandardMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Standard.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Standard.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
   const createEvidenceMutation = useMutation({
-    mutationFn: (data) => base44.entities.Evidence.create(data),
+    mutationFn: (data) => api.entities.Evidence.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
   });
 
   const updateEvidenceMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Evidence.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Evidence.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
   });
 
@@ -159,7 +159,7 @@ export default function Standards() {
     if (!evidenceForm.file || !selectedStandard) return;
 
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file: evidenceForm.file });
+    const { file_url } = await api.integrations.Core.UploadFile({ file: evidenceForm.file });
     
     const fileType = evidenceForm.file.type.startsWith('image/') ? 'image' : 'document';
     

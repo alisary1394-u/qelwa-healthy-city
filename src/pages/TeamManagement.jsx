@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,31 +73,31 @@ export default function TeamManagement() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
-    queryFn: () => base44.entities.Committee.list()
+    queryFn: () => api.entities.Committee.list()
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TeamMember.create(data),
+    mutationFn: (data) => api.entities.TeamMember.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.TeamMember.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.TeamMember.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.TeamMember.delete(id),
+    mutationFn: (id) => api.entities.TeamMember.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
@@ -179,7 +179,7 @@ export default function TeamManagement() {
     } catch (err) {
       const is404 = err?.response?.status === 404 || err?.status === 404 || (err?.message && err.message.includes('404'));
       const message = is404
-        ? 'خطأ 404: تأكد من ملف .env.local (VITE_BASE44_APP_ID و VITE_BASE44_APP_BASE_URL من لوحة Base44)، ثم نفّذ: npx base44 entities push'
+        ? 'خطأ 404: تأكد من ملف .env.local (معرف التطبيق ورابط الخلفية من لوحة الإدارة)، ثم نفّذ أمر رفع الكيانات'
         : (err?.response?.data?.message || err?.message || err?.data?.message || 'فشل في الحفظ.');
       toast({ title: 'خطأ', description: message, variant: 'destructive' });
       throw err;

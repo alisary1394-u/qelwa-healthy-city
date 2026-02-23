@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +30,11 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
   const { data: kpis = [] } = useQuery({
     queryKey: ['kpis', initiativeId],
-    queryFn: () => base44.entities.InitiativeKPI.filter({ initiative_id: initiativeId })
+    queryFn: () => api.entities.InitiativeKPI.filter({ initiative_id: initiativeId })
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.InitiativeKPI.create(data),
+    mutationFn: (data) => api.entities.InitiativeKPI.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kpis', initiativeId] });
       setFormOpen(false);
@@ -43,7 +43,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.InitiativeKPI.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.InitiativeKPI.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['kpis', initiativeId] })
   });
 

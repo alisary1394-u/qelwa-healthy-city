@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,42 +26,42 @@ export default function Dashboard() {
   const { permissions } = usePermissions();
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => base44.entities.Axis.list('order')
+    queryFn: () => api.entities.Axis.list('order')
   });
 
   const { data: standards = [] } = useQuery({
     queryKey: ['standards'],
-    queryFn: () => base44.entities.Standard.list()
+    queryFn: () => api.entities.Standard.list()
   });
 
   const { data: evidence = [] } = useQuery({
     queryKey: ['evidence'],
-    queryFn: () => base44.entities.Evidence.list()
+    queryFn: () => api.entities.Evidence.list()
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list()
+    queryFn: () => api.entities.Task.list()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: surveys = [] } = useQuery({
     queryKey: ['surveys'],
-    queryFn: () => base44.entities.FamilySurvey.list()
+    queryFn: () => api.entities.FamilySurvey.list()
   });
 
   const { data: settingsList = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list()
   });
 
   const queryClient = useQueryClient();
@@ -90,11 +90,11 @@ export default function Dashboard() {
   }, [currentSetting]);
 
   const createSettingsMutation = useMutation({
-    mutationFn: (data) => base44.entities.Settings.create(data),
+    mutationFn: (data) => api.entities.Settings.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
   const updateSettingsMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Settings.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
 
@@ -115,7 +115,7 @@ export default function Dashboard() {
     if (!file) return;
     setLogoUploading(true);
     try {
-      const result = await base44.integrations?.Core?.UploadFile?.({ file });
+      const result = await api.integrations?.Core?.UploadFile?.({ file });
       if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
     } catch (err) { console.error(err); }
     setLogoUploading(false);

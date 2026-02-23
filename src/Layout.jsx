@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { isBase44Configured, appParams } from '@/lib/app-params';
+import { isBackendConfigured, appParams } from '@/lib/app-params';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -25,27 +25,27 @@ export default function Layout({ children }) {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: settings = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list()
   });
 
   const currentSetting = settings[0] || {};
 
   const isActive = (pageName) => currentPath === createPageUrl(pageName);
 
-  const base44Ready = appParams.useLocalBackend || appParams.apiUrl || appParams.useSupabaseBackend || isBase44Configured();
+  const backendReady = appParams.useLocalBackend || appParams.apiUrl || appParams.useSupabaseBackend || isBackendConfigured();
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      {!base44Ready && (
+      {!backendReady && (
         <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <span>
-            إعداد Base44 مطلوب: افتح ملف <strong>.env.local</strong> وضع فيه <strong>VITE_BASE44_APP_ID</strong> و <strong>VITE_BASE44_APP_BASE_URL</strong> من لوحة Base44، ثم نفّذ <strong>npx base44 entities push</strong> وأعد تشغيل التطبيق.
+            إعداد النظام مطلوب: افتح ملف <strong>.env.local</strong> وضع فيه <strong>VITE_BASE44_APP_ID</strong> و <strong>VITE_BASE44_APP_BASE_URL</strong> من لوحة الإدارة، ثم نفّذ أمر رفع الكيانات وأعد تشغيل التطبيق.
           </span>
         </div>
       )}

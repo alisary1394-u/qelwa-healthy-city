@@ -69,11 +69,14 @@ export const appParams = {
 /** يعمل التطبيق محلياً دون إنترنت عند true */
 export const useLocalBackend = () => params.useLocalBackend === true;
 
-/** تحقق إذا كانت إعدادات Base44 مضمّنة (ليست القيم البديلة) */
-export function isBase44Configured() {
+/** تحقق إذا كانت إعدادات الخلفية مضمّنة (ليست القيم البديلة) */
+export function isBackendConfigured() {
 	const id = params.appId;
 	const url = params.appBaseUrl;
 	const invalidId = !id || id === 'your_app_id' || id.length < 10;
 	const invalidUrl = !url || url === 'your_backend_url' || !url.startsWith('http');
 	return !invalidId && !invalidUrl;
 }
+
+/** @deprecated استخدم isBackendConfigured */
+export const isBase44Configured = isBackendConfigured;

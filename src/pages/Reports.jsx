@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,47 +20,47 @@ export default function Reports() {
 
   const { data: initiatives = [] } = useQuery({
     queryKey: ['initiatives'],
-    queryFn: () => base44.entities.Initiative.list()
+    queryFn: () => api.entities.Initiative.list()
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list()
+    queryFn: () => api.entities.Task.list()
   });
 
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
-    queryFn: () => base44.entities.Committee.list()
+    queryFn: () => api.entities.Committee.list()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: kpis = [] } = useQuery({
     queryKey: ['kpis'],
-    queryFn: () => base44.entities.InitiativeKPI.list()
+    queryFn: () => api.entities.InitiativeKPI.list()
   });
 
   const { data: standards = [] } = useQuery({
     queryKey: ['standards'],
-    queryFn: () => base44.entities.Standard.list()
+    queryFn: () => api.entities.Standard.list()
   });
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => base44.entities.Axis.list()
+    queryFn: () => api.entities.Axis.list()
   });
 
   const { data: evidence = [] } = useQuery({
     queryKey: ['evidence'],
-    queryFn: () => base44.entities.Evidence.list()
+    queryFn: () => api.entities.Evidence.list()
   });
 
   const { data: settings = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list()
   });
 
   if (!permissions.canSeeReports) {

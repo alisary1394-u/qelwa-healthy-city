@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,12 +15,12 @@ export default function UserSettings() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: preferences = [] } = useQuery({
     queryKey: ['userPreferences', currentUser?.email],
-    queryFn: () => base44.entities.UserPreferences.filter({ user_email: currentUser?.email }),
+    queryFn: () => api.entities.UserPreferences.filter({ user_email: currentUser?.email }),
     enabled: !!currentUser?.email
   });
 
@@ -42,12 +42,12 @@ export default function UserSettings() {
   }, [preferences]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.UserPreferences.create(data),
+    mutationFn: (data) => api.entities.UserPreferences.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['userPreferences'] })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.UserPreferences.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.UserPreferences.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['userPreferences'] })
   });
 

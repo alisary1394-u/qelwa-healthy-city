@@ -1,5 +1,5 @@
 /**
- * خلفية محلية بالكامل: تخزين البيانات في localStorage دون الحاجة لاتصال إنترنت أو Base44.
+ * خلفية محلية بالكامل: تخزين البيانات في localStorage دون الحاجة لاتصال إنترنت أو سيرفر خارجي.
  * تفعّل بوضع VITE_USE_LOCAL_BACKEND=true في .env.local
  */
 
@@ -323,7 +323,7 @@ export function clearLocalDataAndReseed() {
   if (typeof window !== 'undefined') window.location.reload();
 }
 
-/** واجهة تحاكي base44 للاستخدام في التطبيق */
+/** واجهة تحاكي العميل (api) للاستخدام في التطبيق */
 export const localBackend = {
   entities,
   auth,

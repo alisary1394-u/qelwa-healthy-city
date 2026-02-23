@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
@@ -30,15 +30,15 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
         // تشغيل البذر فقط (بدون دخول تلقائي لأي مشرف أو عضو)
         try {
-          await Promise.resolve(base44.seedDefaultGovernorIfNeeded?.() ?? null);
-          await Promise.resolve(base44.seedAxesAndStandardsIfNeeded?.());
-          await Promise.resolve(base44.seedCommitteesTeamInitiativesTasksIfNeeded?.());
+          await Promise.resolve(api.seedDefaultGovernorIfNeeded?.() ?? null);
+          await Promise.resolve(api.seedAxesAndStandardsIfNeeded?.());
+          await Promise.resolve(api.seedCommitteesTeamInitiativesTasksIfNeeded?.());
         } catch (e) {
           if (typeof console !== 'undefined') console.warn('Seed failed:', e);
         }
         // الدخول فقط عبر نموذج تسجيل الدخول أو جلسة محفوظة سابقاً (لا دخول تلقائي)
         try {
-          const currentUser = await base44.auth.me();
+          const currentUser = await api.auth.me();
           setUser(currentUser);
           setIsAuthenticated(true);
         } catch {
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const currentUser = await api.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
-    base44.auth.logout();
+    api.auth.logout();
     if (shouldRedirect && typeof window !== 'undefined') {
       window.location.href = '/';
     }
@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = () => {
     // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    api.auth.redirectToLogin(window.location.href);
   };
 
   return (

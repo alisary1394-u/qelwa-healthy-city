@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +15,17 @@ export default function Settings() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => api.auth.me()
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
-    queryFn: () => base44.entities.TeamMember.list()
+    queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: settings = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => base44.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list()
   });
 
   const currentSetting = settings[0] || {};
@@ -37,14 +37,14 @@ export default function Settings() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Settings.create(data),
+    mutationFn: (data) => api.entities.Settings.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Settings.update(id, data),
+    mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     }
@@ -71,7 +71,7 @@ export default function Settings() {
 
     setUploading(true);
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
+      const result = await api.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, logo_url: result.file_url });
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -217,7 +217,7 @@ export default function Settings() {
         </Card>
 
         {/* إعادة تحميل بيانات التجربة (محلي أو Supabase) */}
-        {(appParams.useLocalBackend || appParams.useSupabaseBackend || appParams.apiUrl) && typeof base44.clearLocalDataAndReseed === 'function' && (
+        {(appParams.useLocalBackend || appParams.useSupabaseBackend || appParams.apiUrl) && typeof api.clearLocalDataAndReseed === 'function' && (
           <Card className="mt-6 border-amber-200 bg-amber-50/50">
             <CardHeader>
               <CardTitle className="text-lg">
@@ -231,7 +231,7 @@ export default function Settings() {
               <Button
                 variant="outline"
                 className="border-amber-500 text-amber-700 hover:bg-amber-100"
-                onClick={() => base44.clearLocalDataAndReseed()}
+                onClick={() => api.clearLocalDataAndReseed()}
               >
                 <RotateCcw className="w-4 h-4 ml-2" />
                 مسح البيانات وإعادة تحميل بيانات التجربة
