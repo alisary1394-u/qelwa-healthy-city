@@ -305,12 +305,14 @@ export async function seedCommitteesTeamInitiativesTasksIfNeeded() {
 }
 
 /**
- * مسح كل البيانات المحلية وإعادة تحميل الصفحة حتى تُنفَّذ البذرة من جديد (لجان، فريق، مبادرات، مهام، ميزانيات).
- * بعد التحميل سجّل الدخول برقم الهوية 1 وكلمة المرور 123456.
+ * مسح البيانات المحلية (ما عدا أعضاء الفريق) وإعادة تحميل الصفحة حتى تُنفَّذ البذرة من جديد.
+ * لا نمسح TeamMember أبداً حتى لا تُستبدل بيانات الأعضاء التي عدّلها المستخدم (بريد، اسم، إلخ).
  */
 export function clearLocalDataAndReseed() {
   if (typeof localStorage === 'undefined') return;
+  const skipTeamMember = 'TeamMember';
   ENTITY_NAMES.forEach((name) => {
+    if (name === skipTeamMember) return;
     try {
       localStorage.removeItem(DB_PREFIX + name);
     } catch (_) {}

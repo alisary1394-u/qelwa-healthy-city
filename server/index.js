@@ -217,9 +217,9 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
   }
 });
 
-// بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط (لا يمسح المهام والأدلة والإشعارات التي أضافها المستخدم)
+// بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط — ولا نمسح team_member أبداً حتى لا تُستبدل بيانات الأعضاء التي عدّلها المستخدم (بريد، اسم، إلخ).
 const TABLES_CLEAR_ON_RESEED = [
-  'committee', 'team_member', 'axis', 'standard', 'initiative', 'initiative_kpi',
+  'committee', 'axis', 'standard', 'initiative', 'initiative_kpi',
   'budget', 'budget_allocation', 'transaction'
 ];
 app.post('/api/seed', async (req, res) => {
