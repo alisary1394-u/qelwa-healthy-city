@@ -71,7 +71,7 @@ export const PERMISSIONS_BY_ROLE = {
     canApproveEvidence: true,
     canManageBudget: false,
     canApproveTransactions: false,
-    canCreateTransactions: true,
+    canCreateTransactions: false,
     canViewFinancials: true,
     canManageInitiatives: true,
     canVerifySurvey: true,

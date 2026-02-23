@@ -188,8 +188,24 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     let body = { ...(req.body || {}) };
-    if (table === 'team_member' && (body.password === '' || body.password == null)) {
-      delete body.password;
+    if (table === 'team_member') {
+      const existing = db.get(table, req.params.id);
+      if (!existing) return res.status(404).json({ error: 'غير موجود' });
+
+      if (body.password === '' || body.password == null) {
+        delete body.password;
+      }
+
+      // حماية بيانات التواصل من المسح غير المقصود عند تحديث الصلاحيات/المنصب.
+      ['email', 'phone'].forEach((field) => {
+        const incoming = body[field];
+        const incomingBlank = incoming == null || (typeof incoming === 'string' && incoming.trim() === '');
+        const existingValue = existing[field];
+        const existingHasValue = existingValue != null && String(existingValue).trim() !== '';
+        if (incomingBlank && existingHasValue) {
+          delete body[field];
+        }
+      });
     }
     const updated = db.update(table, req.params.id, body);
     if (!updated) return res.status(404).json({ error: 'غير موجود' });

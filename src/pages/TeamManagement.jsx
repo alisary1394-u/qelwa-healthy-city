@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import MemberCard from "@/components/team/MemberCard";
 import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
-import { PERMISSIONS_BY_ROLE, ROLE_LABELS } from '@/lib/permissions';
+import { PERMISSIONS_BY_ROLE } from '@/lib/permissions';
 
 const roleLabels = {
   all: "الجميع",
@@ -55,6 +55,10 @@ const PERMISSION_SUMMARY_KEYS = [
   { key: 'canManageInitiatives', label: 'إدارة المبادرات' },
   { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات' },
 ];
+
+function isBlankValue(value) {
+  return value == null || (typeof value === 'string' && value.trim() === '');
+}
 
 export default function TeamManagement() {
   const [activeRole, setActiveRole] = useState('all');
@@ -166,6 +170,14 @@ export default function TeamManagement() {
     if (editingMember && (payload.password === '' || payload.password == null)) {
       delete payload.password;
     }
+    if (editingMember) {
+      // حماية بيانات التواصل: عند تعديل المنصب/الصلاحيات لا نسمح بمسح البريد أو الهاتف بقيمة فارغة بالخطأ.
+      ['email', 'phone'].forEach((field) => {
+        if (isBlankValue(payload[field]) && !isBlankValue(editingMember?.[field])) {
+          delete payload[field];
+        }
+      });
+    }
     try {
       if (editingMember) {
         await updateMutation.mutateAsync({ id: editingMember.id, data: payload });
@@ -186,9 +198,15 @@ export default function TeamManagement() {
     }
   };
 
-  const handleEdit = (member) => {
+  const handleEdit = async (member) => {
     setEditingMember(member);
     setFormOpen(true);
+    try {
+      const fullMember = await api.entities.TeamMember.get(member.id);
+      if (fullMember) setEditingMember(fullMember);
+    } catch (_) {
+      // نتابع ببيانات القائمة عند تعذر جلب التفاصيل.
+    }
   };
 
   const handleDelete = async () => {
