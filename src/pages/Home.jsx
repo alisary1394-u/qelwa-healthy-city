@@ -466,11 +466,11 @@ export default function Home() {
                     )}
 
                     <div className="space-y-2">
-                      <Label>رمز التحقق (6 أرقام)</Label>
+                      <Label>رمز التحقق (4 أرقام)</Label>
                       <Input
                         type="text"
                         value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
                         placeholder="أدخل رمز التحقق"
                         required
                         maxLength={6}
@@ -486,7 +486,7 @@ export default function Home() {
 
                     <Button
                       type="submit"
-                      disabled={loading || verificationCode.length !== 6}
+                      disabled={loading || verificationCode.length !== 4}
                       className="w-full bg-gradient-to-l from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-lg py-6"
                     >
                       {loading && <Loader2 className="w-5 h-5 ml-2 animate-spin" />}

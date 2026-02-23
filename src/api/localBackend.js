@@ -180,7 +180,7 @@ const functions = {
     if (name === 'sendVerificationCode') {
       const email = data?.email;
       if (!email) return { success: false, message: 'البريد مطلوب.' };
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const code = Math.floor(1000 + Math.random() * 9000).toString(); // 4 أرقام
       const old = getStore('VerificationCode').filter((c) => c.email !== email);
       old.forEach((c) => entities.VerificationCode.delete(c.id));
       entities.VerificationCode.create({

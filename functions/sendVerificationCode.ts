@@ -2,7 +2,7 @@ export default async function sendVerificationCode({ email }, context) {
   const { base44 } = context;
   
   // Generate 6-digit code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = Math.floor(1000 + Math.random() * 9000).toString(); // 4 أرقام
   
   // Set expiration to 5 minutes from now
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();

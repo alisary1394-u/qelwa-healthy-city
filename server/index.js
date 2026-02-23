@@ -255,7 +255,7 @@ app.post('/api/functions/sendVerificationCode', async (req, res) => {
   if (!isValidEmail(email)) {
     return res.json({ success: false, message: 'عنوان البريد غير صالح. يرجى تصحيح البريد في بيانات العضو (يجب أن يكون بصيغة مثال@نطاق.كوم). لا يتم حذف أي بيانات.' });
   }
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = Math.floor(1000 + Math.random() * 9000).toString(); // 4 أرقام
   verificationCodes.set(email, { code, expires_at: Date.now() + 5 * 60 * 1000 });
 
   const { isEmailConfigured, sendVerificationEmail } = await import('./email.js');
