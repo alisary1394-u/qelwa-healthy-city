@@ -25,6 +25,10 @@ export function getBackupConfig() {
     retentionDays: toPositiveNumber(process.env.BACKUP_RETENTION_DAYS, 30),
     backupDir: process.env.BACKUP_DIR || backupDirDefault,
     startupSnapshot: isEnabled(process.env.BACKUP_STARTUP_SNAPSHOT, true),
+    autoRestoreOnLowTeam: isEnabled(process.env.BACKUP_AUTO_RESTORE_ON_LOW_TEAM, true),
+    lowTeamThreshold: toPositiveNumber(process.env.BACKUP_LOW_TEAM_THRESHOLD, 1),
+    minTeamInBackup: toPositiveNumber(process.env.BACKUP_MIN_TEAM_IN_BACKUP, 2),
+    guardIntervalMinutes: toPositiveNumber(process.env.BACKUP_GUARD_INTERVAL_MINUTES, 30),
   };
 }
 
@@ -41,6 +45,11 @@ function parseBackupPayload(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid backup payload');
   if (!raw.tables || typeof raw.tables !== 'object') throw new Error('Backup file missing "tables"');
   return raw;
+}
+
+function readBackupPayload(filePath) {
+  const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  return parseBackupPayload(raw);
 }
 
 function toBackupFileName() {
@@ -100,8 +109,7 @@ export async function restoreBackup(filePath) {
   if (!filePath) throw new Error('Backup file path is required');
   const resolved = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
   if (!fs.existsSync(resolved)) throw new Error(`Backup file not found: ${resolved}`);
-  const raw = JSON.parse(fs.readFileSync(resolved, 'utf8'));
-  const payload = parseBackupPayload(raw);
+  const payload = readBackupPayload(resolved);
 
   const db = await import('./db.js');
   // Clear then restore all known tables to match backup snapshot exactly.
@@ -120,6 +128,46 @@ export async function restoreBackup(filePath) {
   const restoredCounts = {};
   for (const table of db.TABLES) restoredCounts[table] = db.list(table).length;
   return { path: resolved, restoredCounts };
+}
+
+export async function autoRestoreLatestBackupIfTeamLow({ reason = 'guard' } = {}) {
+  const cfg = getBackupConfig();
+  if (!cfg.autoRestoreOnLowTeam) {
+    return { skipped: true, reason: 'disabled' };
+  }
+
+  const db = await import('./db.js');
+  const currentTeam = db.list('team_member').length;
+  if (currentTeam > cfg.lowTeamThreshold) {
+    return { skipped: true, reason: 'team_ok', currentTeam };
+  }
+
+  const backups = listBackups();
+  if (backups.length === 0) {
+    return { skipped: true, reason: 'no_backups', currentTeam };
+  }
+
+  for (const file of backups) {
+    try {
+      const payload = readBackupPayload(file.path);
+      const backupTeamCount = Array.isArray(payload.tables?.team_member) ? payload.tables.team_member.length : 0;
+      if (backupTeamCount >= cfg.minTeamInBackup && backupTeamCount > currentTeam) {
+        const restoreRes = await restoreBackup(file.path);
+        return {
+          restored: true,
+          reason,
+          from: file.path,
+          currentTeamBefore: currentTeam,
+          backupTeamCount,
+          restoredCounts: restoreRes.restoredCounts,
+        };
+      }
+    } catch (e) {
+      console.warn('[Backup] Skipping unreadable backup:', file.path, e?.message || e);
+    }
+  }
+
+  return { skipped: true, reason: 'no_suitable_backup', currentTeam };
 }
 
 export function cleanupOldBackups({ backupDir, retentionDays }) {
@@ -148,7 +196,9 @@ export function startAutoBackup() {
 
   const intervalMs = Math.floor(cfg.intervalHours * 60 * 60 * 1000);
   const startupDelayMs = Math.floor(cfg.startupDelaySeconds * 1000);
+  const guardIntervalMs = Math.floor(cfg.guardIntervalMinutes * 60 * 1000);
   let running = false;
+  let guardRunning = false;
 
   const run = async (reason) => {
     if (running) return;
@@ -167,8 +217,31 @@ export function startAutoBackup() {
     setTimeout(() => run('startup'), startupDelayMs);
   }
 
+  const runGuard = async (reason) => {
+    if (guardRunning) return;
+    guardRunning = true;
+    try {
+      const result = await autoRestoreLatestBackupIfTeamLow({ reason });
+      if (result?.restored) {
+        console.warn('[Backup] Auto-restore executed from latest backup:', result.from);
+      }
+    } catch (e) {
+      console.error('[Backup] Auto-restore guard failed:', e?.message || e);
+    } finally {
+      guardRunning = false;
+    }
+  };
+
+  // فحص مبكر بعد الإقلاع للتعامل مع أي فقد مفاجئ للبيانات.
+  setTimeout(() => runGuard('startup-guard'), Math.max(15000, Math.floor(startupDelayMs / 2)));
+
   const timer = setInterval(() => run('scheduled'), intervalMs);
+  const guardTimer = setInterval(() => runGuard('scheduled-guard'), guardIntervalMs);
   console.log(`[Backup] Auto backup enabled every ${cfg.intervalHours} hour(s). Dir: ${cfg.backupDir}`);
-  return () => clearInterval(timer);
+  console.log(`[Backup] Data-loss guard check every ${cfg.guardIntervalMinutes} minute(s).`);
+  return () => {
+    clearInterval(timer);
+    clearInterval(guardTimer);
+  };
 }
 
