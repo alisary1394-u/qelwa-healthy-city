@@ -17,7 +17,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { startAutoBackup } from './backup.js';
+import { createBackup, startAutoBackup } from './backup.js';
 // عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +26,8 @@ const PORT = process.env.PORT || 8080;
 
 const sessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
+let backupSnapshotInFlight = false;
+let lastMutationBackupAt = 0;
 
 let dbModule = null;
 async function getDb() {
@@ -37,6 +39,30 @@ async function getDb() {
     console.error('فشل تحميل قاعدة البيانات:', e);
     throw e;
   }
+}
+
+function shouldSnapshotOnMutation() {
+  const v = String(process.env.BACKUP_SNAPSHOT_ON_MUTATION ?? 'true').trim().toLowerCase();
+  return !['0', 'false', 'no', 'off'].includes(v);
+}
+
+function enqueueMutationBackup(reason) {
+  if (!shouldSnapshotOnMutation()) return;
+  const now = Date.now();
+  // تهدئة الكتابة: لا ننشئ نسخة كل ثانية أثناء عمليات متتالية.
+  if (backupSnapshotInFlight || now - lastMutationBackupAt < 15000) return;
+  backupSnapshotInFlight = true;
+  createBackup({ reason })
+    .then((result) => {
+      lastMutationBackupAt = Date.now();
+      console.log('[Backup] Mutation snapshot created:', result.path);
+    })
+    .catch((e) => {
+      console.error('[Backup] Mutation snapshot failed:', e?.message || e);
+    })
+    .finally(() => {
+      backupSnapshotInFlight = false;
+    });
 }
 
 app.use(cors({ origin: true, credentials: true }));
@@ -174,6 +200,9 @@ app.post('/api/entities/:name', async (req, res) => {
     const body = { ...data };
     delete body.id;
     const record = db.create(table, id, body);
+    if (table === 'team_member' || table === 'task') {
+      enqueueMutationBackup(`entity_create:${table}`);
+    }
     res.status(201).json(record);
   } catch (e) {
     if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
@@ -219,6 +248,9 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
     }
     const updated = db.update(table, req.params.id, body);
     if (!updated) return res.status(404).json({ error: 'غير موجود' });
+    if (table === 'team_member' || table === 'task') {
+      enqueueMutationBackup(`entity_update:${table}`);
+    }
     res.json(updated);
   } catch (e) {
     if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
@@ -234,6 +266,9 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     db.remove(table, req.params.id);
+    if (table === 'team_member' || table === 'task') {
+      enqueueMutationBackup(`entity_delete:${table}`);
+    }
     res.status(204).send();
   } catch (e) {
     if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
@@ -259,6 +294,7 @@ app.post('/api/seed', async (req, res) => {
     }
     const { runSeed } = await import('./seed.js');
     await runSeed();
+    enqueueMutationBackup('seed');
     res.json({ ok: true, message: 'تم تنفيذ البذرة' });
   } catch (e) {
     if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
