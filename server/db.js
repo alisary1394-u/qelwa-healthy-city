@@ -7,7 +7,14 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'qelwa.db');
+const isRailway = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_ID);
+const DEFAULT_DB_PATH = isRailway ? '/data/qelwa.db' : path.join(__dirname, 'data', 'qelwa.db');
+const DB_PATH = process.env.DB_PATH || DEFAULT_DB_PATH;
+
+if (isRailway && !process.env.DB_PATH) {
+  // تنبيه مهم: الاستمرارية تتطلب ربط Railway Volume على المسار /data.
+  console.warn('[DB] DB_PATH غير مضبوط. سيتم استخدام /data/qelwa.db. تأكد من ربط Volume في Railway على /data لحفظ البيانات بين عمليات النشر.');
+}
 
 const TABLES = [
   'committee', 'team_member', 'settings', 'axis', 'standard', 'initiative',
