@@ -17,11 +17,11 @@
 - `BACKUP_STARTUP_DELAY_SECONDS=120`
 - `BACKUP_STARTUP_SNAPSHOT=true|false`
 - `BACKUP_DIR=/data/backups`
-- `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=true|false`
+- `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=true|false` (default: false)
 - `BACKUP_LOW_TEAM_THRESHOLD=1`
 - `BACKUP_MIN_TEAM_IN_BACKUP=2`
 - `BACKUP_GUARD_INTERVAL_MINUTES=30`
-- `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true|false`
+- `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true|false` (default: false)
 - `BACKUP_SNAPSHOT_ON_MUTATION=true|false`
 - `DEFAULT_COORDINATOR_EMAIL=your-email@example.com`
 - `DEFAULT_COORDINATOR_PASSWORD=123456`
@@ -31,14 +31,14 @@
 
 ## حماية تلقائية من فقد الفريق
 
-إذا أصبح عدد أعضاء الفريق منخفضاً بشكل غير طبيعي (افتراضياً `<= 1`) يحاول السيرفر تلقائياً
-استعادة أحدث نسخة احتياطية صالحة تحتوي على فريق أكبر (افتراضياً `>= 2`).
+إذا أصبح عدد أعضاء الفريق منخفضاً بشكل غير طبيعي (افتراضياً `<= 1`) يمكن للسيرفر
+أن يحاول الاستعادة تلقائياً من أحدث نسخة احتياطية صالحة، لكن هذا السلوك **معطّل افتراضياً**.
 
 - الفحص التلقائي كل 30 دقيقة (قابل للتعديل).
-- الاستعادة التلقائية يمكن إيقافها عند الحاجة عبر:
-  - `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=false`
+- لتفعيل الاستعادة التلقائية صراحة:
+  - `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=true`
 - وإذا لم تتوفر نسخة احتياطية صالحة، يمكن تفعيل/تعطيل الإجراء الاحتياطي (إعادة بذر الفريق والمهام التجريبية):
-  - `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true`
+  - `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true` (غير مفعّل افتراضياً)
 - عند تشغيل إعادة البذر الاحتياطية، يمكن تخصيص بيانات المنسق الافتراضي عبر:
   - `DEFAULT_COORDINATOR_EMAIL`
   - `DEFAULT_COORDINATOR_PASSWORD`

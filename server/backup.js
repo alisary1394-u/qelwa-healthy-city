@@ -25,11 +25,13 @@ export function getBackupConfig() {
     retentionDays: toPositiveNumber(process.env.BACKUP_RETENTION_DAYS, 30),
     backupDir: process.env.BACKUP_DIR || backupDirDefault,
     startupSnapshot: isEnabled(process.env.BACKUP_STARTUP_SNAPSHOT, true),
-    autoRestoreOnLowTeam: isEnabled(process.env.BACKUP_AUTO_RESTORE_ON_LOW_TEAM, true),
+    // افتراضيًا معطّل لتجنب أي تعديل تلقائي غير مقصود على بيانات الإنتاج.
+    autoRestoreOnLowTeam: isEnabled(process.env.BACKUP_AUTO_RESTORE_ON_LOW_TEAM, false),
     lowTeamThreshold: toPositiveNumber(process.env.BACKUP_LOW_TEAM_THRESHOLD, 1),
     minTeamInBackup: toPositiveNumber(process.env.BACKUP_MIN_TEAM_IN_BACKUP, 2),
     guardIntervalMinutes: toPositiveNumber(process.env.BACKUP_GUARD_INTERVAL_MINUTES, 30),
-    fallbackReseedOnLowTeam: isEnabled(process.env.BACKUP_FALLBACK_RESEED_ON_LOW_TEAM, true),
+    // افتراضيًا معطّل، ويُفعّل فقط بطلب صريح.
+    fallbackReseedOnLowTeam: isEnabled(process.env.BACKUP_FALLBACK_RESEED_ON_LOW_TEAM, false),
   };
 }
 
