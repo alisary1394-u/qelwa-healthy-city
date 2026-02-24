@@ -21,6 +21,7 @@
 - `BACKUP_LOW_TEAM_THRESHOLD=1`
 - `BACKUP_MIN_TEAM_IN_BACKUP=2`
 - `BACKUP_GUARD_INTERVAL_MINUTES=30`
+- `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true|false`
 
 > مهم: يجب ربط Railway Volume على `/data` حتى تبقى النسخ بعد إعادة النشر.
 
@@ -32,6 +33,8 @@
 - الفحص التلقائي كل 30 دقيقة (قابل للتعديل).
 - الاستعادة التلقائية يمكن إيقافها عند الحاجة عبر:
   - `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=false`
+- وإذا لم تتوفر نسخة احتياطية صالحة، يمكن تفعيل/تعطيل الإجراء الاحتياطي (إعادة بذر الفريق والمهام التجريبية):
+  - `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true`
 
 ## أوامر يدوية
 
