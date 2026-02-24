@@ -5,6 +5,9 @@
 import * as db from './db.js';
 
 const PASS = '123456';
+const DEFAULT_COORDINATOR_EMAIL = (process.env.DEFAULT_COORDINATOR_EMAIL || 'coordinator@local').trim().toLowerCase();
+const DEFAULT_COORDINATOR_PASSWORD = process.env.DEFAULT_COORDINATOR_PASSWORD || PASS;
+const DEFAULT_COORDINATOR_PHONE = process.env.DEFAULT_COORDINATOR_PHONE || '0500000001';
 const COMMITTEES = [
   { name: 'اللجنة الرئيسية', description: 'اللجنة الرئيسية التي تنبثق منها جميع لجان المدينة الصحية' },
   { name: 'لجنة الحوكمة والشراكات', description: 'الحوكمة والشراكات' },
@@ -91,8 +94,9 @@ export async function runSeed(options = {}) {
       db.create('team_member', null, {
         full_name: 'منسق المدينة الصحية',
         national_id: String(nextId++),
-        password: PASS,
-        email: 'coordinator@local',
+        password: DEFAULT_COORDINATOR_PASSWORD,
+        email: DEFAULT_COORDINATOR_EMAIL,
+        phone: DEFAULT_COORDINATOR_PHONE,
         role: 'coordinator',
         committee_id: committeesNow[0]?.id,
         committee_name: committeesNow[0]?.name,
@@ -143,6 +147,18 @@ export async function runSeed(options = {}) {
         password: PASS,
         email: 'accountant@local',
         role: 'accountant',
+        department: 'الميزانية',
+        status: 'active',
+        join_date: baseDate,
+      });
+    }
+    if (!membersNow.some((m) => m.role === 'financial_officer')) {
+      db.create('team_member', null, {
+        full_name: 'الموظف المالي',
+        national_id: String(nextId++),
+        password: PASS,
+        email: 'financial@local',
+        role: 'financial_officer',
         department: 'الميزانية',
         status: 'active',
         join_date: baseDate,

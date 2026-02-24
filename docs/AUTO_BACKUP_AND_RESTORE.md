@@ -22,6 +22,10 @@
 - `BACKUP_MIN_TEAM_IN_BACKUP=2`
 - `BACKUP_GUARD_INTERVAL_MINUTES=30`
 - `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true|false`
+- `BACKUP_SNAPSHOT_ON_MUTATION=true|false`
+- `DEFAULT_COORDINATOR_EMAIL=your-email@example.com`
+- `DEFAULT_COORDINATOR_PASSWORD=123456`
+- `DEFAULT_COORDINATOR_PHONE=05XXXXXXXX`
 
 > مهم: يجب ربط Railway Volume على `/data` حتى تبقى النسخ بعد إعادة النشر.
 
@@ -35,6 +39,10 @@
   - `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=false`
 - وإذا لم تتوفر نسخة احتياطية صالحة، يمكن تفعيل/تعطيل الإجراء الاحتياطي (إعادة بذر الفريق والمهام التجريبية):
   - `BACKUP_FALLBACK_RESEED_ON_LOW_TEAM=true`
+- عند تشغيل إعادة البذر الاحتياطية، يمكن تخصيص بيانات المنسق الافتراضي عبر:
+  - `DEFAULT_COORDINATOR_EMAIL`
+  - `DEFAULT_COORDINATOR_PASSWORD`
+  - `DEFAULT_COORDINATOR_PHONE`
 
 ## أوامر يدوية
 
