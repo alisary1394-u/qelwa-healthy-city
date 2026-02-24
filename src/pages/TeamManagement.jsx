@@ -60,6 +60,10 @@ function isBlankValue(value) {
   return value == null || (typeof value === 'string' && value.trim() === '');
 }
 
+function isLocalSeedEmail(value) {
+  return typeof value === 'string' && /@local$/i.test(value.trim());
+}
+
 export default function TeamManagement() {
   const [activeRole, setActiveRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,7 +163,20 @@ export default function TeamManagement() {
   };
 
   const handleSave = async (data) => {
-    const payload = { ...data };
+    let payload = { ...data };
+    let latestMember = editingMember || null;
+
+    if (editingMember?.id) {
+      try {
+        latestMember = await api.entities.TeamMember.get(editingMember.id) || editingMember;
+      } catch (_) {
+        latestMember = editingMember;
+      }
+      // نرسل دائماً نسخة مدمجة مع آخر بيانات للعضو لتفادي أي Backend يستبدل السجل بالكامل.
+      payload = { ...(latestMember || {}), ...data };
+      delete payload.id;
+    }
+
     if (!payload.committee_id || payload.committee_id === 'null') {
       delete payload.committee_id;
       delete payload.committee_name;
@@ -173,10 +190,20 @@ export default function TeamManagement() {
     if (editingMember) {
       // حماية بيانات التواصل: عند تعديل المنصب/الصلاحيات لا نسمح بمسح البريد أو الهاتف بقيمة فارغة بالخطأ.
       ['email', 'phone'].forEach((field) => {
-        if (isBlankValue(payload[field]) && !isBlankValue(editingMember?.[field])) {
-          delete payload[field];
+        if (isBlankValue(data[field])) {
+          if (!isBlankValue(latestMember?.[field])) {
+            payload[field] = latestMember[field];
+          } else {
+            delete payload[field];
+          }
         }
       });
+
+      // لا نسمح باستبدال بريد حقيقي بقيمة بذرة افتراضية (@local) أثناء التحديث.
+      const currentEmail = latestMember?.email;
+      if (isLocalSeedEmail(data.email) && !isBlankValue(currentEmail) && !isLocalSeedEmail(currentEmail)) {
+        payload.email = currentEmail;
+      }
     }
     try {
       if (editingMember) {
