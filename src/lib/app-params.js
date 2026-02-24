@@ -50,6 +50,9 @@ const getAppParams = () => {
 		useSupabaseBackend: import.meta.env.VITE_USE_SUPABASE_BACKEND === 'true',
 		supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
 		supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+		// تعطيل التحقق بالبريد مؤقتاً أثناء البرمجة.
+		// الافتراضي: معطّل (true). لإعادة التفعيل لاحقاً اضبط VITE_DISABLE_EMAIL_VERIFICATION=false ثم أعد البناء.
+		disableEmailVerification: import.meta.env.VITE_DISABLE_EMAIL_VERIFICATION !== 'false',
 		// دوال الخلفية (Backend Functions): عند وجود apiUrl نستخدم سيرفر التطبيق (sendVerificationCode, verifyCode, createFirstGovernor...)
 		// في الإنتاج: إن لم يُضبط VITE_API_URL نستخدم نفس النطاق (الواجهة والسيرفر معاً على Railway)
 		// لضمان التفعيل على Railway: لا تضبط VITE_API_URL أو اضبط VITE_USE_BACKEND_FUNCTIONS=true

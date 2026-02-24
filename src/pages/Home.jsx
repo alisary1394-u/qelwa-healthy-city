@@ -29,6 +29,7 @@ export default function Home() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
   const navigate = useNavigate();
+  const isEmailVerificationTemporarilyDisabled = appParams.disableEmailVerification === true;
 
   const { data: isAuth } = useQuery({
     queryKey: ['isAuth'],
@@ -57,6 +58,25 @@ export default function Home() {
     }
   }, [resendTimer]);
 
+  const completeLogin = (member) => {
+    if (!member) return false;
+    const navItems = getNavItemsForRole(member.role || 'volunteer');
+    const firstPage = navItems[0]?.name || 'Dashboard';
+    const userEmail = member.email || (member.role === 'governor' ? 'admin@qeelwah.com' : `member-${member.national_id}@local`);
+    if (typeof api.auth.setUser === 'function') {
+      api.auth.setUser({
+        email: userEmail,
+        full_name: member.full_name,
+        user_role: member.role === 'governor' ? 'admin' : 'user',
+        national_id: member.national_id,
+      });
+      window.location.href = createPageUrl(firstPage);
+    } else {
+      api.auth.redirectToLogin(createPageUrl(firstPage));
+    }
+    return true;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -78,6 +98,13 @@ export default function Home() {
       // Check password
       if (member.password !== password) {
         setError('كلمة المرور غير صحيحة');
+        setLoading(false);
+        return;
+      }
+
+      // تعطيل مؤقت للتحقق بالبريد أثناء البرمجة.
+      if (isEmailVerificationTemporarilyDisabled) {
+        completeLogin(member);
         setLoading(false);
         return;
       }
@@ -134,20 +161,8 @@ export default function Home() {
         const members = await api.entities.TeamMember.list();
         const member = members.find(m => m.national_id === nationalId);
 
-        if (member && member.email) {
-          const navItems = getNavItemsForRole(member.role || 'volunteer');
-          const firstPage = navItems[0]?.name || 'Dashboard';
-          if (typeof api.auth.setUser === 'function') {
-            api.auth.setUser({
-              email: member.email,
-              full_name: member.full_name,
-              user_role: member.role === 'governor' ? 'admin' : 'user',
-              national_id: member.national_id,
-            });
-            window.location.href = createPageUrl(firstPage);
-          } else {
-            api.auth.redirectToLogin(createPageUrl(firstPage));
-          }
+        if (member) {
+          completeLogin(member);
         } else {
           setError('المستخدم غير مسجل. يرجى التواصل مع الإدارة.');
           setLoading(false);
@@ -355,6 +370,11 @@ export default function Home() {
               <CardContent className="p-6">
                 {step === 1 ? (
                   <form onSubmit={handleLogin} className="space-y-4">
+                    {isEmailVerificationTemporarilyDisabled && (
+                      <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded-lg text-sm">
+                        تم تعطيل التحقق بالبريد مؤقتاً أثناء مرحلة البرمجة.
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <Label>رقم الهوية الوطنية</Label>
                       <Input
@@ -391,7 +411,7 @@ export default function Home() {
                       className="w-full bg-gradient-to-l from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-lg py-6"
                     >
                       {loading && <Loader2 className="w-5 h-5 ml-2 animate-spin" />}
-                      متابعة
+                      {isEmailVerificationTemporarilyDisabled ? 'دخول مباشر' : 'متابعة'}
                     </Button>
 
                     {registerSuccess && (
