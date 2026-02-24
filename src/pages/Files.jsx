@@ -91,10 +91,11 @@ export default function Files() {
 
   const currentMember = members.find(m => m.email === currentUser?.email);
   const userRole = currentMember?.role || currentUser?.role;
+  const canUploadFiles = permissions.canUploadFiles === true;
   
-  const isGovernor = userRole === 'admin' || userRole === 'chairman';
-  const isSupervisor = userRole === 'supervisor';
-  const isCommitteeChairman = userRole === 'coordinator';
+  const isGovernor = userRole === 'admin' || userRole === 'governor';
+  const isSupervisor = userRole === 'committee_supervisor';
+  const isCommitteeChairman = userRole === 'committee_head';
 
   const filteredFiles = files.filter(f => {
     const matchesStatus = activeStatus === 'all' || f.status === activeStatus;
@@ -120,6 +121,7 @@ export default function Files() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
+    if (!canUploadFiles) return;
     if (!formData.file) return;
 
     setUploading(true);
@@ -232,10 +234,12 @@ export default function Files() {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input placeholder="بحث في الملفات..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10" />
           </div>
-          <Button onClick={() => setUploadOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Upload className="w-5 h-5 ml-2" />
-            رفع ملف جديد
-          </Button>
+          {canUploadFiles && (
+            <Button onClick={() => setUploadOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Upload className="w-5 h-5 ml-2" />
+              رفع ملف جديد
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}
