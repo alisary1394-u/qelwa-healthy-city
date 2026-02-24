@@ -17,6 +17,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { startAutoBackup } from './backup.js';
 // عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -333,4 +334,5 @@ const HOST = process.env.HOST || '0.0.0.0';
 // عدم استدعاء قاعدة البيانات عند البدء — حتى لا يتعطل السيرفر إن فشل SQLite (مثلاً على Railway)
 app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT, '(استماع على', HOST + ')');
+  startAutoBackup();
 });

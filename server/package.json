@@ -1,1 +1,18 @@
-{"name":"qelwa-healthy-city-server","private":true,"type":"module","scripts":{"start":"node index.js","dev":"node --watch index.js"},"dependencies":{"better-sqlite3":"^11.6.0","cors":"^2.8.5","express":"^4.21.0","nodemailer":"^6.9.0"}}
+{
+  "name": "qelwa-healthy-city-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "backup:create": "node backup-cli.js backup",
+    "backup:list": "node backup-cli.js list",
+    "backup:restore": "node backup-cli.js restore"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "nodemailer": "^6.9.0"
+  }
+}
