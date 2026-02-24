@@ -51,8 +51,7 @@ export default function Tasks() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
   });
 
-  const userRole = currentUser?.user_role || currentUser?.role;
-  const canEdit = userRole === 'admin' || userRole === 'chairman' || userRole === 'coordinator' || userRole === 'supervisor';
+  const canManageTasks = permissions.canManageTasks === true;
 
   if (!permissions.canSeeTasks) {
     return (
@@ -84,6 +83,7 @@ export default function Tasks() {
   });
 
   const handleSave = async (data) => {
+    if (!canManageTasks) return;
     if (editingTask) {
       await updateMutation.mutateAsync({ id: editingTask.id, data });
     } else {
@@ -106,6 +106,7 @@ export default function Tasks() {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
+    if (!canManageTasks) return;
     const updateData = { status: newStatus };
     if (newStatus === 'completed') {
       updateData.completion_date = new Date().toISOString().split('T')[0];
@@ -114,6 +115,7 @@ export default function Tasks() {
   };
 
   const handleDelete = async () => {
+    if (!canManageTasks) return;
     if (deleteDialog.task) {
       await deleteMutation.mutateAsync(deleteDialog.task.id);
       setDeleteDialog({ open: false, task: null });
@@ -191,13 +193,15 @@ export default function Tasks() {
               تذكيرات واتساب
             </Button>
           </a>
-          <Button
-            onClick={() => { setEditingTask(null); setFormOpen(true); }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-5 h-5 ml-2" />
-            إضافة مهمة
-          </Button>
+          {canManageTasks && (
+            <Button
+              onClick={() => { setEditingTask(null); setFormOpen(true); }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-5 h-5 ml-2" />
+              إضافة مهمة
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -234,7 +238,7 @@ export default function Tasks() {
                 onEdit={(t) => { setEditingTask(t); setFormOpen(true); }}
                 onDelete={(t) => setDeleteDialog({ open: true, task: t })}
                 onStatusChange={handleStatusChange}
-                canEdit={canEdit}
+                canEdit={canManageTasks}
               />
             ))}
           </div>
