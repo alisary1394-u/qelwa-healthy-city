@@ -17,8 +17,21 @@
 - `BACKUP_STARTUP_DELAY_SECONDS=120`
 - `BACKUP_STARTUP_SNAPSHOT=true|false`
 - `BACKUP_DIR=/data/backups`
+- `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=true|false`
+- `BACKUP_LOW_TEAM_THRESHOLD=1`
+- `BACKUP_MIN_TEAM_IN_BACKUP=2`
+- `BACKUP_GUARD_INTERVAL_MINUTES=30`
 
 > مهم: يجب ربط Railway Volume على `/data` حتى تبقى النسخ بعد إعادة النشر.
+
+## حماية تلقائية من فقد الفريق
+
+إذا أصبح عدد أعضاء الفريق منخفضاً بشكل غير طبيعي (افتراضياً `<= 1`) يحاول السيرفر تلقائياً
+استعادة أحدث نسخة احتياطية صالحة تحتوي على فريق أكبر (افتراضياً `>= 2`).
+
+- الفحص التلقائي كل 30 دقيقة (قابل للتعديل).
+- الاستعادة التلقائية يمكن إيقافها عند الحاجة عبر:
+  - `BACKUP_AUTO_RESTORE_ON_LOW_TEAM=false`
 
 ## أوامر يدوية
 
