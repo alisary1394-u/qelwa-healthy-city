@@ -30,6 +30,9 @@ function id() {
 
 export async function runSeed() {
   const baseDate = new Date().toISOString().split('T')[0];
+  // افتراضيًا لا نضيف أعضاء فريق تجريبيين (مثل coordinator@local) على السيرفر الحقيقي.
+  // لتفعيل هذا السلوك التجريبي صراحةً: SEED_SAMPLE_TEAM=true
+  const shouldSeedSampleTeam = String(process.env.SEED_SAMPLE_TEAM || '').toLowerCase() === 'true';
 
   if (db.list('team_member').length === 0) {
     db.create('team_member', null, {
@@ -77,71 +80,73 @@ export async function runSeed() {
 
   const committeesNow = db.list('committee');
   const membersNow = db.list('team_member');
-  let nextId = 1;
-  const used = membersNow.map((m) => m.national_id);
-  while (used.includes(String(nextId))) nextId++;
+  if (shouldSeedSampleTeam) {
+    let nextId = 1;
+    const used = membersNow.map((m) => m.national_id);
+    while (used.includes(String(nextId))) nextId++;
 
-  // إضافة منسق افتراضي فقط عند عدم وجود أي منسق — لا نعدّل ولا نستبدل أي عضو موجود أبداً
-  if (!membersNow.some((m) => m.role === 'coordinator')) {
-    db.create('team_member', null, {
-      full_name: 'منسق المدينة الصحية',
-      national_id: String(nextId++),
-      password: PASS,
-      email: 'coordinator@local',
-      role: 'coordinator',
-      committee_id: committeesNow[0]?.id,
-      committee_name: committeesNow[0]?.name,
-      department: 'لوحة التحكم',
-      status: 'active',
-      join_date: baseDate,
-    });
-  }
+    // إضافة منسق افتراضي فقط عند عدم وجود أي منسق — لا نعدّل ولا نستبدل أي عضو موجود أبداً
+    if (!membersNow.some((m) => m.role === 'coordinator')) {
+      db.create('team_member', null, {
+        full_name: 'منسق المدينة الصحية',
+        national_id: String(nextId++),
+        password: PASS,
+        email: 'coordinator@local',
+        role: 'coordinator',
+        committee_id: committeesNow[0]?.id,
+        committee_name: committeesNow[0]?.name,
+        department: 'لوحة التحكم',
+        status: 'active',
+        join_date: baseDate,
+      });
+    }
 
-  const membersAfter = db.list('team_member');
-  committeesNow.forEach((c, i) => {
-    const roles = ['committee_head', 'committee_coordinator', 'committee_supervisor', 'member', 'volunteer'];
-    const labels = { committee_head: 'رئيس', committee_coordinator: 'منسق', committee_supervisor: 'مشرف', member: 'عضو', volunteer: 'متطوع' };
-    roles.forEach((role) => {
-      if (!membersAfter.some((m) => m.role === role && m.committee_id === c.id)) {
-        db.create('team_member', null, {
-          full_name: `${labels[role]} ${c.name}`,
-          national_id: String(nextId++),
-          password: PASS,
-          email: `${role}${i}@local`,
-          role,
-          committee_id: c.id,
-          committee_name: c.name,
-          department: c.name,
-          status: 'active',
-          join_date: baseDate,
-        });
-      }
+    const membersAfter = db.list('team_member');
+    committeesNow.forEach((c, i) => {
+      const roles = ['committee_head', 'committee_coordinator', 'committee_supervisor', 'member', 'volunteer'];
+      const labels = { committee_head: 'رئيس', committee_coordinator: 'منسق', committee_supervisor: 'مشرف', member: 'عضو', volunteer: 'متطوع' };
+      roles.forEach((role) => {
+        if (!membersAfter.some((m) => m.role === role && m.committee_id === c.id)) {
+          db.create('team_member', null, {
+            full_name: `${labels[role]} ${c.name}`,
+            national_id: String(nextId++),
+            password: PASS,
+            email: `${role}${i}@local`,
+            role,
+            committee_id: c.id,
+            committee_name: c.name,
+            department: c.name,
+            status: 'active',
+            join_date: baseDate,
+          });
+        }
+      });
     });
-  });
 
-  if (!membersNow.some((m) => m.role === 'budget_manager')) {
-    db.create('team_member', null, {
-      full_name: 'مدير الميزانية',
-      national_id: String(nextId++),
-      password: PASS,
-      email: 'budget@local',
-      role: 'budget_manager',
-      department: 'الميزانية',
-      status: 'active',
-      join_date: baseDate,
-    });
-  }
-  if (!membersNow.some((m) => m.role === 'accountant')) {
-    db.create('team_member', null, {
-      full_name: 'المحاسب',
-      national_id: String(nextId++),
-      password: PASS,
-      email: 'accountant@local',
-      role: 'accountant',
-      department: 'الميزانية',
-      status: 'active',
-      join_date: baseDate,
-    });
+    if (!membersNow.some((m) => m.role === 'budget_manager')) {
+      db.create('team_member', null, {
+        full_name: 'مدير الميزانية',
+        national_id: String(nextId++),
+        password: PASS,
+        email: 'budget@local',
+        role: 'budget_manager',
+        department: 'الميزانية',
+        status: 'active',
+        join_date: baseDate,
+      });
+    }
+    if (!membersNow.some((m) => m.role === 'accountant')) {
+      db.create('team_member', null, {
+        full_name: 'المحاسب',
+        national_id: String(nextId++),
+        password: PASS,
+        email: 'accountant@local',
+        role: 'accountant',
+        department: 'الميزانية',
+        status: 'active',
+        join_date: baseDate,
+      });
+    }
   }
 
   if (db.list('initiative').length === 0 && committeesNow.length > 0 && axes.length > 0) {
