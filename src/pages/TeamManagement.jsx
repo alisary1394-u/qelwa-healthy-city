@@ -43,21 +43,44 @@ const roleIcons = {
   financial_officer: Briefcase
 };
 
-const PERMISSION_SUMMARY_KEYS = [
+const PERMISSION_REVIEW_KEYS = [
   { key: 'canManageSettings', label: 'إعدادات المدينة' },
   { key: 'canManageTeam', label: 'إدارة الفريق' },
+  { key: 'canAddTeamMember', label: 'إضافة عضو' },
+  { key: 'canEditTeamMember', label: 'تعديل عضو' },
+  { key: 'canDeleteTeamMember', label: 'حذف عضو' },
+  { key: 'canAddOrEditGovernor', label: 'إضافة/تعديل محافظ' },
+  { key: 'canAddOrEditCoordinator', label: 'إضافة/تعديل منسق' },
+  { key: 'canManageCommittees', label: 'إدارة اللجان' },
   { key: 'canManageStandards', label: 'إدارة المعايير' },
+  { key: 'canApproveEvidence', label: 'اعتماد أدلة' },
   { key: 'canManageBudget', label: 'إدارة الميزانية' },
   { key: 'canApproveTransactions', label: 'اعتماد معاملات' },
   { key: 'canCreateTransactions', label: 'إنشاء معاملات' },
   { key: 'canViewFinancials', label: 'عرض المالية' },
-  { key: 'canManageCommittees', label: 'إدارة اللجان' },
   { key: 'canManageInitiatives', label: 'إدارة المبادرات' },
   { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات' },
+  { key: 'canViewReports', label: 'عرض التقارير' },
+  { key: 'canManageTasks', label: 'إدارة المهام' },
+  { key: 'canViewFiles', label: 'عرض الملفات' },
+  { key: 'canUploadFiles', label: 'رفع ملفات' },
+  { key: 'canSeeDashboard', label: 'رابط لوحة التحكم' },
+  { key: 'canSeeReports', label: 'رابط التقارير' },
+  { key: 'canSeeStandards', label: 'رابط المعايير' },
+  { key: 'canSeeInitiatives', label: 'رابط المبادرات' },
+  { key: 'canSeeTasks', label: 'رابط المهام' },
+  { key: 'canSeeBudget', label: 'رابط الميزانية' },
+  { key: 'canSeeCommittees', label: 'رابط اللجان' },
+  { key: 'canSeeTeam', label: 'رابط الفريق' },
+  { key: 'canSeeFiles', label: 'رابط الملفات' },
 ];
 
 function isBlankValue(value) {
   return value == null || (typeof value === 'string' && value.trim() === '');
+}
+
+function isLocalSeedEmail(value) {
+  return typeof value === 'string' && /@local$/i.test(value.trim());
 }
 
 export default function TeamManagement() {
@@ -66,7 +89,6 @@ export default function TeamManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, member: null });
-  const [showPermissionsReview, setShowPermissionsReview] = useState(false);
   
   const urlParams = new URLSearchParams(window.location.search);
   const selectedCommitteeId = urlParams.get('committee') || '';
@@ -159,7 +181,20 @@ export default function TeamManagement() {
   };
 
   const handleSave = async (data) => {
-    const payload = { ...data };
+    let payload = { ...data };
+    let latestMember = editingMember || null;
+
+    if (editingMember?.id) {
+      try {
+        latestMember = await api.entities.TeamMember.get(editingMember.id) || editingMember;
+      } catch (_) {
+        latestMember = editingMember;
+      }
+      // نرسل دائماً نسخة مدمجة مع آخر بيانات للعضو لتفادي أي Backend يستبدل السجل بالكامل.
+      payload = { ...(latestMember || {}), ...data };
+      delete payload.id;
+    }
+
     if (!payload.committee_id || payload.committee_id === 'null') {
       delete payload.committee_id;
       delete payload.committee_name;
@@ -173,10 +208,20 @@ export default function TeamManagement() {
     if (editingMember) {
       // حماية بيانات التواصل: عند تعديل المنصب/الصلاحيات لا نسمح بمسح البريد أو الهاتف بقيمة فارغة بالخطأ.
       ['email', 'phone'].forEach((field) => {
-        if (isBlankValue(payload[field]) && !isBlankValue(editingMember?.[field])) {
-          delete payload[field];
+        if (isBlankValue(data[field])) {
+          if (!isBlankValue(latestMember?.[field])) {
+            payload[field] = latestMember[field];
+          } else {
+            delete payload[field];
+          }
         }
       });
+
+      // لا نسمح باستبدال بريد حقيقي بقيمة بذرة افتراضية (@local) أثناء التحديث.
+      const currentEmail = latestMember?.email;
+      if (isLocalSeedEmail(data.email) && !isBlankValue(currentEmail) && !isLocalSeedEmail(currentEmail)) {
+        payload.email = currentEmail;
+      }
     }
     try {
       if (editingMember) {
@@ -227,24 +272,20 @@ export default function TeamManagement() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* مراجعة الصلاحيات حسب المنصب */}
-        <Card className="mb-6 border-blue-100 bg-blue-50/50">
-          <CardHeader
-            className="cursor-pointer flex flex-row items-center justify-between py-4"
-            onClick={() => setShowPermissionsReview(!showPermissionsReview)}
-          >
-            <CardTitle className="text-lg">مراجعة الصلاحيات حسب المنصب</CardTitle>
-            <span className="text-sm text-gray-500">{showPermissionsReview ? '▼ إخفاء' : '▶ عرض'}</span>
-          </CardHeader>
-          {showPermissionsReview && (
+        {/* مراجعة الصلاحيات حسب المنصب (للمحافظ فقط) */}
+        {isGovernor && (
+          <Card className="mb-6 border-blue-100 bg-blue-50/50">
+            <CardHeader className="py-4">
+              <CardTitle className="text-lg">مراجعة الصلاحيات حسب المنصب</CardTitle>
+              <p className="text-sm text-gray-600">يعرض هذا الجدول جميع الصلاحيات لكل منصب بشكل كامل.</p>
+            </CardHeader>
             <CardContent className="pt-0 overflow-x-auto">
-              <p className="text-sm text-gray-600 mb-3">كل منصب له صلاحيات محددة في التطبيق. الجدول التالي يلخص من يملك أي صلاحية.</p>
-              <table className="w-full text-sm border-collapse bg-white rounded-lg overflow-hidden border">
+              <table className="min-w-max text-sm border-collapse bg-white rounded-lg overflow-hidden border">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="border p-2 text-right">المنصب</th>
-                    {PERMISSION_SUMMARY_KEYS.map(({ label }) => (
-                      <th key={label} className="border p-2 text-center">{label}</th>
+                    <th className="border p-2 text-right sticky right-0 bg-gray-100 z-10">المنصب</th>
+                    {PERMISSION_REVIEW_KEYS.map(({ label }) => (
+                      <th key={label} className="border p-2 text-center whitespace-nowrap">{label}</th>
                     ))}
                   </tr>
                 </thead>
@@ -254,8 +295,8 @@ export default function TeamManagement() {
                     if (!p) return null;
                     return (
                       <tr key={roleKey} className="hover:bg-gray-50">
-                        <td className="border p-2 font-medium">{p.label}</td>
-                        {PERMISSION_SUMMARY_KEYS.map(({ key }) => (
+                        <td className="border p-2 font-medium sticky right-0 bg-white">{p.label}</td>
+                        {PERMISSION_REVIEW_KEYS.map(({ key }) => (
                           <td key={key} className="border p-2 text-center">
                             {p[key] ? <span className="text-green-600">✓</span> : <span className="text-gray-300">—</span>}
                           </td>
@@ -266,8 +307,8 @@ export default function TeamManagement() {
                 </tbody>
               </table>
             </CardContent>
-          )}
-        </Card>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">

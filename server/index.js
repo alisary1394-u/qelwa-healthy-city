@@ -202,6 +202,15 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
         const incomingBlank = incoming == null || (typeof incoming === 'string' && incoming.trim() === '');
         const existingValue = existing[field];
         const existingHasValue = existingValue != null && String(existingValue).trim() !== '';
+        const incomingLocalSeed = field === 'email' && typeof incoming === 'string' && /@local$/i.test(incoming.trim());
+        const existingIsReal = field === 'email' && existingHasValue && !/@local$/i.test(String(existingValue).trim());
+
+        // لا نسمح باستبدال بريد حقيقي بقيمة بذرة افتراضية (@local).
+        if (incomingLocalSeed && existingIsReal) {
+          delete body[field];
+          return;
+        }
+
         if (incomingBlank && existingHasValue) {
           delete body[field];
         }
