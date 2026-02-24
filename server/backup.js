@@ -29,6 +29,7 @@ export function getBackupConfig() {
     lowTeamThreshold: toPositiveNumber(process.env.BACKUP_LOW_TEAM_THRESHOLD, 1),
     minTeamInBackup: toPositiveNumber(process.env.BACKUP_MIN_TEAM_IN_BACKUP, 2),
     guardIntervalMinutes: toPositiveNumber(process.env.BACKUP_GUARD_INTERVAL_MINUTES, 30),
+    fallbackReseedOnLowTeam: isEnabled(process.env.BACKUP_FALLBACK_RESEED_ON_LOW_TEAM, true),
   };
 }
 
@@ -144,6 +145,22 @@ export async function autoRestoreLatestBackupIfTeamLow({ reason = 'guard' } = {}
 
   const backups = listBackups();
   if (backups.length === 0) {
+    if (cfg.fallbackReseedOnLowTeam) {
+      const { runSeed } = await import('./seed.js');
+      await runSeed({ forceSampleTeam: true });
+      const teamAfterFallback = db.list('team_member').length;
+      const tasksAfterFallback = db.list('task').length;
+      if (teamAfterFallback > currentTeam) {
+        return {
+          fallbackReseeded: true,
+          reason,
+          mode: 'no_backups',
+          currentTeamBefore: currentTeam,
+          teamAfter: teamAfterFallback,
+          tasksAfter: tasksAfterFallback,
+        };
+      }
+    }
     return { skipped: true, reason: 'no_backups', currentTeam };
   }
 
@@ -164,6 +181,23 @@ export async function autoRestoreLatestBackupIfTeamLow({ reason = 'guard' } = {}
       }
     } catch (e) {
       console.warn('[Backup] Skipping unreadable backup:', file.path, e?.message || e);
+    }
+  }
+
+  if (cfg.fallbackReseedOnLowTeam) {
+    const { runSeed } = await import('./seed.js');
+    await runSeed({ forceSampleTeam: true });
+    const teamAfterFallback = db.list('team_member').length;
+    const tasksAfterFallback = db.list('task').length;
+    if (teamAfterFallback > currentTeam) {
+      return {
+        fallbackReseeded: true,
+        reason,
+        mode: 'no_suitable_backup',
+        currentTeamBefore: currentTeam,
+        teamAfter: teamAfterFallback,
+        tasksAfter: tasksAfterFallback,
+      };
     }
   }
 
@@ -224,6 +258,8 @@ export function startAutoBackup() {
       const result = await autoRestoreLatestBackupIfTeamLow({ reason });
       if (result?.restored) {
         console.warn('[Backup] Auto-restore executed from latest backup:', result.from);
+      } else if (result?.fallbackReseeded) {
+        console.warn('[Backup] Fallback reseed executed due low team. Team after:', result.teamAfter, 'Tasks after:', result.tasksAfter);
       }
     } catch (e) {
       console.error('[Backup] Auto-restore guard failed:', e?.message || e);

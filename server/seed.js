@@ -28,11 +28,12 @@ function id() {
   return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
 }
 
-export async function runSeed() {
+export async function runSeed(options = {}) {
   const baseDate = new Date().toISOString().split('T')[0];
   // افتراضيًا لا نضيف أعضاء فريق تجريبيين (مثل coordinator@local) على السيرفر الحقيقي.
   // لتفعيل هذا السلوك التجريبي صراحةً: SEED_SAMPLE_TEAM=true
-  const shouldSeedSampleTeam = String(process.env.SEED_SAMPLE_TEAM || '').toLowerCase() === 'true';
+  const forceSampleTeam = options?.forceSampleTeam === true;
+  const shouldSeedSampleTeam = forceSampleTeam || String(process.env.SEED_SAMPLE_TEAM || '').toLowerCase() === 'true';
 
   if (db.list('team_member').length === 0) {
     db.create('team_member', null, {
