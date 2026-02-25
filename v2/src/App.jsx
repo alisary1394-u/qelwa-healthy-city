@@ -1,37 +1,96 @@
-import React from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { useAuth } from "./auth/AuthContext";
-import AppShell from "./components/AppShell";
-import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import MembersPage from "./pages/MembersPage";
-import TasksPage from "./pages/TasksPage";
-import ReportsPage from "./pages/ReportsPage";
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from '@/lib/query-client'
+import NavigationTracker from '@/lib/NavigationTracker'
+import { pagesConfig } from './pages.config'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import PageNotFound from './lib/PageNotFound';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
-function ProtectedLayout() {
-  const { member, loading } = useAuth();
-  if (loading) return <div className="page-loader">جاري التحقق من الجلسة...</div>;
-  if (!member) return <Navigate to="/login" replace />;
+const { Pages, Layout, mainPage } = pagesConfig;
+const mainPageKey = mainPage ?? Object.keys(Pages)[0];
+const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+const HomePage = Pages['Home'];
 
-  return (
-    <AppShell>
+const LayoutWrapper = ({ children, currentPageName }) => Layout ?
+  <Layout currentPageName={currentPageName}>{children}</Layout>
+  : <>{children}</>;
+
+const AuthenticatedApp = () => {
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+
+  // Show loading spinner while checking app public settings or auth
+  if (isLoadingPublicSettings || isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // عند طلب تسجيل الدخول: نعرض صفحة الرئيسية (تسجيل الدخول بالهوية وكلمة المرور) داخل التطبيق
+  if (authError?.type === 'auth_required') {
+    return (
       <Routes>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/members" element={<MembersPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={
+          HomePage
+            ? <HomePage />
+            : (
+              <div className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
+                <p className="text-gray-600">يجب تسجيل الدخول. انتقل إلى الصفحة الرئيسية.</p>
+              </div>
+            )
+        } />
       </Routes>
-    </AppShell>
-  );
-}
+    );
+  }
 
-export default function App() {
-  const { member } = useAuth();
+  // Handle other auth errors
+  if (authError) {
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    }
+  }
+
+  // Render the main app
   return (
     <Routes>
-      <Route path="/login" element={member ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/*" element={<ProtectedLayout />} />
+      <Route path="/" element={
+        <LayoutWrapper currentPageName={mainPageKey}>
+          <MainPage />
+        </LayoutWrapper>
+      } />
+      {Object.entries(Pages).map(([path, Page]) => (
+        <Route
+          key={path}
+          path={`/${path}`}
+          element={
+            <LayoutWrapper currentPageName={path}>
+              <Page />
+            </LayoutWrapper>
+          }
+        />
+      ))}
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
+};
+
+
+function App() {
+
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <NavigationTracker />
+          <AuthenticatedApp />
+        </Router>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  )
 }
+
+export default App

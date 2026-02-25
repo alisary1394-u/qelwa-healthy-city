@@ -1,0 +1,256 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Clock, AlertCircle, FileText } from "lucide-react";
+
+export default function WHOStandardsReport({ standards, axes, evidence, settings }) {
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      not_started: { label: 'لم يبدأ', color: 'bg-gray-500', icon: Clock },
+      in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-500', icon: Clock },
+      completed: { label: 'مكتمل', color: 'bg-green-600', icon: CheckCircle },
+      approved: { label: 'معتمد', color: 'bg-green-700', icon: CheckCircle }
+    };
+    const config = statusConfig[status] || statusConfig.not_started;
+    const Icon = config.icon;
+    return (
+      <Badge className={`${config.color} text-white`}>
+        <Icon className="w-3 h-3 ml-1" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const calculateAxisCompletion = (axisId) => {
+    const axisStandards = standards.filter(s => s.axis_id === axisId);
+    if (axisStandards.length === 0) return 0;
+    const totalCompletion = axisStandards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0);
+    return Math.round(totalCompletion / axisStandards.length);
+  };
+
+  const overallCompletion = standards.length > 0 
+    ? Math.round(standards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / standards.length)
+    : 0;
+
+  const completedStandards = standards.filter(s => s.status === 'completed' || s.status === 'approved').length;
+  const totalStandards = standards.length;
+
+  return (
+    <div className="bg-white p-8 space-y-8" id="who-report">
+      {/* Report Header */}
+      <div className="text-center border-b-4 border-blue-600 pb-6">
+        <div className="flex justify-center mb-4">
+          {settings?.logo_url && (
+            <img src={settings.logo_url} alt="شعار المدينة" className="w-20 h-20 object-cover" />
+          )}
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          تقرير تحقيق معايير المدن الصحية
+        </h1>
+        <h2 className="text-xl text-gray-700 mb-1">
+          {settings?.city_name || 'المدينة الصحية'}
+        </h2>
+        <p className="text-gray-600">{settings?.city_location || ''}</p>
+        <p className="text-sm text-gray-500 mt-4">
+          إعداد التقرير: {new Date().toLocaleDateString('ar-SA')}
+        </p>
+        <p className="text-sm text-gray-500">
+          وفقاً لمعايير منظمة الصحة العالمية للمدن الصحية
+        </p>
+      </div>
+
+      {/* Executive Summary */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-blue-600 pr-3">
+          الملخص التنفيذي
+        </h2>
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-4xl font-bold text-blue-600">{overallCompletion}%</p>
+              <p className="text-sm text-gray-600 mt-2">نسبة الإنجاز الإجمالية</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-4xl font-bold text-green-600">{completedStandards}</p>
+              <p className="text-sm text-gray-600 mt-2">المعايير المكتملة</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-4xl font-bold text-gray-700">{totalStandards}</p>
+              <p className="text-sm text-gray-600 mt-2">إجمالي المعايير</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Progress by Axis */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-green-600 pr-3">
+          التقدم حسب المحاور
+        </h2>
+        <div className="space-y-3">
+          {axes.map(axis => {
+            const completion = calculateAxisCompletion(axis.id);
+            const axisStandards = standards.filter(s => s.axis_id === axis.id);
+            return (
+              <div key={axis.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-lg">{axis.name}</h3>
+                  <span className="text-2xl font-bold text-blue-600">{completion}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div 
+                    className="bg-gradient-to-l from-blue-600 to-green-600 h-3 rounded-full transition-all"
+                    style={{ width: `${completion}%` }}
+                  />
+                </div>
+                <p className="text-sm text-gray-600">
+                  {axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length} من {axisStandards.length} معيار مكتمل
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Detailed Standards by Axis */}
+      {axes.map(axis => {
+        const axisStandards = standards.filter(s => s.axis_id === axis.id);
+        if (axisStandards.length === 0) return null;
+
+        return (
+          <div key={axis.id} className="space-y-4 break-inside-avoid">
+            <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-blue-600 pr-3">
+              {axis.name}
+            </h2>
+            {axis.description && (
+              <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">{axis.description}</p>
+            )}
+            
+            <div className="space-y-4">
+              {axisStandards.map(standard => {
+                const standardEvidence = evidence.filter(e => e.standard_id === standard.id);
+                return (
+                  <Card key={standard.id} className="break-inside-avoid">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-sm">{standard.code}</Badge>
+                            {getStatusBadge(standard.status)}
+                          </div>
+                          <CardTitle className="text-lg">{standard.title}</CardTitle>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-3xl font-bold text-blue-600">{standard.completion_percentage || 0}%</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {standard.description && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">الوصف:</p>
+                          <p className="text-sm text-gray-600">{standard.description}</p>
+                        </div>
+                      )}
+                      
+                      {standard.required_evidence && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">الأدلة المطلوبة:</p>
+                          <p className="text-sm text-gray-600">{standard.required_evidence}</p>
+                        </div>
+                      )}
+                      
+                      {standard.assigned_to && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">المسؤول:</p>
+                          <p className="text-sm text-gray-600">{standard.assigned_to}</p>
+                        </div>
+                      )}
+                      
+                      {standardEvidence.length > 0 && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                            <FileText className="w-4 h-4" />
+                            الأدلة المرفقة ({standardEvidence.length}):
+                          </p>
+                          <div className="space-y-1">
+                            {standardEvidence.map(ev => (
+                              <div key={ev.id} className="text-xs bg-gray-50 p-2 rounded flex items-center justify-between">
+                                <span>{ev.title}</span>
+                                <Badge className={
+                                  ev.status === 'approved' ? 'bg-green-600' :
+                                  ev.status === 'rejected' ? 'bg-red-600' :
+                                  'bg-gray-500'
+                                }>
+                                  {ev.status === 'approved' ? 'معتمد' : 
+                                   ev.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {standard.notes && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">ملاحظات:</p>
+                          <p className="text-sm text-gray-600 italic">{standard.notes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Recommendations */}
+      <div className="space-y-4 break-inside-avoid">
+        <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-green-600 pr-3">
+          التوصيات والخطوات القادمة
+        </h2>
+        <div className="bg-green-50 border-r-4 border-green-600 p-6 space-y-3">
+          {standards.filter(s => s.status !== 'completed' && s.status !== 'approved').length > 0 && (
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">المعايير التي تحتاج إلى إكمال:</p>
+              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                {standards
+                  .filter(s => s.status !== 'completed' && s.status !== 'approved')
+                  .slice(0, 5)
+                  .map(s => (
+                    <li key={s.id}>{s.code} - {s.title} ({s.completion_percentage || 0}%)</li>
+                  ))}
+              </ul>
+            </div>
+          )}
+          
+          <div>
+            <p className="font-semibold text-gray-900 mb-2">التوصيات العامة:</p>
+            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+              <li>مراجعة المعايير غير المكتملة وتحديد الموارد اللازمة</li>
+              <li>تعزيز التوثيق وجمع الأدلة للمعايير قيد التنفيذ</li>
+              <li>تحديث خطة العمل بناءً على التقدم الحالي</li>
+              <li>التنسيق مع جميع اللجان لضمان استكمال المتطلبات</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t-2 border-gray-300 pt-6 text-center text-gray-600">
+        <p className="text-sm">
+          هذا التقرير معد وفقاً لمعايير منظمة الصحة العالمية للمدن الصحية
+        </p>
+        <p className="text-sm mt-2">
+          للمزيد من المعلومات: {settings?.city_name || 'المدينة الصحية'}
+        </p>
+      </div>
+    </div>
+  );
+}
