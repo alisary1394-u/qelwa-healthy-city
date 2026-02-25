@@ -270,7 +270,7 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
         delete body.password;
       }
 
-      // حماية بيانات التواصل من المسح غير المقصود عند تحديث الصلاحيات/المنصب.
+      // حماية بيانات التواصل: عند تحديث المنصب/الصلاحيات لا نحذف البريد أو الهاتف — لا نستبدل قيمة موجودة بقيمة فارغة.
       ['email', 'phone'].forEach((field) => {
         const incoming = body[field];
         const incomingBlank = incoming == null || (typeof incoming === 'string' && incoming.trim() === '');
@@ -279,12 +279,10 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
         const incomingLocalSeed = field === 'email' && typeof incoming === 'string' && /@local$/i.test(incoming.trim());
         const existingIsReal = field === 'email' && existingHasValue && !/@local$/i.test(String(existingValue).trim());
 
-        // لا نسمح باستبدال بريد حقيقي بقيمة بذرة افتراضية (@local).
         if (incomingLocalSeed && existingIsReal) {
           delete body[field];
           return;
         }
-
         if (incomingBlank && existingHasValue) {
           delete body[field];
         }

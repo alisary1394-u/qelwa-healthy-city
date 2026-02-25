@@ -383,6 +383,47 @@ export const PERMISSIONS_BY_ROLE = {
 PERMISSIONS_BY_ROLE.admin = PERMISSIONS_BY_ROLE.governor;
 
 /**
+ * أعمدة جدول "مراجعة الصلاحيات حسب المنصب" — مصدر واحد للحقيقة مع PERMISSIONS_BY_ROLE.
+ */
+export const PERMISSION_REVIEW_KEYS = [
+  { key: 'canManageSettings', label: 'إعدادات المدينة' },
+  { key: 'canManageTeam', label: 'إدارة الفريق' },
+  { key: 'canAddTeamMember', label: 'إضافة عضو' },
+  { key: 'canEditTeamMember', label: 'تعديل عضو' },
+  { key: 'canDeleteTeamMember', label: 'حذف عضو' },
+  { key: 'canAddOrEditGovernor', label: 'إضافة/تعديل محافظ' },
+  { key: 'canAddOrEditCoordinator', label: 'إضافة/تعديل منسق' },
+  { key: 'canManageCommittees', label: 'إدارة اللجان' },
+  { key: 'canManageStandards', label: 'إدارة المعايير' },
+  { key: 'canApproveEvidence', label: 'اعتماد أدلة' },
+  { key: 'canManageBudget', label: 'إدارة الميزانية' },
+  { key: 'canApproveTransactions', label: 'اعتماد معاملات' },
+  { key: 'canCreateTransactions', label: 'إنشاء معاملات' },
+  { key: 'canViewFinancials', label: 'عرض المالية' },
+  { key: 'canManageInitiatives', label: 'إدارة المبادرات' },
+  { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات' },
+  { key: 'canViewReports', label: 'عرض التقارير' },
+  { key: 'canManageTasks', label: 'إدارة المهام' },
+  { key: 'canViewFiles', label: 'عرض الملفات' },
+  { key: 'canUploadFiles', label: 'رفع ملفات' },
+  { key: 'canSeeDashboard', label: 'رابط لوحة التحكم' },
+  { key: 'canSeeReports', label: 'رابط التقارير' },
+  { key: 'canSeeStandards', label: 'رابط المعايير' },
+  { key: 'canSeeInitiatives', label: 'رابط المبادرات' },
+  { key: 'canSeeTasks', label: 'رابط المهام' },
+  { key: 'canSeeBudget', label: 'رابط الميزانية' },
+  { key: 'canSeeCommittees', label: 'رابط اللجان' },
+  { key: 'canSeeTeam', label: 'رابط الفريق' },
+  { key: 'canSeeFiles', label: 'رابط الملفات' },
+];
+
+/** ترتيب المناصب في جدول مراجعة الصلاحيات */
+export const PERMISSIONS_REVIEW_ROLE_ORDER = [
+  'governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor',
+  'committee_member', 'budget_manager', 'accountant', 'financial_officer', 'member', 'volunteer'
+];
+
+/**
  * إرجاع صلاحيات الدور. إذا لم يُعرَف الدور يُعامل كـ volunteer.
  * @param {string} role - governor | coordinator | committee_head | committee_coordinator | committee_supervisor | member | volunteer | budget_manager | accountant | financial_officer | admin
  * @returns {Object} كائن الصلاحيات
