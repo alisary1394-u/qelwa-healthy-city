@@ -298,7 +298,7 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
 // لا نمسح team_member أبداً — حماية نهائية لبيانات الأعضاء (بريد، هاتف، إلخ) حتى مع الاستخدام الفعلي.
 const TABLES_CLEAR_ON_RESEED = [
   'committee', 'axis', 'standard', 'initiative', 'initiative_kpi',
-  'budget', 'budget_allocation', 'transaction'
+  'task', 'budget', 'budget_allocation', 'transaction'
 ];
 const NEVER_CLEAR_TABLES = ['team_member'];
 
@@ -315,7 +315,9 @@ app.post('/api/seed', async (req, res) => {
       TABLES_CLEAR_ON_RESEED.filter((t) => !NEVER_CLEAR_TABLES.includes(t)).forEach((t) => db.clearTable(t));
     }
     const { runSeed } = await import('./seed.js');
-    await runSeed();
+    // عند مسح البيانات وإعادة التحّميل نُعيد فريق التجربة والمهام أيضاً
+    const forceSampleTeam = req.query.clear === '1';
+    await runSeed({ forceSampleTeam });
     enqueueMutationBackup('seed');
     res.json({ ok: true, message: 'تم تنفيذ البذرة' });
   } catch (e) {
