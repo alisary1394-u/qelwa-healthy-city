@@ -450,6 +450,9 @@ async function ensureMinimalSeedOnStartup() {
   try {
     const db = await getDb();
     if (db.list('team_member').length > 0) return;
+    if (isRailwayRuntime()) {
+      console.warn('[Qelwa] تنبيه: لا يوجد أعضاء. إذا كان هذا يحدث بعد كل نشر، فغالباً المسار /data غير مربوط بـ Volume — ربط Volume على /data ضروري لاستمرارية البيانات. راجع docs/DATA_LOSS_ON_UPDATE_ANALYSIS.md و DEPLOY.md');
+    }
     console.log('[Qelwa] لا يوجد أعضاء — تشغيل البذر التلقائي (المشرف + فريق التجربة)...');
     const { runSeed } = await import('./seed.js');
     await runSeed({ forceSampleTeam: true });
