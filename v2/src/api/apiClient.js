@@ -8,13 +8,16 @@ const { appId, token, functionsVersion, appBaseUrl, useLocalBackend, useSupabase
 
 let api;
 
-// دوال الخلفية: عند وجود apiUrl نستخدم سيرفر التطبيق (apiBackend)
-if (apiUrl) {
+// في V2 نعطي أولوية للخلفية المحلية لتفادي أي فشل fetch في بيئات التطوير المحلية.
+const isLocalHostRuntime = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+const preferLocalBackend = useLocalBackend || isLocalHostRuntime;
+
+if (preferLocalBackend) {
+  api = localBackend;
+} else if (apiUrl) {
   api = apiBackend;
 } else if (useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey) {
   api = supabaseBackend;
-} else if (useLocalBackend) {
-  api = localBackend;
 } else {
   const hasValidBase = typeof appBaseUrl === 'string' && appBaseUrl.startsWith('http') && !appBaseUrl.includes('your_backend');
   const serverUrl = hasValidBase ? appBaseUrl.replace(/\/$/, '') : 'https://base44.app';
