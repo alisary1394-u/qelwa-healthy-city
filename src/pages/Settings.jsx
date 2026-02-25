@@ -51,6 +51,15 @@ export default function Settings() {
   });
 
   const { isGovernor } = usePermissions();
+  const canShowReseedTools =
+    appParams.useLocalBackend ||
+    appParams.useSupabaseBackend ||
+    (appParams.apiUrl && appParams.allowServerReseed);
+  const reseedSourceLabel = appParams.apiUrl
+    ? 'بيانات التجربة (سيرفر التطبيق)'
+    : appParams.useSupabaseBackend
+      ? 'بيانات التجربة (قاعدة Supabase)'
+      : 'بيانات التجربة (الخلفية المحلية)';
 
   if (!isGovernor) {
     return (
@@ -217,15 +226,20 @@ export default function Settings() {
         </Card>
 
         {/* إعادة تحميل بيانات التجربة (محلي أو Supabase) */}
-        {(appParams.useLocalBackend || appParams.useSupabaseBackend || appParams.apiUrl) && typeof api.clearLocalDataAndReseed === 'function' && (
+        {canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function' && (
           <Card className="mt-6 border-amber-200 bg-amber-50/50">
             <CardHeader>
               <CardTitle className="text-lg">
-                {appParams.apiUrl ? 'بيانات التجربة (سيرفر التطبيق)' : appParams.useSupabaseBackend ? 'بيانات التجربة (قاعدة Supabase)' : 'بيانات التجربة (الخلفية المحلية)'}
+                {reseedSourceLabel}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
                 إذا لم تظهر اللجان أو الفريق أو المبادرات أو المهام أو الميزانيات، اضغط الزر أدناه لمسح البيانات وإعادة تحميل بيانات التجربة. بعد إعادة التحميل سجّل الدخول برقم الهوية <strong>1</strong> وكلمة المرور <strong>123456</strong>.
               </p>
+              {appParams.apiUrl && (
+                <p className="text-xs text-amber-700 mt-2">
+                  تنبيه: هذا الخيار ظاهر لأن <code>VITE_ALLOW_SERVER_RESEED=true</code> مفعّل. استخدمه فقط عند الضرورة القصوى.
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <Button
