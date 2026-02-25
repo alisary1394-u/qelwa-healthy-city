@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Upload, Trash2, Save, Image, RotateCcw } from "lucide-react";
+import { Settings as SettingsIcon, Upload, Trash2, Save, Image, RotateCcw, Database } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
@@ -60,6 +60,24 @@ export default function Settings() {
     : appParams.useSupabaseBackend
       ? 'بيانات التجربة (قاعدة Supabase)'
       : 'بيانات التجربة (الخلفية المحلية)';
+
+  const canShowBackupRestore = !!appParams.apiUrl && typeof api.backups?.list === 'function';
+  const { data: backupsList = [], isLoading: backupsLoading } = useQuery({
+    queryKey: ['backupsList'],
+    queryFn: () => api.backups.list(),
+    enabled: canShowBackupRestore,
+  });
+  const restoreMutation = useMutation({
+    mutationFn: () => api.backups.restoreLatest(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['teamMembers', 'tasks', 'settings', 'committees'] });
+      if (typeof window !== 'undefined') window.alert(data?.message || 'تمت الاستعادة. حدّث الصفحة.');
+      if (typeof window !== 'undefined') window.location.reload();
+    },
+    onError: (err) => {
+      if (typeof window !== 'undefined') window.alert(err?.message || 'فشلت الاستعادة');
+    },
+  });
 
   if (!isGovernor) {
     return (
@@ -224,6 +242,39 @@ export default function Settings() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
+        {canShowBackupRestore && (
+          <Card className="mt-6 border-green-200 bg-green-50/50">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                استعادة البيانات من نسخة احتياطية
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                إذا انحذفت البيانات (الفريق، المهام، اللجان…) وكان السيرفر يحفظ نسخاً احتياطية تلقائياً، يمكنك استعادة آخر نسخة. بعد الاستعادة سيتم إعادة تحميل الصفحة.
+              </p>
+              {backupsLoading ? (
+                <p className="text-sm text-gray-500">جاري التحقق من النسخ الاحتياطية...</p>
+              ) : backupsList.length === 0 ? (
+                <p className="text-sm text-amber-700">لا توجد نسخ احتياطية حالياً. استخدم الخيار أدناه لإعادة تحميل بيانات التجربة.</p>
+              ) : (
+                <p className="text-sm text-gray-600">آخر نسخة: {backupsList[0]?.name || ''}</p>
+              )}
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                className="border-green-600 text-green-700 hover:bg-green-100"
+                disabled={backupsList.length === 0 || restoreMutation.isPending}
+                onClick={() => restoreMutation.mutate()}
+              >
+                <Database className="w-4 h-4 ml-2" />
+                {restoreMutation.isPending ? 'جاري الاستعادة...' : 'استعادة من آخر نسخة احتياطية'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* إعادة تحميل بيانات التجربة (محلي أو Supabase) */}
         {canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function' && (

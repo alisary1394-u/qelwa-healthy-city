@@ -17,7 +17,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { createBackup, startAutoBackup } from './backup.js';
+import { createBackup, listBackups, restoreBackup, startAutoBackup } from './backup.js';
 // عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -93,6 +93,34 @@ app.use((req, res, next) => {
 // نقطة فحص الصحة (للمنصات مثل Railway) — لا تحتاج قاعدة بيانات
 app.get('/api/health', (req, res) => {
   res.status(200).json({ ok: true });
+});
+
+/** تهيئة التطبيق عند عدم وجود أي عضو: إنشاء المشرف وفريق التجربة. يعمل فقط عندما الفريق فارغ (آمن). */
+app.get('/api/bootstrap', async (req, res) => {
+  try {
+    const db = await getDb();
+    if (db.list('team_member').length > 0) {
+      return res.status(200).json({
+        ok: true,
+        message: 'يوجد أعضاء بالفعل. لا حاجة للتهيئة.',
+        teamCount: db.list('team_member').length,
+      });
+    }
+    const { runSeed } = await import('./seed.js');
+    await runSeed({ forceSampleTeam: true });
+    const teamCount = db.list('team_member').length;
+    enqueueMutationBackup('bootstrap');
+    res.status(200).json({
+      ok: true,
+      message: `تم إنشاء ${teamCount} عضو. سجّل الدخول برقم الهوية 1 وكلمة المرور 123456`,
+      teamCount,
+    });
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ ok: false, error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // فحص إعدادات البريد (للتشخيص)
@@ -328,6 +356,31 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+// قائمة النسخ الاحتياطية (تُستدعى من صفحة الإعدادات للمشرف)
+app.get('/api/backups', async (req, res) => {
+  try {
+    const files = listBackups();
+    res.json(files.map((f) => ({ name: f.name, mtime: f.mtime, size: f.size })));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// استعادة من أحدث نسخة احتياطية
+app.post('/api/backups/restore-latest', async (req, res) => {
+  try {
+    const files = listBackups();
+    if (files.length === 0) {
+      return res.status(404).json({ ok: false, error: 'لا توجد نسخ احتياطية' });
+    }
+    const result = await restoreBackup(files[0].path);
+    enqueueMutationBackup('after_restore');
+    res.json({ ok: true, message: 'تمت استعادة البيانات من آخر نسخة', restoredCounts: result.restoredCounts });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 function isValidEmail(str) {
   if (!str || typeof str !== 'string') return false;
   const trimmed = str.trim().toLowerCase();
@@ -391,8 +444,25 @@ if (fs.existsSync(distPath)) {
 }
 
 const HOST = process.env.HOST || '0.0.0.0';
+
+/** عند بدء السيرفر: إذا لم يوجد أي عضو (حتى المحافظ) نُنفّذ البذر تلقائياً لإنشاء المشرف وفريق التجربة. */
+async function ensureMinimalSeedOnStartup() {
+  try {
+    const db = await getDb();
+    if (db.list('team_member').length > 0) return;
+    console.log('[Qelwa] لا يوجد أعضاء — تشغيل البذر التلقائي (المشرف + فريق التجربة)...');
+    const { runSeed } = await import('./seed.js');
+    await runSeed({ forceSampleTeam: true });
+    const after = db.list('team_member').length;
+    console.log('[Qelwa] تم إنشاء', after, 'عضو. الدخول: رقم الهوية 1 وكلمة المرور 123456');
+  } catch (e) {
+    console.error('[Qelwa] فشل البذر التلقائي:', e?.message || e);
+  }
+}
+
 // عدم استدعاء قاعدة البيانات عند البدء — حتى لا يتعطل السيرفر إن فشل SQLite (مثلاً على Railway)
 app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT, '(استماع على', HOST + ')');
   startAutoBackup();
+  setTimeout(() => ensureMinimalSeedOnStartup(), 3000);
 });

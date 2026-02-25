@@ -193,10 +193,20 @@ async function clearLocalDataAndReseed() {
   if (typeof window !== 'undefined') window.location.reload();
 }
 
+const backups = {
+  async list() {
+    return api('GET', '/api/backups');
+  },
+  async restoreLatest() {
+    return api('POST', '/api/backups/restore-latest');
+  },
+};
+
 export const apiBackend = {
   entities,
   auth,
   functions,
+  backups,
   asServiceRole: { entities, functions },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
