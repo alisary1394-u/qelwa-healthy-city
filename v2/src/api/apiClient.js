@@ -10,7 +10,8 @@ let api;
 
 // في V2 نعطي أولوية للخلفية المحلية لتفادي أي فشل fetch في بيئات التطوير المحلية.
 const isLocalHostRuntime = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
-const preferLocalBackend = useLocalBackend || isLocalHostRuntime;
+const isDevRuntime = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV === true;
+const preferLocalBackend = isDevRuntime || useLocalBackend || isLocalHostRuntime;
 
 if (preferLocalBackend) {
   api = localBackend;
