@@ -52,5 +52,5 @@ Backend (`v2/server`):
 ```env
 PORT=8080
 HOST=0.0.0.0
-DB_PATH=./data/healthy_city_v2.db
+DB_PATH=./data/healthy_city_v2.json
 ```
