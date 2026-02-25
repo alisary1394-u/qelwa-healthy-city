@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { UserPlus, Search, Users, Crown, UserCog, Eye, HandHelping, Building, X, DollarSign, Calculator, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
+import { UserPlus, Search, Users, Crown, UserCog, Eye, HandHelping, Building, X, DollarSign, Calculator, Briefcase, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
@@ -273,42 +273,53 @@ export default function TeamManagement() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* مراجعة الصلاحيات حسب المنصب (للمحافظ فقط) */}
+        {/* مراجعة الصلاحيات حسب المنصب (للمحافظ فقط) — تُفتح بالضغط على الزر فقط */}
         {isGovernor && (
-          <Card className="mb-6 border-blue-100 bg-blue-50/50">
-            <CardHeader className="py-4">
-              <CardTitle className="text-lg">مراجعة الصلاحيات حسب المنصب</CardTitle>
-              <p className="text-sm text-gray-600">يعرض هذا الجدول جميع الصلاحيات لكل منصب بشكل كامل.</p>
-            </CardHeader>
-            <CardContent className="pt-0 overflow-x-auto">
-              <table className="min-w-max text-sm border-collapse bg-white rounded-lg overflow-hidden border">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border p-2 text-right sticky right-0 bg-gray-100 z-10">المنصب</th>
-                    {PERMISSION_REVIEW_KEYS.map(({ label }) => (
-                      <th key={label} className="border p-2 text-center whitespace-nowrap">{label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {['governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor', 'committee_member', 'budget_manager', 'accountant', 'financial_officer', 'member', 'volunteer'].map((roleKey) => {
-                    const p = PERMISSIONS_BY_ROLE[roleKey];
-                    if (!p) return null;
-                    return (
-                      <tr key={roleKey} className="hover:bg-gray-50">
-                        <td className="border p-2 font-medium sticky right-0 bg-white">{p.label}</td>
-                        {PERMISSION_REVIEW_KEYS.map(({ key }) => (
-                          <td key={key} className="border p-2 text-center">
-                            {p[key] ? <span className="text-green-600">✓</span> : <span className="text-gray-300">—</span>}
-                          </td>
+          <Collapsible className="mb-6">
+            <Card className="border-blue-100 bg-blue-50/50">
+              <CollapsibleTrigger asChild>
+                <button type="button" className="w-full text-right group">
+                  <CardHeader className="py-4 flex flex-row items-center justify-between gap-2 cursor-pointer hover:bg-blue-100/50 rounded-t-lg transition-colors">
+                    <div>
+                      <CardTitle className="text-lg">مراجعة الصلاحيات حسب المنصب</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">اضغط لعرض الجدول الكامل للصلاحيات لكل منصب.</p>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+                  </CardHeader>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0 overflow-x-auto">
+                  <table className="min-w-max text-sm border-collapse bg-white rounded-lg overflow-hidden border">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border p-2 text-right sticky right-0 bg-gray-100 z-10">المنصب</th>
+                        {PERMISSION_REVIEW_KEYS.map(({ label }) => (
+                          <th key={label} className="border p-2 text-center whitespace-nowrap">{label}</th>
                         ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+                    </thead>
+                    <tbody>
+                      {['governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor', 'committee_member', 'budget_manager', 'accountant', 'financial_officer', 'member', 'volunteer'].map((roleKey) => {
+                        const p = PERMISSIONS_BY_ROLE[roleKey];
+                        if (!p) return null;
+                        return (
+                          <tr key={roleKey} className="hover:bg-gray-50">
+                            <td className="border p-2 font-medium sticky right-0 bg-white">{p.label}</td>
+                            {PERMISSION_REVIEW_KEYS.map(({ key }) => (
+                              <td key={key} className="border p-2 text-center">
+                                {p[key] ? <span className="text-green-600">✓</span> : <span className="text-gray-300">—</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         )}
 
         {/* Stats Cards */}
