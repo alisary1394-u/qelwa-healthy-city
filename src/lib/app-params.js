@@ -59,6 +59,8 @@ const getAppParams = () => {
 		apiUrl: (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') ||
 			(import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : '') ||
 			(import.meta.env.VITE_USE_BACKEND_FUNCTIONS === 'true' && typeof window !== 'undefined' && window.location ? window.location.origin : ''),
+		// حماية إضافية: لا نسمح بإعادة البذر على السيرفر الحقيقي إلا بتفعيل صريح.
+		allowServerReseed: import.meta.env.VITE_ALLOW_SERVER_RESEED === 'true',
 	}
 }
 

@@ -15,6 +15,8 @@ function getBaseUrl() {
   return appParams.apiUrl || '';
 }
 
+const allowServerReseed = import.meta.env.DEV || appParams.allowServerReseed === true;
+
 async function api(method, path, body) {
   const base = getBaseUrl();
   const opts = {
@@ -147,6 +149,7 @@ const functions = {
 };
 
 async function seedDefaultGovernorIfNeeded() {
+  if (!allowServerReseed) return null;
   const members = await entities.TeamMember.list();
   if (members.length > 0) return getStoredUser();
   await api('POST', '/api/seed');
@@ -165,16 +168,24 @@ function getDefaultLocalCredentials() {
 }
 
 async function seedAxesAndStandardsIfNeeded() {
+  if (!allowServerReseed) return;
   const axes = await entities.Axis.list();
   if (axes.length === 0) await api('POST', '/api/seed');
 }
 
 async function seedCommitteesTeamInitiativesTasksIfNeeded() {
+  if (!allowServerReseed) return;
   const committees = await entities.Committee.list();
   if (committees.length === 0) await api('POST', '/api/seed');
 }
 
 async function clearLocalDataAndReseed() {
+  if (!allowServerReseed) {
+    if (typeof window !== 'undefined') {
+      window.alert('إعادة البذر على السيرفر معطّلة افتراضياً لحماية البيانات. فعّل VITE_ALLOW_SERVER_RESEED=true فقط عند الحاجة.');
+    }
+    return;
+  }
   try {
     await api('POST', '/api/seed?clear=1');
   } catch (_) {}

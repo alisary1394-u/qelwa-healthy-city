@@ -18,6 +18,7 @@
     "backup:create": "npm --prefix server run backup:create",
     "backup:list": "npm --prefix server run backup:list",
     "backup:restore": "npm --prefix server run backup:restore",
+    "backup:restore-latest": "npm --prefix server run backup:restore-latest",
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:android": "npm run cap:sync && npx cap open android",

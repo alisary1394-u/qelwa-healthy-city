@@ -46,6 +46,22 @@ function shouldSnapshotOnMutation() {
   return !['0', 'false', 'no', 'off'].includes(v);
 }
 
+function isEnabled(value, defaultValue = false) {
+  if (value == null || value === '') return defaultValue;
+  const v = String(value).trim().toLowerCase();
+  return !['0', 'false', 'no', 'off'].includes(v);
+}
+
+function isRailwayRuntime() {
+  return !!(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.RAILWAY_SERVICE_ID);
+}
+
+function isSeedApiEnabled() {
+  // أمان افتراضي: على Railway يكون /api/seed مغلقاً حتى يتم تفعيله صراحةً.
+  const defaultValue = !isRailwayRuntime();
+  return isEnabled(process.env.SEED_API_ENABLED, defaultValue);
+}
+
 function enqueueMutationBackup(reason) {
   if (!shouldSnapshotOnMutation()) return;
   const now = Date.now();
@@ -282,18 +298,26 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
 // لا نمسح team_member أبداً — حماية نهائية لبيانات الأعضاء (بريد، هاتف، إلخ) حتى مع الاستخدام الفعلي.
 const TABLES_CLEAR_ON_RESEED = [
   'committee', 'axis', 'standard', 'initiative', 'initiative_kpi',
-  'budget', 'budget_allocation', 'transaction'
+  'task', 'budget', 'budget_allocation', 'transaction'
 ];
 const NEVER_CLEAR_TABLES = ['team_member'];
 
 app.post('/api/seed', async (req, res) => {
   try {
+    if (!isSeedApiEnabled()) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Seed API is disabled. Set SEED_API_ENABLED=true temporarily only when you explicitly need reseed.',
+      });
+    }
     const db = await getDb();
     if (req.query.clear === '1') {
       TABLES_CLEAR_ON_RESEED.filter((t) => !NEVER_CLEAR_TABLES.includes(t)).forEach((t) => db.clearTable(t));
     }
     const { runSeed } = await import('./seed.js');
-    await runSeed();
+    // عند مسح البيانات وإعادة التحّميل نُعيد فريق التجربة والمهام أيضاً
+    const forceSampleTeam = req.query.clear === '1';
+    await runSeed({ forceSampleTeam });
     enqueueMutationBackup('seed');
     res.json({ ok: true, message: 'تم تنفيذ البذرة' });
   } catch (e) {

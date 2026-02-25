@@ -22,19 +22,29 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
 
-      const useLocalOrServerDb = appParams.useLocalBackend ||
-        (appParams.useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey) ||
-        !!appParams.apiUrl;
-      if (useLocalOrServerDb) {
+      const useSupabaseBackend = appParams.useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey;
+      const useServerBackend = !!appParams.apiUrl;
+      const useManagedBackend = appParams.useLocalBackend || useSupabaseBackend || useServerBackend;
+      const allowSeedOnServer = appParams.allowServerReseed === true;
+      const shouldRunClientSeed =
+        appParams.useLocalBackend ||
+        useSupabaseBackend ||
+        (useServerBackend && allowSeedOnServer);
+
+      if (useManagedBackend) {
         setAppPublicSettings({});
         setIsLoadingPublicSettings(false);
-        // تشغيل البذر فقط (بدون دخول تلقائي لأي مشرف أو عضو)
-        try {
-          await Promise.resolve(api.seedDefaultGovernorIfNeeded?.() ?? null);
-          await Promise.resolve(api.seedAxesAndStandardsIfNeeded?.());
-          await Promise.resolve(api.seedCommitteesTeamInitiativesTasksIfNeeded?.());
-        } catch (e) {
-          if (typeof console !== 'undefined') console.warn('Seed failed:', e);
+        // حماية الإنتاج: لا نشغّل بذر البيانات على السيرفر إلا بتفعيل صريح.
+        if (shouldRunClientSeed) {
+          try {
+            await Promise.resolve(api.seedDefaultGovernorIfNeeded?.() ?? null);
+            await Promise.resolve(api.seedAxesAndStandardsIfNeeded?.());
+            await Promise.resolve(api.seedCommitteesTeamInitiativesTasksIfNeeded?.());
+          } catch (e) {
+            if (typeof console !== 'undefined') console.warn('Seed failed:', e);
+          }
+        } else if (useServerBackend && typeof console !== 'undefined') {
+          console.info('[Auth] Server seed is disabled by default (set VITE_ALLOW_SERVER_RESEED=true only when explicitly needed).');
         }
         // الدخول فقط عبر نموذج تسجيل الدخول أو جلسة محفوظة سابقاً (لا دخول تلقائي)
         try {
