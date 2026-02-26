@@ -34,18 +34,18 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
-/** استخراج مؤشر المعيار (0–74) من الرمز محور-رقم، مع دعم 12 محوراً (CSV) */
+/** استخراج مؤشر المعيار (0–85) من الرمز محور-رقم، مع دعم 13 محوراً (CSV) */
 function getStandardIndexFromCode(code) {
   const match = String(code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(code || '').match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
   const i = parseInt(match[2], 10);
-  if (axisNum < 1 || axisNum > 12 || i < 1) return -1;
+  if (axisNum < 1 || axisNum > 13 || i < 1) return -1;
   if (AXIS_COUNTS[axisNum - 1] != null) {
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    return Math.min(74, before + (i - 1));
+    return Math.min(85, before + (i - 1));
   }
-  return Math.min(74, (axisNum - 1) * 8 + (i - 1));
+  return Math.min(85, (axisNum - 1) * 8 + (i - 1));
 }
 
 function buildRequiredEvidence(documents) {
@@ -295,7 +295,7 @@ export default function Standards() {
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '75 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '86 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -315,7 +315,7 @@ export default function Standards() {
           {showResultTable && (
             <CardContent className="space-y-4 pt-0">
               <p className="text-sm text-gray-600">
-                حسب ملف المعايير (Healthy_Cities_Criteria): 12 محوراً و 75 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
+                حسب ملف المعايير (Healthy_Cities_Criteria): 13 محوراً و 86 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
               </p>
               <div className="rounded-lg border bg-white p-3">
                 <h4 className="font-semibold mb-2">مؤشر التصنيف الإجمالي</h4>
