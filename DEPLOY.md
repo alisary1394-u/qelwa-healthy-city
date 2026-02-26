@@ -67,7 +67,7 @@
 1. اربط المشروع من GitHub واختر الفرع (مثلاً `main` أو `master`).
 2. إن لم تستخدم Dockerfile، في **Settings** للخدمة:
    - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `node server/index.js` (مفضّل على `npm start` لاستقبال SIGTERM مباشرة وتقليل رسائل "npm error signal SIGTERM" في السجلات)
+   - **Start Command:** `node server/index.js` (مفضّل على `npm start` لاستقبال SIGTERM مباشرة وتقليل رسائل "npm error signal SIGTERM" في السجلات). **إذا ظهرت في السجلات "npm error signal SIGTERM":** تأكد من ضبط **Start Command** في Railway → الخدمة → **Settings** → **Deploy** على `node server/index.js` (إعدادات اللوحة قد تتجاوز `railway.json`).
    - **Root Directory:** اتركه فارغاً.
 3. في **Settings → Networking** (إن وُجد):
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
@@ -102,7 +102,7 @@
 8. **ربط الواجهة بالسيرفر:** الواجهة تتصل تلقائياً بنفس النطاق (مثلاً `https://qeelwah.com` أو `https://xxx.railway.app`). **لا تضبط** `VITE_API_URL` في Railway إلا إذا كانت الواجهة تُعرض من نطاق مختلف عن السيرفر. إضافة البريد الإلكتروني (التحقق) لا تغيّر هذا الربط — كل الطلبات تبقى إلى نفس السيرفر.
 9. بعد النشر، افتح رابط **الخدمة** (مثل `https://xxx.up.railway.app`) وليس رابط لوحة التحكم.
 10. إن ظهرت "Application failed to respond":
-   - **تجربة خادم بسيط:** في Railway → الخدمة → **Settings** → **Deploy** (أو **Build & Deploy**) → **Start Command** غيّره إلى: `node server/railway-minimal.cjs` ثم **Redeploy**. إن فتح الرابط وظهرت كلمة "OK" فالمشكلة من التطبيق الرئيسي وليس من المنصة. بعدها أرجع **Start Command** إلى `npm start` أو اتركه فارغاً لاستخدام أوامر الـ Dockerfile.
+   - **تجربة خادم بسيط:** في Railway → الخدمة → **Settings** → **Deploy** (أو **Build & Deploy**) → **Start Command** غيّره إلى: `node server/railway-minimal.cjs` ثم **Redeploy**. إن فتح الرابط وظهرت كلمة "OK" فالمشكلة من التطبيق الرئيسي وليس من المنصة. بعدها أرجع **Start Command** إلى `node server/index.js` أو اتركه فارغاً لاستخدام أوامر الـ Dockerfile.
    - من **Deployments** → آخر نشر → **View Logs**: ابحث عن `[Qelwa] Container CMD starting` أو `[Qelwa] Process starting` أو `سيرفر المدينة الصحية يعمل على المنفذ`. إن ظهر بعدها `Uncaught exception:` أو خطأ أحمر فانسخه للمساعدة في التشخيص. إن لم يظهر أي من ذلك فالبناء أو بدء الحاوية قد يكون فاشلاً.
    - تأكد أن آخر تعديلات الكود (بما فيها `Dockerfile` و`server/index.js`) مرفوعة إلى GitHub.
 11. **التحديثات لا تظهر على Railway بعد الـ push:**
