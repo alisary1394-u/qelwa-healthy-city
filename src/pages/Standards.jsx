@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -152,21 +152,10 @@ export default function Standards() {
         updated += 1;
       }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
-      if (typeof window !== 'undefined' && updated > 0) {
-        window.alert(`تم تحديث ${updated} معياراً من ملف المعايير (Healthy_Cities_Criteria.csv).`);
-      }
     } finally {
       setSyncingStandards(false);
     }
   }, [updateStandardMutation, queryClient]);
-
-  /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
-  const syncRanRef = useRef(false);
-  useEffect(() => {
-    if (!canManageStandards || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
-    syncRanRef.current = true;
-    syncStandardsFromGuide().catch(() => { syncRanRef.current = false; });
-  }, [canManageStandards, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
