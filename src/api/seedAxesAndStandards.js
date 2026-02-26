@@ -1,20 +1,25 @@
 /**
- * بذرة المحاور التسعة و 80 معياراً (معايير المدينة الصحية - دليل منظمة الصحة العالمية، الملحق الثاني)
+ * بذرة المحاور التسعة و 80 معياراً (معايير المدينة الصحية - دليل منظمة الصحة العالمية، الملحق الثاني).
  * نصوص المعايير والمستندات المطلوبة ومؤشرات الأداء من ملف standardsFromPdf.js المستخرج من PDF الدليل.
+ * أسماء المحاور يمكن تحديثها حسب ملف المعايير.pdf الرسمي عند توفره.
  */
 
 import { STANDARDS_80, AXIS_COUNTS } from './standardsFromPdf.js';
 
+/**
+ * المحاور التسعة حسب الملحق الثاني من دليل منظمة الصحة العالمية (معايير المدن الصحية).
+ * الأسماء مأخوذة من ملف "معايير المدن الصحية.pdf" – دليل موجز لتنفيذ برنامج المدينة الصحية.
+ */
 export const AXES_SEED = [
-  { name: 'الحوكمة والشراكات', description: 'الحوكمة الرشيدة والشراكات من أجل الصحة والتنمية', order: 1 },
-  { name: 'المشاركة المجتمعية وتمكين المواطنين', description: 'مشاركة المجتمع في صنع القرار وتمكين المواطنين', order: 2 },
-  { name: 'البيئة والاستدامة', description: 'البيئة الحضرية المستدامة والصحة البيئية', order: 3 },
-  { name: 'الصحة والرعاية الصحية', description: 'الخدمات الصحية والوقاية والرعاية', order: 4 },
-  { name: 'النقل والتنقل الآمن', description: 'النقل المستدام والتنقل الآمن', order: 5 },
-  { name: 'الإسكان والخدمات الأساسية', description: 'الإسكان اللائق والبنية التحتية والخدمات', order: 6 },
-  { name: 'التعليم والثقافة', description: 'التعليم والصحة الثقافية والمعرفية', order: 7 },
-  { name: 'الاقتصاد والتشغيل', description: 'الفرص الاقتصادية والعمل اللائق', order: 8 },
-  { name: 'السلامة والعدالة الاجتماعية', description: 'الأمان والعدالة والاندماج الاجتماعي', order: 9 },
+  { name: 'بناء الشراكات من أجل التنمية المحلية', description: 'بناء الشراكات من أجل التنمية المحلية (معايير 1–9)', order: 1 },
+  { name: 'مركز المعلومات والمشاركة المجتمعية', description: 'مركز المعلومات والمشاركة المجتمعية (معايير 10–18)', order: 2 },
+  { name: 'البيئة والاستدامة', description: 'البيئة والاستدامة (معايير 19–27)', order: 3 },
+  { name: 'الصحة والرعاية الصحية', description: 'الصحة والرعاية الصحية (معايير 28–36)', order: 4 },
+  { name: 'الصحة والرعاية والوقاية', description: 'الصحة والرعاية والوقاية والبرامج (معايير 37–45)', order: 5 },
+  { name: 'السلامة والأمان والعدالة الاجتماعية', description: 'السلامة والأمان والعدالة والطفولة والتعليم والعمل (معايير 46–54)', order: 6 },
+  { name: 'الطوارئ والتعليم والثقافة', description: 'الطوارئ والاستعداد لها والتعليم والثقافة (معايير 55–63)', order: 7 },
+  { name: 'التدريب والمهارات', description: 'التدريب والمهارات (معايير 64–72)', order: 8 },
+  { name: 'الاقتصاد والإقراض', description: 'الاقتصاد والإقراض (معايير 73–80)', order: 9 },
 ];
 
 const VERIFICATION_KPI = { name: 'مؤشر التحقق (من الدليل)', target: 'أدلة متوفرة (+)', unit: 'تحقق' };
@@ -34,8 +39,17 @@ function kpisWithVerificationFirst(kpisArray, description) {
 }
 
 /**
+ * بناء نص "الأدلة المطلوبة" من قائمة المستندات (حسب دليل منظمة الصحة العالمية).
+ */
+function buildRequiredEvidence(documents) {
+  const list = Array.isArray(documents) && documents.length ? documents : [];
+  if (list.length === 0) return 'أدلة ومستندات تدعم تحقيق المعيار';
+  return 'أدلة مطلوبة: ' + list.join('، ');
+}
+
+/**
  * إنشاء مصفوفة الـ 80 معياراً من دليل المدن الصحية (PDF)، موزعة على المحاور التسعة.
- * كل معيار يأخذ: العنوان، الوصف، المستندات المطلوبة، مؤشرات الأداء (مع مؤشر التحقق من الدليل أولاً).
+ * كل معيار يأخذ: العنوان، الوصف، المستندات المطلوبة (كأدلة مطلوبة)، مؤشرات الأداء (مع مؤشر التحقق من الدليل أولاً).
  */
 export function buildStandardsSeed(axesWithIds) {
   const standards = [];
@@ -48,14 +62,15 @@ export function buildStandardsSeed(axesWithIds) {
       const code = `م${axisNum}-${i}`;
       const description = item?.description ?? `وصف المعيار ${code} ضمن محور ${axis.name}.`;
       const kpis = kpisWithVerificationFirst(item?.kpis ?? [{ name: 'مؤشر تحقيق', target: '-', unit: '' }], description);
+      const documents = item?.documents ?? [];
       standards.push({
         code,
         title: item?.title ?? `معيار ${axis.name} ${code}`,
         description,
         axis_id: axis.id,
         axis_name: axis.name,
-        required_evidence: 'أدلة ومستندات تدعم تحقيق المعيار',
-        required_documents: JSON.stringify(item?.documents ?? ['وثائق تدعم تحقيق المعيار']),
+        required_evidence: buildRequiredEvidence(documents),
+        required_documents: JSON.stringify(documents.length ? documents : ['وثائق تدعم تحقيق المعيار']),
         kpis: JSON.stringify(kpis),
         status: 'not_started',
       });
