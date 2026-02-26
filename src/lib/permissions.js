@@ -262,7 +262,7 @@ export const PERMISSIONS_BY_ROLE = {
     canManageCommittees: false,
     canManageStandards: false,
     canApproveEvidence: false,
-    canManageBudget: false,
+    canManageBudget: true,
     canApproveTransactions: false,
     canCreateTransactions: true,
     canViewFinancials: true,
