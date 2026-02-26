@@ -14,9 +14,9 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
     const config = statusConfig[status] || statusConfig.not_started;
     const Icon = config.icon;
     return (
-      <Badge className={`${config.color} text-white shrink-0 whitespace-nowrap px-2.5 py-1`} dir="rtl">
-        <Icon className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 shrink-0" />
-        <span className="inline-block">{config.label}</span>
+      <Badge className={`${config.color} text-white shrink-0 whitespace-nowrap text-sm font-medium px-4 py-2 min-h-[2.25rem] rounded-lg inline-flex items-center gap-1.5`} dir="rtl">
+        <Icon className="w-4 h-4 shrink-0 rtl:order-2" />
+        <span>{config.label}</span>
       </Badge>
     );
   };
