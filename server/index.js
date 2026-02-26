@@ -481,6 +481,7 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 let httpServer;
 httpServer = app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT, '(استماع على', HOST + ')');
+  console.log('[Qelwa] جاهز — /api/health يرد الآن');
   startAutoBackup();
   setTimeout(() => ensureMinimalSeedOnStartup(), 3000);
 });
