@@ -14,8 +14,8 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
     const config = statusConfig[status] || statusConfig.not_started;
     const Icon = config.icon;
     return (
-      <Badge className={`${config.color} text-white`}>
-        <Icon className="w-3 h-3 ml-1" />
+      <Badge className={`${config.color} text-white`} dir="rtl">
+        <Icon className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1" />
         {config.label}
       </Badge>
     );
@@ -36,7 +36,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
   const totalStandards = standards.length;
 
   return (
-    <div className="bg-white p-8 space-y-8" id="who-report">
+    <div dir="rtl" className="bg-white p-8 space-y-8 text-right font-sans" id="who-report">
       {/* Report Header */}
       <div className="text-center border-b-4 border-blue-600 pb-6">
         <div className="flex justify-center mb-4">
@@ -87,7 +87,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
       </div>
 
       {/* Progress by Axis */}
-      <div className="space-y-4">
+      <div className="space-y-4 text-right">
         <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-green-600 pr-3">
           التقدم حسب المحاور
         </h2>
@@ -96,7 +96,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
             const completion = calculateAxisCompletion(axis.id);
             const axisStandards = standards.filter(s => s.axis_id === axis.id);
             return (
-              <div key={axis.id} className="border rounded-lg p-4">
+              <div key={axis.id} className="border rounded-lg p-4 text-right">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">{axis.name}</h3>
                   <span className="text-2xl font-bold text-blue-600">{completion}%</span>
@@ -134,22 +134,22 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
               {axisStandards.map(standard => {
                 const standardEvidence = evidence.filter(e => e.standard_id === standard.id);
                 return (
-                  <Card key={standard.id} className="break-inside-avoid">
+                  <Card key={standard.id} className="break-inside-avoid text-right">
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 text-right">
+                          <div className="flex items-center gap-2 mb-2 justify-end">
                             <Badge variant="outline" className="text-sm">{standard.code}</Badge>
                             {getStatusBadge(standard.status)}
                           </div>
-                          <CardTitle className="text-lg">{standard.title}</CardTitle>
+                          <CardTitle className="text-lg text-right">{standard.title}</CardTitle>
                         </div>
-                        <div className="text-right">
+                        <div className="shrink-0">
                           <p className="text-3xl font-bold text-blue-600">{standard.completion_percentage || 0}%</p>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-3 text-right">
                       {standard.description && (
                         <div>
                           <p className="text-sm font-semibold text-gray-700">الوصف:</p>
@@ -173,13 +173,13 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                       
                       {standardEvidence.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                          <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1 justify-end">
                             <FileText className="w-4 h-4" />
                             الأدلة المرفقة ({standardEvidence.length}):
                           </p>
                           <div className="space-y-1">
                             {standardEvidence.map(ev => (
-                              <div key={ev.id} className="text-xs bg-gray-50 p-2 rounded flex items-center justify-between">
+                              <div key={ev.id} className="text-xs bg-gray-50 p-2 rounded flex items-center justify-between text-right" dir="rtl">
                                 <span>{ev.title}</span>
                                 <Badge className={
                                   ev.status === 'approved' ? 'bg-green-600' :
