@@ -21,40 +21,6 @@ const ALL_ROLES = [
   { value: "financial_officer", label: "موظف مالي" }
 ];
 
-/** أقسام وجهات متاحة للاختيار في حقل القسم/الجهة (أقسام التطبيق + جهات عامة) */
-const DEPARTMENT_OPTIONS = [
-  // أقسام التطبيق
-  'لوحة التحكم',
-  'التقارير',
-  'المعايير',
-  'المبادرات',
-  'المهام',
-  'الميزانية',
-  'اللجان',
-  'الفريق',
-  'الملفات',
-  'الاستبيان',
-  'الإعدادات',
-  // جهات وأقسام عامة
-  'الصحة العامة',
-  'البيئة',
-  'التعليم',
-  'البلدية',
-  'الشؤون الاجتماعية',
-  'الزراعة',
-  'المياه',
-  'الطوارئ والدفاع المدني',
-  'الإعلام والتوعية',
-  'الشؤون البلدية والقروية',
-  'الرعاية الصحية الأولية',
-  'الصحة المدرسية',
-  'الطب الوقائي',
-  'الخدمات المساندة',
-  'أخرى'
-];
-
-const OTHER_DEPARTMENT_VALUE = '__other__';
-
 export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], restrictedRoles = [] }) {
   const roles = (restrictedRoles && restrictedRoles.length) ? ALL_ROLES.filter((r) => !restrictedRoles.includes(r.value)) : ALL_ROLES;
   const [formData, setFormData] = useState({
@@ -74,19 +40,6 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     notes: ''
   });
   const [loading, setLoading] = useState(false);
-  const [departmentOther, setDepartmentOther] = useState('');
-
-  const predefinedDepts = DEPARTMENT_OPTIONS.filter(d => d !== 'أخرى');
-  const existingUnique = [...new Set((existingDepartments || []).filter(Boolean))].filter(d => !predefinedDepts.includes(d));
-  const departmentOptions = [
-    ...predefinedDepts.map(d => ({ value: d, label: d })),
-    ...existingUnique.map(d => ({ value: d, label: d })),
-    { value: OTHER_DEPARTMENT_VALUE, label: 'أخرى' }
-  ];
-  const isPredefinedOrExisting = predefinedDepts.includes(formData.department) || existingUnique.includes(formData.department);
-  const departmentSelectValue = isPredefinedOrExisting
-    ? formData.department
-    : (formData.department ? OTHER_DEPARTMENT_VALUE : '');
 
   useEffect(() => {
     if (member) {
@@ -125,11 +78,6 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         notes: ''
       });
     }
-    if (member?.department && !DEPARTMENT_OPTIONS.includes(member.department)) {
-      setDepartmentOther(member.department);
-    } else {
-      setDepartmentOther('');
-    }
   }, [member, open, selectedCommitteeId, committees]);
 
   const handleCommitteeChange = (committeeId) => {
@@ -145,19 +93,10 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     e.preventDefault();
     setLoading(true);
     try {
-      const departmentToSave = departmentSelectValue === OTHER_DEPARTMENT_VALUE ? departmentOther : formData.department;
-      await onSave({ ...formData, department: departmentToSave || '' });
+      await onSave({ ...formData, department: formData.department?.trim() || '' });
       onOpenChange(false);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDepartmentChange = (value) => {
-    if (value === OTHER_DEPARTMENT_VALUE) {
-      setFormData({ ...formData, department: '' });
-    } else {
-      setFormData({ ...formData, department: value });
     }
   };
 
@@ -267,24 +206,11 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             
             <div className="space-y-2">
               <Label>القسم/الجهة</Label>
-              <Select value={departmentSelectValue} onValueChange={handleDepartmentChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر القسم أو الجهة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departmentOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {departmentSelectValue === OTHER_DEPARTMENT_VALUE && (
-                <Input
-                  value={departmentOther}
-                  onChange={(e) => setDepartmentOther(e.target.value)}
-                  placeholder="أدخل اسم القسم أو الجهة"
-                  className="mt-2"
-                />
-              )}
+              <Input
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                placeholder="أدخل القسم أو الجهة"
+              />
             </div>
             
             {(formData.role === 'volunteer' || formData.role === 'member') && (
