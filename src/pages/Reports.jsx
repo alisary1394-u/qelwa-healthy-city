@@ -173,8 +173,8 @@ export default function Reports() {
     { value: 'initiatives_completed', label: 'المبادرات المكتملة', getData: () => filteredInitiatives.filter(i => i.status === 'completed').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
     { value: 'initiatives_in_progress', label: 'المبادرات قيد التنفيذ', getData: () => filteredInitiatives.filter(i => i.status === 'in_progress').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
     { value: 'team', label: 'أعضاء الفريق', getData: () => members.map(m => ({ 'الاسم': m.full_name || '—', 'رقم الهوية': m.national_id || '—', 'المنصب': m.role || '—', 'اللجنة': getMemberCommitteeName(m), 'القسم/الجهة': m.department || '—', 'البريد': m.email || '—', 'الهاتف': m.phone || '—' })) },
-    { value: 'standards', label: 'المعايير', getData: () => standards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || axes.find(a => a.id === s.axis_id)?.name || '—', 'الحالة': standardStatusLabel[s.status] || s.status, 'نسبة الإنجاز %': s.completion_percentage ?? '—', 'الوصف': (s.description || '').slice(0, 100) + ((s.description || '').length > 100 ? '...' : ''), 'المسؤول': s.assigned_to || '—' })) },
-    { value: 'kpis', label: 'المؤشرات', getData: () => kpis.map(k => ({ 'المؤشر': k.kpi_name || '—', 'الوصف': (k.description || '').slice(0, 80) + ((k.description || '').length > 80 ? '...' : ''), 'المبادرة': getKpiInitiativeTitle(k), 'القيمة الحالية': k.current_value, 'المستهدف': k.target_value, 'الوحدة': k.unit || '—', 'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
+    { value: 'standards', label: 'المعايير', getData: () => standards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || axes.find(a => a.id === s.axis_id)?.name || '—', 'الحالة': standardStatusLabel[s.status] || s.status, 'نسبة الإنجاز %': s.completion_percentage ?? '—', 'الوصف': s.description || '—', 'المسؤول': s.assigned_to || '—' })) },
+    { value: 'kpis', label: 'المؤشرات', getData: () => kpis.map(k => ({ 'المؤشر': k.kpi_name || '—', 'الوصف': k.description || '—', 'المبادرة': getKpiInitiativeTitle(k), 'القيمة الحالية': k.current_value, 'المستهدف': k.target_value, 'الوحدة': k.unit || '—', 'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
   ];
 
   const currentDetailedData = (() => {
@@ -520,12 +520,12 @@ export default function Reports() {
                     {currentDetailedData.length === 0 ? (
                       <p className="text-muted-foreground py-8 text-center">لا توجد بيانات لهذا التقرير.</p>
                     ) : (
-                      <div className="overflow-x-auto rounded-md border">
-                        <Table>
+                      <div dir="rtl" className="overflow-x-auto rounded-md border text-right">
+                        <Table className="min-w-full">
                           <TableHeader>
                             <TableRow>
                               {Object.keys(currentDetailedData[0]).map(key => (
-                                <TableHead key={key} className="whitespace-nowrap">{key}</TableHead>
+                                <TableHead key={key} className="whitespace-nowrap text-right font-semibold">{key}</TableHead>
                               ))}
                             </TableRow>
                           </TableHeader>
@@ -533,7 +533,7 @@ export default function Reports() {
                             {currentDetailedData.map((row, idx) => (
                               <TableRow key={idx}>
                                 {Object.keys(currentDetailedData[0]).map(key => (
-                                  <TableCell key={key} className="whitespace-nowrap max-w-[200px] truncate" title={String(row[key] ?? '')}>
+                                  <TableCell key={key} dir="rtl" className="text-right align-top max-w-[280px] break-words whitespace-normal" title={String(row[key] ?? '')}>
                                     {String(row[key] ?? '—')}
                                   </TableCell>
                                 ))}
