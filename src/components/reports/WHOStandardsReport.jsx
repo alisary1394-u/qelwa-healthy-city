@@ -36,7 +36,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
   const totalStandards = standards.length;
 
   return (
-    <div dir="rtl" className="bg-white p-8 space-y-8 text-right font-sans" id="who-report">
+    <div dir="rtl" className="report-font bg-white p-8 space-y-8 text-right font-sans antialiased" id="who-report">
       {/* Report Header */}
       <div className="text-center border-b-4 border-blue-600 pb-6">
         <div className="flex justify-center mb-4">

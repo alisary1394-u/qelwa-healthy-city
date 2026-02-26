@@ -85,4 +85,11 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* خط التقارير — وضوح أفضل للعربية وعند التصدير */
+  .report-font {
+    font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

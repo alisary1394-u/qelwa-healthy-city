@@ -262,9 +262,11 @@ export default function Reports() {
       await new Promise(r => setTimeout(r, 150));
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         logging: false,
+        windowWidth: Math.max(element.scrollWidth || 800, 800),
+        windowHeight: Math.max(element.scrollHeight || 600, 600),
         onclone: (clonedDoc, node) => {
           const root = node;
           root.querySelectorAll('.recharts-responsive-container').forEach((el) => {
@@ -417,7 +419,7 @@ export default function Reports() {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-4">
-              <div id="reports-overview" dir="rtl" className="space-y-4 text-right">
+              <div id="reports-overview" dir="rtl" className="report-font space-y-4 text-right">
               <div className="flex flex-wrap justify-end gap-2 mb-4">
                 <Button
                   variant="outline"
@@ -563,7 +565,7 @@ export default function Reports() {
 
             {/* تقارير تفصيلية Tab */}
             <TabsContent value="detailed" className="space-y-4">
-              <div id="detailed-report-content" dir="rtl" className="space-y-4 text-right">
+              <div id="detailed-report-content" dir="rtl" className="report-font space-y-4 text-right">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <Select value={detailedReportType} onValueChange={setDetailedReportType}>
                     <SelectTrigger className="w-full max-w-[280px]">
@@ -641,7 +643,7 @@ export default function Reports() {
 
             {/* Standards Tab */}
             <TabsContent value="standards" className="space-y-4">
-              <div id="reports-standards" dir="rtl" className="space-y-4 text-right">
+              <div id="reports-standards" dir="rtl" className="report-font space-y-4 text-right">
               <div className="flex flex-wrap justify-end gap-2 mb-4">
                 <Button
                   variant="outline"
@@ -822,7 +824,7 @@ export default function Reports() {
 
             {/* Initiatives Tab */}
             <TabsContent value="initiatives" className="space-y-4">
-              <div id="reports-initiatives" dir="rtl" className="space-y-4 text-right">
+              <div id="reports-initiatives" dir="rtl" className="report-font space-y-4 text-right">
               <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   variant="outline"
@@ -894,7 +896,7 @@ export default function Reports() {
 
             {/* Tasks Tab */}
             <TabsContent value="tasks" className="space-y-4">
-              <div id="reports-tasks" dir="rtl" className="space-y-4 text-right">
+              <div id="reports-tasks" dir="rtl" className="report-font space-y-4 text-right">
               <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   variant="outline"
@@ -963,7 +965,7 @@ export default function Reports() {
 
             {/* KPIs Tab */}
             <TabsContent value="kpis" className="space-y-4">
-              <div id="reports-kpis" dir="rtl" className="space-y-4 text-right">
+              <div id="reports-kpis" dir="rtl" className="report-font space-y-4 text-right">
               <div className="flex flex-wrap justify-end gap-2 mb-4">
                 <Button
                   variant="outline"
