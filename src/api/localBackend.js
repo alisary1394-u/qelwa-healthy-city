@@ -4,7 +4,7 @@
  */
 
 import { AXES_SEED, buildStandardsSeed } from '@/api/seedAxesAndStandards';
-import { STANDARDS_80, AXIS_COUNTS } from '@/api/standardsFromPdf';
+import { STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
 import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const DB_PREFIX = 'local_db_';
@@ -262,6 +262,7 @@ export function syncStandardsKpisFromPdf() {
   const standards = getStore('Standard');
   if (standards.length === 0) return;
   let updated = 0;
+  const axesList = getStore('Axis');
   standards.forEach((standard) => {
     const code = standard.code;
     if (!code || typeof code !== 'string') return;
@@ -269,11 +270,15 @@ export function syncStandardsKpisFromPdf() {
     if (!match) return;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 8) return;
-    const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    const standardIndex = before + (i - 1);
+    if (axisNum < 1 || axisNum > 9 || i < 1) return;
+    const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
+    const standardIndex = Math.min(79, before + (i - 1));
     const item = STANDARDS_80[standardIndex];
     if (!item) return;
+    const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
+    const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
+    const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
+    const axisId = axisRecord?.id ?? standard.axis_id;
     const documents = item.documents ?? [];
     const required_documents = JSON.stringify(documents);
     const required_evidence = buildRequiredEvidence(documents);
@@ -285,7 +290,6 @@ export function syncStandardsKpisFromPdf() {
       kpisList[0] = { ...kpisList[0], description: item.description };
     }
     const kpis = JSON.stringify(kpisList);
-    const axisName = AXES_SEED[axisNum - 1]?.name ?? standard.axis_name;
     entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
       description: item.description ?? standard.description,
@@ -293,6 +297,7 @@ export function syncStandardsKpisFromPdf() {
       required_documents,
       kpis,
       axis_name: axisName,
+      axis_id: axisId,
     });
     updated += 1;
   });

@@ -105,6 +105,20 @@ export const STANDARDS_80 = [
 export const AXIS_COUNTS = [10, 9, 11, 26, 6, 5, 6, 7];
 
 /**
+ * استنتاج رقم المحور (1–8) من فهرس المعيار (0–79) حسب الدليل، لضمان وضع كل معيار في محوره الصحيح.
+ * مثال: الفهرس 62 هو "الالتحاق بالمدارس وعدم التسرب" → المحور 6 (التعليم والثقافة).
+ */
+export function getAxisOrderFromStandardIndex(index) {
+  if (index < 0 || index >= 80) return 1;
+  let sum = 0;
+  for (let a = 0; a < AXIS_COUNTS.length; a++) {
+    if (index < sum + AXIS_COUNTS[a]) return a + 1;
+    sum += AXIS_COUNTS[a];
+  }
+  return 8;
+}
+
+/**
  * مؤشرات تحقق ومؤشرات أداء كل محور حسب الملحق الثاني (معايير تصنيف المدينة على أنها مدينة صحية).
  * النتيجة لكل معيار: أدلة متوفرة (+) أو أدلة غير متوفرة (-). الهدف 80% على الأقل من معايير كل محور.
  */

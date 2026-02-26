@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, STANDARDS_80, AXIS_COUNTS } from '@/api/standardsFromPdf';
+import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
 import { AXES_SEED, AXIS_SHORT_NAMES } from '@/api/seedAxesAndStandards';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ function getStandardIndexFromCode(code) {
   if (axisNum < 1 || axisNum > 9 || i < 1) return -1;
   if (axisNum <= 8 && AXIS_COUNTS[axisNum - 1] != null) {
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    return before + (i - 1);
+    return Math.min(79, before + (i - 1));
   }
   return (axisNum - 1) * 9 + (i - 1);
 }
@@ -114,9 +114,12 @@ export default function Standards() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
-  /** مزامنة نصوص المعايير (عنوان، وصف، أدلة، مؤشرات، اسم المحور) من دليل منظمة الصحة العالمية */
+  /** مزامنة نصوص المعايير (عنوان، وصف، أدلة، مؤشرات، اسم المحور، ومحور axis_id) من دليل منظمة الصحة — كل معيار يُوضع في محوره الصحيح حسب موضعه في الدليل */
   const syncStandardsFromGuide = useCallback(async () => {
-    const list = await api.entities.Standard.list('code').catch(() => []);
+    const [list, axesData] = await Promise.all([
+      api.entities.Standard.list('code').catch(() => []),
+      api.entities.Axis.list('order').catch(() => [])
+    ]);
     if (list.length === 0) return;
     setSyncingStandards(true);
     try {
@@ -125,9 +128,10 @@ export default function Standards() {
         const idx = getStandardIndexFromCode(standard.code);
         const item = STANDARDS_80[idx];
         if (!item) continue;
-        const match = String(standard.code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(standard.code || '').match(/م(\d+)-(\d+)/);
-        const axisNum = match ? parseInt(match[1], 10) : 1;
-        const axisName = AXES_SEED[Math.min(axisNum - 1, AXES_SEED.length - 1)]?.name ?? standard.axis_name;
+        const axisOrder = getAxisOrderFromStandardIndex(idx);
+        const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
+        const axisRecord = axesData.find((a) => Number(a.order) === axisOrder);
+        const axisId = axisRecord?.id ?? standard.axis_id;
         const documents = item.documents ?? [];
         const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
         const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
@@ -145,13 +149,14 @@ export default function Standards() {
             required_documents: JSON.stringify(documents),
             kpis: JSON.stringify(kpisList),
             axis_name: axisName,
+            axis_id: axisId,
           }
         });
         updated += 1;
       }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
       if (typeof window !== 'undefined' && updated > 0) {
-        window.alert(`تم تحديث ${updated} معياراً من دليل معايير المدينة الصحية.`);
+        window.alert(`تم تحديث ${updated} معياراً من دليل معايير المدينة الصحية (بما فيها وضع كل معيار في محوره الصحيح).`);
       }
     } finally {
       setSyncingStandards(false);

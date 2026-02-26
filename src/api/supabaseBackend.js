@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { appParams } from '@/lib/app-params';
 import { AXES_SEED, buildStandardsSeed } from '@/api/seedAxesAndStandards';
-import { STANDARDS_80, AXIS_COUNTS } from '@/api/standardsFromPdf';
+import { STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
 import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const AUTH_KEY = 'local_current_user';
@@ -267,9 +267,9 @@ function buildRequiredEvidence(documents) {
   return 'أدلة مطلوبة: ' + list.join('، ');
 }
 
-/** مزامنة المعايير نفسها من PDF: عنوان، وصف، أدلة مطلوبة، مستندات، مؤشرات، اسم المحور */
+/** مزامنة المعايير نفسها من PDF: عنوان، وصف، أدلة، مؤشرات، اسم المحور، ومحور (axis_id) حسب موضع المعيار في الدليل */
 async function syncStandardsKpisFromPdf() {
-  const standards = await entities.Standard.list();
+  const [standards, axesList] = await Promise.all([entities.Standard.list(), entities.Axis.list('order')]);
   if (standards.length === 0) return;
   let updated = 0;
   for (const standard of standards) {
@@ -279,11 +279,15 @@ async function syncStandardsKpisFromPdf() {
     if (!match) continue;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 8) continue;
-    const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    const standardIndex = before + (i - 1);
+    if (axisNum < 1 || axisNum > 9 || i < 1) continue;
+    const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
+    const standardIndex = Math.min(79, before + (i - 1));
     const item = STANDARDS_80[standardIndex];
     if (!item) continue;
+    const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
+    const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
+    const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
+    const axisId = axisRecord?.id ?? standard.axis_id;
     const documents = item.documents ?? [];
     const required_documents = JSON.stringify(documents);
     const required_evidence = buildRequiredEvidence(documents);
@@ -295,7 +299,6 @@ async function syncStandardsKpisFromPdf() {
       kpisList[0] = { ...kpisList[0], description: item.description };
     }
     const kpis = JSON.stringify(kpisList);
-    const axisName = AXES_SEED[axisNum - 1]?.name ?? standard.axis_name;
     await entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
       description: item.description ?? standard.description,
@@ -303,10 +306,11 @@ async function syncStandardsKpisFromPdf() {
       required_documents,
       kpis,
       axis_name: axisName,
+      axis_id: axisId,
     });
     updated++;
   }
-  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً');
+  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات، محور)', updated, 'معياراً');
 }
 
 export async function seedAxesAndStandardsIfNeeded() {
