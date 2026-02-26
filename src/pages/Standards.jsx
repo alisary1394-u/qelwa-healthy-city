@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, STANDARDS_80, AXIS_COUNTS } from '@/api/standardsFromPdf';
-import { AXES_SEED } from '@/api/seedAxesAndStandards';
+import { AXES_SEED, AXIS_SHORT_NAMES } from '@/api/seedAxesAndStandards';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -273,12 +273,19 @@ export default function Standards() {
 
   const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId);
 
+  const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
+  const pageTitle = activeAxisEntity
+    ? ((activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_SHORT_NAMES.length)
+        ? AXIS_SHORT_NAMES[activeAxisEntity.order - 1]
+        : activeAxisEntity.name)
+    : 'المعايير الدولية والأدلة';
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">المعايير الدولية والأدلة</h1>
-          <p className="text-blue-100">80 معياراً وفق منظمة الصحة العالمية</p>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
+          <p className="text-blue-100">{activeAxisEntity ? `${standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً وفق منظمة الصحة العالمية'}</p>
         </div>
       </div>
 
@@ -380,30 +387,37 @@ export default function Standards() {
             >
               جميع المحاور ({standards.length})
             </Button>
-            {axes.map(axis => (
-              <Button
-                key={axis.id}
-                variant={activeAxis === axis.id ? 'default' : 'outline'}
-                onClick={() => setActiveAxis(axis.id)}
-                className="whitespace-nowrap"
-              >
-                {axis.name} ({standards.filter(s => s.axis_id === axis.id).length})
-              </Button>
-            ))}
+            {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
+              const order = axis.order ?? 0;
+              const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
+              const count = standards.filter(s => s.axis_id === axis.id).length;
+              return (
+                <Button
+                  key={axis.id}
+                  variant={activeAxis === axis.id ? 'default' : 'outline'}
+                  onClick={() => setActiveAxis(axis.id)}
+                  className="whitespace-nowrap"
+                >
+                  {tabLabel} ({count})
+                </Button>
+              );
+            })}
           </div>
         </div>
 
         {/* Axis Progress Cards */}
         {activeAxis === 'all' && axes.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {axes.map(axis => {
+            {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
+              const order = axis.order ?? 0;
+              const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
               const progress = getAxisProgress(axis.id);
               const axisStandards = standards.filter(s => s.axis_id === axis.id);
               return (
                 <Card key={axis.id} className="cursor-pointer hover:shadow-md" onClick={() => setActiveAxis(axis.id)}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{axis.name}</h3>
+                      <h3 className="font-semibold">{tabLabel}</h3>
                       <Badge variant="outline">{axisStandards.length} معيار</Badge>
                     </div>
                     <Progress value={progress} className="h-2 mb-1" />
@@ -623,7 +637,10 @@ export default function Standards() {
                 <Select value={standardForm.axis_id} onValueChange={(v) => setStandardForm({ ...standardForm, axis_id: v })}>
                   <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
                   <SelectContent>
-                    {axes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
+                      const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
+                      return <SelectItem key={a.id} value={a.id}>{label}</SelectItem>;
+                    })}
                   </SelectContent>
                 </Select>
               </div>
