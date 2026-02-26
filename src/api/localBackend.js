@@ -261,7 +261,7 @@ export function syncStandardsKpisFromPdf() {
     if (!match) return;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 9) return;
+    if (axisNum < 1 || axisNum > 8) return;
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
     const standardIndex = before + (i - 1);
     const item = STANDARDS_80[standardIndex];
@@ -281,7 +281,7 @@ export function syncStandardsKpisFromPdf() {
   if (updated > 0) console.log('[localBackend] تم تحديث مؤشرات ومستندات', updated, 'معياراً من بيانات PDF');
 }
 
-/** إعادة المحاور التسعة و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات والمستندات من PDF */
+/** إعادة المحاور الثمانية و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات والمستندات من PDF */
 export function seedAxesAndStandardsIfNeeded() {
   if (typeof localStorage === 'undefined') return;
   const axesList = getStore('Axis');

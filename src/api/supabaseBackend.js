@@ -272,7 +272,7 @@ async function syncStandardsKpisFromPdf() {
     if (!match) continue;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 9) continue;
+    if (axisNum < 1 || axisNum > 8) continue;
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
     const standardIndex = before + (i - 1);
     const item = STANDARDS_80[standardIndex];
