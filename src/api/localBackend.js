@@ -3,8 +3,8 @@
  * تفعّل بوضع VITE_USE_LOCAL_BACKEND=true في .env.local
  */
 
-import { AXES_SEED, buildStandardsSeed } from '@/api/seedAxesAndStandards';
-import { STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
+import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
+import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const DB_PREFIX = 'local_db_';
@@ -246,7 +246,7 @@ export function getDefaultLocalCredentials() {
   return { national_id: DEFAULT_NATIONAL_ID, password: DEFAULT_PASSWORD };
 }
 
-/** بناء نص الأدلة المطلوبة من قائمة المستندات (من STANDARDS_80) */
+/** بناء نص الأدلة المطلوبة من قائمة المستندات (من ملف المعايير CSV) */
 function buildRequiredEvidence(documents) {
   const list = Array.isArray(documents) && documents.length ? documents : [];
   if (list.length === 0) return 'أدلة ومستندات تدعم تحقيق المعيار';
@@ -270,10 +270,10 @@ export function syncStandardsKpisFromPdf() {
     if (!match) return;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 9 || i < 1) return;
+    if (axisNum < 1 || axisNum > 12 || i < 1) return;
     const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
     const standardIndex = Math.min(79, before + (i - 1));
-    const item = STANDARDS_80[standardIndex];
+    const item = STANDARDS_CSV[standardIndex];
     if (!item) return;
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
@@ -282,17 +282,11 @@ export function syncStandardsKpisFromPdf() {
     const documents = item.documents ?? [];
     const required_documents = JSON.stringify(documents);
     const required_evidence = buildRequiredEvidence(documents);
-    const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
-    const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
-    if (!hasVerification) {
-      kpisList.unshift({ name: 'مؤشر التحقق (من الدليل)', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.description ?? '' });
-    } else if ((item.description ?? '') && !kpisList[0].description) {
-      kpisList[0] = { ...kpisList[0], description: item.description };
-    }
+    const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
     const kpis = JSON.stringify(kpisList);
     entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
-      description: item.description ?? standard.description,
+      description: item.title ?? standard.description,
       required_evidence,
       required_documents,
       kpis,
@@ -301,10 +295,10 @@ export function syncStandardsKpisFromPdf() {
     });
     updated += 1;
   });
-  if (updated > 0) console.log('[localBackend] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً من بيانات PDF');
+  if (updated > 0) console.log('[localBackend] تم تحديث المعايير (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً من ملف المعايير CSV');
 }
 
-/** إعادة المحاور الثمانية و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات والمستندات من PDF */
+/** إعادة المحاور الـ 12 و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */
 export function seedAxesAndStandardsIfNeeded() {
   if (typeof localStorage === 'undefined') return;
   const axesList = getStore('Axis');

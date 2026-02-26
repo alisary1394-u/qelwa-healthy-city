@@ -5,8 +5,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { appParams } from '@/lib/app-params';
-import { AXES_SEED, buildStandardsSeed } from '@/api/seedAxesAndStandards';
-import { STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
+import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
+import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const AUTH_KEY = 'local_current_user';
@@ -279,10 +279,10 @@ async function syncStandardsKpisFromPdf() {
     if (!match) continue;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 9 || i < 1) continue;
+    if (axisNum < 1 || axisNum > 12 || i < 1) continue;
     const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
     const standardIndex = Math.min(79, before + (i - 1));
-    const item = STANDARDS_80[standardIndex];
+    const item = STANDARDS_CSV[standardIndex];
     if (!item) continue;
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
@@ -291,17 +291,11 @@ async function syncStandardsKpisFromPdf() {
     const documents = item.documents ?? [];
     const required_documents = JSON.stringify(documents);
     const required_evidence = buildRequiredEvidence(documents);
-    const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
-    const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
-    if (!hasVerification) {
-      kpisList.unshift({ name: 'مؤشر التحقق (من الدليل)', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.description ?? '' });
-    } else if ((item.description ?? '') && !kpisList[0].description) {
-      kpisList[0] = { ...kpisList[0], description: item.description };
-    }
+    const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
     const kpis = JSON.stringify(kpisList);
     await entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
-      description: item.description ?? standard.description,
+      description: item.title ?? standard.description,
       required_evidence,
       required_documents,
       kpis,
@@ -310,7 +304,7 @@ async function syncStandardsKpisFromPdf() {
     });
     updated++;
   }
-  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات، محور)', updated, 'معياراً');
+  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير (عنوان، وصف، أدلة، مؤشرات، محور)', updated, 'معياراً من ملف CSV');
 }
 
 export async function seedAxesAndStandardsIfNeeded() {

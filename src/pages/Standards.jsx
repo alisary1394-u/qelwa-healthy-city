@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, STANDARDS_80, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/standardsFromPdf';
-import { AXES_SEED, AXIS_SHORT_NAMES } from '@/api/seedAxesAndStandards';
+import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
+import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,18 +34,18 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
-/** استخراج مؤشر المعيار (0–79) من الرمز محور-رقم، مع دعم 8 أو 9 محاور */
+/** استخراج مؤشر المعيار (0–79) من الرمز محور-رقم، مع دعم 12 محوراً (CSV) */
 function getStandardIndexFromCode(code) {
   const match = String(code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(code || '').match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
   const i = parseInt(match[2], 10);
-  if (axisNum < 1 || axisNum > 9 || i < 1) return -1;
-  if (axisNum <= 8 && AXIS_COUNTS[axisNum - 1] != null) {
+  if (axisNum < 1 || axisNum > 12 || i < 1) return -1;
+  if (AXIS_COUNTS[axisNum - 1] != null) {
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
     return Math.min(79, before + (i - 1));
   }
-  return (axisNum - 1) * 9 + (i - 1);
+  return Math.min(79, (axisNum - 1) * 8 + (i - 1));
 }
 
 function buildRequiredEvidence(documents) {
@@ -126,25 +126,19 @@ export default function Standards() {
       let updated = 0;
       for (const standard of list) {
         const idx = getStandardIndexFromCode(standard.code);
-        const item = STANDARDS_80[idx];
+        const item = STANDARDS_CSV[idx];
         if (!item) continue;
         const axisOrder = getAxisOrderFromStandardIndex(idx);
         const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
         const axisRecord = axesData.find((a) => Number(a.order) === axisOrder);
         const axisId = axisRecord?.id ?? standard.axis_id;
         const documents = item.documents ?? [];
-        const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
-        const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
-        if (!hasVerification) {
-          kpisList.unshift({ name: 'مؤشر التحقق (من الدليل)', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.description ?? '' });
-        } else if ((item.description ?? '') && !kpisList[0].description) {
-          kpisList[0] = { ...kpisList[0], description: item.description };
-        }
+        const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
         await updateStandardMutation.mutateAsync({
           id: standard.id,
           data: {
             title: item.title ?? standard.title,
-            description: item.description ?? standard.description,
+            description: item.title ?? standard.description,
             required_evidence: buildRequiredEvidence(documents),
             required_documents: JSON.stringify(documents),
             kpis: JSON.stringify(kpisList),
@@ -156,7 +150,7 @@ export default function Standards() {
       }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
       if (typeof window !== 'undefined' && updated > 0) {
-        window.alert(`تم تحديث ${updated} معياراً من دليل معايير المدينة الصحية (بما فيها وضع كل معيار في محوره الصحيح).`);
+        window.alert(`تم تحديث ${updated} معياراً من ملف المعايير (Healthy_Cities_Criteria.csv).`);
       }
     } finally {
       setSyncingStandards(false);
