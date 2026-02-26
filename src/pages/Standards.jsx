@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Settings, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -157,6 +157,14 @@ export default function Standards() {
     }
   }, [updateStandardMutation, queryClient]);
 
+  /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
+  const syncRanRef = useRef(false);
+  useEffect(() => {
+    if (!canManage || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
+    syncRanRef.current = true;
+    syncStandardsFromGuide().catch(() => { syncRanRef.current = false; });
+  }, [canManage, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
+
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
@@ -289,19 +297,6 @@ export default function Standards() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {standards.length > 0 && canManage && (
-          <div className="mb-4 flex justify-end">
-            <Button
-              variant="outline"
-              onClick={syncStandardsFromGuide}
-              disabled={syncingStandards}
-              className="border-green-200 bg-green-50 text-green-800 hover:bg-green-100"
-            >
-              {syncingStandards ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Settings className="w-4 h-4 ml-2" />}
-              {syncingStandards ? 'جاري التحديث...' : 'تحديث المعايير من دليل منظمة الصحة'}
-            </Button>
-          </div>
-        )}
         {/* جدول النتيجة - مؤشرات الأداء لكل محور (الملحق الثاني) */}
         <Card className="mb-6 border-blue-100 bg-blue-50/50">
           <CardHeader
