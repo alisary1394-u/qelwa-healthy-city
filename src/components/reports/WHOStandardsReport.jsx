@@ -14,9 +14,9 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
     const config = statusConfig[status] || statusConfig.not_started;
     const Icon = config.icon;
     return (
-      <Badge className={`${config.color} text-white`} dir="rtl">
-        <Icon className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1" />
-        {config.label}
+      <Badge className={`${config.color} text-white shrink-0 whitespace-nowrap px-2.5 py-1`} dir="rtl">
+        <Icon className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 shrink-0" />
+        <span className="inline-block">{config.label}</span>
       </Badge>
     );
   };
@@ -134,15 +134,15 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
               {axisStandards.map(standard => {
                 const standardEvidence = evidence.filter(e => e.standard_id === standard.id);
                 return (
-                  <Card key={standard.id} className="break-inside-avoid text-right">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 text-right">
-                          <div className="flex items-center gap-2 mb-2 justify-end">
-                            <Badge variant="outline" className="text-sm">{standard.code}</Badge>
+                  <Card key={standard.id} className="break-inside-avoid text-right overflow-visible">
+                    <CardHeader className="overflow-visible">
+                      <div className="flex items-start justify-between gap-4 overflow-visible">
+                        <div className="flex-1 min-w-0 text-right overflow-visible">
+                          <div className="flex flex-wrap items-center gap-2 mb-2 justify-end overflow-visible">
+                            <Badge variant="outline" className="text-sm shrink-0 whitespace-nowrap">{standard.code}</Badge>
                             {getStatusBadge(standard.status)}
                           </div>
-                          <CardTitle className="text-lg text-right">{standard.title}</CardTitle>
+                          <CardTitle className="report-standard-title text-lg text-right leading-snug">{standard.title}</CardTitle>
                         </div>
                         <div className="shrink-0">
                           <p className="text-3xl font-bold text-blue-600">{standard.completion_percentage || 0}%</p>
