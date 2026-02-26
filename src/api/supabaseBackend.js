@@ -261,6 +261,13 @@ export function getDefaultLocalCredentials() {
   return { national_id: DEFAULT_NATIONAL_ID, password: DEFAULT_PASSWORD };
 }
 
+function buildRequiredEvidence(documents) {
+  const list = Array.isArray(documents) && documents.length ? documents : [];
+  if (list.length === 0) return 'أدلة ومستندات تدعم تحقيق المعيار';
+  return 'أدلة مطلوبة: ' + list.join('، ');
+}
+
+/** مزامنة المعايير نفسها من PDF: عنوان، وصف، أدلة مطلوبة، مستندات، مؤشرات، اسم المحور */
 async function syncStandardsKpisFromPdf() {
   const standards = await entities.Standard.list();
   if (standards.length === 0) return;
@@ -277,7 +284,9 @@ async function syncStandardsKpisFromPdf() {
     const standardIndex = before + (i - 1);
     const item = STANDARDS_80[standardIndex];
     if (!item) continue;
-    const required_documents = JSON.stringify(item.documents ?? []);
+    const documents = item.documents ?? [];
+    const required_documents = JSON.stringify(documents);
+    const required_evidence = buildRequiredEvidence(documents);
     const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
     const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
     if (!hasVerification) {
@@ -286,10 +295,18 @@ async function syncStandardsKpisFromPdf() {
       kpisList[0] = { ...kpisList[0], description: item.description };
     }
     const kpis = JSON.stringify(kpisList);
-    await entities.Standard.update(standard.id, { required_documents, kpis });
+    const axisName = AXES_SEED[axisNum - 1]?.name ?? standard.axis_name;
+    await entities.Standard.update(standard.id, {
+      title: item.title ?? standard.title,
+      description: item.description ?? standard.description,
+      required_evidence,
+      required_documents,
+      kpis,
+      axis_name: axisName,
+    });
     updated++;
   }
-  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث مؤشرات ومستندات', updated, 'معياراً');
+  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً');
 }
 
 export async function seedAxesAndStandardsIfNeeded() {

@@ -246,8 +246,16 @@ export function getDefaultLocalCredentials() {
   return { national_id: DEFAULT_NATIONAL_ID, password: DEFAULT_PASSWORD };
 }
 
+/** بناء نص الأدلة المطلوبة من قائمة المستندات (من STANDARDS_80) */
+function buildRequiredEvidence(documents) {
+  const list = Array.isArray(documents) && documents.length ? documents : [];
+  if (list.length === 0) return 'أدلة ومستندات تدعم تحقيق المعيار';
+  return 'أدلة مطلوبة: ' + list.join('، ');
+}
+
 /**
- * مزامنة مؤشرات الأداء والمستندات المطلوبة من بيانات PDF لجميع المعايير الموجودة (حسب الرمز م1-1 ... م9-8).
+ * مزامنة المعايير نفسها من بيانات PDF: العنوان، الوصف، الأدلة المطلوبة، المستندات، المؤشرات، واسم المحور.
+ * يطبق على جميع المعايير الموجودة (حسب الرمز م1-1 ... م8-7).
  */
 export function syncStandardsKpisFromPdf() {
   if (typeof localStorage === 'undefined') return;
@@ -266,7 +274,9 @@ export function syncStandardsKpisFromPdf() {
     const standardIndex = before + (i - 1);
     const item = STANDARDS_80[standardIndex];
     if (!item) return;
-    const required_documents = JSON.stringify(item.documents ?? []);
+    const documents = item.documents ?? [];
+    const required_documents = JSON.stringify(documents);
+    const required_evidence = buildRequiredEvidence(documents);
     const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
     const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
     if (!hasVerification) {
@@ -275,10 +285,18 @@ export function syncStandardsKpisFromPdf() {
       kpisList[0] = { ...kpisList[0], description: item.description };
     }
     const kpis = JSON.stringify(kpisList);
-    entities.Standard.update(standard.id, { required_documents, kpis });
+    const axisName = AXES_SEED[axisNum - 1]?.name ?? standard.axis_name;
+    entities.Standard.update(standard.id, {
+      title: item.title ?? standard.title,
+      description: item.description ?? standard.description,
+      required_evidence,
+      required_documents,
+      kpis,
+      axis_name: axisName,
+    });
     updated += 1;
   });
-  if (updated > 0) console.log('[localBackend] تم تحديث مؤشرات ومستندات', updated, 'معياراً من بيانات PDF');
+  if (updated > 0) console.log('[localBackend] تم تحديث المعايير نفسها (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً من بيانات PDF');
 }
 
 /** إعادة المحاور الثمانية و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات والمستندات من PDF */
