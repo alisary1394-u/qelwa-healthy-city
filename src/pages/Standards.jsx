@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -152,10 +152,21 @@ export default function Standards() {
         updated += 1;
       }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
+      if (typeof window !== 'undefined' && updated > 0) {
+        window.alert(`تم تحديث ${updated} معياراً من ملف المعايير (Healthy_Cities_Criteria.csv).`);
+      }
     } finally {
       setSyncingStandards(false);
     }
   }, [updateStandardMutation, queryClient]);
+
+  /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
+  const syncRanRef = useRef(false);
+  useEffect(() => {
+    if (!canManageStandards || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
+    syncRanRef.current = true;
+    syncStandardsFromGuide().catch(() => { syncRanRef.current = false; });
+  }, [canManageStandards, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
@@ -283,7 +294,7 @@ export default function Standards() {
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '79 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -303,7 +314,7 @@ export default function Standards() {
           {showResultTable && (
             <CardContent className="space-y-4 pt-0">
               <p className="text-sm text-gray-600">
-                حسب ملف المعايير (Healthy_Cities_Criteria): 12 محوراً و 80 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
+                حسب ملف المعايير (Healthy_Cities_Criteria): 12 محوراً و 79 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
               </p>
               <div className="rounded-lg border bg-white p-3">
                 <h4 className="font-semibold mb-2">مؤشر التصنيف الإجمالي</h4>
