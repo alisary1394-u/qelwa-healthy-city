@@ -235,14 +235,31 @@ export default function Reports() {
   // Export to PDF (قد يستغرق 15–60 ثانية لتقرير منظمة الصحة حسب حجم المحتوى وجهازك)
   const exportToPDF = async (elementId = 'reports-content', filename = 'تقرير-التحليلات.pdf') => {
     setExportingPDF(true);
+    let restore = [];
     try {
       const element = document.getElementById(elementId);
       if (!element) {
         toast({ title: 'فشل التصدير', description: 'العنصر غير موجود. تأكد من فتح التبويب الصحيح.', variant: 'destructive' });
         return;
       }
+
+      let el = element;
+      while (el && el !== document.body) {
+        const style = el.style;
+        const hidden = el.getAttribute('hidden');
+        restore.push({
+          el,
+          display: style.display,
+          visibility: style.visibility,
+          hidden,
+        });
+        style.display = 'block';
+        style.visibility = 'visible';
+        if (hidden != null) el.removeAttribute('hidden');
+        el = el.parentElement;
+      }
       element.scrollIntoView({ behavior: 'instant', block: 'start' });
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 150));
 
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -271,6 +288,8 @@ export default function Reports() {
               img.style.minHeight = '40px';
             }
           });
+          root.style.minHeight = '400px';
+          root.style.width = Math.max(root.scrollWidth || 800, 800) + 'px';
         },
       });
 
@@ -322,6 +341,11 @@ export default function Reports() {
     } catch (e) {
       toast({ title: 'فشل تصدير PDF', description: e?.message || 'حدث خطأ. جرّب تقريراً أصغر أو تحقق من المتصفح.', variant: 'destructive' });
     } finally {
+      restore.forEach(({ el, display, visibility, hidden }) => {
+        el.style.display = display;
+        el.style.visibility = visibility;
+        if (hidden != null) el.setAttribute('hidden', hidden);
+      });
       setExportingPDF(false);
     }
   };
