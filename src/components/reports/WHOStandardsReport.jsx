@@ -66,7 +66,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
           إعداد التقرير: {new Date().toLocaleDateString('ar-SA')}
         </p>
         <p className="text-sm text-gray-500">
-          وفقاً لمعايير منظمة الصحة العالمية للمدن الصحية
+          وفقاً لمعايير المدن الصحية (Healthy_Cities_Criteria) — 12 محوراً و 80 معياراً
         </p>
       </div>
 
@@ -305,7 +305,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
       {/* Footer */}
       <div className="border-t-2 border-gray-300 pt-6 text-center text-gray-600">
         <p className="text-sm">
-          هذا التقرير معد وفقاً لمعايير منظمة الصحة العالمية للمدن الصحية
+          هذا التقرير معد وفقاً لمعايير المدن الصحية (Healthy_Cities_Criteria) — 12 محوراً و 80 معياراً
         </p>
         <p className="text-sm mt-2">
           للمزيد من المعلومات: {settings?.city_name || 'المدينة الصحية'}

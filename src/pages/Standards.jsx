@@ -299,7 +299,7 @@ export default function Standards() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* جدول النتيجة - مؤشرات الأداء لكل محور (الملحق الثاني) */}
+        {/* جدول النتيجة — مؤشرات الأداء لكل محور (من ملف Healthy_Cities_Criteria.csv) */}
         <Card className="mb-6 border-blue-100 bg-blue-50/50">
           <CardHeader
             className="cursor-pointer flex flex-row items-center justify-between"
@@ -307,14 +307,14 @@ export default function Standards() {
           >
             <CardTitle className="text-lg flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              جدول النتيجة — مؤشرات الأداء لكل محور (الملحق الثاني)
+              جدول النتيجة — مؤشرات الأداء لكل محور (معايير المدن الصحية)
             </CardTitle>
             {showResultTable ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </CardHeader>
           {showResultTable && (
             <CardContent className="space-y-4 pt-0">
               <p className="text-sm text-gray-600">
-                حسب دليل منظمة الصحة العالمية: كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من إجمالي المعايير.
+                حسب ملف المعايير (Healthy_Cities_Criteria): 12 محوراً و 80 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
               </p>
               <div className="rounded-lg border bg-white p-3">
                 <h4 className="font-semibold mb-2">مؤشر التصنيف الإجمالي</h4>
