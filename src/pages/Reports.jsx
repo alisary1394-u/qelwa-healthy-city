@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, PieChart, Pie, LineChart, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
@@ -18,6 +19,7 @@ export default function Reports() {
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [exportingPDF, setExportingPDF] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [detailedReportType, setDetailedReportType] = useState('tasks_all');
 
   const { data: initiatives = [] } = useQuery({
     queryKey: ['initiatives'],
@@ -146,6 +148,44 @@ export default function Reports() {
       : 0
   }));
 
+  // تسميات الحالات للعرض في التقارير التفصيلية
+  const taskStatusLabel = { pending: 'معلقة', in_progress: 'قيد التنفيذ', completed: 'مكتملة', cancelled: 'ملغاة' };
+  const taskPriorityLabel = { low: 'منخفضة', medium: 'متوسطة', high: 'عالية', urgent: 'عاجلة' };
+  const initiativeStatusLabel = { planning: 'التخطيط', approved: 'معتمد', in_progress: 'قيد التنفيذ', completed: 'مكتمل', on_hold: 'معلق', cancelled: 'ملغي' };
+  const standardStatusLabel = { not_started: 'لم يبدأ', in_progress: 'قيد التنفيذ', completed: 'مكتمل', approved: 'معتمد' };
+
+  // بناء بيانات التقارير التفصيلية
+  const getTaskCommitteeName = (t) => {
+    const member = members.find(m => m.id === t.assigned_to);
+    return committees.find(c => c.id === member?.committee_id)?.name || '';
+  };
+  const getTaskInitiativeTitle = (t) => initiatives.find(i => i.id === t.initiative_id)?.title || '';
+  const getMemberCommitteeName = (m) => committees.find(c => c.id === m.committee_id)?.name || '';
+  const getKpiInitiativeTitle = (k) => initiatives.find(i => i.id === k.initiative_id)?.title || '';
+
+  const detailedReportConfig = [
+    { value: 'tasks_all', label: 'المهام (كافة)', getData: () => filteredTasks.map(t => ({ 'العنوان': t.title, 'الوصف': t.description || '—', 'الحالة': taskStatusLabel[t.status] || t.status, 'الأولوية': taskPriorityLabel[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
+    { value: 'tasks_completed', label: 'المهام المنجزة', getData: () => filteredTasks.filter(t => t.status === 'completed').map(t => ({ 'العنوان': t.title, 'الوصف': t.description || '—', 'الحالة': taskStatusLabel[t.status] || t.status, 'الأولوية': taskPriorityLabel[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
+    { value: 'tasks_in_progress', label: 'المهام قيد التنفيذ', getData: () => filteredTasks.filter(t => t.status === 'in_progress').map(t => ({ 'العنوان': t.title, 'الوصف': t.description || '—', 'الحالة': taskStatusLabel[t.status] || t.status, 'الأولوية': taskPriorityLabel[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
+    { value: 'tasks_pending', label: 'المهام المعلقة', getData: () => filteredTasks.filter(t => t.status === 'pending').map(t => ({ 'العنوان': t.title, 'الوصف': t.description || '—', 'الحالة': taskStatusLabel[t.status] || t.status, 'الأولوية': taskPriorityLabel[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
+    { value: 'tasks_overdue', label: 'المهام المتأخرة', getData: () => filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').map(t => ({ 'العنوان': t.title, 'الوصف': t.description || '—', 'الحالة': taskStatusLabel[t.status] || t.status, 'الأولوية': taskPriorityLabel[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
+    { value: 'initiatives_all', label: 'المبادرات (كافة)', getData: () => filteredInitiatives.map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
+    { value: 'initiatives_completed', label: 'المبادرات المكتملة', getData: () => filteredInitiatives.filter(i => i.status === 'completed').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
+    { value: 'initiatives_in_progress', label: 'المبادرات قيد التنفيذ', getData: () => filteredInitiatives.filter(i => i.status === 'in_progress').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
+    { value: 'team', label: 'أعضاء الفريق', getData: () => members.map(m => ({ 'الاسم': m.full_name || '—', 'رقم الهوية': m.national_id || '—', 'المنصب': m.role || '—', 'اللجنة': getMemberCommitteeName(m), 'القسم/الجهة': m.department || '—', 'البريد': m.email || '—', 'الهاتف': m.phone || '—' })) },
+    { value: 'standards', label: 'المعايير', getData: () => standards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || axes.find(a => a.id === s.axis_id)?.name || '—', 'الحالة': standardStatusLabel[s.status] || s.status, 'نسبة الإنجاز %': s.completion_percentage ?? '—', 'الوصف': (s.description || '').slice(0, 100) + ((s.description || '').length > 100 ? '...' : ''), 'المسؤول': s.assigned_to || '—' })) },
+    { value: 'kpis', label: 'المؤشرات', getData: () => kpis.map(k => ({ 'المؤشر': k.kpi_name || '—', 'الوصف': (k.description || '').slice(0, 80) + ((k.description || '').length > 80 ? '...' : ''), 'المبادرة': getKpiInitiativeTitle(k), 'القيمة الحالية': k.current_value, 'المستهدف': k.target_value, 'الوحدة': k.unit || '—', 'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
+  ];
+
+  const currentDetailedData = (() => {
+    const config = detailedReportConfig.find(c => c.value === detailedReportType);
+    return config ? config.getData() : [];
+  })();
+  const detailedReportFilename = (() => {
+    const config = detailedReportConfig.find(c => c.value === detailedReportType);
+    return config ? config.label.replace(/\s*[(\（].*?[)\）]\s*/g, '').trim() : 'تقرير-تفصيلي';
+  })();
+
   // Export to CSV (يدعم مصفوفة فارغة)
   const exportToCSV = (data, filename) => {
     if (!Array.isArray(data) || data.length === 0) {
@@ -180,7 +220,8 @@ export default function Reports() {
     standards: { id: 'reports-standards', filename: 'تقرير-المعايير.pdf' },
     initiatives: { id: 'reports-initiatives', filename: 'تقرير-المبادرات.pdf' },
     tasks: { id: 'reports-tasks', filename: 'تقرير-المهام.pdf' },
-    kpis: { id: 'reports-kpis', filename: 'تقرير-المؤشرات.pdf' }
+    kpis: { id: 'reports-kpis', filename: 'تقرير-المؤشرات.pdf' },
+    detailed: { id: 'detailed-report-content', filename: `تقرير-تفصيلي-${detailedReportFilename}.pdf` }
   };
 
   // Export to PDF (قد يستغرق 15–60 ثانية لتقرير منظمة الصحة حسب حجم المحتوى وجهازك)
@@ -274,8 +315,9 @@ export default function Reports() {
         {/* Reports Content */}
         <div id="reports-content">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
               <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+              <TabsTrigger value="detailed">تقارير تفصيلية</TabsTrigger>
               <TabsTrigger value="standards">المعايير</TabsTrigger>
               <TabsTrigger value="initiatives">المبادرات</TabsTrigger>
               <TabsTrigger value="tasks">المهام</TabsTrigger>
@@ -425,6 +467,84 @@ export default function Reports() {
                   </CardContent>
                 </Card>
               </div>
+              </div>
+            </TabsContent>
+
+            {/* تقارير تفصيلية Tab */}
+            <TabsContent value="detailed" className="space-y-4">
+              <div id="detailed-report-content" className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <Select value={detailedReportType} onValueChange={setDetailedReportType}>
+                    <SelectTrigger className="w-full max-w-[280px]">
+                      <SelectValue placeholder="اختر نوع التقرير" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tasks_all">المهام (كافة)</SelectItem>
+                      <SelectItem value="tasks_completed">المهام المنجزة</SelectItem>
+                      <SelectItem value="tasks_in_progress">المهام قيد التنفيذ</SelectItem>
+                      <SelectItem value="tasks_pending">المهام المعلقة</SelectItem>
+                      <SelectItem value="tasks_overdue">المهام المتأخرة</SelectItem>
+                      <SelectItem value="initiatives_all">المبادرات (كافة)</SelectItem>
+                      <SelectItem value="initiatives_completed">المبادرات المكتملة</SelectItem>
+                      <SelectItem value="initiatives_in_progress">المبادرات قيد التنفيذ</SelectItem>
+                      <SelectItem value="team">أعضاء الفريق</SelectItem>
+                      <SelectItem value="standards">المعايير</SelectItem>
+                      <SelectItem value="kpis">المؤشرات</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => exportToCSV(currentDetailedData, detailedReportFilename)}
+                      disabled={currentDetailedData.length === 0}
+                    >
+                      <Download className="w-4 h-4 ml-2" />
+                      تصدير CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => exportToPDF('detailed-report-content', `تقرير-تفصيلي-${detailedReportFilename}.pdf`)}
+                      disabled={exportingPDF || currentDetailedData.length === 0}
+                    >
+                      <Download className="w-4 h-4 ml-2" />
+                      {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                    </Button>
+                  </div>
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>جدول التقرير التفصيلي — {detailedReportConfig.find(c => c.value === detailedReportType)?.label}</CardTitle>
+                    <CardDescription>{currentDetailedData.length} سجل</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {currentDetailedData.length === 0 ? (
+                      <p className="text-muted-foreground py-8 text-center">لا توجد بيانات لهذا التقرير.</p>
+                    ) : (
+                      <div className="overflow-x-auto rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {Object.keys(currentDetailedData[0]).map(key => (
+                                <TableHead key={key} className="whitespace-nowrap">{key}</TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentDetailedData.map((row, idx) => (
+                              <TableRow key={idx}>
+                                {Object.keys(currentDetailedData[0]).map(key => (
+                                  <TableCell key={key} className="whitespace-nowrap max-w-[200px] truncate" title={String(row[key] ?? '')}>
+                                    {String(row[key] ?? '—')}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 
