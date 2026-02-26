@@ -294,7 +294,7 @@ export default function Standards() {
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً وفق منظمة الصحة العالمية'}</p>
+          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -386,7 +386,7 @@ export default function Standards() {
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
               const order = axis.order ?? 0;
               const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
-              const count = standards.filter(s => s.axis_id === axis.id).length;
+              const count = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : standards.filter(s => s.axis_id === axis.id).length;
               return (
                 <Button
                   key={axis.id}
@@ -408,13 +408,13 @@ export default function Standards() {
               const order = axis.order ?? 0;
               const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
               const progress = getAxisProgress(axis.id);
-              const axisStandards = standards.filter(s => s.axis_id === axis.id);
+              const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : standards.filter(s => s.axis_id === axis.id).length;
               return (
                 <Card key={axis.id} className="cursor-pointer hover:shadow-md" onClick={() => setActiveAxis(axis.id)}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold">{tabLabel}</h3>
-                      <Badge variant="outline">{axisStandards.length} معيار</Badge>
+                      <Badge variant="outline">{expectedCount} معيار</Badge>
                     </div>
                     <Progress value={progress} className="h-2 mb-1" />
                     <p className="text-sm text-gray-500">{progress}% مكتمل</p>
