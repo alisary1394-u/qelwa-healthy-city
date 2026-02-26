@@ -261,9 +261,35 @@ export default function Reports() {
             el.style.background = '#2563eb';
             el.style.backgroundImage = 'none';
           });
+          root.querySelectorAll('img[src]').forEach((img) => {
+            const s = (img.getAttribute('src') || '').trim();
+            if (s.startsWith('http') && !s.startsWith(window.location.origin)) {
+              img.removeAttribute('src');
+              img.alt = img.alt || 'صورة';
+              img.style.background = '#e2e8f0';
+              img.style.minWidth = '40px';
+              img.style.minHeight = '40px';
+            }
+          });
         },
       });
-      const imgData = canvas.toDataURL('image/png');
+
+      if (!canvas.width || !canvas.height) {
+        toast({ title: 'فشل تصدير PDF', description: 'المحتوى المراد تصديره فارغ أو غير ظاهر.', variant: 'destructive' });
+        return;
+      }
+
+      let imgData;
+      try {
+        imgData = canvas.toDataURL('image/jpeg', 0.92);
+      } catch (_) {
+        imgData = canvas.toDataURL('image/png');
+      }
+      if (!imgData || !imgData.startsWith('data:image/')) {
+        toast({ title: 'فشل تصدير PDF', description: 'تعذر إنشاء صورة من المحتوى. جرّب تقريراً أصغر أو تبويباً آخر.', variant: 'destructive' });
+        return;
+      }
+      const imgType = imgData.startsWith('data:image/png') ? 'PNG' : 'JPEG';
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
@@ -272,13 +298,13 @@ export default function Reports() {
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, imgType, 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, imgType, 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
