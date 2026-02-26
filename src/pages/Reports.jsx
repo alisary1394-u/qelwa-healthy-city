@@ -244,7 +244,25 @@ export default function Reports() {
       element.scrollIntoView({ behavior: 'instant', block: 'start' });
       await new Promise(r => setTimeout(r, 100));
 
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        onclone: (clonedDoc, node) => {
+          const root = node;
+          root.querySelectorAll('.recharts-responsive-container').forEach((el) => {
+            const placeholder = clonedDoc.createElement('div');
+            placeholder.style.cssText = 'min-height: 120px; padding: 20px; background: #f1f5f9; color: #64748b; text-align: center; border-radius: 8px; display: flex; align-items: center; justify-content: center;';
+            placeholder.textContent = 'رسم بياني (مستثنى من التصدير)';
+            if (el.parentNode) el.parentNode.replaceChild(placeholder, el);
+          });
+          root.querySelectorAll('svg defs linearGradient, svg defs radialGradient').forEach((el) => el.remove());
+          root.querySelectorAll('[class*="gradient"]').forEach((el) => {
+            el.style.background = '#2563eb';
+            el.style.backgroundImage = 'none';
+          });
+        },
+      });
       const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
