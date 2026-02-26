@@ -461,8 +461,25 @@ async function ensureMinimalSeedOnStartup() {
   }
 }
 
+// إغلاق نظيف عند إشارة SIGTERM (مثلاً عند إعادة النشر على Railway) — يقلل من ظهور "command failed" في السجلات
+function gracefulShutdown(signal) {
+  console.log('[Qelwa] استلام', signal, '— إغلاق السيرفر...');
+  if (typeof httpServer !== 'undefined' && httpServer.close) {
+    httpServer.close(() => {
+      console.log('[Qelwa] السيرفر متوقف.');
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 5000);
+  } else {
+    process.exit(0);
+  }
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // عدم استدعاء قاعدة البيانات عند البدء — حتى لا يتعطل السيرفر إن فشل SQLite (مثلاً على Railway)
-app.listen(PORT, HOST, () => {
+let httpServer;
+httpServer = app.listen(PORT, HOST, () => {
   console.log('سيرفر المدينة الصحية يعمل على المنفذ', PORT, '(استماع على', HOST + ')');
   startAutoBackup();
   setTimeout(() => ensureMinimalSeedOnStartup(), 3000);
