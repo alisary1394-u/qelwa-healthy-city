@@ -99,6 +99,9 @@ export default function Standards() {
     queryFn: () => api.entities.TeamMember.list()
   });
 
+  const { permissions } = usePermissions();
+  const canManageStandards = permissions.canManageStandards;
+
   const createAxisMutation = useMutation({
     mutationFn: (data) => api.entities.Axis.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['axes'] })
@@ -160,10 +163,10 @@ export default function Standards() {
   /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
   const syncRanRef = useRef(false);
   useEffect(() => {
-    if (!canManage || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
+    if (!canManageStandards || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
     syncRanRef.current = true;
     syncStandardsFromGuide().catch(() => { syncRanRef.current = false; });
-  }, [canManage, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
+  }, [canManageStandards, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
@@ -176,8 +179,7 @@ export default function Standards() {
   });
 
   const currentMember = members.find(m => m.email === currentUser?.email);
-  const { permissions } = usePermissions();
-  const canManage = permissions.canManageStandards;
+  const canManage = canManageStandards;
   const canApprove = permissions.canApproveEvidence;
 
   if (!permissions.canSeeStandards) {
