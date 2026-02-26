@@ -67,7 +67,7 @@
 1. اربط المشروع من GitHub واختر الفرع (مثلاً `main` أو `master`).
 2. إن لم تستخدم Dockerfile، في **Settings** للخدمة:
    - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm start` (أو `node server/index.js`)
+   - **Start Command:** `node server/index.js` (مفضّل على `npm start` لاستقبال SIGTERM مباشرة وتقليل رسائل "npm error signal SIGTERM" في السجلات)
    - **Root Directory:** اتركه فارغاً.
 3. في **Settings → Networking** (إن وُجد):
    - **Health Check Path:** `/api/health` — حتى تعتبر المنصة أن التطبيق يعمل.
