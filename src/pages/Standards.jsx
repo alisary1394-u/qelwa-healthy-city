@@ -152,9 +152,10 @@ export default function Standards() {
         updated += 1;
       }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
-      if (typeof window !== 'undefined' && updated > 0) {
-        window.alert(`تم تحديث ${updated} معياراً من ملف المعايير (Healthy_Cities_Criteria.csv).`);
-      }
+      // تم تعطيل رسالة التنبيه عند المزامنة
+      // if (typeof window !== 'undefined' && updated > 0) {
+      //   window.alert(`تم تحديث المعايير من ملف المعايير (Healthy_Cities_Criteria.csv) — ${STANDARDS_CSV.length} معياراً.`);
+      // }
     } finally {
       setSyncingStandards(false);
     }
