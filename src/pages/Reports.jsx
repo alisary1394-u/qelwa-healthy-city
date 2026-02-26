@@ -17,6 +17,7 @@ export default function Reports() {
   const [selectedCommittee, setSelectedCommittee] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const { data: initiatives = [] } = useQuery({
     queryKey: ['initiatives'],
@@ -145,11 +146,25 @@ export default function Reports() {
       : 0
   }));
 
-  // Export to CSV
+  // Export to CSV (يدعم مصفوفة فارغة)
   const exportToCSV = (data, filename) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      const blob = new Blob(['\ufeffلا توجد بيانات للتصدير'], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${filename}.csv`;
+      link.click();
+      return;
+    }
+    const headers = Object.keys(data[0]);
+    const escapeCsv = (v) => {
+      const s = String(v ?? '');
+      if (/[,"\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    };
     const csvContent = [
-      Object.keys(data[0]).join(','),
-      ...data.map(row => Object.values(row).join(','))
+      headers.map(escapeCsv).join(','),
+      ...data.map(row => headers.map(h => escapeCsv(row[h])).join(','))
     ].join('\n');
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -157,6 +172,15 @@ export default function Reports() {
     link.href = URL.createObjectURL(blob);
     link.download = `${filename}.csv`;
     link.click();
+  };
+
+  // خريطة التبويبات لتصدير PDF حسب المحتوى
+  const tabExportIds = {
+    overview: { id: 'reports-overview', filename: 'تقرير-النظرة-العامة.pdf' },
+    standards: { id: 'reports-standards', filename: 'تقرير-المعايير.pdf' },
+    initiatives: { id: 'reports-initiatives', filename: 'تقرير-المبادرات.pdf' },
+    tasks: { id: 'reports-tasks', filename: 'تقرير-المهام.pdf' },
+    kpis: { id: 'reports-kpis', filename: 'تقرير-المؤشرات.pdf' }
   };
 
   // Export to PDF (قد يستغرق 15–60 ثانية لتقرير منظمة الصحة حسب حجم المحتوى وجهازك)
@@ -207,10 +231,18 @@ export default function Reports() {
               </h1>
               <p className="text-blue-100">تحليل شامل لأداء المبادرات والمهام</p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={exportToPDF} disabled={exportingPDF} variant="secondary">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => {
+                  const t = tabExportIds[activeTab];
+                  if (t) exportToPDF(t.id, t.filename);
+                  else exportToPDF('reports-content', 'تقرير-التحليلات.pdf');
+                }}
+                disabled={exportingPDF}
+                variant="secondary"
+              >
                 <Download className="w-4 h-4 ml-2" />
-                {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF (التبويب الحالي)'}
               </Button>
             </div>
           </div>
@@ -241,7 +273,7 @@ export default function Reports() {
 
         {/* Reports Content */}
         <div id="reports-content">
-          <Tabs defaultValue="overview" className="space-y-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
               <TabsTrigger value="standards">المعايير</TabsTrigger>
@@ -252,6 +284,34 @@ export default function Reports() {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-4">
+              <div id="reports-overview" className="space-y-4">
+              <div className="flex flex-wrap justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => exportToPDF('reports-overview', 'تقرير-النظرة-العامة.pdf')}
+                  disabled={exportingPDF}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => exportToCSV(
+                    [{
+                      'إجمالي المبادرات': filteredInitiatives.length,
+                      'المبادرات المكتملة': filteredInitiatives.filter(i => i.status === 'completed').length,
+                      'إجمالي المهام': filteredTasks.length,
+                      'المهام المكتملة': filteredTasks.filter(t => t.status === 'completed').length,
+                      'المهام قيد التنفيذ': filteredTasks.filter(t => t.status === 'in_progress').length,
+                      'المهام المعلقة': filteredTasks.filter(t => t.status === 'pending').length
+                    }],
+                    'النظرة-العامة'
+                  )}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  تصدير CSV
+                </Button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="pb-3">
@@ -365,11 +425,21 @@ export default function Reports() {
                   </CardContent>
                 </Card>
               </div>
+              </div>
             </TabsContent>
 
             {/* Standards Tab */}
             <TabsContent value="standards" className="space-y-4">
-              <div className="flex justify-end gap-2 mb-4">
+              <div id="reports-standards" className="space-y-4">
+              <div className="flex flex-wrap justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => exportToPDF('reports-standards', 'تقرير-المعايير.pdf')}
+                  disabled={exportingPDF}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF (هذا التبويب)'}
+                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => exportToCSV(
@@ -528,6 +598,7 @@ export default function Reports() {
               </Card>
 
               {/* WHO Standards Report */}
+              </div>
               <div className="hidden">
                 <WHOStandardsReport 
                   standards={standards}
@@ -540,7 +611,16 @@ export default function Reports() {
 
             {/* Initiatives Tab */}
             <TabsContent value="initiatives" className="space-y-4">
-              <div className="flex justify-end gap-2">
+              <div id="reports-initiatives" className="space-y-4">
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => exportToPDF('reports-initiatives', 'تقرير-المبادرات.pdf')}
+                  disabled={exportingPDF}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => exportToCSV(
@@ -598,11 +678,21 @@ export default function Reports() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+              </div>
             </TabsContent>
 
             {/* Tasks Tab */}
             <TabsContent value="tasks" className="space-y-4">
-              <div className="flex justify-end gap-2">
+              <div id="reports-tasks" className="space-y-4">
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => exportToPDF('reports-tasks', 'تقرير-المهام.pdf')}
+                  disabled={exportingPDF}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                </Button>
                 <Button 
                   variant="outline"
                   onClick={() => exportToCSV(
@@ -657,10 +747,43 @@ export default function Reports() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+              </div>
             </TabsContent>
 
             {/* KPIs Tab */}
             <TabsContent value="kpis" className="space-y-4">
+              <div id="reports-kpis" className="space-y-4">
+              <div className="flex flex-wrap justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => exportToPDF('reports-kpis', 'تقرير-المؤشرات.pdf')}
+                  disabled={exportingPDF}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => exportToCSV(
+                    kpis.map(k => {
+                      const init = initiatives.find(i => i.id === k.initiative_id);
+                      return {
+                        'المؤشر': k.kpi_name,
+                        'الوصف': k.description || '',
+                        'القيمة الحالية': k.current_value,
+                        'المستهدف': k.target_value,
+                        'الوحدة': k.unit || '',
+                        'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0,
+                        'المبادرة': init?.title || ''
+                      };
+                    }),
+                    'المؤشرات'
+                  )}
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  تصدير CSV
+                </Button>
+              </div>
               <Card>
                 <CardHeader>
                   <CardTitle>تقدم مؤشرات الأداء الرئيسية</CardTitle>
@@ -706,6 +829,7 @@ export default function Reports() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
               </div>
             </TabsContent>
           </Tabs>
