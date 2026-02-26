@@ -1,6 +1,7 @@
 /**
  * صلاحيات الفريق حسب المنصب — مصدر واحد للحقيقة لجميع الصفحات.
- * الأدوار: governor, coordinator, committee_head, member, volunteer, budget_manager, accountant, financial_officer
+ * مُحدّثة لِتطابق جدول صلاحيات-المناصب.xml (Excel).
+ * الأدوار: governor, coordinator, committee_head, committee_coordinator, committee_supervisor, committee_member, budget_manager, accountant, financial_officer, member, volunteer
  */
 
 /** أسماء المناصب بالعربية */
@@ -103,9 +104,9 @@ export const PERMISSIONS_BY_ROLE = {
     canApproveEvidence: true,
     canManageBudget: false,
     canApproveTransactions: false,
-    canCreateTransactions: true,
-    canViewFinancials: true,
-    canManageInitiatives: true,
+    canCreateTransactions: false,
+    canViewFinancials: false,
+    canManageInitiatives: false,
     canVerifySurvey: true,
     canViewReports: true,
     canManageTasks: true,
@@ -135,9 +136,9 @@ export const PERMISSIONS_BY_ROLE = {
     canApproveEvidence: true,
     canManageBudget: false,
     canApproveTransactions: false,
-    canCreateTransactions: true,
-    canViewFinancials: true,
-    canManageInitiatives: true,
+    canCreateTransactions: false,
+    canViewFinancials: false,
+    canManageInitiatives: false,
     canVerifySurvey: true,
     canViewReports: true,
     canManageTasks: true,
@@ -167,9 +168,9 @@ export const PERMISSIONS_BY_ROLE = {
     canApproveEvidence: true,
     canManageBudget: false,
     canApproveTransactions: false,
-    canCreateTransactions: true,
-    canViewFinancials: true,
-    canManageInitiatives: true,
+    canCreateTransactions: false,
+    canViewFinancials: false,
+    canManageInitiatives: false,
     canVerifySurvey: true,
     canViewReports: true,
     canManageTasks: true,
