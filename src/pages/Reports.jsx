@@ -12,9 +12,11 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Reports() {
   const { permissions } = usePermissions();
+  const { toast } = useToast();
   const [selectedCommittee, setSelectedCommittee] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -188,30 +190,36 @@ export default function Reports() {
 
   // Export to CSV (يدعم مصفوفة فارغة)
   const exportToCSV = (data, filename) => {
-    if (!Array.isArray(data) || data.length === 0) {
-      const blob = new Blob(['\ufeffلا توجد بيانات للتصدير'], { type: 'text/csv;charset=utf-8;' });
+    try {
+      const emptyContent = '\ufeffلا توجد بيانات للتصدير';
+      let csvContent = emptyContent;
+      if (Array.isArray(data) && data.length > 0) {
+        const headers = Object.keys(data[0]);
+        const escapeCsv = (v) => {
+          const s = String(v ?? '');
+          if (/[,"\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+          return s;
+        };
+        csvContent = [
+          headers.map(escapeCsv).join(','),
+          ...data.map(row => headers.map(h => escapeCsv(row[h])).join(','))
+        ].join('\n');
+        csvContent = '\ufeff' + csvContent;
+      }
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      link.href = url;
       link.download = `${filename}.csv`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
       link.click();
-      return;
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
+      toast({ title: 'تم التصدير', description: `تم تنزيل الملف: ${filename}.csv` });
+    } catch (e) {
+      toast({ title: 'فشل التصدير', description: e?.message || 'حدث خطأ أثناء تصدير CSV', variant: 'destructive' });
     }
-    const headers = Object.keys(data[0]);
-    const escapeCsv = (v) => {
-      const s = String(v ?? '');
-      if (/[,"\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-      return s;
-    };
-    const csvContent = [
-      headers.map(escapeCsv).join(','),
-      ...data.map(row => headers.map(h => escapeCsv(row[h])).join(','))
-    ].join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${filename}.csv`;
-    link.click();
   };
 
   // خريطة التبويبات لتصدير PDF حسب المحتوى
@@ -230,10 +238,13 @@ export default function Reports() {
     try {
       const element = document.getElementById(elementId);
       if (!element) {
-        setExportingPDF(false);
+        toast({ title: 'فشل التصدير', description: 'العنصر غير موجود. تأكد من فتح التبويب الصحيح.', variant: 'destructive' });
         return;
       }
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      element.scrollIntoView({ behavior: 'instant', block: 'start' });
+      await new Promise(r => setTimeout(r, 100));
+
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
       const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -253,7 +264,19 @@ export default function Reports() {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(filename);
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
+      toast({ title: 'تم التصدير', description: `تم تنزيل الملف: ${filename}` });
+    } catch (e) {
+      toast({ title: 'فشل تصدير PDF', description: e?.message || 'حدث خطأ. جرّب تقريراً أصغر أو تحقق من المتصفح.', variant: 'destructive' });
     } finally {
       setExportingPDF(false);
     }
