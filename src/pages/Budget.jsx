@@ -119,7 +119,7 @@ export default function Budget() {
   const canCreateTransactions = permissions.canCreateTransactions;
   const canViewFinancials = permissions.canViewFinancials;
   const memberRole = currentMember?.role || role;
-  const showBudgetManagement = canManageBudget && memberRole !== 'accountant';
+  const showBudgetManagement = canManageBudget && memberRole !== 'accountant' && memberRole !== 'financial_officer';
 
   const createTransactionMutation = useMutation({
     mutationFn: (data) => api.entities.Transaction.create(data),
