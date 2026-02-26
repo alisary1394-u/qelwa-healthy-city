@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI } from '@/api/standardsFromPdf';
+import { AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, STANDARDS_80, AXIS_COUNTS } from '@/api/standardsFromPdf';
+import { AXES_SEED } from '@/api/seedAxesAndStandards';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,25 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
+/** استخراج مؤشر المعيار (0–79) من الرمز محور-رقم، مع دعم 8 أو 9 محاور */
+function getStandardIndexFromCode(code) {
+  const match = String(code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(code || '').match(/م(\d+)-(\d+)/);
+  if (!match) return -1;
+  const axisNum = parseInt(match[1], 10);
+  const i = parseInt(match[2], 10);
+  if (axisNum < 1 || axisNum > 9 || i < 1) return -1;
+  if (axisNum <= 8 && AXIS_COUNTS[axisNum - 1] != null) {
+    const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
+    return before + (i - 1);
+  }
+  return (axisNum - 1) * 9 + (i - 1);
+}
+
+function buildRequiredEvidence(documents) {
+  const list = Array.isArray(documents) && documents.length ? documents : [];
+  return list.length === 0 ? 'أدلة ومستندات تدعم تحقيق المعيار' : 'أدلة مطلوبة: ' + list.join('، ');
+}
+
 export default function Standards() {
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,6 +70,7 @@ export default function Standards() {
   const [editDocuments, setEditDocuments] = useState([]);
   const [editKpis, setEditKpis] = useState([]);
   const [showResultTable, setShowResultTable] = useState(false);
+  const [syncingStandards, setSyncingStandards] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -92,6 +113,50 @@ export default function Standards() {
     mutationFn: ({ id, data }) => api.entities.Standard.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
+
+  /** مزامنة نصوص المعايير (عنوان، وصف، أدلة، مؤشرات، اسم المحور) من دليل منظمة الصحة العالمية */
+  const syncStandardsFromGuide = useCallback(async () => {
+    const list = await api.entities.Standard.list('code').catch(() => []);
+    if (list.length === 0) return;
+    setSyncingStandards(true);
+    try {
+      let updated = 0;
+      for (const standard of list) {
+        const idx = getStandardIndexFromCode(standard.code);
+        const item = STANDARDS_80[idx];
+        if (!item) continue;
+        const match = String(standard.code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(standard.code || '').match(/م(\d+)-(\d+)/);
+        const axisNum = match ? parseInt(match[1], 10) : 1;
+        const axisName = AXES_SEED[Math.min(axisNum - 1, AXES_SEED.length - 1)]?.name ?? standard.axis_name;
+        const documents = item.documents ?? [];
+        const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [];
+        const hasVerification = kpisList.length > 0 && kpisList[0].name === 'مؤشر التحقق (من الدليل)';
+        if (!hasVerification) {
+          kpisList.unshift({ name: 'مؤشر التحقق (من الدليل)', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.description ?? '' });
+        } else if ((item.description ?? '') && !kpisList[0].description) {
+          kpisList[0] = { ...kpisList[0], description: item.description };
+        }
+        await updateStandardMutation.mutateAsync({
+          id: standard.id,
+          data: {
+            title: item.title ?? standard.title,
+            description: item.description ?? standard.description,
+            required_evidence: buildRequiredEvidence(documents),
+            required_documents: JSON.stringify(documents),
+            kpis: JSON.stringify(kpisList),
+            axis_name: axisName,
+          }
+        });
+        updated += 1;
+      }
+      await queryClient.invalidateQueries({ queryKey: ['standards'] });
+      if (typeof window !== 'undefined' && updated > 0) {
+        window.alert(`تم تحديث ${updated} معياراً من دليل معايير المدينة الصحية.`);
+      }
+    } finally {
+      setSyncingStandards(false);
+    }
+  }, [updateStandardMutation, queryClient]);
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
@@ -218,6 +283,19 @@ export default function Standards() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {standards.length > 0 && canManage && (
+          <div className="mb-4 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={syncStandardsFromGuide}
+              disabled={syncingStandards}
+              className="border-green-200 bg-green-50 text-green-800 hover:bg-green-100"
+            >
+              {syncingStandards ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Settings className="w-4 h-4 ml-2" />}
+              {syncingStandards ? 'جاري التحديث...' : 'تحديث المعايير من دليل منظمة الصحة'}
+            </Button>
+          </div>
+        )}
         {/* جدول النتيجة - مؤشرات الأداء لكل محور (الملحق الثاني) */}
         <Card className="mb-6 border-blue-100 bg-blue-50/50">
           <CardHeader
