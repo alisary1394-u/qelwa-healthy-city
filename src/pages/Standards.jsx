@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -47,12 +47,12 @@ function getStandardIndexFromCode(code) {
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
   const i = parseInt(match[2], 10);
-  if (axisNum < 1 || axisNum > 13 || i < 1) return -1;
+  if (axisNum < 1 || axisNum > 9 || i < 1) return -1;
   if (AXIS_COUNTS[axisNum - 1] != null) {
     const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    return Math.min(85, before + (i - 1));
+    return Math.min(79, before + (i - 1));
   }
-  return Math.min(85, (axisNum - 1) * 8 + (i - 1));
+  return Math.min(79, (axisNum - 1) * 8 + (i - 1));
 }
 
 function buildRequiredEvidence(documents) {
@@ -395,6 +395,14 @@ export default function Standards() {
               <Button onClick={() => setStandardFormOpen(true)} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 ml-2" />
                 إضافة معيار
+              </Button>
+              <Button
+                variant="outline"
+                disabled={syncingStandards || loadingAxes || loadingStandards}
+                onClick={() => syncStandardsFromGuide().then(() => queryClient.invalidateQueries({ queryKey: ['standards'] })).catch((e) => console.error(e))}
+              >
+                {syncingStandards ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <RefreshCw className="w-4 h-4 ml-2" />}
+                مزامنة المعايير من الدليل
               </Button>
             </>
           )}
