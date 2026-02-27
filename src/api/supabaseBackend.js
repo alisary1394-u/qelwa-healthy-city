@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { appParams } from '@/lib/app-params';
 import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
 import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const AUTH_KEY = 'local_current_user';
@@ -267,10 +267,17 @@ function buildRequiredEvidence(documents) {
   return 'أدلة مطلوبة: ' + list.join('، ');
 }
 
-/** مزامنة المعايير نفسها من PDF: عنوان، وصف، أدلة، مؤشرات، اسم المحور، ومحور (axis_id) حسب موضع المعيار في الدليل */
+/** مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11) — 13 محوراً، 86 معياراً */
 async function syncStandardsKpisFromPdf() {
-  const [standards, axesList] = await Promise.all([entities.Standard.list(), entities.Axis.list('order')]);
-  if (standards.length === 0) return;
+  let axesList = await entities.Axis.list('order');
+  const numAxes = AXES_SEED.length;
+  if (axesList.length < numAxes) {
+    for (let idx = axesList.length; idx < numAxes; idx++) {
+      await entities.Axis.create({ ...AXES_SEED[idx], order: idx + 1 });
+    }
+    axesList = await entities.Axis.list('order');
+  }
+  const standards = await entities.Standard.list();
   let updated = 0;
   for (const standard of standards) {
     const code = standard.code;
@@ -279,9 +286,9 @@ async function syncStandardsKpisFromPdf() {
     if (!match) continue;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 12 || i < 1) continue;
+    if (axisNum < 1 || axisNum > numAxes || i < 1) continue;
     const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
-    const standardIndex = Math.min(79, before + (i - 1));
+    const standardIndex = Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
     const item = STANDARDS_CSV[standardIndex];
     if (!item) continue;
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
@@ -304,7 +311,33 @@ async function syncStandardsKpisFromPdf() {
     });
     updated++;
   }
+  const existingCodes = new Set(standards.map((s) => s.code));
+  let created = 0;
+  for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
+    const code = getStandardCodeFromIndex(standardIndex);
+    if (!code || existingCodes.has(code)) continue;
+    const item = STANDARDS_CSV[standardIndex];
+    const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
+    const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
+    if (!axisRecord) continue;
+    const documents = item?.documents ?? ['أدلة ومستندات تدعم تحقيق المعيار'];
+    const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
+    await entities.Standard.create({
+      code,
+      title: item?.title ?? `معيار ${axisRecord.name} ${code}`,
+      description: item?.title ?? '',
+      axis_id: axisRecord.id,
+      axis_name: axisRecord.name,
+      required_evidence: buildRequiredEvidence(documents),
+      required_documents: JSON.stringify(documents),
+      kpis: JSON.stringify(kpisList),
+      status: 'not_started',
+    });
+    existingCodes.add(code);
+    created++;
+  }
   if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير (عنوان، وصف، أدلة، مؤشرات، محور)', updated, 'معياراً من ملف CSV');
+  if (created > 0 && typeof console !== 'undefined') console.log('[Supabase] تمت إضافة المعايير الناقصة', created, 'معياراً');
 }
 
 export async function seedAxesAndStandardsIfNeeded() {

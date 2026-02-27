@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,13 +117,12 @@ export default function Standards() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
-  /** مزامنة نصوص المعايير (عنوان، وصف، أدلة، مؤشرات، اسم المحور، ومحور axis_id) من دليل منظمة الصحة — كل معيار يُوضع في محوره الصحيح حسب موضعه في الدليل */
+  /** مزامنة المعايير من الدليل: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11 في المحور الرابع) */
   const syncStandardsFromGuide = useCallback(async () => {
     const [list, axesData] = await Promise.all([
       api.entities.Standard.list('code').catch(() => []),
       api.entities.Axis.list('order').catch(() => [])
     ]);
-    if (list.length === 0) return;
     setSyncingStandards(true);
     try {
       let updated = 0;
@@ -151,15 +150,36 @@ export default function Standards() {
         });
         updated += 1;
       }
+      const existingCodes = new Set((list || []).map((s) => s.code));
+      let created = 0;
+      for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
+        const code = getStandardCodeFromIndex(standardIndex);
+        if (!code || existingCodes.has(code)) continue;
+        const item = STANDARDS_CSV[standardIndex];
+        const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
+        const axisRecord = axesData.find((a) => Number(a.order) === axisOrder);
+        if (!axisRecord) continue;
+        const documents = item?.documents ?? ['أدلة ومستندات تدعم تحقيق المعيار'];
+        const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
+        await createStandardMutation.mutateAsync({
+          code,
+          title: item?.title ?? `معيار ${axisRecord.name} ${code}`,
+          description: item?.title ?? '',
+          axis_id: axisRecord.id,
+          axis_name: axisRecord.name,
+          required_evidence: buildRequiredEvidence(documents),
+          required_documents: JSON.stringify(documents),
+          kpis: JSON.stringify(kpisList),
+          status: 'not_started',
+        });
+        existingCodes.add(code);
+        created += 1;
+      }
       await queryClient.invalidateQueries({ queryKey: ['standards'] });
-      // تم تعطيل رسالة التنبيه عند المزامنة
-      // if (typeof window !== 'undefined' && updated > 0) {
-      //   window.alert(`تم تحديث المعايير من ملف المعايير (Healthy_Cities_Criteria.csv) — ${STANDARDS_CSV.length} معياراً.`);
-      // }
     } finally {
       setSyncingStandards(false);
     }
-  }, [updateStandardMutation, queryClient]);
+  }, [updateStandardMutation, createStandardMutation, queryClient]);
 
   /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
   const syncRanRef = useRef(false);

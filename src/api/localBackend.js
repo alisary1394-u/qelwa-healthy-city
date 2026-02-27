@@ -4,7 +4,7 @@
  */
 
 import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
 import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
 const DB_PREFIX = 'local_db_';
@@ -254,15 +254,22 @@ function buildRequiredEvidence(documents) {
 }
 
 /**
- * مزامنة المعايير نفسها من بيانات PDF: العنوان، الوصف، الأدلة المطلوبة، المستندات، المؤشرات، واسم المحور.
- * يطبق على جميع المعايير الموجودة (حسب الرمز م1-1 ... م8-7).
+ * مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11).
+ * يطبق على المعايير حسب الرمز م1-1 … م13-8 (13 محوراً، 86 معياراً).
  */
 export function syncStandardsKpisFromPdf() {
   if (typeof localStorage === 'undefined') return;
+  let axesList = getStore('Axis');
+  const numAxes = AXES_SEED.length;
+  if (axesList.length < numAxes) {
+    for (let idx = axesList.length; idx < numAxes; idx++) {
+      const rec = entities.Axis.create({ ...AXES_SEED[idx], order: idx + 1 });
+      axesList = getStore('Axis');
+    }
+    axesList = getStore('Axis');
+  }
   const standards = getStore('Standard');
-  if (standards.length === 0) return;
   let updated = 0;
-  const axesList = getStore('Axis');
   standards.forEach((standard) => {
     const code = standard.code;
     if (!code || typeof code !== 'string') return;
@@ -270,9 +277,9 @@ export function syncStandardsKpisFromPdf() {
     if (!match) return;
     const axisNum = parseInt(match[1], 10);
     const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > 12 || i < 1) return;
+    if (axisNum < 1 || axisNum > numAxes || i < 1) return;
     const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
-    const standardIndex = Math.min(79, before + (i - 1));
+    const standardIndex = Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
     const item = STANDARDS_CSV[standardIndex];
     if (!item) return;
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
@@ -295,7 +302,33 @@ export function syncStandardsKpisFromPdf() {
     });
     updated += 1;
   });
+  const existingCodes = new Set(standards.map((s) => s.code));
+  let created = 0;
+  for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
+    const code = getStandardCodeFromIndex(standardIndex);
+    if (!code || existingCodes.has(code)) continue;
+    const item = STANDARDS_CSV[standardIndex];
+    const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
+    const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
+    if (!axisRecord) continue;
+    const documents = item?.documents ?? ['أدلة ومستندات تدعم تحقيق المعيار'];
+    const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
+    entities.Standard.create({
+      code,
+      title: item?.title ?? `معيار ${axisRecord.name} ${code}`,
+      description: item?.title ?? '',
+      axis_id: axisRecord.id,
+      axis_name: axisRecord.name,
+      required_evidence: buildRequiredEvidence(documents),
+      required_documents: JSON.stringify(documents),
+      kpis: JSON.stringify(kpisList),
+      status: 'not_started',
+    });
+    existingCodes.add(code);
+    created += 1;
+  }
   if (updated > 0) console.log('[localBackend] تم تحديث المعايير (عنوان، وصف، أدلة، مؤشرات)', updated, 'معياراً من ملف المعايير CSV');
+  if (created > 0) console.log('[localBackend] تمت إضافة المعايير الناقصة', created, 'معياراً (منها م4-10، م4-11 إن وُجدت)');
 }
 
 /** إعادة المحاور الـ 12 و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */

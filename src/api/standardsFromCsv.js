@@ -205,3 +205,14 @@ export function getAxisOrderFromStandardIndexCsv(index) {
   }
   return 13;
 }
+
+/**
+ * استنتاج رمز المعيار (م1-1 … م13-8) من فهرس المعيار (0–85).
+ */
+export function getStandardCodeFromIndex(index) {
+  if (index < 0 || index >= STANDARDS_CSV.length) return null;
+  const axisOrder = getAxisOrderFromStandardIndexCsv(index);
+  const before = AXIS_COUNTS_CSV.slice(0, axisOrder - 1).reduce((a, b) => a + b, 0);
+  const i = index - before + 1;
+  return `م${axisOrder}-${i}`;
+}
