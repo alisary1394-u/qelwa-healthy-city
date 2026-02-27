@@ -6,14 +6,17 @@ echo   Fix Axes Order & Push Updates
 echo ========================================
 echo.
 
-echo [0] Fix axes order in database...
-echo Opening browser to fix axes order...
+echo [0] Axes order fix applied!
+echo The application now automatically sorts axes correctly (1-9)
+echo in both Standards and Dashboard pages.
 echo.
-echo In the application:
-echo 1. Go to Settings page
-echo 2. Click "مسح البيانات وإعادة تحميل بيانات التجربة"
-echo 3. Login with ID: 1, Password: 123456
-echo 4. This will reset axes to correct order (1-9)
+echo Changes made:
+echo - Added client-side sorting in Standards.jsx
+echo - Added client-side sorting in Dashboard.jsx  
+echo - Created utility function in src/lib/axesSort.js
+echo.
+echo The fix ensures axes always display in correct order
+echo regardless of database order.
 echo.
 echo Press any key to continue to Git push...
 pause > nul

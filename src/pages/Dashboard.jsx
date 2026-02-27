@@ -35,7 +35,21 @@ export default function Dashboard() {
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => api.entities.Axis.list('order')
+    queryFn: () => api.entities.Axis.list('order'),
+    select: (data) => {
+      if (!Array.isArray(data)) return [];
+      const sortedAxes = [...data].sort((a, b) => {
+        const orderA = Number(a.order) || 0;
+        const orderB = Number(b.order) || 0;
+        if (orderA < 1 || orderA > 9) return 1;
+        if (orderB < 1 || orderB > 9) return -1;
+        return orderA - orderB;
+      });
+      return sortedAxes.filter(axis => {
+        const order = Number(axis.order);
+        return order >= 1 && order <= 9;
+      });
+    }
   });
 
   const { data: standards = [] } = useQuery({

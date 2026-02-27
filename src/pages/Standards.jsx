@@ -3,6 +3,7 @@ import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
 import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { createAxesSelectFunction } from '@/lib/axesSort';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,21 @@ export default function Standards() {
 
   const { data: axes = [], isLoading: loadingAxes } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => api.entities.Axis.list('order')
+    queryFn: () => api.entities.Axis.list('order'),
+    select: (data) => {
+      if (!Array.isArray(data)) return [];
+      const sortedAxes = [...data].sort((a, b) => {
+        const orderA = Number(a.order) || 0;
+        const orderB = Number(b.order) || 0;
+        if (orderA < 1 || orderA > 9) return 1;
+        if (orderB < 1 || orderB > 9) return -1;
+        return orderA - orderB;
+      });
+      return sortedAxes.filter(axis => {
+        const order = Number(axis.order);
+        return order >= 1 && order <= 9;
+      });
+    }
   });
 
   const { data: standards = [], isLoading: loadingStandards } = useQuery({
