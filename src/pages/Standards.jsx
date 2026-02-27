@@ -16,7 +16,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+
+// استيراد المؤشرات المحسنة
+import { 
+  EnhancedKpiDisplay, 
+  EnhancedDocumentsDisplay, 
+  EnhancedAxisCard,
+  enhanceStandardsDisplay,
+  calculateAxisPerformance 
+} from '@/components/EnhancedStandardsDisplay';
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -424,25 +433,17 @@ export default function Standards() {
           </div>
         </div>
 
-        {/* Axis Progress Cards */}
+        {/* Enhanced Axis Progress Cards */}
         {activeAxis === 'all' && axes.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
-              const order = axis.order ?? 0;
-              const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
-              const progress = getAxisProgress(axis.id);
-              const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : standards.filter(s => s.axis_id === axis.id).length;
+              const axisStandards = standards.filter(s => s.axis_id === axis.id);
               return (
-                <Card key={axis.id} className="cursor-pointer hover:shadow-md" onClick={() => setActiveAxis(axis.id)}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{tabLabel}</h3>
-                      <Badge variant="outline">{expectedCount} معيار</Badge>
-                    </div>
-                    <Progress value={progress} className="h-2 mb-1" />
-                    <p className="text-sm text-gray-500">{progress}% مكتمل</p>
-                  </CardContent>
-                </Card>
+                <EnhancedAxisCard
+                  key={axis.id}
+                  axis={axis}
+                  standards={axisStandards}
+                />
               );
             })}
           </div>
@@ -533,9 +534,38 @@ export default function Standards() {
                             </div>
                           );
                         })()}
+                        
+                        {/* Enhanced KPIs and Documents Display */}
+                        {(() => {
+                          const enhancedStandard = enhanceStandardsDisplay(
+                            standard, 
+                            parseJsonArray(standard.kpis), 
+                            parseJsonArray(standard.required_documents)
+                          );
+                          
+                          return (
+                            <>
+                              {enhancedStandard.hasEnhancedData && (
+                                <>
+                                  <EnhancedKpiDisplay 
+                                    standard={enhancedStandard} 
+                                    currentKpis={enhancedStandard.enhancedKpis}
+                                  />
+                                  <EnhancedDocumentsDisplay 
+                                    standard={enhancedStandard} 
+                                    currentDocuments={enhancedStandard.enhancedDocuments}
+                                  />
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
+                        
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                           <span>المحور: {standard.axis_name}</span>
                           <span>الأدلة: {approvedEvidence}/{standardEvidence.length}</span>
+                          <span>المؤشرات: {parseJsonArray(standard.kpis).length}</span>
+                          <span>المستندات: {parseJsonArray(standard.required_documents).length}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
