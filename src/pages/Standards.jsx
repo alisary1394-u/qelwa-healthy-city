@@ -34,9 +34,16 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
+/** تصحيح رموز قديمة: م1-8 وم1-9 تتبعان المحور الثاني (م2-1، م2-2) */
+const CODE_TO_INDEX_CORRECTIONS = { 'م1-8': 7, 'م1-9': 8 };
+const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2' };
+
 /** استخراج مؤشر المعيار (0–85) من الرمز محور-رقم، مع دعم 13 محوراً (CSV) */
 function getStandardIndexFromCode(code) {
-  const match = String(code || '').match(/م\s*(\d+)\s*-\s*(\d+)/) || String(code || '').match(/م(\d+)-(\d+)/);
+  const raw = String(code || '').trim().replace(/\s+/g, '');
+  const correctedIndex = CODE_TO_INDEX_CORRECTIONS[raw];
+  if (correctedIndex !== undefined) return correctedIndex;
+  const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
   const i = parseInt(match[2], 10);
@@ -127,6 +134,8 @@ export default function Standards() {
     try {
       let updated = 0;
       for (const standard of list) {
+        const rawCode = (standard.code || '').trim().replace(/\s+/g, '');
+        const correctedCode = CODE_CORRECTIONS[rawCode] || rawCode;
         const idx = getStandardIndexFromCode(standard.code);
         const item = STANDARDS_CSV[idx];
         if (!item) continue;
@@ -136,21 +145,20 @@ export default function Standards() {
         const axisId = axisRecord?.id ?? standard.axis_id;
         const documents = item.documents ?? [];
         const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
-        await updateStandardMutation.mutateAsync({
-          id: standard.id,
-          data: {
-            title: item.title ?? standard.title,
-            description: item.title ?? standard.description,
-            required_evidence: buildRequiredEvidence(documents),
-            required_documents: JSON.stringify(documents),
-            kpis: JSON.stringify(kpisList),
-            axis_name: axisName,
-            axis_id: axisId,
-          }
-        });
+        const data = {
+          title: item.title ?? standard.title,
+          description: item.title ?? standard.description,
+          required_evidence: buildRequiredEvidence(documents),
+          required_documents: JSON.stringify(documents),
+          kpis: JSON.stringify(kpisList),
+          axis_name: axisName,
+          axis_id: axisId,
+        };
+        if (correctedCode !== rawCode) data.code = correctedCode;
+        await updateStandardMutation.mutateAsync({ id: standard.id, data });
         updated += 1;
       }
-      const existingCodes = new Set((list || []).map((s) => s.code));
+      const existingCodes = new Set((list || []).map((s) => CODE_CORRECTIONS[(s.code || '').trim().replace(/\s+/g, '')] || s.code));
       let created = 0;
       for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
         const code = getStandardCodeFromIndex(standardIndex);

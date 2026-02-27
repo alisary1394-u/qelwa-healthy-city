@@ -277,11 +277,15 @@ async function syncStandardsKpisFromPdf() {
     }
     axesList = await entities.Axis.list('order');
   }
+  /** تصحيح رموز قديمة: م1-8 وم1-9 تتبعان المحور الثاني (م2-1، م2-2) */
+  const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2' };
   const standards = await entities.Standard.list();
   let updated = 0;
   for (const standard of standards) {
-    const code = standard.code;
-    if (!code || typeof code !== 'string') continue;
+    let code = (standard.code || '').trim().replace(/\s+/g, '');
+    const correctedCode = CODE_CORRECTIONS[code] || code;
+    if (correctedCode !== code) code = correctedCode;
+    if (!code) continue;
     const match = code.match(/م(\d+)-(\d+)/);
     if (!match) continue;
     const axisNum = parseInt(match[1], 10);
@@ -300,7 +304,7 @@ async function syncStandardsKpisFromPdf() {
     const required_evidence = buildRequiredEvidence(documents);
     const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
     const kpis = JSON.stringify(kpisList);
-    await entities.Standard.update(standard.id, {
+    const payload = {
       title: item.title ?? standard.title,
       description: item.title ?? standard.description,
       required_evidence,
@@ -308,10 +312,12 @@ async function syncStandardsKpisFromPdf() {
       kpis,
       axis_name: axisName,
       axis_id: axisId,
-    });
+    };
+    if (correctedCode !== (standard.code || '').trim().replace(/\s+/g, '')) payload.code = correctedCode;
+    await entities.Standard.update(standard.id, payload);
     updated++;
   }
-  const existingCodes = new Set(standards.map((s) => s.code));
+  const existingCodes = new Set(standards.map((s) => CODE_CORRECTIONS[(s.code || '').trim().replace(/\s+/g, '')] || s.code));
   let created = 0;
   for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
     const code = getStandardCodeFromIndex(standardIndex);
