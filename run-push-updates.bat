@@ -2,8 +2,21 @@
 cd /d "%~dp0"
 
 echo ========================================
-echo   Push updates to server (Git)
+echo   Fix Axes Order & Push Updates
 echo ========================================
+echo.
+
+echo [0] Fix axes order in database...
+echo Opening browser to fix axes order...
+echo.
+echo In the application:
+echo 1. Go to Settings page
+echo 2. Click "مسح البيانات وإعادة تحميل بيانات التجربة"
+echo 3. Login with ID: 1, Password: 123456
+echo 4. This will reset axes to correct order (1-9)
+echo.
+echo Press any key to continue to Git push...
+pause > nul
 echo.
 
 echo [1] Check Git...
