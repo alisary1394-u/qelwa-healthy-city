@@ -267,7 +267,7 @@ function buildRequiredEvidence(documents) {
   return 'أدلة مطلوبة: ' + list.join('، ');
 }
 
-/** مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة — 9 محاور، 80 معياراً */
+/** مزامنة المعايير من المرجع (standardsFromCsv): تحديث الموجودة وإضافة الناقصة — 9 محاور، 80 معياراً */
 async function syncStandardsKpisFromPdf() {
   let axesList = await entities.Axis.list('order');
   const numAxes = AXES_SEED.length;
@@ -277,58 +277,36 @@ async function syncStandardsKpisFromPdf() {
     }
     axesList = await entities.Axis.list('order');
   }
-  /** تصحيح رموز قديمة: م1-8/م1-9 → م2-1/م2-2؛ م2-8/م2-9 → م3-1/م3-2 (المحور 2 له 7 معايير فقط) */
-  const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
-  /** حذف سجلات مرقمة برموز خاطئة (مكررة) حتى لا يظهر م2-1 أو م2-2 مرتين */
-  const CODES_TO_DELETE_AS_DUPLICATES = ['م1-8', 'م1-9', 'م2-8', 'م2-9'];
-  let standards = await entities.Standard.list();
-  for (const standard of standards) {
-    const raw = (standard.code || '').trim().replace(/\s+/g, '');
-    if (CODES_TO_DELETE_AS_DUPLICATES.includes(raw)) await entities.Standard.delete(standard.id);
-  }
-  standards = await entities.Standard.list();
+  const standards = await entities.Standard.list();
+  const existingCodes = new Set(standards.map((s) => (s.code || '').trim().replace(/\s+/g, '')));
   let updated = 0;
   for (const standard of standards) {
-    let code = (standard.code || '').trim().replace(/\s+/g, '');
-    const correctedCode = CODE_CORRECTIONS[code] || code;
-    if (correctedCode !== code) code = correctedCode;
+    const code = (standard.code || '').trim().replace(/\s+/g, '');
     if (!code) continue;
-    const match = code.match(/م(\d+)-(\d+)/);
-    if (!match) continue;
-    const axisNum = parseInt(match[1], 10);
-    const i = parseInt(match[2], 10);
-    if (axisNum < 1 || axisNum > numAxes || i < 1) continue;
-    const before = AXIS_COUNTS.slice(0, Math.min(axisNum - 1, AXIS_COUNTS.length)).reduce((a, b) => a + b, 0);
-    const standardIndex = Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
+    const standardIndex = getStandardIndexFromCodeSupabase(code);
+    if (standardIndex < 0 || standardIndex >= STANDARDS_CSV.length) continue;
     const item = STANDARDS_CSV[standardIndex];
-    if (!item) continue;
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
     const axisId = axisRecord?.id ?? standard.axis_id;
     const documents = item.documents ?? [];
-    const required_documents = JSON.stringify(documents);
-    const required_evidence = buildRequiredEvidence(documents);
     const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
-    const kpis = JSON.stringify(kpisList);
-    const payload = {
+    await entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
       description: item.title ?? standard.description,
-      required_evidence,
-      required_documents,
-      kpis,
+      required_evidence: buildRequiredEvidence(documents),
+      required_documents: JSON.stringify(documents),
+      kpis: JSON.stringify(kpisList),
       axis_name: axisName,
       axis_id: axisId,
-    };
-    if (correctedCode !== (standard.code || '').trim().replace(/\s+/g, '')) payload.code = correctedCode;
-    await entities.Standard.update(standard.id, payload);
+    });
     updated++;
   }
-  const existingCodes = new Set(standards.map((s) => CODE_CORRECTIONS[(s.code || '').trim().replace(/\s+/g, '')] || s.code));
   let created = 0;
   for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
     const code = getStandardCodeFromIndex(standardIndex);
-    if (!code || existingCodes.has(code)) continue;
+    if (!code || existingCodes.has(code.trim().replace(/\s+/g, ''))) continue;
     const item = STANDARDS_CSV[standardIndex];
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
@@ -346,11 +324,20 @@ async function syncStandardsKpisFromPdf() {
       kpis: JSON.stringify(kpisList),
       status: 'not_started',
     });
-    existingCodes.add(code);
+    existingCodes.add(code.trim().replace(/\s+/g, ''));
     created++;
   }
-  if (updated > 0 && typeof console !== 'undefined') console.log('[Supabase] تم تحديث المعايير (عنوان، وصف، أدلة، مؤشرات، محور)', updated, 'معياراً من ملف CSV');
-  if (created > 0 && typeof console !== 'undefined') console.log('[Supabase] تمت إضافة المعايير الناقصة', created, 'معياراً');
+  if ((updated > 0 || created > 0) && typeof console !== 'undefined') console.log('[Supabase] مزامنة المعايير من المرجع:', updated, 'تحديث،', created, 'إضافة');
+}
+
+function getStandardIndexFromCodeSupabase(code) {
+  const match = String(code || '').trim().replace(/\s+/g, '').match(/م(\d+)-(\d+)/);
+  if (!match) return -1;
+  const axisNum = parseInt(match[1], 10);
+  const i = parseInt(match[2], 10);
+  if (axisNum < 1 || axisNum > AXIS_COUNTS.length || i < 1) return -1;
+  const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
+  return Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
 }
 
 export async function seedAxesAndStandardsIfNeeded() {
@@ -364,6 +351,15 @@ export async function seedAxesAndStandardsIfNeeded() {
     for (const s of standardsSeed) await entities.Standard.create(s);
   }
   await syncStandardsKpisFromPdf();
+}
+
+/** حذف جميع المحاور والمعايير ثم إعادة بنائها من مرجع المعايير (9 محاور، 80 معياراً) */
+export async function clearAxesAndStandardsAndReseed() {
+  const standards = await entities.Standard.list();
+  for (const s of standards) await entities.Standard.delete(s.id);
+  const axes = await entities.Axis.list();
+  for (const a of axes) await entities.Axis.delete(a.id);
+  await seedAxesAndStandardsIfNeeded();
 }
 
 export async function seedCommitteesTeamInitiativesTasksIfNeeded() {
@@ -405,6 +401,7 @@ export const supabaseBackend = {
   asServiceRole: { entities, functions },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
+  clearAxesAndStandardsAndReseed,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
   getDefaultLocalCredentials,

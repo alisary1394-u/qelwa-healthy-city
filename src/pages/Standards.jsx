@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -34,15 +34,9 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
-/** تصحيح رموز قديمة: م1-8/م1-9 → المحور 2؛ م2-8/م2-9 → المحور 3 (المحور 2 له 7 معايير فقط: م2-1…م2-7) */
-const CODE_TO_INDEX_CORRECTIONS = { 'م1-8': 7, 'م1-9': 8, 'م2-8': 14, 'م2-9': 15 };
-const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
-
-/** استخراج مؤشر المعيار (0–79) من الرمز محور-رقم، مع دعم 9 محاور (CSV) */
+/** استخراج مؤشر المعيار (0–79) من الرمز م{محور}-{رقم} — 9 محاور، 80 معياراً (حسب مرجع المعايير) */
 function getStandardIndexFromCode(code) {
   const raw = String(code || '').trim().replace(/\s+/g, '');
-  const correctedIndex = CODE_TO_INDEX_CORRECTIONS[raw];
-  if (correctedIndex !== undefined) return correctedIndex;
   const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
@@ -77,7 +71,6 @@ export default function Standards() {
   const [editDocuments, setEditDocuments] = useState([]);
   const [editKpis, setEditKpis] = useState([]);
   const [showResultTable, setShowResultTable] = useState(false);
-  const [syncingStandards, setSyncingStandards] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -124,85 +117,17 @@ export default function Standards() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
-  /** مزامنة المعايير من الدليل: حذف المكررات (م1-8، م1-9، م2-8، م2-9) ثم تحديث الباقي وإضافة الناقصة */
-  const syncStandardsFromGuide = useCallback(async () => {
-    let list = await api.entities.Standard.list('code').catch(() => []);
-    const axesData = await api.entities.Axis.list('order').catch(() => []);
-    const CODES_TO_DELETE_AS_DUPLICATES = ['م1-8', 'م1-9', 'م2-8', 'م2-9'];
-    for (const standard of list) {
-      const raw = (standard.code || '').trim().replace(/\s+/g, '');
-      if (CODES_TO_DELETE_AS_DUPLICATES.includes(raw) && typeof api.entities.Standard.delete === 'function') {
-        await api.entities.Standard.delete(standard.id).catch(() => {});
+  const reseedAxesStandardsMutation = useMutation({
+    mutationFn: async () => {
+      if (typeof api.clearAxesAndStandardsAndReseed === 'function') {
+        await Promise.resolve(api.clearAxesAndStandardsAndReseed());
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['axes'] });
+      queryClient.invalidateQueries({ queryKey: ['standards'] });
     }
-    await queryClient.invalidateQueries({ queryKey: ['standards'] });
-    list = await api.entities.Standard.list('code').catch(() => []);
-    setSyncingStandards(true);
-    try {
-      let updated = 0;
-      for (const standard of list) {
-        const rawCode = (standard.code || '').trim().replace(/\s+/g, '');
-        const correctedCode = CODE_CORRECTIONS[rawCode] || rawCode;
-        const idx = getStandardIndexFromCode(standard.code);
-        const item = STANDARDS_CSV[idx];
-        if (!item) continue;
-        const axisOrder = getAxisOrderFromStandardIndex(idx);
-        const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
-        const axisRecord = axesData.find((a) => Number(a.order) === axisOrder);
-        const axisId = axisRecord?.id ?? standard.axis_id;
-        const documents = item.documents ?? [];
-        const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
-        const data = {
-          title: item.title ?? standard.title,
-          description: item.title ?? standard.description,
-          required_evidence: buildRequiredEvidence(documents),
-          required_documents: JSON.stringify(documents),
-          kpis: JSON.stringify(kpisList),
-          axis_name: axisName,
-          axis_id: axisId,
-        };
-        if (correctedCode !== rawCode) data.code = correctedCode;
-        await updateStandardMutation.mutateAsync({ id: standard.id, data });
-        updated += 1;
-      }
-      const existingCodes = new Set((list || []).map((s) => CODE_CORRECTIONS[(s.code || '').trim().replace(/\s+/g, '')] || s.code));
-      let created = 0;
-      for (let standardIndex = 0; standardIndex < STANDARDS_CSV.length; standardIndex++) {
-        const code = getStandardCodeFromIndex(standardIndex);
-        if (!code || existingCodes.has(code)) continue;
-        const item = STANDARDS_CSV[standardIndex];
-        const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
-        const axisRecord = axesData.find((a) => Number(a.order) === axisOrder);
-        if (!axisRecord) continue;
-        const documents = item?.documents ?? ['أدلة ومستندات تدعم تحقيق المعيار'];
-        const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
-        await createStandardMutation.mutateAsync({
-          code,
-          title: item?.title ?? `معيار ${axisRecord.name} ${code}`,
-          description: item?.title ?? '',
-          axis_id: axisRecord.id,
-          axis_name: axisRecord.name,
-          required_evidence: buildRequiredEvidence(documents),
-          required_documents: JSON.stringify(documents),
-          kpis: JSON.stringify(kpisList),
-          status: 'not_started',
-        });
-        existingCodes.add(code);
-        created += 1;
-      }
-      await queryClient.invalidateQueries({ queryKey: ['standards'] });
-    } finally {
-      setSyncingStandards(false);
-    }
-  }, [updateStandardMutation, createStandardMutation, queryClient]);
-
-  /** تحديث المعايير تلقائياً من ملف المعايير (مرة واحدة عند توفر البيانات لمن لديه صلاحية الإدارة) */
-  const syncRanRef = useRef(false);
-  useEffect(() => {
-    if (!canManageStandards || syncingStandards || syncRanRef.current || standards.length === 0 || axes.length === 0) return;
-    syncRanRef.current = true;
-    syncStandardsFromGuide().catch(() => { syncRanRef.current = false; });
-  }, [canManageStandards, standards.length, axes.length, syncingStandards, syncStandardsFromGuide]);
+  });
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
@@ -386,6 +311,17 @@ export default function Standards() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 mb-6">
+          {canManage && typeof api.clearAxesAndStandardsAndReseed === 'function' && (
+            <Button
+              variant="outline"
+              className="border-amber-500 text-amber-700 hover:bg-amber-50"
+              disabled={reseedAxesStandardsMutation.isPending}
+              onClick={() => reseedAxesStandardsMutation.mutate()}
+            >
+              {reseedAxesStandardsMutation.isPending ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Target className="w-4 h-4 ml-2" />}
+              إعادة بناء المحاور والمعايير من المرجع
+            </Button>
+          )}
           {canManage && (
             <>
               <Button onClick={() => setAxisFormOpen(true)} variant="outline">
@@ -395,14 +331,6 @@ export default function Standards() {
               <Button onClick={() => setStandardFormOpen(true)} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 ml-2" />
                 إضافة معيار
-              </Button>
-              <Button
-                variant="outline"
-                disabled={syncingStandards || loadingAxes || loadingStandards}
-                onClick={() => syncStandardsFromGuide().then(() => queryClient.invalidateQueries({ queryKey: ['standards'] })).catch((e) => console.error(e))}
-              >
-                {syncingStandards ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <RefreshCw className="w-4 h-4 ml-2" />}
-                مزامنة المعايير من الدليل
               </Button>
             </>
           )}
