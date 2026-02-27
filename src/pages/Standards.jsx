@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode, normalizeStandardCode } from '@/api/standardsFromCsv';
 import { createAxesSelectFunction } from '@/lib/axesSort';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
@@ -163,10 +163,28 @@ export default function Standards() {
     const list = standards.filter(s => {
       const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
       const matchesSearch = !searchQuery ||
-        s.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.title?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesAxis && matchesSearch;
     });
+    
+    // فرز بسيط وفعال للمحاور الفردية
+    if (activeAxis !== 'all') {
+      return list.sort((a, b) => {
+        // استخراج رقم المحور والمعيار من الرمز
+        const extractNumbers = (code) => {
+          const match = code?.match(/م(\d+)-(\d+)/);
+          return match ? [parseInt(match[1]), parseInt(match[2])] : [0, 0];
+        };
+        
+        const [axisA, numA] = extractNumbers(a.code);
+        const [axisB, numB] = extractNumbers(b.code);
+        
+        // فرز حسب رقم المحور ثم رقم المعيار
+        if (axisA !== axisB) return axisA - axisB;
+        return numA - numB;
+      });
+    }
+    
     return sortAndDeduplicateStandardsByCode(list);
   })();
 
