@@ -38,7 +38,7 @@ const statusConfig = {
 const CODE_TO_INDEX_CORRECTIONS = { 'م1-8': 7, 'م1-9': 8, 'م2-8': 14, 'م2-9': 15 };
 const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
 
-/** استخراج مؤشر المعيار (0–85) من الرمز محور-رقم، مع دعم 13 محوراً (CSV) */
+/** استخراج مؤشر المعيار (0–79) من الرمز محور-رقم، مع دعم 9 محاور (CSV) */
 function getStandardIndexFromCode(code) {
   const raw = String(code || '').trim().replace(/\s+/g, '');
   const correctedIndex = CODE_TO_INDEX_CORRECTIONS[raw];
@@ -330,7 +330,7 @@ export default function Standards() {
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '86 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -350,7 +350,7 @@ export default function Standards() {
           {showResultTable && (
             <CardContent className="space-y-4 pt-0">
               <p className="text-sm text-gray-600">
-                حسب ملف المعايير (Healthy_Cities_Criteria): 13 محوراً و 86 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
+                حسب مرجع المعايير (مرجع-معايير-المحاور-للمقارنة): 9 محاور و 80 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
               </p>
               <div className="rounded-lg border bg-white p-3">
                 <h4 className="font-semibold mb-2">مؤشر التصنيف الإجمالي</h4>

@@ -267,7 +267,7 @@ function buildRequiredEvidence(documents) {
   return 'أدلة مطلوبة: ' + list.join('، ');
 }
 
-/** مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11) — 13 محوراً، 86 معياراً */
+/** مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة — 9 محاور، 80 معياراً */
 async function syncStandardsKpisFromPdf() {
   let axesList = await entities.Axis.list('order');
   const numAxes = AXES_SEED.length;

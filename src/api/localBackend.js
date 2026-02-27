@@ -255,7 +255,7 @@ function buildRequiredEvidence(documents) {
 
 /**
  * مزامنة المعايير من CSV: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11).
- * يطبق على المعايير حسب الرمز م1-1 … م13-8 (13 محوراً، 86 معياراً).
+ * يطبق على المعايير حسب الرمز م1-1 … م9-7 (9 محاور، 80 معياراً).
  */
 export function syncStandardsKpisFromPdf() {
   if (typeof localStorage === 'undefined') return;
@@ -344,7 +344,7 @@ export function syncStandardsKpisFromPdf() {
   if (created > 0) console.log('[localBackend] تمت إضافة المعايير الناقصة', created, 'معياراً (منها م4-10، م4-11 إن وُجدت)');
 }
 
-/** إعادة المحاور الـ 13 و 86 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */
+/** إعادة المحاور الـ 9 و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */
 export function seedAxesAndStandardsIfNeeded() {
   if (typeof localStorage === 'undefined') return;
   const axesList = getStore('Axis');
