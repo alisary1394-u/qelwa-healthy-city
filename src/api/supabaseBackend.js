@@ -142,7 +142,7 @@ const auth = {
     const user = getCurrentUser();
     if (!user) {
       const err = new Error('غير مسجل الدخول');
-      err.status = 401;
+      Object.defineProperty(err, 'status', { value: 401, writable: true, configurable: true });
       throw err;
     }
     return user;
