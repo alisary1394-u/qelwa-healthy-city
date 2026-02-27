@@ -18,14 +18,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 
-// استيراد المؤشرات المحسنة
+// استيراد المؤشرات المحسنة (النسخة المبسطة)
 import { 
   EnhancedKpiDisplay, 
   EnhancedDocumentsDisplay, 
   EnhancedAxisCard,
   enhanceStandardsDisplay,
   calculateAxisPerformance 
-} from '@/components/EnhancedStandardsDisplay';
+} from '@/components/EnhancedStandardsDisplay-Simple';
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
