@@ -10,11 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
+import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, ClipboardList, 
   AlertTriangle, CheckCircle2, Clock, TrendingUp, Building2,
   ArrowLeft, Activity, Image, Upload, Trash2, Save, Settings
 } from "lucide-react";
+
+/** عدد المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
+const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 const axisColors = [
@@ -132,8 +136,8 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate overall stats
-  const totalStandards = standards.length || 80;
+  // Calculate overall stats — المعايير المعتمدة في التطبيق: 80 (مرجع المعايير)
+  const totalStandards = REFERENCE_STANDARDS_COUNT;
   const completedStandards = standards.filter(s => s.status === 'completed' || s.status === 'approved').length;
   const overallProgress = totalStandards > 0 ? Math.round((completedStandards / totalStandards) * 100) : 0;
 
@@ -199,7 +203,7 @@ export default function Dashboard() {
           <Card>
             <CardContent className="p-4 text-center">
               <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <p className="text-2xl font-bold">{totalStandards}</p>
+              <p className="text-2xl font-bold">{REFERENCE_STANDARDS_COUNT}</p>
               <p className="text-sm text-gray-500">المعايير الدولية</p>
             </CardContent>
           </Card>
