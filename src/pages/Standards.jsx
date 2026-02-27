@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,26 +36,6 @@ const statusConfig = {
 
 /** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
 const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
-
-/** تطبيع الرمز للمقارنة (إزالة المسافات) */
-function normalizeCode(code) {
-  return String(code || '').trim().replace(/\s+/g, '');
-}
-
-/** استخراج مؤشر المعيار (0–79) من الرمز م{محور}-{رقم} — 9 محاور، 80 معياراً (حسب مرجع المعايير) */
-function getStandardIndexFromCode(code) {
-  const raw = normalizeCode(code);
-  const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
-  if (!match) return -1;
-  const axisNum = parseInt(match[1], 10);
-  const i = parseInt(match[2], 10);
-  if (axisNum < 1 || axisNum > 9 || i < 1) return -1;
-  if (AXIS_COUNTS[axisNum - 1] != null) {
-    const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-    return Math.min(79, before + (i - 1));
-  }
-  return Math.min(79, (axisNum - 1) * 8 + (i - 1));
-}
 
 function buildRequiredEvidence(documents) {
   const list = Array.isArray(documents) && documents.length ? documents : [];
@@ -163,7 +143,7 @@ export default function Standards() {
     );
   }
 
-  // فلترة ثم ترتيب حسب الترقيم المرجعي (م1-1، م1-2، … م9-7) وإزالة التكرار بحيث يظهر معيار واحد فقط لكل رمز
+  // فلترة ثم ترتيب حسب الترقيم المرجعي (م1-1 … م9-7) وإزالة التكرار — نفس المنطق لجميع المحاور بما فيها 4، 7، 8، 9
   const filteredStandards = (() => {
     const list = standards.filter(s => {
       const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
@@ -172,21 +152,7 @@ export default function Standards() {
         s.title?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesAxis && matchesSearch;
     });
-    const sorted = [...list].sort((a, b) => {
-      const idxA = getStandardIndexFromCode(a.code);
-      const idxB = getStandardIndexFromCode(b.code);
-      if (idxA < 0 && idxB < 0) return 0;
-      if (idxA < 0) return 1;
-      if (idxB < 0) return -1;
-      return idxA - idxB;
-    });
-    const seen = new Set();
-    return sorted.filter(s => {
-      const code = normalizeCode(s.code);
-      if (seen.has(code)) return false;
-      seen.add(code);
-      return true;
-    });
+    return sortAndDeduplicateStandardsByCode(list);
   })();
 
   const getAxisProgress = (axisId) => {

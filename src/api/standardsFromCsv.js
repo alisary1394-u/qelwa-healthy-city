@@ -194,3 +194,47 @@ export function getStandardCodeFromIndex(index) {
   const i = index - before + 1;
   return `م${axisOrder}-${i}`;
 }
+
+/** تطبيع الرمز للمقارنة (إزالة المسافات) */
+export function normalizeStandardCode(code) {
+  return String(code || '').trim().replace(/\s+/g, '');
+}
+
+/**
+ * استخراج مؤشر المعيار (0–79) من الرمز م{محور}-{رقم} — 9 محاور، 80 معياراً.
+ * للترتيب وإزالة التكرار في الواجهة والتقارير.
+ */
+export function getStandardIndexFromCode(code) {
+  const raw = normalizeStandardCode(code);
+  const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
+  if (!match) return -1;
+  const axisNum = parseInt(match[1], 10);
+  const i = parseInt(match[2], 10);
+  if (axisNum < 1 || axisNum > AXIS_COUNTS_CSV.length || i < 1) return -1;
+  const before = AXIS_COUNTS_CSV.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
+  return Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
+}
+
+/**
+ * ترتيب المعايير حسب الترقيم المرجعي (م1-1 … م9-7) وإزالة التكرار (معيار واحد لكل رمز).
+ * @param {Array} standardsList مصفوفة معايير من API
+ * @returns {Array} نفس المصدر مرتبة ومُزالة التكرار
+ */
+export function sortAndDeduplicateStandardsByCode(standardsList) {
+  if (!Array.isArray(standardsList)) return [];
+  const sorted = [...standardsList].sort((a, b) => {
+    const idxA = getStandardIndexFromCode(a.code);
+    const idxB = getStandardIndexFromCode(b.code);
+    if (idxA < 0 && idxB < 0) return 0;
+    if (idxA < 0) return 1;
+    if (idxB < 0) return -1;
+    return idxA - idxB;
+  });
+  const seen = new Set();
+  return sorted.filter((s) => {
+    const code = normalizeStandardCode(s.code);
+    if (seen.has(code)) return false;
+    seen.add(code);
+    return true;
+  });
+}

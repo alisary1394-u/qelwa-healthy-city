@@ -2,7 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, AlertCircle, FileText, Target } from "lucide-react";
-import { AXIS_KPIS_CSV } from '@/api/standardsFromCsv';
+import { AXIS_KPIS_CSV, AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+
+const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -32,19 +34,31 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
     );
   };
 
-  const calculateAxisCompletion = (axisId) => {
-    const axisStandards = standards.filter(s => s.axis_id === axisId);
-    if (axisStandards.length === 0) return 0;
-    const totalCompletion = axisStandards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0);
-    return Math.round(totalCompletion / axisStandards.length);
+  const getExpectedCountForAxis = (axisOrder) => {
+    if (axisOrder >= 1 && axisOrder <= AXIS_COUNTS_CSV.length) return AXIS_COUNTS_CSV[axisOrder - 1];
+    return 1;
   };
 
-  const overallCompletion = standards.length > 0 
-    ? Math.round(standards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / standards.length)
+  const getAxisStandardsSortedAndDeduped = (axisId, axisOrder) => {
+    const list = standards.filter(s => s.axis_id === axisId);
+    return sortAndDeduplicateStandardsByCode(list);
+  };
+
+  const calculateAxisCompletion = (axisId, axisOrder) => {
+    const axisStandards = standards.filter(s => s.axis_id === axisId);
+    const expectedCount = getExpectedCountForAxis(axisOrder);
+    if (expectedCount <= 0) return 0;
+    const completed = axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
+    return Math.round((completed / expectedCount) * 100);
+  };
+
+  const dedupedStandards = sortAndDeduplicateStandardsByCode(standards);
+  const overallCompletion = REFERENCE_TOTAL_STANDARDS > 0 && dedupedStandards.length > 0
+    ? Math.round(dedupedStandards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / dedupedStandards.length)
     : 0;
 
   const completedStandards = standards.filter(s => s.status === 'completed' || s.status === 'approved').length;
-  const totalStandards = standards.length;
+  const totalStandards = REFERENCE_TOTAL_STANDARDS;
 
   return (
     <div dir="rtl" className="report-font bg-white p-8 space-y-8 text-right font-sans antialiased" id="who-report">
@@ -104,8 +118,11 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
         </h2>
         <div className="space-y-3">
           {axes.map(axis => {
-            const completion = calculateAxisCompletion(axis.id);
+            const order = axis.order ?? 0;
+            const completion = calculateAxisCompletion(axis.id, order);
             const axisStandards = standards.filter(s => s.axis_id === axis.id);
+            const expectedCount = getExpectedCountForAxis(order);
+            const completedCount = axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
             return (
               <div key={axis.id} className="border rounded-lg p-4 text-right">
                 <div className="flex items-center justify-between mb-2">
@@ -119,7 +136,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                   />
                 </div>
                 <p className="text-sm text-gray-600">
-                  {axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length} من {axisStandards.length} معيار مكتمل
+                  {completedCount} من {expectedCount} معيار مكتمل
                 </p>
               </div>
             );
@@ -127,9 +144,10 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
         </div>
       </div>
 
-      {/* Detailed Standards by Axis */}
+      {/* Detailed Standards by Axis — ترتيب وإزالة تكرار حسب الرمز (م1-1 … م9-7) لجميع المحاور بما فيها 4، 7، 8، 9 */}
       {axes.map(axis => {
-        const axisStandards = standards.filter(s => s.axis_id === axis.id);
+        const order = axis.order ?? 0;
+        const axisStandards = getAxisStandardsSortedAndDeduped(axis.id, order);
         if (axisStandards.length === 0) return null;
 
         return (
@@ -276,11 +294,11 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
           التوصيات والخطوات القادمة
         </h2>
         <div className="bg-green-50 border-r-4 border-green-600 p-6 space-y-3">
-          {standards.filter(s => s.status !== 'completed' && s.status !== 'approved').length > 0 && (
+          {dedupedStandards.filter(s => s.status !== 'completed' && s.status !== 'approved').length > 0 && (
             <div>
               <p className="font-semibold text-gray-900 mb-2">المعايير التي تحتاج إلى إكمال:</p>
               <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                {standards
+                {dedupedStandards
                   .filter(s => s.status !== 'completed' && s.status !== 'approved')
                   .slice(0, 5)
                   .map(s => (

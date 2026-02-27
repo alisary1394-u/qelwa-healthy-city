@@ -11,7 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
+import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
+
+const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Reports() {
@@ -141,14 +144,19 @@ export default function Reports() {
     { name: 'معتمد', value: standards.filter(s => s.status === 'approved').length, color: '#059669' }
   ];
 
-  const standardsByAxis = axes.map(axis => ({
-    name: axis.name,
-    total: standards.filter(s => s.axis_id === axis.id).length,
-    completed: standards.filter(s => s.axis_id === axis.id && (s.status === 'completed' || s.status === 'approved')).length,
-    avgCompletion: standards.filter(s => s.axis_id === axis.id).length > 0 
-      ? Math.round(standards.filter(s => s.axis_id === axis.id).reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / standards.filter(s => s.axis_id === axis.id).length)
-      : 0
-  }));
+  const standardsByAxis = axes.map(axis => {
+    const order = axis.order ?? 0;
+    const expectedCount = (order >= 1 && order <= AXIS_COUNTS_CSV.length) ? AXIS_COUNTS_CSV[order - 1] : standards.filter(s => s.axis_id === axis.id).length;
+    const axisStandards = standards.filter(s => s.axis_id === axis.id);
+    const completed = axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
+    const avgCompletion = expectedCount > 0 ? Math.round((completed / expectedCount) * 100) : 0;
+    return {
+      name: axis.name,
+      total: expectedCount,
+      completed,
+      avgCompletion
+    };
+  });
 
   // تسميات الحالات للعرض في التقارير التفصيلية
   const taskStatusLabel = { pending: 'معلقة', in_progress: 'قيد التنفيذ', completed: 'مكتملة', cancelled: 'ملغاة' };
@@ -175,7 +183,7 @@ export default function Reports() {
     { value: 'initiatives_completed', label: 'المبادرات المكتملة', getData: () => filteredInitiatives.filter(i => i.status === 'completed').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
     { value: 'initiatives_in_progress', label: 'المبادرات قيد التنفيذ', getData: () => filteredInitiatives.filter(i => i.status === 'in_progress').map(i => ({ 'العنوان': i.title, 'الوصف': i.description || '—', 'اللجنة': i.committee_name || '—', 'الحالة': initiativeStatusLabel[i.status] || i.status, 'الأولوية': i.priority || '—', 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
     { value: 'team', label: 'أعضاء الفريق', getData: () => members.map(m => ({ 'الاسم': m.full_name || '—', 'رقم الهوية': m.national_id || '—', 'المنصب': m.role || '—', 'اللجنة': getMemberCommitteeName(m), 'القسم/الجهة': m.department || '—', 'البريد': m.email || '—', 'الهاتف': m.phone || '—' })) },
-    { value: 'standards', label: 'المعايير', getData: () => standards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || axes.find(a => a.id === s.axis_id)?.name || '—', 'الحالة': standardStatusLabel[s.status] || s.status, 'نسبة الإنجاز %': s.completion_percentage ?? '—', 'الوصف': s.description || '—', 'المسؤول': s.assigned_to || '—' })) },
+    { value: 'standards', label: 'المعايير', getData: () => sortAndDeduplicateStandardsByCode(standards).map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || axes.find(a => a.id === s.axis_id)?.name || '—', 'الحالة': standardStatusLabel[s.status] || s.status, 'نسبة الإنجاز %': s.completion_percentage ?? '—', 'الوصف': s.description || '—', 'المسؤول': s.assigned_to || '—' })) },
     { value: 'standards_kpis', label: 'المعايير ومؤشرات الأداء', getData: () => {
       const parseKpis = (str) => {
         if (!str) return [];
@@ -184,7 +192,7 @@ export default function Reports() {
           return Array.isArray(v) ? v : [];
         } catch { return []; }
         };
-      return standards.map(s => {
+      return sortAndDeduplicateStandardsByCode(standards).map(s => {
         const kpisList = parseKpis(s.kpis);
         const kpisText = kpisList.map(k => `${k.name}: ${k.target || '-'} ${k.unit && k.unit !== '-' ? `(${k.unit})` : ''}`).join('؛ ');
         return {
@@ -707,7 +715,7 @@ export default function Reports() {
                 <Card>
                   <CardHeader className="pb-3">
                     <CardDescription>إجمالي المعايير</CardDescription>
-                    <CardTitle className="text-3xl">{standards.length}</CardTitle>
+                    <CardTitle className="text-3xl">{REFERENCE_TOTAL_STANDARDS}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -751,9 +759,12 @@ export default function Reports() {
                   <CardHeader className="pb-3">
                     <CardDescription>نسبة الإنجاز</CardDescription>
                     <CardTitle className="text-3xl text-blue-600">
-                      {standards.length > 0 
-                        ? Math.round(standards.reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / standards.length)
-                        : 0}%
+                      {(() => {
+                        const deduped = sortAndDeduplicateStandardsByCode(standards);
+                        return deduped.length > 0
+                          ? Math.round(deduped.reduce((sum, s) => sum + (s.completion_percentage || 0), 0) / deduped.length)
+                          : 0;
+                      })()}%
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
