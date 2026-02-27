@@ -174,8 +174,15 @@ export default function Standards() {
         const match = s.code?.match(/م(\d+)-(\d+)/);
         if (match) {
           const codeAxisOrder = parseInt(match[1]);
+          const codeStandardNum = parseInt(match[2]);
+          
           // إزالة المعايير التي لا تنتمي إلى المحور الصحيح
           if (codeAxisOrder !== axisOrder) {
+            return false;
+          }
+          
+          // فلتر خاص للمحور 9: إزالة م9-8 المكرر
+          if (axisOrder === 9 && codeStandardNum === 8) {
             return false;
           }
         }
