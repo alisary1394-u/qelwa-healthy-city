@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import KPIManager from "../components/initiatives/KPIManager";
+import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 
 const statusConfig = {
@@ -242,7 +243,9 @@ export default function Initiatives() {
     }
   };
 
-  const axisStandards = standards.filter(s => s.axis_id === formData.axis_id);
+  const axisStandards = formData.axis_id
+    ? sortAndDeduplicateStandardsByCode(standards.filter(s => s.axis_id === formData.axis_id))
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">

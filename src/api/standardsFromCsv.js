@@ -195,9 +195,15 @@ export function getStandardCodeFromIndex(index) {
   return `م${axisOrder}-${i}`;
 }
 
-/** تطبيع الرمز للمقارنة (إزالة المسافات) */
+/** تطبيع الرمز للمقارنة: إزالة كل المسافات وتوحيد الشرطة ليصبح الشكل مرقم-رقم فقط */
 export function normalizeStandardCode(code) {
-  return String(code || '').trim().replace(/\s+/g, '');
+  const s = String(code || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/\u0640/g, '')
+    .replace(/[\u2010-\u2015\u2212\u058A\u2010\u2011\u2012\u2013\u2014\u2015\u2053\u207B\u208B\u2212\u2796\uFE58\uFE63\uFF0D]/g, '-');
+  const match = s.match(/[\u0645م](\d+)-(\d+)/); // م عربية أو لاتينية
+  return match ? `م${match[1]}-${match[2]}` : s;
 }
 
 /**
@@ -206,7 +212,7 @@ export function normalizeStandardCode(code) {
  */
 export function getStandardIndexFromCode(code) {
   const raw = normalizeStandardCode(code);
-  const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
+  const match = raw.match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
   const i = parseInt(match[2], 10);
@@ -233,7 +239,7 @@ export function sortAndDeduplicateStandardsByCode(standardsList) {
   const seen = new Set();
   return sorted.filter((s) => {
     const code = normalizeStandardCode(s.code);
-    if (seen.has(code)) return false;
+    if (!code || seen.has(code)) return false;
     seen.add(code);
     return true;
   });

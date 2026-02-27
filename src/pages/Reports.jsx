@@ -685,7 +685,7 @@ export default function Reports() {
                 <Button 
                   variant="outline" 
                   onClick={() => exportToCSV(
-                    standards.map(s => ({
+                    sortAndDeduplicateStandardsByCode(standards).map(s => ({
                       'الرمز': s.code,
                       'العنوان': s.title,
                       'المحور': s.axis_name,
