@@ -1,6 +1,6 @@
 /**
  * بذرة المحاور والمعايير من ملف Healthy_Cities_Criteria.csv (معايير المدن الصحية).
- * 12 محوراً، 80 معياراً، مع مؤشرات أداء من standardsFromCsv.js.
+ * 13 محوراً، 86 معياراً، مع مؤشرات أداء من standardsFromCsv.js.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
 /** المحاور الـ 12 حسب CSV (مصدر البذرة) */
 export const AXES_SEED = AXES_CSV;
 
-/** أسماء مختصرة للمحاور للعرض في التبويبات (12 محوراً) */
+/** أسماء مختصرة للمحاور للعرض في التبويبات (13 محوراً) */
 export const AXIS_SHORT_NAMES = AXIS_SHORT_NAMES_CSV;
 
 /** عدد المعايير لكل محور (للاستخدام في المزامنة والحسابات) */
@@ -30,7 +30,7 @@ function buildRequiredEvidence(documents) {
 }
 
 /**
- * إنشاء مصفوفة الـ 80 معياراً من بيانات CSV، موزعة على المحاور الـ 12.
+ * إنشاء مصفوفة الـ 86 معياراً من بيانات CSV، موزعة على المحاور الـ 13.
  */
 export function buildStandardsSeed(axesWithIds) {
   const standards = [];

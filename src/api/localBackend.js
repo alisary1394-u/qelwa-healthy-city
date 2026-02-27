@@ -331,7 +331,7 @@ export function syncStandardsKpisFromPdf() {
   if (created > 0) console.log('[localBackend] تمت إضافة المعايير الناقصة', created, 'معياراً (منها م4-10، م4-11 إن وُجدت)');
 }
 
-/** إعادة المحاور الـ 12 و 80 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */
+/** إعادة المحاور الـ 13 و 86 معياراً إن كانت قائمة المحاور فارغة، ثم مزامنة المؤشرات من CSV */
 export function seedAxesAndStandardsIfNeeded() {
   if (typeof localStorage === 'undefined') return;
   const axesList = getStore('Axis');
