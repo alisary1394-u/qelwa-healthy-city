@@ -279,7 +279,14 @@ async function syncStandardsKpisFromPdf() {
   }
   /** تصحيح رموز قديمة: م1-8/م1-9 → م2-1/م2-2؛ م2-8/م2-9 → م3-1/م3-2 (المحور 2 له 7 معايير فقط) */
   const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
-  const standards = await entities.Standard.list();
+  /** حذف سجلات مرقمة برموز خاطئة (مكررة) حتى لا يظهر م2-1 أو م2-2 مرتين */
+  const CODES_TO_DELETE_AS_DUPLICATES = ['م1-8', 'م1-9', 'م2-8', 'م2-9'];
+  let standards = await entities.Standard.list();
+  for (const standard of standards) {
+    const raw = (standard.code || '').trim().replace(/\s+/g, '');
+    if (CODES_TO_DELETE_AS_DUPLICATES.includes(raw)) await entities.Standard.delete(standard.id);
+  }
+  standards = await entities.Standard.list();
   let updated = 0;
   for (const standard of standards) {
     let code = (standard.code || '').trim().replace(/\s+/g, '');

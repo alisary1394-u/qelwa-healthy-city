@@ -124,12 +124,19 @@ export default function Standards() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
-  /** مزامنة المعايير من الدليل: تحديث الموجودة وإضافة الناقصة (مثل م4-10، م4-11 في المحور الرابع) */
+  /** مزامنة المعايير من الدليل: حذف المكررات (م1-8، م1-9، م2-8، م2-9) ثم تحديث الباقي وإضافة الناقصة */
   const syncStandardsFromGuide = useCallback(async () => {
-    const [list, axesData] = await Promise.all([
-      api.entities.Standard.list('code').catch(() => []),
-      api.entities.Axis.list('order').catch(() => [])
-    ]);
+    let list = await api.entities.Standard.list('code').catch(() => []);
+    const axesData = await api.entities.Axis.list('order').catch(() => []);
+    const CODES_TO_DELETE_AS_DUPLICATES = ['م1-8', 'م1-9', 'م2-8', 'م2-9'];
+    for (const standard of list) {
+      const raw = (standard.code || '').trim().replace(/\s+/g, '');
+      if (CODES_TO_DELETE_AS_DUPLICATES.includes(raw) && typeof api.entities.Standard.delete === 'function') {
+        await api.entities.Standard.delete(standard.id).catch(() => {});
+      }
+    }
+    await queryClient.invalidateQueries({ queryKey: ['standards'] });
+    list = await api.entities.Standard.list('code').catch(() => []);
     setSyncingStandards(true);
     try {
       let updated = 0;
