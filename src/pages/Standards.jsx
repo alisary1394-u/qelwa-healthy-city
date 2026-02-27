@@ -37,9 +37,14 @@ const statusConfig = {
 /** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
 const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 
+/** تطبيع الرمز للمقارنة (إزالة المسافات) */
+function normalizeCode(code) {
+  return String(code || '').trim().replace(/\s+/g, '');
+}
+
 /** استخراج مؤشر المعيار (0–79) من الرمز م{محور}-{رقم} — 9 محاور، 80 معياراً (حسب مرجع المعايير) */
 function getStandardIndexFromCode(code) {
-  const raw = String(code || '').trim().replace(/\s+/g, '');
+  const raw = normalizeCode(code);
   const match = raw.match(/م\s*(\d+)\s*-\s*(\d+)/) || raw.match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
@@ -158,13 +163,31 @@ export default function Standards() {
     );
   }
 
-  const filteredStandards = standards.filter(s => {
-    const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
-    const matchesSearch = !searchQuery || 
-      s.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.title?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesAxis && matchesSearch;
-  });
+  // فلترة ثم ترتيب حسب الترقيم المرجعي (م1-1، م1-2، … م9-7) وإزالة التكرار بحيث يظهر معيار واحد فقط لكل رمز
+  const filteredStandards = (() => {
+    const list = standards.filter(s => {
+      const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
+      const matchesSearch = !searchQuery ||
+        s.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesAxis && matchesSearch;
+    });
+    const sorted = [...list].sort((a, b) => {
+      const idxA = getStandardIndexFromCode(a.code);
+      const idxB = getStandardIndexFromCode(b.code);
+      if (idxA < 0 && idxB < 0) return 0;
+      if (idxA < 0) return 1;
+      if (idxB < 0) return -1;
+      return idxA - idxB;
+    });
+    const seen = new Set();
+    return sorted.filter(s => {
+      const code = normalizeCode(s.code);
+      if (seen.has(code)) return false;
+      seen.add(code);
+      return true;
+    });
+  })();
 
   const getAxisProgress = (axisId) => {
     const axis = axes.find(a => a.id === axisId);
