@@ -34,6 +34,9 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
+/** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
+const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
+
 /** استخراج مؤشر المعيار (0–79) من الرمز م{محور}-{رقم} — 9 محاور، 80 معياراً (حسب مرجع المعايير) */
 function getStandardIndexFromCode(code) {
   const raw = String(code || '').trim().replace(/\s+/g, '');
@@ -164,10 +167,11 @@ export default function Standards() {
   });
 
   const getAxisProgress = (axisId) => {
-    const axisStandards = standards.filter(s => s.axis_id === axisId);
-    if (axisStandards.length === 0) return 0;
-    const completed = axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
-    return Math.round((completed / axisStandards.length) * 100);
+    const axis = axes.find(a => a.id === axisId);
+    const order = axis?.order ?? 0;
+    const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 1;
+    const completed = standards.filter(s => s.axis_id === axisId && (s.status === 'completed' || s.status === 'approved')).length;
+    return expectedCount > 0 ? Math.round((completed / expectedCount) * 100) : 0;
   };
 
   const handleSaveAxis = async (e) => {
@@ -353,12 +357,13 @@ export default function Standards() {
               onClick={() => setActiveAxis('all')}
               className="whitespace-nowrap"
             >
-              جميع المحاور ({standards.length})
+              جميع المحاور ({REFERENCE_TOTAL_STANDARDS})
             </Button>
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
               const order = axis.order ?? 0;
               const tabLabel = (order >= 1 && order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[order - 1] : axis.name;
-              const count = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : standards.filter(s => s.axis_id === axis.id).length;
+              /** عدد المعايير من مرجع المعايير لكل محور (1–9)، وليس من البيانات الحالية */
+              const count = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 0;
               return (
                 <Button
                   key={axis.id}
