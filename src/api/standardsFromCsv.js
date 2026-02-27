@@ -186,13 +186,22 @@ export function getAxisOrderFromStandardIndexCsv(index) {
 
 /**
  * استنتاج رمز المعيار (م1-1 … م9-7) من فهرس المعيار (0–79).
+ * يستخدم axis_order من بيانات المعيار لضمان الترميز الصحيح
  */
 export function getStandardCodeFromIndex(index) {
   if (index < 0 || index >= STANDARDS_CSV.length) return null;
-  const axisOrder = getAxisOrderFromStandardIndexCsv(index);
-  const before = AXIS_COUNTS_CSV.slice(0, axisOrder - 1).reduce((a, b) => a + b, 0);
-  const i = index - before + 1;
-  return `م${axisOrder}-${i}`;
+  const item = STANDARDS_CSV[index];
+  const axisOrder = item.axis_order || getAxisOrderFromStandardIndexCsv(index);
+  
+  // حساب رقم المعيار داخل المحور بناءً على axis_order الصحيح
+  let countInAxis = 0;
+  for (let i = 0; i <= index; i++) {
+    if (STANDARDS_CSV[i].axis_order === axisOrder) {
+      countInAxis++;
+    }
+  }
+  
+  return `م${axisOrder}-${countInAxis}`;
 }
 
 /** تطبيع الرمز للمقارنة: إزالة كل المسافات وتوحيد الشرطة ليصبح الشكل مرقم-رقم فقط */
@@ -215,10 +224,22 @@ export function getStandardIndexFromCode(code) {
   const match = raw.match(/م(\d+)-(\d+)/);
   if (!match) return -1;
   const axisNum = parseInt(match[1], 10);
-  const i = parseInt(match[2], 10);
-  if (axisNum < 1 || axisNum > AXIS_COUNTS_CSV.length || i < 1) return -1;
-  const before = AXIS_COUNTS_CSV.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
-  return Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
+  const standardNum = parseInt(match[2], 10);
+  if (axisNum < 1 || axisNum > 9 || standardNum < 1) return -1;
+  
+  // البحث عن المعيار الصحيح بناءً على axis_order ورقم المعيار داخل المحور
+  let countInAxis = 0;
+  for (let i = 0; i < STANDARDS_CSV.length; i++) {
+    const item = STANDARDS_CSV[i];
+    if (item.axis_order === axisNum) {
+      countInAxis++;
+      if (countInAxis === standardNum) {
+        return i;
+      }
+    }
+  }
+  
+  return -1;
 }
 
 /**

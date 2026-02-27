@@ -2,21 +2,26 @@
 cd /d "%~dp0"
 
 echo ========================================
-echo   Fix Axes Order & Push Updates
+echo   Fix Axes Order & Standards Coding
 echo ========================================
 echo.
 
-echo [0] Axes order fix applied!
-echo The application now automatically sorts axes correctly (1-9)
-echo in both Standards and Dashboard pages.
+echo [0] Comprehensive fix applied!
+echo The application now correctly handles both:
+echo 1. Axes ordering (1-9) in UI
+echo 2. Standards coding (م4-1, م4-2, etc.)
 echo.
 echo Changes made:
 echo - Added client-side sorting in Standards.jsx
 echo - Added client-side sorting in Dashboard.jsx  
 echo - Created utility function in src/lib/axesSort.js
+echo - Fixed getStandardCodeFromIndex() to use axis_order
+echo - Fixed getStandardIndexFromCode() to use axis_order
 echo.
-echo The fix ensures axes always display in correct order
-echo regardless of database order.
+echo Now each standard will have correct coding:
+echo - Axis 4: م4-1, م4-2, ... م4-11
+echo - Axis 5: م5-1, م5-2, ... م5-26
+echo - And so on for all axes (1-9)
 echo.
 echo Press any key to continue to Git push...
 pause > nul
