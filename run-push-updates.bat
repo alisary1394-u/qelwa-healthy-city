@@ -23,16 +23,17 @@ echo    - Fixed buildStandardsSeed() to use axis.order
 echo    - Fixed localBackend.js seeding to use axis.order
 echo    - Fixed supabaseBackend.js seeding to use axis.order
 echo.
-echo RESULTS:
-echo - Axes display correctly (1-9) in UI
-echo - Standards have correct coding (م4-1, م4-2, etc.)
-echo - No duplicate standards
-echo - Correct count for each axis
+echo 4. TypeScript Errors:
+echo    - Fixed Property 'status' does not exist on type 'Error'
 echo.
-echo To apply changes to existing data:
+echo IMPORTANT: To fix duplicate standards issue:
+echo You MUST clear existing data and reseed:
 echo 1. Go to Settings page
 echo 2. Click "مسح البيانات وإعادة تحميل بيانات التجربة"
 echo 3. Login with ID: 1, Password: 123456
+echo.
+echo This will remove old data with duplicates and create
+echo new correct data with proper coding (م4-1, م4-2, etc.)
 echo.
 echo Press any key to continue to Git push...
 pause > nul
