@@ -34,9 +34,9 @@ const statusConfig = {
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
 };
 
-/** تصحيح رموز قديمة: م1-8 وم1-9 تتبعان المحور الثاني (م2-1، م2-2) */
-const CODE_TO_INDEX_CORRECTIONS = { 'م1-8': 7, 'م1-9': 8 };
-const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2' };
+/** تصحيح رموز قديمة: م1-8/م1-9 → المحور 2؛ م2-8/م2-9 → المحور 3 (المحور 2 له 7 معايير فقط: م2-1…م2-7) */
+const CODE_TO_INDEX_CORRECTIONS = { 'م1-8': 7, 'م1-9': 8, 'م2-8': 14, 'م2-9': 15 };
+const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
 
 /** استخراج مؤشر المعيار (0–85) من الرمز محور-رقم، مع دعم 13 محوراً (CSV) */
 function getStandardIndexFromCode(code) {

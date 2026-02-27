@@ -277,8 +277,8 @@ async function syncStandardsKpisFromPdf() {
     }
     axesList = await entities.Axis.list('order');
   }
-  /** تصحيح رموز قديمة: م1-8 وم1-9 تتبعان المحور الثاني (م2-1، م2-2) */
-  const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2' };
+  /** تصحيح رموز قديمة: م1-8/م1-9 → م2-1/م2-2؛ م2-8/م2-9 → م3-1/م3-2 (المحور 2 له 7 معايير فقط) */
+  const CODE_CORRECTIONS = { 'م1-8': 'م2-1', 'م1-9': 'م2-2', 'م2-8': 'م3-1', 'م2-9': 'م3-2' };
   const standards = await entities.Standard.list();
   let updated = 0;
   for (const standard of standards) {
