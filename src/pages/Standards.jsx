@@ -164,6 +164,23 @@ export default function Standards() {
       const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
       const matchesSearch = !searchQuery ||
         s.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // فلتر إضافي لإزالة المعايير غير الصحيحة
+      if (activeAxis !== 'all') {
+        const activeAxisEntity = axes.find(a => a.id === activeAxis);
+        const axisOrder = activeAxisEntity?.order ?? 0;
+        
+        // استخراج رقم المحور من رمز المعيار
+        const match = s.code?.match(/م(\d+)-(\d+)/);
+        if (match) {
+          const codeAxisOrder = parseInt(match[1]);
+          // إزالة المعايير التي لا تنتمي إلى المحور الصحيح
+          if (codeAxisOrder !== axisOrder) {
+            return false;
+          }
+        }
+      }
+      
       return matchesAxis && matchesSearch;
     });
     
