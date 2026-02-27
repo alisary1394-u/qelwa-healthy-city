@@ -31,16 +31,25 @@ function buildRequiredEvidence(documents) {
 
 /**
  * إنشاء مصفوفة الـ 80 معياراً من بيانات CSV، موزعة على المحاور الـ 9.
+ * يستخدم axis.order الصحيح لضمان الترميز الصحيح
  */
 export function buildStandardsSeed(axesWithIds) {
   const standards = [];
   let standardIndex = 0;
-  axesWithIds.forEach((axis, idx) => {
-    const axisNum = idx + 1;
-    const count = AXIS_COUNTS_CSV[idx] ?? 8;
+  
+  // فرز المحاور بناءً على order لضمان الترميز الصحيح
+  const sortedAxes = [...axesWithIds].sort((a, b) => {
+    const orderA = Number(a.order) || 0;
+    const orderB = Number(b.order) || 0;
+    return orderA - orderB;
+  });
+  
+  sortedAxes.forEach((axis) => {
+    const axisOrder = Number(axis.order) || 1;
+    const count = AXIS_COUNTS_CSV[axisOrder - 1] ?? 8;
     for (let i = 1; i <= count; i++) {
       const item = STANDARDS_CSV[standardIndex];
-      const code = `م${axisNum}-${i}`;
+      const code = `م${axisOrder}-${i}`;
       const title = item?.title ?? `معيار ${axis.name} ${code}`;
       const description = title;
       const kpis = item?.kpis ?? [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: title }];

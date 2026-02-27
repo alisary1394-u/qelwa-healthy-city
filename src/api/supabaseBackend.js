@@ -343,8 +343,8 @@ function getStandardIndexFromCodeSupabase(code) {
 export async function seedAxesAndStandardsIfNeeded() {
   const axesList = await entities.Axis.list();
   if (axesList.length === 0) {
-    for (let idx = 0; idx < AXES_SEED.length; idx++) {
-      await entities.Axis.create({ ...AXES_SEED[idx], order: idx + 1 });
+    for (const axisData of AXES_SEED) {
+      await entities.Axis.create({ ...axisData, order: axisData.order });
     }
     const createdAxes = await entities.Axis.list('order');
     const standardsSeed = buildStandardsSeed(createdAxes);

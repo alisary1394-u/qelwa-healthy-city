@@ -337,8 +337,8 @@ export function seedAxesAndStandardsIfNeeded() {
   const axesList = getStore('Axis');
   if (axesList.length === 0) {
     const createdAxes = [];
-    AXES_SEED.forEach((a, idx) => {
-      const rec = entities.Axis.create({ ...a, order: idx + 1 });
+    AXES_SEED.forEach((a) => {
+      const rec = entities.Axis.create({ ...a, order: a.order });
       createdAxes.push(rec);
     });
     const standardsSeed = buildStandardsSeed(createdAxes);
