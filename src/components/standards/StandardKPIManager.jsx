@@ -340,7 +340,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 
 	return (
 		<div className="space-y-4">
-			<Collapsible defaultOpen className="mt-4">
+			<Collapsible className="mt-4">
 				<CollapsibleTrigger asChild>
 					<button type="button" className="w-full text-right group">
 						<div className="flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100/50 transition-colors">

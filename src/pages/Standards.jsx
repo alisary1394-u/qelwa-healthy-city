@@ -116,7 +116,7 @@ function StandardsLegacy() {
     queryFn: () => api.entities.TeamMember.list()
   });
 
-  const { permissions } = usePermissions();
+  const { permissions, isGovernor } = usePermissions();
   const canManageStandards = permissions.canManageStandards;
 
   const createAxisMutation = useMutation({
@@ -156,9 +156,15 @@ function StandardsLegacy() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
   });
 
+  const deleteEvidenceMutation = useMutation({
+    mutationFn: (id) => api.entities.Evidence.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
+  });
+
   const currentMember = members.find(m => m.email === currentUser?.email);
   const canManage = canManageStandards;
   const canApprove = permissions.canApproveEvidence;
+  const canDeleteAnyEvidence = Boolean(isGovernor);
 
   if (!permissions.canSeeStandards) {
     return (
@@ -305,6 +311,14 @@ function StandardsLegacy() {
     });
   };
 
+  const handleDeleteEvidence = async (evidenceItem) => {
+    if (!canDeleteAnyEvidence) return;
+    if (!evidenceItem?.id) return;
+    const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف الدليل؟') : false;
+    if (!ok) return;
+    await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
+  };
+
   const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId);
 
   const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
@@ -373,19 +387,7 @@ function StandardsLegacy() {
           )}
         </Card>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {canManage && typeof api.clearAxesAndStandardsAndReseed === 'function' && (
-            <Button
-              variant="outline"
-              className="border-amber-500 text-amber-700 hover:bg-amber-50"
-              disabled={reseedAxesStandardsMutation.isPending}
-              onClick={() => reseedAxesStandardsMutation.mutate()}
-            >
-              {reseedAxesStandardsMutation.isPending ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Target className="w-4 h-4 ml-2" />}
-              إعادة بناء المحاور والمعايير من المرجع
-            </Button>
-          )}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
           {canManage && (
             <>
               <Button onClick={() => setAxisFormOpen(true)} variant="outline">
@@ -520,30 +522,6 @@ function StandardsLegacy() {
                           <span>المستندات: {parseJsonArray(standard.required_documents).length}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {canManage && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditStandard(standard);
-                              setEditDocuments(parseJsonArray(standard.required_documents));
-                              setEditKpis(parseJsonArray(standard.kpis).map(k => typeof k === 'object' ? { name: k.name ?? '', target: k.target ?? '', unit: k.unit ?? '' } : { name: String(k), target: '', unit: '' }));
-                              setEditStandardOpen(true);
-                            }}
-                          >
-                            <Edit3 className="w-4 h-4 ml-2" />
-                            تعديل المستندات والمؤشرات
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          onClick={() => { setSelectedStandard(standard); setEvidenceFormOpen(true); }}
-                        >
-                          <Upload className="w-4 h-4 ml-2" />
-                          رفع دليل
-                        </Button>
-                      </div>
                     </div>
 
                     {/* Evidence List */}
@@ -570,9 +548,9 @@ function StandardsLegacy() {
                               {standardEvidence.map(ev => (
                                 <div key={ev.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                   {ev.file_type === 'image' ? (
-                                    <Image className="w-8 h-8 text-blue-600" />
+                                    <Image className="w-5 h-5 text-blue-600" />
                                   ) : (
-                                    <FileText className="w-8 h-8 text-green-600" />
+                                    <FileText className="w-5 h-5 text-green-600" />
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium truncate">{ev.title}</p>
@@ -588,17 +566,40 @@ function StandardsLegacy() {
                                   </div>
                                   <div className="flex gap-1">
                                     <a href={ev.file_url} target="_blank" rel="noopener noreferrer">
-                                      <Button size="icon" variant="ghost"><Eye className="w-4 h-4" /></Button>
+                                      <Button size="icon" variant="ghost" className="text-blue-700" title="معاينة">
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
                                     </a>
                                     {canApprove && ev.status === 'pending' && (
                                       <>
-                                        <Button size="icon" variant="ghost" className="text-green-600" onClick={() => handleApproveEvidence(ev)}>
-                                          <Check className="w-4 h-4" />
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-green-700"
+                                          onClick={() => handleApproveEvidence(ev)}
+                                        >
+                                          يعتمد
                                         </Button>
-                                        <Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleRejectEvidence(ev, 'غير مطابق')}>
-                                          <X className="w-4 h-4" />
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-red-700"
+                                          onClick={() => handleRejectEvidence(ev, 'غير مطابق')}
+                                        >
+                                          رفض
                                         </Button>
                                       </>
+                                    )}
+
+                                    {canDeleteAnyEvidence && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-red-700"
+                                        onClick={() => handleDeleteEvidence(ev)}
+                                      >
+                                        حذف
+                                      </Button>
                                     )}
                                   </div>
                                 </div>

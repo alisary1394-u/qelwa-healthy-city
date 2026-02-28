@@ -97,7 +97,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
   const enhancedDocuments = currentDocuments.length > 0 ? currentDocuments : buildRequiredDocumentsForStandard(standard.title, standard.axis_order);
   
   return (
-    <Collapsible className="mt-4" defaultOpen>
+    <Collapsible className="mt-4">
       <div className="bg-green-50 rounded-lg border border-green-200">
         <CollapsibleTrigger asChild>
           <button type="button" className="w-full text-right group">
