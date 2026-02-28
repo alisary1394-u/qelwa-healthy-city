@@ -1172,13 +1172,8 @@ const handleUploadEvidence = async (e) => {
 																</div>
 															)}
 														</div>
-																	</div>
-																))}
-															</div>
-														)}
-													</div>
-												</CardContent>
-											</Card>
+													</CardContent>
+												</Card>
 											);
 										})}
 									</div>
