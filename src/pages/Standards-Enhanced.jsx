@@ -855,6 +855,44 @@ const handleUploadEvidence = async (e) => {
     });
   };
 
+  const handlePreviewFile = useCallback((fileUrl) => {
+    if (!fileUrl || typeof window === 'undefined') return;
+
+    const normalizedUrl = String(fileUrl);
+    if (normalizedUrl.startsWith('data:')) {
+      try {
+        const [meta, base64Payload] = normalizedUrl.split(',', 2);
+        const mimeTypeMatch = meta.match(/^data:(.*?);base64$/i);
+        const mimeType = mimeTypeMatch?.[1] || 'application/octet-stream';
+        const binary = atob(base64Payload || '');
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      } catch {
+        window.open(normalizedUrl, '_blank');
+      }
+      return;
+    }
+
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const previewUrl = `${normalizedUrl}${separator}t=${Date.now()}`;
+    const previewWindow = window.open(previewUrl, '_blank');
+
+    if (previewWindow) {
+      setTimeout(() => {
+        try {
+          previewWindow.location.replace(previewUrl);
+        } catch {
+          window.open(previewUrl, '_blank');
+        }
+      }, 400);
+    }
+  }, []);
+
 
   const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
   const pageTitle = activeAxisEntity
@@ -1116,20 +1154,24 @@ const handleUploadEvidence = async (e) => {
 																			) : (
 																				<FileText className="w-4 h-4 text-green-700" />
 																			)}
-																			<a
-																			href={att.file_url}
-																			target="_blank"
-																			rel="noreferrer"
-																			className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate"
-																			title={att.title}
-																		>
-																			{att.title || 'مرفق'}
-																		</a>
-																		{canEditThisStandardKpis && (
-																			<Button size="icon" variant="ghost" className="text-red-600" onClick={() => deleteEvidenceMutation.mutateAsync(att.id)}>
-																				<Trash2 className="w-4 h-4" />
-																			</Button>
-																		)}
+																			<button
+																				type="button"
+																				onClick={() => handlePreviewFile(att.file_url)}
+																				className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate text-right"
+																				title={att.title}
+																			>
+																				{att.title || 'مرفق'}
+																			</button>
+																			{canEditThisStandardKpis && (
+																				<Button size="icon" variant="ghost" className="text-red-600" onClick={() => deleteEvidenceMutation.mutateAsync(att.id)}>
+																					<Trash2 className="w-4 h-4" />
+																				</Button>
+																			)}
+																		</div>
+																	))}
+																</div>
+															)}
+														</div>
 																	</div>
 																))}
 															</div>

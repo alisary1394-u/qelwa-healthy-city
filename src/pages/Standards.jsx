@@ -319,6 +319,44 @@ function StandardsLegacy() {
     await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
   };
 
+  const handlePreviewEvidence = useCallback((fileUrl) => {
+    if (!fileUrl || typeof window === 'undefined') return;
+
+    const normalizedUrl = String(fileUrl);
+    if (normalizedUrl.startsWith('data:')) {
+      try {
+        const [meta, base64Payload] = normalizedUrl.split(',', 2);
+        const mimeTypeMatch = meta.match(/^data:(.*?);base64$/i);
+        const mimeType = mimeTypeMatch?.[1] || 'application/octet-stream';
+        const binary = atob(base64Payload || '');
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      } catch {
+        window.open(normalizedUrl, '_blank');
+      }
+      return;
+    }
+
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    const previewUrl = `${normalizedUrl}${separator}t=${Date.now()}`;
+
+    const previewWindow = window.open(previewUrl, '_blank');
+    if (previewWindow) {
+      setTimeout(() => {
+        try {
+          previewWindow.location.replace(previewUrl);
+        } catch {
+          window.open(previewUrl, '_blank');
+        }
+      }, 400);
+    }
+  }, []);
+
   const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId);
 
   const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
@@ -565,11 +603,15 @@ function StandardsLegacy() {
                                     </div>
                                   </div>
                                   <div className="flex gap-1">
-                                    <a href={ev.file_url} target="_blank" rel="noopener noreferrer">
-                                      <Button size="icon" variant="ghost" className="text-blue-700" title="معاينة">
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
-                                    </a>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="text-blue-700"
+                                      title="معاينة"
+                                      onClick={() => handlePreviewEvidence(ev.file_url)}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
                                     {canApprove && ev.status === 'pending' && (
                                       <>
                                         <Button
