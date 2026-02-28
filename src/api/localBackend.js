@@ -9,6 +9,8 @@ import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInit
 
 const DB_PREFIX = 'local_db_';
 const AUTH_KEY = 'local_current_user';
+const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 
 function getId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -364,6 +366,13 @@ export function seedAxesAndStandardsIfNeeded() {
   syncStandardsKpisFromPdf();
 }
 
+export function syncStandardsFromCsv() {
+  if (typeof localStorage === 'undefined') return;
+  if (localStorage.getItem(CSV_SYNC_KEY) === CSV_SYNC_VERSION) return;
+  syncStandardsKpisFromPdf();
+  localStorage.setItem(CSV_SYNC_KEY, CSV_SYNC_VERSION);
+}
+
 /** حذف جميع المحاور والمعايير ثم إعادة بنائها من مرجع المعايير (9 محاور، 80 معياراً) */
 export function clearAxesAndStandardsAndReseed() {
   if (typeof localStorage === 'undefined') return;
@@ -418,6 +427,7 @@ export const localBackend = {
   },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
+  syncStandardsFromCsv,
   clearAxesAndStandardsAndReseed,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,

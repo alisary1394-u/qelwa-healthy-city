@@ -3,7 +3,12 @@
  * تفعّل عند وجود VITE_API_URL في .env.local
  */
 
+import { AXES_SEED, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequiredDocumentsForAxis } from '@/api/seedAxesAndStandards';
+import { STANDARDS_CSV, getStandardIndexFromCode } from '@/api/standardsFromCsv';
+
 const AUTH_USER_KEY = 'api_auth_user';
+const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 
 function entityToTable(name) {
   return String(name || '')
@@ -181,10 +186,52 @@ function getDefaultLocalCredentials() {
   return { national_id: '1', password: '123456' };
 }
 
+function buildRequiredEvidenceApi(documents) {
+  const list = Array.isArray(documents) && documents.length ? documents : [];
+  if (list.length === 0) return 'أدلة ومستندات تدعم تحقيق المعيار';
+  return 'أدلة مطلوبة: ' + list.join('، ');
+}
+
+async function syncStandardsFromCsv() {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(CSV_SYNC_KEY) === CSV_SYNC_VERSION) return;
+    const standards = await entities.Standard.list();
+    if (!standards || standards.length === 0) return;
+    let updated = 0;
+    for (const standard of standards) {
+      const code = (standard.code || '').trim().replace(/\s+/g, '');
+      if (!code) continue;
+      const idx = getStandardIndexFromCode(code);
+      if (idx < 0 || idx >= STANDARDS_CSV.length) continue;
+      const item = STANDARDS_CSV[idx];
+      const axisOrder = item.axis_order || getAxisOrderFromStandardIndex(idx);
+      const csvDocs = Array.isArray(item.documents) ? item.documents : [];
+      const documents = csvDocs.length > 0 ? csvDocs : getDefaultRequiredDocumentsForAxis(axisOrder);
+      const docCount = documents.length;
+      const rawKpis = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
+      const kpisList = rawKpis.map(k => k.unit === 'تحقق' ? { ...k, target: String(docCount), target_value: docCount } : k);
+      await entities.Standard.update(standard.id, {
+        title: item.title ?? standard.title,
+        description: item.title ?? standard.description,
+        required_evidence: buildRequiredEvidenceApi(documents),
+        required_documents: JSON.stringify(documents),
+        kpis: JSON.stringify(kpisList),
+      });
+      updated++;
+    }
+    if (updated > 0 && typeof console !== 'undefined') console.log('[apiBackend] مزامنة المعايير من CSV:', updated, 'تحديث');
+    if (typeof localStorage !== 'undefined') localStorage.setItem(CSV_SYNC_KEY, CSV_SYNC_VERSION);
+  } catch (e) {
+    if (typeof console !== 'undefined') console.warn('[apiBackend] فشل مزامنة المعايير:', e?.message || e);
+  }
+}
+
 async function seedAxesAndStandardsIfNeeded() {
-  if (!allowServerReseed) return;
-  const axes = await entities.Axis.list();
-  if (axes.length === 0) await api('POST', '/api/seed');
+  if (allowServerReseed) {
+    const axes = await entities.Axis.list();
+    if (axes.length === 0) await api('POST', '/api/seed');
+  }
+  await syncStandardsFromCsv();
 }
 
 async function seedCommitteesTeamInitiativesTasksIfNeeded() {
@@ -216,6 +263,11 @@ const backups = {
   },
 };
 
+async function clearAxesAndStandardsAndReseed() {
+  if (typeof localStorage !== 'undefined') localStorage.removeItem(CSV_SYNC_KEY);
+  await syncStandardsFromCsv();
+}
+
 export const apiBackend = {
   entities,
   auth,
@@ -232,6 +284,8 @@ export const apiBackend = {
   asServiceRole: { entities, functions },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
+  syncStandardsFromCsv,
+  clearAxesAndStandardsAndReseed,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
   getDefaultLocalCredentials,

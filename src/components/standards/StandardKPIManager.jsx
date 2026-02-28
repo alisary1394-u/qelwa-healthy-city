@@ -478,21 +478,27 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 												<Progress value={Math.min(percentage, 100)} className="h-2" />
 												<p className="text-xs text-gray-500">{Math.min(percentage, 100).toFixed(1)}% محقق</p>
 
-												<div className="flex items-center gap-2 pt-2">
-													<Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, Number(currentValue) - 1))}>
-														<Minus className="w-4 h-4" />
-													</Button>
-													<Input
-														type="number"
-														value={Number(currentValue) || 0}
-														disabled={!canEditKpis}
-														onChange={(ev) => handleUpdateValue(kpi, parseFloat(ev.target.value) || 0)}
-														className="text-center"
-													/>
-													<Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Number(currentValue) + 1)}>
-														<Plus className="w-4 h-4" />
-													</Button>
-												</div>
+											<div className="flex items-center gap-2 pt-2">
+												<Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, Number(currentValue) - 1))}>
+													<Minus className="w-4 h-4" />
+												</Button>
+												<Input
+													type="number"
+													min={0}
+													max={Number(kpi.target_value) || undefined}
+													value={Number(currentValue) || 0}
+													disabled={!canEditKpis}
+													onChange={(ev) => {
+														const target = Number(kpi.target_value) || 0;
+														const val = Math.max(0, parseFloat(ev.target.value) || 0);
+														handleUpdateValue(kpi, target > 0 ? Math.min(val, target) : val);
+													}}
+													className="text-center"
+												/>
+												<Button size="sm" variant="outline" disabled={!canEditKpis || (Number(kpi.target_value) > 0 && Number(currentValue) >= Number(kpi.target_value))} onClick={() => handleUpdateValue(kpi, Number(currentValue) + 1)}>
+													<Plus className="w-4 h-4" />
+												</Button>
+											</div>
 
 												<div className="pt-3 mt-3 border-t">
 													<Collapsible>

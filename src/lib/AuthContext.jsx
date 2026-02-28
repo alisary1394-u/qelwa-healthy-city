@@ -66,6 +66,9 @@ export const AuthProvider = ({ children }) => {
         } else if (useServerBackend && typeof console !== 'undefined') {
           console.info('[Auth] Server seed is disabled by default (set VITE_ALLOW_SERVER_RESEED=true only when explicitly needed).');
         }
+        try {
+          await Promise.resolve(api.syncStandardsFromCsv?.());
+        } catch {}
         // الدخول فقط عبر نموذج تسجيل الدخول أو جلسة محفوظة سابقاً (لا دخول تلقائي)
         try {
           const currentUser = await api.auth.me();

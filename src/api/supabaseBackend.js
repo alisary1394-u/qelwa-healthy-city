@@ -11,6 +11,8 @@ import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedC
 
 const AUTH_KEY = 'local_current_user';
 const SEEDED_KEY = 'local_seeded_governor';
+const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const DEFAULT_NATIONAL_ID = '1';
 const DEFAULT_PASSWORD = '123456';
 
@@ -374,6 +376,16 @@ export async function seedAxesAndStandardsIfNeeded() {
   await syncStandardsKpisFromPdf();
 }
 
+export async function syncStandardsFromCsv() {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(CSV_SYNC_KEY) === CSV_SYNC_VERSION) return;
+    await syncStandardsKpisFromPdf();
+    if (typeof localStorage !== 'undefined') localStorage.setItem(CSV_SYNC_KEY, CSV_SYNC_VERSION);
+  } catch (e) {
+    if (typeof console !== 'undefined') console.warn('[Supabase] فشل مزامنة المعايير:', e?.message || e);
+  }
+}
+
 /** حذف جميع المحاور والمعايير ثم إعادة بنائها من مرجع المعايير (9 محاور، 80 معياراً) */
 export async function clearAxesAndStandardsAndReseed() {
   const standards = await entities.Standard.list();
@@ -430,6 +442,7 @@ export const supabaseBackend = {
   asServiceRole: { entities, functions },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
+  syncStandardsFromCsv,
   clearAxesAndStandardsAndReseed,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
