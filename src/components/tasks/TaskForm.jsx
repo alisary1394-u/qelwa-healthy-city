@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lightbulb, Target } from "lucide-react";
+import { DOCUMENT_TYPES } from "@/lib/documentTypes";
 
 const priorities = [
   { value: "low", label: "منخفضة" },
@@ -23,12 +24,17 @@ const categories = [
   { value: "other", label: "أخرى" }
 ];
 
-export default function TaskForm({ open, onOpenChange, task, onSave, members }) {
+export default function TaskForm({ open, onOpenChange, task, onSave, members, initiatives = [], standards = [] }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     assigned_to: '',
     assigned_to_name: '',
+    initiative_id: '',
+    initiative_title: '',
+    standard_id: '',
+    standard_code: '',
+    document_type: '',
     priority: 'medium',
     status: 'pending',
     due_date: '',
@@ -45,6 +51,11 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members }) 
         description: task.description || '',
         assigned_to: task.assigned_to || '',
         assigned_to_name: task.assigned_to_name || '',
+        initiative_id: task.initiative_id || '',
+        initiative_title: task.initiative_title || '',
+        standard_id: task.standard_id || '',
+        standard_code: task.standard_code || '',
+        document_type: task.document_type || '',
         priority: task.priority || 'medium',
         status: task.status || 'pending',
         due_date: task.due_date || '',
@@ -58,6 +69,11 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members }) 
         description: '',
         assigned_to: '',
         assigned_to_name: '',
+        initiative_id: '',
+        initiative_title: '',
+        standard_id: '',
+        standard_code: '',
+        document_type: '',
         priority: 'medium',
         status: 'pending',
         due_date: '',
@@ -129,6 +145,68 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members }) 
                 </SelectContent>
               </Select>
             </div>
+
+            {initiatives?.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><Lightbulb className="w-4 h-4" /> المبادرة المرتبطة</Label>
+                <Select
+                  value={formData.initiative_id}
+                  onValueChange={(v) => {
+                    const init = initiatives.find(i => i.id === v);
+                    setFormData({ ...formData, initiative_id: v, initiative_title: init?.title });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="بدون مبادرة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون مبادرة</SelectItem>
+                    {initiatives.map(i => (
+                      <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 45)}{(i.title?.length || 0) > 45 ? '...' : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {standards?.length > 0 && (
+              <div className="space-y-2 md:col-span-2">
+                <Label className="flex items-center gap-1"><Target className="w-4 h-4" /> المعيار المرتبط (للإثبات)</Label>
+                <Select
+                  value={formData.standard_id}
+                  onValueChange={(v) => {
+                    const s = standards.find(st => st.id === v);
+                    setFormData({ ...formData, standard_id: v, standard_code: s?.code });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="بدون معيار" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون معيار</SelectItem>
+                    {standards.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.code} - {s.title?.slice(0, 50)}...</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {formData.standard_id && (
+              <div className="space-y-2">
+                <Label>نوع المستند</Label>
+                <Select value={formData.document_type} onValueChange={(v) => setFormData({ ...formData, document_type: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر النوع" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOCUMENT_TYPES.map(d => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>التصنيف</Label>

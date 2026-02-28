@@ -189,9 +189,9 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
               </p>
             </div>
             
-            <div className="space-y-2">
-              <Label>اللجنة</Label>
-              <Select value={formData.committee_id} onValueChange={handleCommitteeChange}>
+          <div className="space-y-2">
+            <Label>اللجنة</Label>
+            <Select value={formData.committee_id} onValueChange={handleCommitteeChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر اللجنة" />
                 </SelectTrigger>

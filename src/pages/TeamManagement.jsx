@@ -233,10 +233,17 @@ export default function TeamManagement() {
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة فريق المدينة الصحية</h1>
-          <p className="text-blue-100">محافظة قلوة - برنامج المدن الصحية</p>
+      <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+              <Users className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">إدارة فريق المدينة الصحية</h1>
+              <p className="text-blue-100 text-sm mt-1">محافظة قلوة — اللجان والأعضاء والمعايير</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -291,17 +298,19 @@ export default function TeamManagement() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <Card className="bg-white">
-            <CardContent className="p-4 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-gray-500">إجمالي الأعضاء</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          <Card className="bg-white shadow-sm border-0 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white text-center">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-sm opacity-90">إجمالي الأعضاء</p>
+              </div>
             </CardContent>
           </Card>
           {Object.entries(roleIcons).map(([role, Icon]) => (
-            <Card key={role} className="bg-white">
-              <CardContent className="p-4 text-center">
+            <Card key={role} className="bg-white shadow-sm border-0 overflow-hidden">
+              <CardContent className="p-4 text-center hover:shadow-md transition-shadow">
                 <Icon className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                 <p className="text-xl font-bold">{stats[role]}</p>
                 <p className="text-xs text-gray-500">{roleLabels[role]}</p>

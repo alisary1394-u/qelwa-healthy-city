@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTodo, MessageCircle } from "lucide-react";
+import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTodo, MessageCircle, Lightbulb } from "lucide-react";
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
@@ -15,6 +16,7 @@ export default function Tasks() {
   const { permissions } = usePermissions();
   const [activeStatus, setActiveStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterInitiative, setFilterInitiative] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, task: null });
@@ -34,6 +36,16 @@ export default function Tasks() {
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
     queryFn: () => api.entities.TeamMember.list()
+  });
+
+  const { data: initiatives = [] } = useQuery({
+    queryKey: ['initiatives'],
+    queryFn: () => api.entities.Initiative.list()
+  });
+
+  const { data: standards = [] } = useQuery({
+    queryKey: ['standards'],
+    queryFn: () => api.entities.Standard.list()
   });
 
   const createMutation = useMutation({
@@ -79,15 +91,20 @@ export default function Tasks() {
     const matchesSearch = !searchQuery ||
       t.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.assigned_to_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const matchesInitiative = filterInitiative === 'all' || t.initiative_id === filterInitiative;
+    return matchesStatus && matchesSearch && matchesInitiative;
   });
 
   const handleSave = async (data) => {
     if (!canManageTasks) return;
+    const payload = { ...data };
+    if (!payload.initiative_id) { delete payload.initiative_id; delete payload.initiative_title; }
+    if (!payload.standard_id) { delete payload.standard_id; delete payload.standard_code; }
+    if (!payload.document_type) delete payload.document_type;
     if (editingTask) {
-      await updateMutation.mutateAsync({ id: editingTask.id, data });
+      await updateMutation.mutateAsync({ id: editingTask.id, data: payload });
     } else {
-      const newTask = await createMutation.mutateAsync({ ...data, assigned_by: currentUser?.email });
+      const newTask = await createMutation.mutateAsync({ ...payload, assigned_by: currentUser?.email });
       
       // Create notification for assigned user
       const assignedMember = members.find(m => m.id === data.assigned_to);
@@ -125,10 +142,17 @@ export default function Tasks() {
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة المهام والتذكيرات</h1>
-          <p className="text-blue-100">متابعة وتنظيم مهام فريق المدينة الصحية</p>
+      <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+              <ClipboardList className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">إدارة المهام والتذكيرات</h1>
+              <p className="text-blue-100 text-sm mt-1">متابعة مهام الفريق — مرتبطة بالمبادرات والمعايير</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -183,6 +207,20 @@ export default function Tasks() {
               className="pr-10"
             />
           </div>
+          {initiatives.length > 0 && (
+            <Select value={filterInitiative} onValueChange={setFilterInitiative}>
+              <SelectTrigger className="w-[200px]">
+                <Lightbulb className="w-4 h-4 ml-1 text-purple-500" />
+                <SelectValue placeholder="المبادرة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">كل المبادرات</SelectItem>
+                {initiatives.map(i => (
+                  <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <a 
             href={api.agents?.getWhatsAppConnectURL?.('tasks_assistant')} 
             target="_blank"
@@ -239,6 +277,7 @@ export default function Tasks() {
                 onDelete={(t) => setDeleteDialog({ open: true, task: t })}
                 onStatusChange={handleStatusChange}
                 canEdit={canManageTasks}
+                initiatives={initiatives}
               />
             ))}
           </div>
@@ -251,6 +290,8 @@ export default function Tasks() {
         task={editingTask}
         onSave={handleSave}
         members={members}
+        initiatives={initiatives}
+        standards={standards}
       />
 
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>

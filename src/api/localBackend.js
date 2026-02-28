@@ -3,7 +3,7 @@
  * تفعّل بوضع VITE_USE_LOCAL_BACKEND=true في .env.local
  */
 
-import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
+import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequiredDocumentsForAxis } from '@/api/seedAxesAndStandards';
 import { STANDARDS_CSV, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
 import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
 
@@ -292,7 +292,7 @@ export function syncStandardsKpisFromPdf() {
     const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
     const axisId = axisRecord?.id ?? standard.axis_id;
-    const documents = item.documents ?? [];
+    const documents = getDefaultRequiredDocumentsForAxis(axisOrder);
     const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
     entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
@@ -313,7 +313,7 @@ export function syncStandardsKpisFromPdf() {
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
     if (!axisRecord) continue;
-    const documents = item?.documents ?? ['أدلة ومستندات تدعم تحقيق المعيار'];
+    const documents = getDefaultRequiredDocumentsForAxis(axisOrder);
     const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
     entities.Standard.create({
       code,

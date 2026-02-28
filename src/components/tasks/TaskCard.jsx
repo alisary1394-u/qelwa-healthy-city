@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Edit, Trash2, CheckCircle, AlertCircle } from "lucide-react";
+import { Calendar, Clock, User, Edit, Trash2, CheckCircle, AlertCircle, Lightbulb, Target } from "lucide-react";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -29,8 +30,9 @@ const categoryLabels = {
   other: "أخرى"
 };
 
-export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEdit }) {
+export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEdit, initiatives = [] }) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+  const initiativeTitle = task.initiative_title || (task.initiative_id && initiatives.find(i => i.id === task.initiative_id)?.title);
 
   return (
     <Card className={`hover:shadow-lg transition-shadow ${isOverdue ? 'border-red-300 bg-red-50/50' : ''}`}>
@@ -49,6 +51,9 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 {statusConfig[task.status]?.label}
               </Badge>
               <Badge variant="outline">{categoryLabels[task.category]}</Badge>
+              {task.document_type && DOCUMENT_TYPE_LABELS[task.document_type] && (
+                <Badge variant="secondary" className="text-xs">{DOCUMENT_TYPE_LABELS[task.document_type]}</Badge>
+              )}
             </div>
           </div>
           {canEdit && (
@@ -68,6 +73,18 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
         )}
 
         <div className="space-y-2 text-sm text-gray-600">
+          {(initiativeTitle || task.initiative_id) && (
+            <div className="flex items-center gap-2 text-purple-600">
+              <Lightbulb className="w-4 h-4 shrink-0" />
+              <span className="truncate">المبادرة: {initiativeTitle || '—'}</span>
+            </div>
+          )}
+          {(task.standard_code || task.standard_id) && (
+            <div className="flex items-center gap-2 text-blue-600">
+              <Target className="w-4 h-4 shrink-0" />
+              <span>المعيار: {task.standard_code || '—'}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <User className="w-4 h-4" />
             <span>المكلف: {task.assigned_to_name || 'غير محدد'}</span>

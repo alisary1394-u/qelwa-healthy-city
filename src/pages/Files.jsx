@@ -52,6 +52,11 @@ export default function Files() {
     queryFn: () => api.entities.FileUpload.list('-created_date')
   });
 
+  const { data: evidenceFiles = [] } = useQuery({
+    queryKey: ['evidence'],
+    queryFn: () => api.entities.Evidence.list('-created_date')
+  });
+
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
     queryFn: () => api.entities.Committee.list()
@@ -77,6 +82,11 @@ export default function Files() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files'] })
   });
 
+  const deleteEvidenceMutation = useMutation({
+    mutationFn: (id) => api.entities.Evidence.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
+  });
+
   if (!permissions.canSeeFiles) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
@@ -92,24 +102,43 @@ export default function Files() {
   const currentMember = members.find(m => m.email === currentUser?.email);
   const userRole = currentMember?.role || currentUser?.role;
   const canUploadFiles = permissions.canUploadFiles === true;
-  
+
   const isGovernor = userRole === 'admin' || userRole === 'governor';
   const isSupervisor = userRole === 'committee_supervisor';
   const isCommitteeChairman = userRole === 'committee_head';
 
-  const filteredFiles = files.filter(f => {
+  const mapEvidenceStatusToFilesStatus = (status) => {
+    if (!status) return 'pending_supervisor';
+    if (status === 'approved') return 'approved';
+    if (status === 'rejected') return 'rejected';
+    if (status === 'returned') return 'returned';
+    if (String(status).startsWith('pending')) return 'pending_supervisor';
+    return 'pending_supervisor';
+  };
+
+  const mergedFiles = [
+    ...files.map((f) => ({ ...f, _source: 'file_upload' })),
+    ...evidenceFiles.map((e) => ({
+      ...e,
+      _source: 'evidence',
+      status: mapEvidenceStatusToFilesStatus(e.status),
+      committee_name: e.committee_name || e.axis_name || (e.standard_code ? `المعيار ${e.standard_code}` : ''),
+    })),
+  ];
+
+  const filteredFiles = mergedFiles.filter(f => {
     const matchesStatus = activeStatus === 'all' || f.status === activeStatus;
     const matchesSearch = !searchQuery || f.title?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   const stats = {
-    total: files.length,
-    pending_supervisor: files.filter(f => f.status === 'pending_supervisor').length,
-    pending_chairman: files.filter(f => f.status === 'pending_chairman').length,
-    approved: files.filter(f => f.status === 'approved').length,
-    rejected: files.filter(f => f.status === 'rejected').length,
-    returned: files.filter(f => f.status === 'returned').length
+    total: mergedFiles.length,
+    pending_supervisor: mergedFiles.filter(f => f.status === 'pending_supervisor').length,
+    pending_chairman: mergedFiles.filter(f => f.status === 'pending_chairman').length,
+    approved: mergedFiles.filter(f => f.status === 'approved').length,
+    rejected: mergedFiles.filter(f => f.status === 'rejected').length,
+    returned: mergedFiles.filter(f => f.status === 'returned').length
   };
 
   const handleFileChange = async (e) => {
@@ -126,7 +155,7 @@ export default function Files() {
 
     setUploading(true);
     const { file_url } = await api.integrations.Core.UploadFile({ file: formData.file });
-    
+
     const committee = committees.find(c => c.id === formData.committee_id);
     await createMutation.mutateAsync({
       title: formData.title,
@@ -181,7 +210,11 @@ export default function Files() {
 
   const handleDelete = async () => {
     if (deleteDialog.file) {
-      await deleteMutation.mutateAsync(deleteDialog.file.id);
+      if (deleteDialog.file._source === 'evidence') {
+        await deleteEvidenceMutation.mutateAsync(deleteDialog.file.id);
+      } else {
+        await deleteMutation.mutateAsync(deleteDialog.file.id);
+      }
       setDeleteDialog({ open: false, file: null });
     }
   };
@@ -224,8 +257,8 @@ export default function Files() {
     }
   };
 
-  const canApproveAsSupervisor = (file) => isSupervisor && file.status === 'pending_supervisor';
-  const canApproveAsChairman = (file) => isCommitteeChairman && file.status === 'pending_chairman';
+  const canApproveAsSupervisor = (file) => file?._source === 'file_upload' && isSupervisor && file.status === 'pending_supervisor';
+  const canApproveAsChairman = (file) => file?._source === 'file_upload' && isCommitteeChairman && file.status === 'pending_chairman';
   const canModifyOrDelete = isGovernor;
 
   return (
@@ -306,7 +339,7 @@ export default function Files() {
               const StatusIcon = statusConfig[file.status]?.icon || Clock;
               const FileIcon = fileTypes.find(t => t.value === file.file_type)?.icon || File;
               return (
-                <Card key={file.id} className="hover:shadow-lg transition-shadow">
+                <Card key={`${file._source || 'file'}-${file.id}`} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -326,6 +359,7 @@ export default function Files() {
                         {statusConfig[file.status]?.label}
                       </Badge>
                       {file.committee_name && <Badge variant="outline">{file.committee_name}</Badge>}
+                      {file._source === 'evidence' && <Badge variant="outline">الأدلة المرفوعة</Badge>}
                     </div>
 
                     {file.rejection_reason && (
@@ -359,15 +393,16 @@ export default function Files() {
                         </>
                       )}
 
+                      {canModifyOrDelete && file._source !== 'evidence' && (
+                        <Button size="sm" variant="outline" onClick={() => setActionDialog({ open: true, file, action: 'return' })}>
+                          <RotateCcw className="w-4 h-4 ml-1" />إعادة
+                        </Button>
+                      )}
+
                       {canModifyOrDelete && (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => setActionDialog({ open: true, file, action: 'return' })}>
-                            <RotateCcw className="w-4 h-4 ml-1" />إعادة
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ open: true, file })}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
+                        <Button size="sm" variant="destructive" onClick={() => setDeleteDialog({ open: true, file })}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
                   </CardContent>

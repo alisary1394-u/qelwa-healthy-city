@@ -402,8 +402,11 @@ export default function Standards() {
   const [evidenceForm, setEvidenceForm] = useState({ title: '', description: '', file: null });
 
   const queryClient = useQueryClient();
-  const { permissions, role, currentMember } = usePermissions();
+  const { permissions, role, currentMember, isGovernor } = usePermissions();
   const canManage = permissions?.canManageStandards === true;
+	const canApproveEvidence = permissions?.canApproveEvidence === true;
+	const canDeleteAnyEvidence = Boolean(isGovernor);
+	const isPendingEvidenceStatus = (status) => typeof status === 'string' && status.startsWith('pending');
 	const isGlobalInitiativeManager = role === 'governor' || role === 'coordinator' || permissions?.canManageInitiatives === true;
 	const isCommitteeLeader = role === 'committee_head' || role === 'committee_coordinator' || role === 'committee_supervisor';
 	const currentUser = null;
@@ -855,6 +858,14 @@ const handleUploadEvidence = async (e) => {
     });
   };
 
+  const handleDeleteEvidence = async (evidenceItem) => {
+    if (!canDeleteAnyEvidence) return;
+    if (!evidenceItem?.id) return;
+    const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المرفق؟') : false;
+    if (!ok) return;
+    await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
+  };
+
   const handlePreviewFile = useCallback((fileUrl) => {
     if (!fileUrl || typeof window === 'undefined') return;
 
@@ -1162,9 +1173,19 @@ const handleUploadEvidence = async (e) => {
 																			>
 																				{att.title || 'مرفق'}
 																			</button>
-																			{canEditThisStandardKpis && (
-																				<Button size="icon" variant="ghost" className="text-red-600" onClick={() => deleteEvidenceMutation.mutateAsync(att.id)}>
-																					<Trash2 className="w-4 h-4" />
+																			{canApproveEvidence && isPendingEvidenceStatus(att.status) && (
+																				<>
+																					<Button size="sm" variant="ghost" className="text-green-700" onClick={() => handleApproveEvidence(att)}>
+																						اعتماد
+																					</Button>
+																					<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleRejectEvidence(att, 'غير مطابق للمتطلبات')}>
+																						رفض
+																					</Button>
+																				</>
+																			)}
+																			{canDeleteAnyEvidence && (
+																				<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleDeleteEvidence(att)}>
+																					حذف
 																				</Button>
 																			)}
 																		</div>
@@ -1332,7 +1353,10 @@ const handleUploadEvidence = async (e) => {
                                 <span className="truncate">بواسطة: {evidence.uploaded_by_name}</span>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span>{formatDateSafe(evidence.created_at)}</span>
-                                  {canManage && evidence.status === 'pending' && (
+                                  <Button size="icon" variant="ghost" className="text-blue-700" title="معاينة" onClick={() => handlePreviewFile(evidence.file_url)}>
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  {canApproveEvidence && isPendingEvidenceStatus(evidence.status) && (
                                     <div className="flex gap-2">
                                       <Button size="sm" variant="outline" onClick={() => handleApproveEvidence(evidence)}>
                                         <Check className="w-3 h-3 ml-1" />
@@ -1343,6 +1367,11 @@ const handleUploadEvidence = async (e) => {
                                         رفض
                                       </Button>
                                     </div>
+                                  )}
+                                  {canDeleteAnyEvidence && (
+                                    <Button size="sm" variant="outline" className="text-red-700" onClick={() => handleDeleteEvidence(evidence)}>
+                                      حذف
+                                    </Button>
                                   )}
                                 </div>
                               </div>

@@ -99,7 +99,7 @@ export default function Initiatives() {
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => api.entities.Axis.list()
+    queryFn: () => api.entities.Axis.list('order')
   });
 
   const { data: standards = [] } = useQuery({
@@ -249,10 +249,17 @@ export default function Initiatives() {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      <div className="bg-gradient-to-l from-purple-600 to-blue-600 text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة المبادرات</h1>
-          <p className="text-purple-100">مبادرات المدينة الصحية المرتبطة باللجان والمعايير</p>
+      <div className="bg-gradient-to-l from-purple-700 via-purple-600 to-blue-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+              <Lightbulb className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">إدارة المبادرات</h1>
+              <p className="text-purple-100 text-sm mt-1">مبادرات المدينة الصحية — المرتبطة بالمحاور والمعايير الـ 80</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -795,12 +802,21 @@ export default function Initiatives() {
                         {selectedInitiative.related_standards.map(sid => {
                           const standard = standards.find(s => s.id === sid);
                           return standard ? (
-                            <Badge key={sid} variant="outline">{standard.code} - {standard.title}</Badge>
+                            <Badge key={sid} variant="outline">{standard.code} - {standard.title?.slice(0, 50)}{(standard.title?.length || 0) > 50 ? '...' : ''}</Badge>
                           ) : null;
                         })}
                       </div>
                     </div>
                   )}
+
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm">
+                    <h4 className="font-semibold text-amber-800 mb-2 flex items-center gap-1">
+                      <Target className="w-4 h-4" />
+                      المستندات المطلوبة (مرجع)
+                    </h4>
+                    <p className="text-amber-700 text-xs mb-2">حسب دليل المستندات: خطة تنفيذ، تقرير تقدم شهري، قائمة تحقق، محضر اجتماع، سجل مخاطر، دليل إثبات</p>
+                    <p className="text-amber-600 text-xs">التسمية: <code className="bg-amber-100 px-1 rounded">A[محور]-M[معيار]-[نوع]-YYYY-MM-DD-v1.pdf</code></p>
+                  </div>
                 </CardContent>
               </Card>
 

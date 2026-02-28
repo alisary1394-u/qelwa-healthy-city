@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, FileText, Image, Loader2, Minus, Paperclip, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { Check, ChevronDown, Eye, FileText, Image, Loader2, Minus, Paperclip, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 
 function safeParseJson(value, fallback) {
 	if (value == null) return fallback;
@@ -95,7 +95,7 @@ function getStatusLabel(status) {
 }
 
 export default function StandardKPIManager({ standard, evidence = [] }) {
-	const { permissions, role, currentMember } = usePermissions();
+	const { permissions, role, currentMember, isGovernor } = usePermissions();
 	const queryClient = useQueryClient();
 
 	const isGlobalInitiativeManager = role === 'governor' || role === 'coordinator' || permissions?.canManageInitiatives === true;
@@ -108,7 +108,9 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 
 	const canEditKpis = isGlobalInitiativeManager || (isCommitteeLeader && sameCommittee);
 	const canUploadEvidence = permissions?.canUploadFiles === true || canEditKpis;
-	const canDeleteEvidence = canEditKpis;
+	const canApproveEvidence = permissions?.canApproveEvidence === true;
+	const canDeleteEvidence = Boolean(isGovernor);
+	const isPendingEvidenceStatus = (status) => typeof status === 'string' && status.startsWith('pending');
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
@@ -158,6 +160,11 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 
 	const deleteEvidenceMutation = useMutation({
 		mutationFn: (id) => api.entities.Evidence.delete(id),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] }),
+	});
+
+	const updateEvidenceMutation = useMutation({
+		mutationFn: ({ id, data }) => api.entities.Evidence.update(id, data),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] }),
 	});
 
@@ -317,6 +324,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 					standard_code: standard.code,
 					axis_id: standard.axis_id,
 					uploaded_by_name: currentMember?.full_name,
+					status: 'pending',
 					created_at: new Date().toISOString(),
 				});
 			}
@@ -335,8 +343,70 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 	const handleDeleteEvidence = async (evidenceItem) => {
 		if (!canDeleteEvidence) return;
 		if (!evidenceItem?.id) return;
+		const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المرفق؟') : false;
+		if (!ok) return;
 		await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
 	};
+
+	const handleApproveEvidence = async (evidenceItem) => {
+		if (!canApproveEvidence) return;
+		if (!evidenceItem?.id) return;
+		await updateEvidenceMutation.mutateAsync({
+			id: evidenceItem.id,
+			data: {
+				status: 'approved',
+				approved_by: currentMember?.full_name,
+				approved_at: new Date().toISOString(),
+			},
+		});
+	};
+
+	const handleRejectEvidence = async (evidenceItem, reason) => {
+		if (!canApproveEvidence) return;
+		if (!evidenceItem?.id) return;
+		await updateEvidenceMutation.mutateAsync({
+			id: evidenceItem.id,
+			data: { status: 'rejected', rejection_reason: reason || 'غير مطابق للمتطلبات' },
+		});
+	};
+
+	const handlePreviewEvidence = useCallback((fileUrl) => {
+		if (!fileUrl || typeof window === 'undefined') return;
+
+		const normalizedUrl = String(fileUrl);
+		if (normalizedUrl.startsWith('data:')) {
+			try {
+				const [meta, base64Payload] = normalizedUrl.split(',', 2);
+				const mimeTypeMatch = meta.match(/^data:(.*?);base64$/i);
+				const mimeType = mimeTypeMatch?.[1] || 'application/octet-stream';
+				const binary = atob(base64Payload || '');
+				const bytes = new Uint8Array(binary.length);
+				for (let i = 0; i < binary.length; i += 1) {
+					bytes[i] = binary.charCodeAt(i);
+				}
+				const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+				window.open(blobUrl, '_blank');
+				setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+			} catch {
+				window.open(normalizedUrl, '_blank');
+			}
+			return;
+		}
+
+		const separator = normalizedUrl.includes('?') ? '&' : '?';
+		const previewUrl = `${normalizedUrl}${separator}t=${Date.now()}`;
+		const previewWindow = window.open(previewUrl, '_blank');
+
+		if (previewWindow) {
+			setTimeout(() => {
+				try {
+					previewWindow.location.replace(previewUrl);
+				} catch {
+					window.open(previewUrl, '_blank');
+				}
+			}, 400);
+		}
+	}, []);
 
 	return (
 		<div className="space-y-4">
@@ -451,18 +521,30 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 																			) : (
 																				<FileText className="w-4 h-4 text-green-700" />
 																			)}
-																			<a
-																				href={att.file_url}
-																				target="_blank"
-																				rel="noreferrer"
-																				className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate"
+																			<button
+																				type="button"
+																				onClick={() => handlePreviewEvidence(att.file_url)}
+																				className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate text-right"
 																				title={att.title || att.file_name}
 																			>
 																				{att.title || att.file_name || 'مرفق'}
-																			</a>
+																			</button>
+																			<Button size="icon" variant="ghost" className="text-blue-700" title="معاينة" onClick={() => handlePreviewEvidence(att.file_url)}>
+																				<Eye className="w-4 h-4" />
+																			</Button>
+																			{canApproveEvidence && isPendingEvidenceStatus(att.status) && (
+																				<>
+																					<Button size="sm" variant="ghost" className="text-green-700" onClick={() => handleApproveEvidence(att)}>
+																						<Check className="w-4 h-4 ml-1" />اعتماد
+																					</Button>
+																					<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleRejectEvidence(att, 'غير مطابق للمتطلبات')}>
+																						<X className="w-4 h-4 ml-1" />رفض
+																					</Button>
+																				</>
+																			)}
 																			{canDeleteEvidence && (
-																				<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteEvidence(att)}>
-																					<Trash2 className="w-4 h-4" />
+																				<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleDeleteEvidence(att)}>
+																					<Trash2 className="w-4 h-4 ml-1" />حذف
 																				</Button>
 																			)}
 																		</div>

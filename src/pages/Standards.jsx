@@ -165,6 +165,10 @@ function StandardsLegacy() {
   const canManage = canManageStandards;
   const canApprove = permissions.canApproveEvidence;
   const canDeleteAnyEvidence = Boolean(isGovernor);
+  const isPendingEvidenceStatus = (status) => {
+    if (!status) return true;
+    return typeof status === 'string' && status.startsWith('pending');
+  };
 
   if (!permissions.canSeeStandards) {
     return (
@@ -612,7 +616,7 @@ function StandardsLegacy() {
                                     >
                                       <Eye className="w-4 h-4" />
                                     </Button>
-                                    {canApprove && ev.status === 'pending' && (
+                                    {canApprove && isPendingEvidenceStatus(ev.status) && (
                                       <>
                                         <Button
                                           size="sm"
