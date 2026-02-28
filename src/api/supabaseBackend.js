@@ -305,8 +305,11 @@ async function syncStandardsKpisFromPdf() {
     const axisName = AXES_SEED[axisOrder - 1]?.name ?? standard.axis_name;
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
     const axisId = axisRecord?.id ?? standard.axis_id;
-    const documents = getDefaultRequiredDocumentsForAxis(axisOrder);
-    const kpisList = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
+    const csvDocs = Array.isArray(item.documents) ? item.documents : [];
+    const documents = csvDocs.length > 0 ? csvDocs : getDefaultRequiredDocumentsForAxis(axisOrder);
+    const docCount = documents.length;
+    const rawKpis = Array.isArray(item.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item.title ?? '' }];
+    const kpisList = rawKpis.map(k => k.unit === 'تحقق' ? { ...k, target: String(docCount), target_value: docCount } : k);
     await entities.Standard.update(standard.id, {
       title: item.title ?? standard.title,
       description: item.title ?? standard.description,
@@ -326,8 +329,11 @@ async function syncStandardsKpisFromPdf() {
     const axisOrder = getAxisOrderFromStandardIndex(standardIndex);
     const axisRecord = axesList.find((a) => Number(a.order) === axisOrder);
     if (!axisRecord) continue;
-    const documents = getDefaultRequiredDocumentsForAxis(axisOrder);
-    const kpisList = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
+    const csvDocs2 = Array.isArray(item?.documents) ? item.documents : [];
+    const documents = csvDocs2.length > 0 ? csvDocs2 : getDefaultRequiredDocumentsForAxis(axisOrder);
+    const docCount2 = documents.length;
+    const rawKpis2 = Array.isArray(item?.kpis) ? [...item.kpis] : [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: item?.title ?? '' }];
+    const kpisList = rawKpis2.map(k => k.unit === 'تحقق' ? { ...k, target: String(docCount2), target_value: docCount2 } : k);
     await entities.Standard.create({
       code,
       title: item?.title ?? `معيار ${axisRecord.name} ${code}`,

@@ -471,9 +471,9 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 											<div className="space-y-2">
 												<div className="flex justify-between text-sm">
 													<span className="text-gray-500">التقدم</span>
-													<span className="font-semibold">
-														{currentValue} / {Number(kpi.target_value) || 0} {kpi.unit}
-													</span>
+								<span className="font-semibold">
+													{currentValue} / {Number(kpi.target_value) || 0} {kpi.unit === 'تحقق' ? 'مستند' : kpi.unit}
+												</span>
 												</div>
 												<Progress value={Math.min(percentage, 100)} className="h-2" />
 												<p className="text-xs text-gray-500">{Math.min(percentage, 100).toFixed(1)}% محقق</p>

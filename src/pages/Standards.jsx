@@ -184,35 +184,42 @@ function StandardsLegacy() {
 
   // فلترة ثم ترتيب حسب الترقيم المرجعي (م1-1 … م9-7) وإزالة التكرار — نفس المنطق لجميع المحاور بما فيها 4، 7، 8، 9
   const filteredStandards = (() => {
+    const query = String(searchQuery || '').trim().toLowerCase();
+    const hasSearch = query.length > 0;
     const list = standards.filter(s => {
-      const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
-      const matchesSearch = !searchQuery ||
-        s.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !hasSearch ||
+        (String(s?.title || '').toLowerCase().includes(query)) ||
+        (String(s?.code || '').toLowerCase().includes(query)) ||
+        (String(s?.description || '').toLowerCase().includes(query)) ||
+        (String(s?.axis_name || '').toLowerCase().includes(query));
+
+      if (!matchesSearch) return false;
+
+      // عند وجود بحث نصي، نبحث في كل المحاور
+      if (hasSearch) return true;
       
-      // فلتر إضافي لإزالة المعايير غير الصحيحة
+      const matchesAxis = activeAxis === 'all' || s.axis_id === activeAxis;
+      
       if (activeAxis !== 'all') {
         const activeAxisEntity = axes.find(a => a.id === activeAxis);
         const axisOrder = activeAxisEntity?.order ?? 0;
         
-        // استخراج رقم المحور من رمز المعيار
         const match = s.code?.match(/م(\d+)-(\d+)/);
         if (match) {
           const codeAxisOrder = parseInt(match[1]);
           const codeStandardNum = parseInt(match[2]);
           
-          // إزالة المعايير التي لا تنتمي إلى المحور الصحيح
           if (codeAxisOrder !== axisOrder) {
             return false;
           }
           
-          // فلتر خاص للمحور 9: إزالة م9-8 المكرر
           if (axisOrder === 9 && codeStandardNum === 8) {
             return false;
           }
         }
       }
       
-      return matchesAxis && matchesSearch;
+      return matchesAxis;
     });
     
     // فرز بسيط وفعال للمحاور الفردية
@@ -445,10 +452,12 @@ function StandardsLegacy() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
-              placeholder="بحث في المعايير..."
+              placeholder="بحث في المعايير (العنوان، الرمز، الوصف)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
+              dir="rtl"
+              autoComplete="off"
             />
           </div>
         </div>
@@ -837,4 +846,5 @@ function StandardsLegacy() {
   );
 }
 
+// يمكن التبديل: StandardsLegacy أو StandardsEnhanced
 export default StandardsLegacy;

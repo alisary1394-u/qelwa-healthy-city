@@ -71,7 +71,18 @@ export function buildStandardsSeed(axesWithIds) {
       const title = item?.title ?? `معيار ${axis.name} ${code}`;
       const description = title;
       const kpis = item?.kpis ?? [{ name: 'مؤشر التحقق', target: 'أدلة متوفرة (+)', unit: 'تحقق', description: title }];
-      const documents = getDefaultRequiredDocumentsForAxis(axisOrder);
+
+      const csvDocs = Array.isArray(item?.documents) ? item.documents : [];
+      const documents = csvDocs.length > 0 ? csvDocs : getDefaultRequiredDocumentsForAxis(axisOrder);
+
+      const docCount = documents.length;
+      const updatedKpis = kpis.map(k => {
+        if (k.unit === 'تحقق') {
+          return { ...k, target: String(docCount), target_value: docCount };
+        }
+        return k;
+      });
+
       standards.push({
         code,
         title,
@@ -79,8 +90,8 @@ export function buildStandardsSeed(axesWithIds) {
         axis_id: axis.id,
         axis_name: axis.name,
         required_evidence: buildRequiredEvidence(documents),
-        required_documents: JSON.stringify(Array.isArray(documents) ? documents : [documents]),
-        kpis: JSON.stringify(kpis),
+        required_documents: JSON.stringify(documents),
+        kpis: JSON.stringify(updatedKpis),
         status: 'not_started',
       });
       standardIndex += 1;

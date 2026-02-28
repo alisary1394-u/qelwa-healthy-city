@@ -914,8 +914,9 @@ const handleUploadEvidence = async (e) => {
 
   const filteredStandardsFn = useCallback(() => {
     let list = Array.isArray(standards) ? standards : [];
+    const hasSearch = String(searchQuery || '').trim().length > 0;
 
-		if (activeAxis !== 'all') {
+		if (activeAxis !== 'all' && !hasSearch) {
 			const activeAxisOrder = axes.find((a) => a.id === activeAxis)?.order;
 			list = list.filter((s) => {
 				if (s?.axis_id === activeAxis) return true;
@@ -925,13 +926,14 @@ const handleUploadEvidence = async (e) => {
 			});
 		}
 
-		if (String(searchQuery || '').trim()) {
-			const query = String(searchQuery || '').toLowerCase();
+		if (hasSearch) {
+			const query = String(searchQuery || '').trim().toLowerCase();
 			list = list.filter((s) => {
 				const title = String(s?.title || '').toLowerCase();
 				const desc = String(s?.description || '').toLowerCase();
 				const code = String(s?.code || '').toLowerCase();
-				return title.includes(query) || desc.includes(query) || code.includes(query);
+				const axisName = String(s?.axis_name || '').toLowerCase();
+				return title.includes(query) || desc.includes(query) || code.includes(query) || axisName.includes(query);
 			});
 		}
 
@@ -962,10 +964,12 @@ const handleUploadEvidence = async (e) => {
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="البحث في المعايير..."
+              placeholder="البحث في المعايير (العنوان، الرمز، الوصف)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 w-64"
+              className="pl-10 pr-10 w-64 min-w-[200px]"
+              dir="rtl"
+              autoComplete="off"
             />
           </div>
           {canManage && (
