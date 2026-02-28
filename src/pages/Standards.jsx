@@ -17,6 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+import StandardsEnhanced from './Standards-Enhanced';
+
+import StandardKPIManager from '@/components/standards/StandardKPIManager';
 
 // استيراد المؤشرات المحسنة (النسخة المبسطة)
 import { 
@@ -52,7 +57,7 @@ function buildRequiredEvidence(documents) {
   return list.length === 0 ? 'أدلة ومستندات تدعم تحقيق المعيار' : 'أدلة مطلوبة: ' + list.join('، ');
 }
 
-export default function Standards() {
+function StandardsLegacy() {
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [axisFormOpen, setAxisFormOpen] = useState(false);
@@ -492,74 +497,21 @@ export default function Standards() {
                             الأدلة المطلوبة: {standard.required_evidence}
                           </p>
                         )}
-                        {(() => {
-                          const docs = parseJsonArray(standard.required_documents);
-                          const kpisList = parseJsonArray(standard.kpis);
-                          return (
-                            <div className="mt-3 space-y-2">
-                              {docs.length > 0 && (
-                                <div className="text-sm">
-                                  <span className="font-medium text-gray-700">المستندات المطلوبة: </span>
-                                  <ul className="list-disc list-inside text-gray-600 pr-2">
-                                    {docs.map((d, i) => (
-                                      <li key={i}>{typeof d === 'string' ? d : d?.name || '-'}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {kpisList.length > 0 && (
-                                <div className="text-sm">
-                                  <span className="font-medium text-gray-700 flex items-center gap-1">
-                                    <BarChart3 className="w-4 h-4" /> مؤشرات الأداء (KPI):
-                                  </span>
-                                  <ul className="mt-1 space-y-0.5 text-gray-600">
-                                    {kpisList.map((k, i) => (
-                                      <li key={i} className="flex flex-col gap-0.5">
-                                        <span className="flex items-center gap-2 flex-wrap">
-                                          <span>{typeof k === 'object' && k?.name ? k.name : String(k)}</span>
-                                          {typeof k === 'object' && (k.target || k.unit) && (
-                                            <Badge variant="outline" className="text-xs">
-                                              الهدف: {k.target ?? '-'} {k.unit ? `(${k.unit})` : ''}
-                                            </Badge>
-                                          )}
-                                        </span>
-                                        {typeof k === 'object' && k?.description && (
-                                          <span className="text-gray-500 text-xs block pr-2 border-r-2 border-gray-100">{k.description}</span>
-                                        )}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
                         
-                        {/* Enhanced KPIs and Documents Display */}
-                        {(() => {
-                          const enhancedStandard = enhanceStandardsDisplay(
-                            standard, 
-                            parseJsonArray(standard.kpis), 
+                        <StandardKPIManager standard={standard} evidence={evidence} />
+
+                        <EnhancedDocumentsDisplay
+                          standard={enhanceStandardsDisplay(
+                            standard,
+                            parseJsonArray(standard.kpis),
                             parseJsonArray(standard.required_documents)
-                          );
-                          
-                          return (
-                            <>
-                              {enhancedStandard.hasEnhancedData && (
-                                <>
-                                  <EnhancedKpiDisplay 
-                                    standard={enhancedStandard} 
-                                    currentKpis={enhancedStandard.enhancedKpis}
-                                  />
-                                  <EnhancedDocumentsDisplay 
-                                    standard={enhancedStandard} 
-                                    currentDocuments={enhancedStandard.enhancedDocuments}
-                                  />
-                                </>
-                              )}
-                            </>
-                          );
-                        })()}
+                          )}
+                          currentDocuments={enhanceStandardsDisplay(
+                            standard,
+                            parseJsonArray(standard.kpis),
+                            parseJsonArray(standard.required_documents)
+                          ).enhancedDocuments}
+                        />
                         
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                           <span>المحور: {standard.axis_name}</span>
@@ -595,49 +547,67 @@ export default function Standards() {
                     </div>
 
                     {/* Evidence List */}
-                    {standardEvidence.length > 0 && (
-                      <div className="mt-4 pt-4 border-t">
-                        <p className="text-sm font-medium mb-3">الأدلة المرفوعة:</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {standardEvidence.map(ev => (
-                            <div key={ev.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                              {ev.file_type === 'image' ? (
-                                <Image className="w-8 h-8 text-blue-600" />
-                              ) : (
-                                <FileText className="w-8 h-8 text-green-600" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{ev.title}</p>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={
-                                    ev.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                    ev.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                    'bg-yellow-100 text-yellow-700'
-                                  }>
-                                    {ev.status === 'approved' ? 'معتمد' : ev.status === 'rejected' ? 'مرفوض' : 'بانتظار'}
-                                  </Badge>
-                                </div>
+                    <div className="mt-4 pt-4 border-t">
+                      <Collapsible className="w-full">
+                        <CollapsibleTrigger asChild>
+                          <button type="button" className="w-full text-right group">
+                            <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 p-4 hover:bg-gray-100 transition-colors">
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-gray-600" />
+                                <p className="text-sm font-medium">الأدلة المرفوعة</p>
+                                <Badge variant="secondary" className="text-xs">{standardEvidence.length}</Badge>
                               </div>
-                              <div className="flex gap-1">
-                                <a href={ev.file_url} target="_blank" rel="noopener noreferrer">
-                                  <Button size="icon" variant="ghost"><Eye className="w-4 h-4" /></Button>
-                                </a>
-                                {canApprove && ev.status === 'pending' && (
-                                  <>
-                                    <Button size="icon" variant="ghost" className="text-green-600" onClick={() => handleApproveEvidence(ev)}>
-                                      <Check className="w-4 h-4" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleRejectEvidence(ev, 'غير مطابق')}>
-                                      <X className="w-4 h-4" />
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
+                              <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </button>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          {standardEvidence.length === 0 ? (
+                            <div className="mt-3 text-sm text-gray-500">لا توجد أدلة مرفوعة</div>
+                          ) : (
+                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {standardEvidence.map(ev => (
+                                <div key={ev.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                  {ev.file_type === 'image' ? (
+                                    <Image className="w-8 h-8 text-blue-600" />
+                                  ) : (
+                                    <FileText className="w-8 h-8 text-green-600" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate">{ev.title}</p>
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={
+                                        ev.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                        ev.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'
+                                      }>
+                                        {ev.status === 'approved' ? 'معتمد' : ev.status === 'rejected' ? 'مرفوض' : 'بانتظار'}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <a href={ev.file_url} target="_blank" rel="noopener noreferrer">
+                                      <Button size="icon" variant="ghost"><Eye className="w-4 h-4" /></Button>
+                                    </a>
+                                    {canApprove && ev.status === 'pending' && (
+                                      <>
+                                        <Button size="icon" variant="ghost" className="text-green-600" onClick={() => handleApproveEvidence(ev)}>
+                                          <Check className="w-4 h-4" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleRejectEvidence(ev, 'غير مطابق')}>
+                                          <X className="w-4 h-4" />
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -819,3 +789,5 @@ export default function Standards() {
     </div>
   );
 }
+
+export default StandardsLegacy;

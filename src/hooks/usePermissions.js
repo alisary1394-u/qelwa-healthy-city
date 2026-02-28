@@ -46,7 +46,9 @@ export function usePermissions() {
     ? members.find((m) => String(m.national_id) === String(currentUser.national_id))
     : null) || members.find((m) => m.email === currentUser?.email);
   // الصلاحيات تعتمد فقط على دور العضو في الفريق: إن وُجد في الفريق نستخدم دوره، وإلا نعامله كمتطوع (لا نعتمد user_role من النظام حتى لا يحصل غير المسجلين على صلاحيات المشرف)
-  const role = currentMember?.role ?? (currentUser?.user_role === 'admin' || currentUser?.role === 'admin' ? 'volunteer' : (currentUser?.user_role || currentUser?.role || 'volunteer'));
+  const role = (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
+    ? 'governor'
+    : (currentMember?.role ?? (currentUser?.user_role || currentUser?.role || 'volunteer'));
   const permissions = getPermissions(role);
   const isGovernor = role === 'admin' || role === 'governor';
 

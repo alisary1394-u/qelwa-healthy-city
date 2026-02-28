@@ -15,9 +15,10 @@ const DEFAULT_NATIONAL_ID = '1';
 const DEFAULT_PASSWORD = '123456';
 
 function entityToTable(entityName) {
-  return entityName
-    .replace(/([A-Z])/g, (_, c) => '_' + c.toLowerCase())
-    .replace(/^_/, '');
+  return String(entityName || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .toLowerCase();
 }
 
 function rowToRecord(row) {
@@ -44,9 +45,20 @@ function sortBy(arr, orderBy) {
   });
 }
 
+function uploadFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('file is required'));
+    if (typeof FileReader === 'undefined') return reject(new Error('FileReader is not available'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  });
+}
+
 const ENTITY_NAMES = [
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
-  'Evidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
+  'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode',
 ];
 
@@ -57,6 +69,9 @@ function getSupabase() {
   const url = appParams.supabaseUrl;
   const key = appParams.supabaseAnonKey;
   if (!url || !key) throw new Error('VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY مطلوبان');
+  if (!/^https?:\/\//i.test(String(url || ''))) {
+    throw new Error(`Invalid supabaseUrl: ${String(url)}`);
+  }
   supabase = createClient(url, key);
   return supabase;
 }
@@ -398,6 +413,14 @@ export const supabaseBackend = {
   entities,
   auth,
   functions,
+  integrations: {
+    Core: {
+      async UploadFile({ file }) {
+        const file_url = await uploadFileToDataUrl(file);
+        return { file_url };
+      },
+    },
+  },
   asServiceRole: { entities, functions },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,

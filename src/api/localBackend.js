@@ -35,6 +35,17 @@ function setStore(entityName, arr) {
   }
 }
 
+function uploadFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('file is required'));
+    if (typeof FileReader === 'undefined') return reject(new Error('FileReader is not available'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  });
+}
+
 function createEntityHandler(entityName) {
   return {
     list(orderBy) {
@@ -99,7 +110,7 @@ function createEntityHandler(entityName) {
 
 const ENTITY_NAMES = [
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
-  'Evidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
+  'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode',
 ];
 
@@ -391,6 +402,14 @@ export const localBackend = {
   auth,
   functions,
   asServiceRole: { entities, functions },
+  integrations: {
+    Core: {
+      async UploadFile({ file }) {
+        const file_url = await uploadFileToDataUrl(file);
+        return { file_url };
+      },
+    },
+  },
   seedDefaultGovernorIfNeeded,
   seedAxesAndStandardsIfNeeded,
   clearAxesAndStandardsAndReseed,

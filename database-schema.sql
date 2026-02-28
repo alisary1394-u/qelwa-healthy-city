@@ -6,7 +6,7 @@ CREATE TABLE axes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  order INTEGER NOT NULL UNIQUE,
+  "order" INTEGER NOT NULL UNIQUE,
   short_name VARCHAR(100),
   icon VARCHAR(50),
   color VARCHAR(7),
@@ -14,7 +14,7 @@ CREATE TABLE axes (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX axes_order_idx ON axes(order);
+CREATE INDEX axes_order_idx ON axes("order");
 CREATE INDEX axes_name_idx ON axes(name);
 
 -- جدول المعايير
@@ -296,7 +296,7 @@ CREATE TRIGGER update_verification_tasks_updated_at
 -- ===== بيانات أولية =====
 
 -- إدخال المحاور
-INSERT INTO axes (name, description, order, short_name, icon, color) VALUES
+INSERT INTO axes (name, description, "order", short_name, icon, color) VALUES
 ('تنظيم المجتمع وتعبئته من أجل الصحة والتنمية', '(أ) تنظيم المجتمع وتعبئته من أجل الصحة والتنمية (معايير 1–7)', 1, 'تنظيم المجتمع', 'users', '#3B82F6'),
 ('التعاون، والشراكة والدعوى بين القطاعات', '(ب) التعاون، والشراكة والدعوى بين القطاعات (معايير 8–14)', 2, 'التعاون والشراكة', 'handshake', '#10B981'),
 ('مركز المعلومات المجتمعي', '(ج) مركز المعلومات المجتمعي (معايير 15–19)', 3, 'مركز المعلومات', 'info', '#F59E0B'),

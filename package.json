@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:host": "vite --host",
     "start": "node server/index.js",
-    "postinstall": "cd server && npm install",
+    "postinstall": "echo 'Skipping server install for now'",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",

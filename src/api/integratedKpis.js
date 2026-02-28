@@ -464,15 +464,6 @@ function checkSyncStatus(standard) {
 
 // ===== التصدير =====
 
-export {
-  buildIntegratedStandardsData,
-  generateIntegratedPerformanceReport,
-  calculateAxisScore,
-  generateAxisPerformanceReport,
-  generateVerificationReport,
-  verifyDocumentCompleteness
-};
-
 export default {
   buildIntegratedStandardsData,
   generateIntegratedPerformanceReport,

@@ -6,6 +6,8 @@
 import React from 'react';
 import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard } from '@/api/enhancedKpis';
 import { ENHANCED_AXIS_KPIS } from '@/api/enhancedAxisKpis';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 
 // ===== دالة مساعدة لتحليل مصفوفة JSON =====
 
@@ -95,41 +97,54 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
   const enhancedDocuments = currentDocuments.length > 0 ? currentDocuments : buildRequiredDocumentsForStandard(standard.title, standard.axis_order);
   
   return (
-    <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-      <div className="flex items-center gap-2 mb-3">
-        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h4 className="font-semibold text-green-900">المستندات المطلوبة</h4>
-        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-          {enhancedDocuments.length} مستند
-        </span>
-      </div>
-      
-      <div className="space-y-2">
-        {enhancedDocuments.slice(0, 5).map((doc, index) => (
-          <div key={index} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <div className="flex-1">
-              <span className="text-sm font-medium">{doc.name}</span>
-              {doc.type && (
-                <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded mr-2">
-                  {doc.type}
+    <Collapsible className="mt-4" defaultOpen>
+      <div className="bg-green-50 rounded-lg border border-green-200">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="w-full text-right group">
+            <div className="flex items-center justify-between gap-2 p-4 hover:bg-green-100/50 transition-colors rounded-lg">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h4 className="font-semibold text-green-900">المستندات المطلوبة</h4>
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  {enhancedDocuments.length} مستند
                 </span>
-              )}
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
             </div>
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="px-4 pb-4">
+            <div className="space-y-2">
+              {enhancedDocuments.slice(0, 5).map((doc, index) => (
+                <div key={index} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">{doc.name}</span>
+                    {doc.type && (
+                      <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded mr-2">
+                        {doc.type}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {enhancedDocuments.length > 5 && (
+              <div className="mt-3 text-center text-sm text-gray-600">
+                و {enhancedDocuments.length - 5} مستندات أخرى...
+              </div>
+            )}
           </div>
-        ))}
+        </CollapsibleContent>
       </div>
-      
-      {enhancedDocuments.length > 5 && (
-        <div className="mt-3 text-center text-sm text-gray-600">
-          و {enhancedDocuments.length - 5} مستندات أخرى...
-        </div>
-      )}
-    </div>
+    </Collapsible>
   );
 }
 
@@ -243,8 +258,23 @@ function EnhancedAxisCard({ axis, standards }) {
 // ===== دالة تحديث عرض المعايير =====
 
 function enhanceStandardsDisplay(standard, kpis = [], documents = []) {
-  const enhancedKpis = kpis.length > 0 ? kpis : buildAdvancedKpisForStandard(standard.title, standard.global_num, standard.axis_order);
-  const enhancedDocuments = documents.length > 0 ? documents : buildRequiredDocumentsForStandard(standard.title, standard.axis_order);
+  const derivedAxisOrder = (() => {
+    const existing = standard?.axis_order;
+    if (Number.isFinite(Number(existing)) && Number(existing) > 0) return Number(existing);
+    const code = standard?.code;
+    if (typeof code !== 'string') return undefined;
+    const m = code.match(/م(\d+)-/);
+    if (!m) return undefined;
+    const v = Number(m[1]);
+    return Number.isFinite(v) && v > 0 ? v : undefined;
+  })();
+
+  const enhancedKpis = kpis.length > 0
+    ? kpis
+    : buildAdvancedKpisForStandard(standard.title, standard.global_num, derivedAxisOrder);
+  const enhancedDocuments = documents.length > 0
+    ? documents
+    : buildRequiredDocumentsForStandard(standard.title, derivedAxisOrder);
   
   return {
     ...standard,

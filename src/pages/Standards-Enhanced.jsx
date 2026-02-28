@@ -38,6 +38,55 @@ function parseJsonArray(str, fallback = []) {
   } catch {
     return fallback;
   }
+ }
+
+function normalizeStandardKpis(kpis) {
+  const list = Array.isArray(kpis) ? kpis : [];
+  return list
+    .map((k) => {
+      if (!k) return null;
+      if (typeof k === 'string') {
+        return {
+          name: k,
+          target: '',
+          unit: '',
+          description: '',
+          category: 'عام',
+          weight: 1,
+        };
+      }
+      if (typeof k === 'object') {
+        return {
+          name: k.name ?? '',
+          target: k.target ?? '',
+          unit: k.unit ?? '',
+          description: k.description ?? '',
+          category: k.category ?? 'عام',
+          weight: k.weight ?? 1,
+          scale: k.scale,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .filter((k) => k.name);
+}
+
+function parseJsonObject(str, fallback = {}) {
+  if (!str) return fallback;
+  try {
+    const v = JSON.parse(str);
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function formatDateSafe(value) {
+	if (!value) return '—';
+	const d = new Date(value);
+	if (!Number.isFinite(d.getTime())) return '—';
+	return d.toLocaleDateString('ar-SA');
 }
 
 const statusConfig = {
@@ -55,32 +104,56 @@ function buildRequiredEvidence(documents) {
   return list.length === 0 ? 'أدلة ومستندات تدعم تحقيق المعيار' : 'أدلة مطلوبة: ' + list.join('، ');
 }
 
+function getStandardIndexFromCode(code) {
+	const match = String(code || '').trim().replace(/\s+/g, '').match(/م(\d+)-(\d+)/);
+	if (!match) return -1;
+	const axisNum = parseInt(match[1], 10);
+	const i = parseInt(match[2], 10);
+	if (axisNum < 1 || axisNum > AXIS_COUNTS.length || i < 1) return -1;
+	const before = AXIS_COUNTS.slice(0, axisNum - 1).reduce((a, b) => a + b, 0);
+	return Math.min(STANDARDS_CSV.length - 1, before + (i - 1));
+}
+
+function getAxisOrderFromStandardCode(code) {
+	const match = String(code || '').trim().replace(/\s+/g, '').match(/م(\d+)-(\d+)/);
+	if (!match) return null;
+	const axisNum = parseInt(match[1], 10);
+	return Number.isFinite(axisNum) ? axisNum : null;
+}
+
 // ===== مكونات المؤشرات المحسنة =====
+
+function calculateKpiScore(kpi, value) {
+  if (!value || value === 'غير متوفر') return 0;
+
+  if (kpi.unit === '%') {
+    const target = parseFloat(String(kpi.target).replace('%', ''));
+    const actual = parseFloat(String(value).replace('%', ''));
+    if (!Number.isFinite(target) || target <= 0 || !Number.isFinite(actual)) return 0;
+    return Math.min((actual / target) * 100, 100);
+  }
+
+  if (kpi.scale) {
+    const targetIndex = kpi.scale.indexOf(kpi.target);
+    const actualIndex = kpi.scale.indexOf(value);
+    if (targetIndex <= 0 || actualIndex < 0) return 0;
+    if (actualIndex >= targetIndex) return 100;
+    return (actualIndex / targetIndex) * 100;
+  }
+
+  if (kpi.unit === 'شخص' || kpi.unit === 'جهة' || kpi.unit === 'مشروع') {
+    const target = parseFloat(kpi.target);
+    const actual = parseFloat(value);
+    if (!Number.isFinite(target) || target <= 0 || !Number.isFinite(actual)) return 0;
+    return Math.min((actual / target) * 100, 100);
+  }
+
+  return String(value) === String(kpi.target) ? 100 : 50;
+}
 
 function KpiIndicator({ kpi, value, showProgress = true }) {
   const getScore = () => {
-    if (!value || value === 'غير متوفر') return 0;
-    
-    if (kpi.unit === '%') {
-      const target = parseFloat(kpi.target.replace('%', ''));
-      const actual = parseFloat(value.replace('%', ''));
-      return Math.min((actual / target) * 100, 100);
-    }
-    
-    if (kpi.scale) {
-      const targetIndex = kpi.scale.indexOf(kpi.target);
-      const actualIndex = kpi.scale.indexOf(value);
-      if (actualIndex >= targetIndex) return 100;
-      return (actualIndex / targetIndex) * 100;
-    }
-    
-    if (kpi.unit === 'شخص' || kpi.unit === 'جهة' || kpi.unit === 'مشروع') {
-      const target = parseFloat(kpi.target);
-      const actual = parseFloat(value);
-      return Math.min((actual / target) * 100, 100);
-    }
-    
-    return value === kpi.target ? 100 : 50;
+    return calculateKpiScore(kpi, value);
   };
 
   const score = getScore();
@@ -181,22 +254,24 @@ function AxisPerformanceCard({ axis, standards }) {
   // حساب النتيجة الإجمالية للمحور
   const calculateAxisScore = () => {
     if (standards.length === 0) return 0;
-    
-    let totalScore = 0;
-    let totalWeight = 0;
-    
-    standards.forEach(standard => {
-      const kpis = parseJsonArray(standard.kpis);
-      kpis.forEach(kpi => {
-        if (typeof kpi === 'object' && kpi.weight) {
-          const score = Math.random() * 100; // مؤقتاً - سيتم استبداله بالحساب الحقيقي
-          totalScore += score * kpi.weight;
-          totalWeight += kpi.weight;
-        }
-      });
-    });
-    
-    return totalWeight > 0 ? totalScore / totalWeight : 0;
+
+		let totalScore = 0;
+		let totalWeight = 0;
+
+		standards.forEach((standard) => {
+			const kpis = parseJsonArray(standard.kpis);
+			const valuesMap = parseJsonObject(standard.kpi_values);
+			kpis.forEach((kpi) => {
+				if (!kpi || typeof kpi !== 'object') return;
+				const weight = Number(kpi.weight) || 0;
+				if (weight <= 0) return;
+				const score = calculateKpiScore(kpi, valuesMap[kpi.name]);
+				totalScore += score * weight;
+				totalWeight += weight;
+			});
+		});
+
+		return totalWeight > 0 ? totalScore / totalWeight : 0;
   };
   
   const score = calculateAxisScore();
@@ -327,9 +402,34 @@ export default function Standards() {
   const [evidenceForm, setEvidenceForm] = useState({ title: '', description: '', file: null });
 
   const queryClient = useQueryClient();
-  const { canManage } = usePermissions();
-  const currentUser = api.auth.user();
-  const currentMember = api.auth.member();
+  const { permissions, role, currentMember } = usePermissions();
+  const canManage = permissions?.canManageStandards === true;
+	const isGlobalInitiativeManager = role === 'governor' || role === 'coordinator' || permissions?.canManageInitiatives === true;
+	const isCommitteeLeader = role === 'committee_head' || role === 'committee_coordinator' || role === 'committee_supervisor';
+	const currentUser = null;
+	const authMember = null;
+
+	const [kpiValuesOpen, setKpiValuesOpen] = useState(false);
+	const [kpiValuesStandard, setKpiValuesStandard] = useState(null);
+	const [kpiValuesForm, setKpiValuesForm] = useState({});
+
+	const [kpiFormOpen, setKpiFormOpen] = useState(false);
+	const [kpiFormStandard, setKpiFormStandard] = useState(null);
+	const [editingKpiIndex, setEditingKpiIndex] = useState(null);
+	const [kpiFormData, setKpiFormData] = useState({ name: '', target: '', unit: '', description: '', category: 'عام', weight: 1, scale: undefined });
+
+	const [kpiEvidenceOpen, setKpiEvidenceOpen] = useState(false);
+	const [kpiEvidenceStandard, setKpiEvidenceStandard] = useState(null);
+	const [kpiEvidenceKpiName, setKpiEvidenceKpiName] = useState('');
+	const [kpiEvidenceForm, setKpiEvidenceForm] = useState({ title: '', description: '', files: [] });
+	const [uploadingKpiEvidence, setUploadingKpiEvidence] = useState(false);
+
+	const sameCommitteeForStandard = Boolean(
+		kpiValuesStandard?.committee_id &&
+		currentMember?.committee_id &&
+		String(kpiValuesStandard.committee_id) === String(currentMember.committee_id)
+	);
+	const canEditStandardKpis = isGlobalInitiativeManager || (isCommitteeLeader && sameCommitteeForStandard);
 
   // Queries
   const { data: axes = [], isLoading: loadingAxes } = useQuery({
@@ -346,6 +446,25 @@ export default function Standards() {
     queryKey: ['evidence'],
     queryFn: () => api.entities.Evidence.list()
   });
+
+	useEffect(() => {
+		let cancelled = false;
+		(async () => {
+			try {
+				if (typeof api?.seedAxesAndStandardsIfNeeded === 'function') {
+					await api.seedAxesAndStandardsIfNeeded();
+					if (cancelled) return;
+					queryClient.invalidateQueries({ queryKey: ['axes'] });
+					queryClient.invalidateQueries({ queryKey: ['standards'] });
+				}
+			} catch (e) {
+				// ignore
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [queryClient]);
 
   // Mutations
   const createAxisMutation = useMutation({
@@ -365,6 +484,255 @@ export default function Standards() {
     mutationFn: ({ id, data }) => api.entities.Standard.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
+
+	useEffect(() => {
+		if (!canManage) return;
+		if (!Array.isArray(axes) || axes.length === 0) return;
+		if (!Array.isArray(standards) || standards.length === 0) return;
+		const axisIds = new Set(axes.map((a) => String(a.id)));
+		const broken = standards.filter((s) => s?.axis_id && !axisIds.has(String(s.axis_id)));
+		if (broken.length === 0) return;
+
+		let cancelled = false;
+		(async () => {
+			try {
+				for (const s of broken) {
+					if (cancelled) return;
+					const idx = getStandardIndexFromCode(s.code);
+					if (idx < 0) continue;
+					const axisOrder = getAxisOrderFromStandardIndex(idx);
+					const axis = axes.find((a) => Number(a.order) === Number(axisOrder));
+					if (!axis?.id) continue;
+					await updateStandardMutation.mutateAsync({
+						id: s.id,
+						data: {
+							axis_id: axis.id,
+							axis_name: axis.name,
+						},
+					});
+				}
+			} catch (e) {
+				// ignore
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [axes, standards, canManage, updateStandardMutation]);
+
+	const openKpiValuesDialog = (standard) => {
+		const standardSameCommittee = Boolean(
+			standard?.committee_id &&
+			currentMember?.committee_id &&
+			String(standard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+		if (!standard?.id) return;
+		const kpis = parseJsonArray(standard.kpis);
+		const saved = parseJsonObject(standard.kpi_values);
+		const next = {};
+		kpis.forEach((kpi) => {
+			if (!kpi || typeof kpi !== 'object') return;
+			next[kpi.name] = saved[kpi.name] ?? '';
+		});
+		setKpiValuesStandard(standard);
+		setKpiValuesForm(next);
+		setKpiValuesOpen(true);
+	};
+
+	const handleSaveKpiValues = async () => {
+		if (!canEditStandardKpis) return;
+		if (!kpiValuesStandard?.id) return;
+		await updateStandardMutation.mutateAsync({
+			id: kpiValuesStandard.id,
+			data: {
+				kpi_values: JSON.stringify(kpiValuesForm || {}),
+			},
+		});
+		setKpiValuesOpen(false);
+		setKpiValuesStandard(null);
+		setKpiValuesForm({});
+	};
+
+	const openCreateKpiDialog = (standard) => {
+		if (!standard?.id) return;
+		setKpiFormStandard(standard);
+		setEditingKpiIndex(null);
+		setKpiFormData({ name: '', target: '', unit: '', description: '', category: 'عام', weight: 1, scale: undefined });
+		setKpiFormOpen(true);
+	};
+
+	const openEditKpiDialog = (standard, kpis, index) => {
+		if (!standard?.id) return;
+		const kpi = kpis[index];
+		if (!kpi) return;
+		setKpiFormStandard(standard);
+		setEditingKpiIndex(index);
+		setKpiFormData({
+			name: kpi.name || '',
+			target: kpi.target || '',
+			unit: kpi.unit || '',
+			description: kpi.description || '',
+			category: kpi.category || 'عام',
+			weight: Number(kpi.weight) || 1,
+			scale: kpi.scale,
+		});
+		setKpiFormOpen(true);
+	};
+
+	const handleSaveKpiDefinition = async (e) => {
+		e?.preventDefault?.();
+		if (!kpiFormStandard?.id) return;
+		const standardSameCommittee = Boolean(
+			kpiFormStandard?.committee_id &&
+			currentMember?.committee_id &&
+			String(kpiFormStandard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+
+		const existing = normalizeStandardKpis(parseJsonArray(kpiFormStandard.kpis));
+		const next = [...existing];
+		const item = {
+			name: kpiFormData.name,
+			target: kpiFormData.target,
+			unit: kpiFormData.unit,
+			description: kpiFormData.description,
+			category: kpiFormData.category,
+			weight: Number(kpiFormData.weight) || 1,
+		};
+		if (Array.isArray(kpiFormData.scale)) item.scale = kpiFormData.scale;
+
+		if (editingKpiIndex != null) {
+			next[editingKpiIndex] = item;
+		} else {
+			next.push(item);
+		}
+
+		await updateStandardMutation.mutateAsync({
+			id: kpiFormStandard.id,
+			data: {
+				kpis: JSON.stringify(next),
+			},
+		});
+		setKpiFormOpen(false);
+		setKpiFormStandard(null);
+		setEditingKpiIndex(null);
+	};
+
+	const handleDeleteKpi = async (standard, kpis, index) => {
+		if (!standard?.id) return;
+		const standardSameCommittee = Boolean(
+			standard?.committee_id &&
+			currentMember?.committee_id &&
+			String(standard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+		const kpi = kpis[index];
+		if (!kpi?.name) return;
+		const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المؤشر؟ سيتم حذف مرفقاته أيضاً.') : false;
+		if (!ok) return;
+
+		try {
+			const attachments = getKpiEvidence(standard.id, kpi.name);
+			for (const att of attachments) {
+				if (att?.id) await deleteEvidenceMutation.mutateAsync(att.id);
+			}
+			const next = kpis.filter((_, i) => i !== index);
+			await updateStandardMutation.mutateAsync({
+				id: standard.id,
+				data: { kpis: JSON.stringify(next) },
+			});
+			// تنظيف القيمة المسجلة لهذا المؤشر
+			const valuesMap = parseJsonObject(standard.kpi_values);
+			if (valuesMap && Object.prototype.hasOwnProperty.call(valuesMap, kpi.name)) {
+				delete valuesMap[kpi.name];
+				await updateStandardMutation.mutateAsync({
+					id: standard.id,
+					data: { kpi_values: JSON.stringify(valuesMap) },
+				});
+			}
+		} catch (err) {
+			if (typeof window !== 'undefined') window.alert(`فشل حذف المؤشر.\n${err?.message || err}`);
+		}
+	};
+
+	const handleUpdateKpiValue = async (standard, kpiName, value) => {
+		if (!standard?.id || !kpiName) return;
+		const standardSameCommittee = Boolean(
+			standard?.committee_id &&
+			currentMember?.committee_id &&
+			String(standard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+		const map = parseJsonObject(standard.kpi_values);
+		map[kpiName] = value;
+		await updateStandardMutation.mutateAsync({
+			id: standard.id,
+			data: { kpi_values: JSON.stringify(map) },
+		});
+	};
+
+	const openKpiEvidenceDialog = (standard, kpiName) => {
+		if (!standard?.id || !kpiName) return;
+		const standardSameCommittee = Boolean(
+			standard?.committee_id &&
+			currentMember?.committee_id &&
+			String(standard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+		setKpiEvidenceStandard(standard);
+		setKpiEvidenceKpiName(kpiName);
+		setKpiEvidenceForm({ title: '', description: '', files: [] });
+		setKpiEvidenceOpen(true);
+	};
+
+	const handleUploadKpiEvidence = async (e) => {
+		e.preventDefault();
+		if (!kpiEvidenceStandard?.id || !kpiEvidenceKpiName) return;
+		const standardSameCommittee = Boolean(
+			kpiEvidenceStandard?.committee_id &&
+			currentMember?.committee_id &&
+			String(kpiEvidenceStandard.committee_id) === String(currentMember.committee_id)
+		);
+		const allow = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
+		if (!allow) return;
+		const files = Array.isArray(kpiEvidenceForm.files) ? kpiEvidenceForm.files : [];
+		if (files.length === 0) return;
+		setUploadingKpiEvidence(true);
+		try {
+			for (const file of files) {
+				const { file_url } = await api.integrations.Core.UploadFile({ file });
+				const fileType = file.type?.startsWith('image/') ? 'image' : 'document';
+				await createEvidenceMutation.mutateAsync({
+					title: kpiEvidenceForm.title || file.name,
+					description: kpiEvidenceForm.description,
+					file_url,
+					file_type: fileType,
+					standard_id: kpiEvidenceStandard.id,
+					standard_code: kpiEvidenceStandard.code,
+					axis_id: kpiEvidenceStandard.axis_id,
+					uploaded_by_name: currentMember?.full_name,
+					status: 'pending',
+					kpi_type: 'standard',
+					kpi_name: kpiEvidenceKpiName,
+				});
+			}
+			setKpiEvidenceOpen(false);
+			setKpiEvidenceStandard(null);
+			setKpiEvidenceKpiName('');
+			setKpiEvidenceForm({ title: '', description: '', files: [] });
+		} catch (err) {
+			if (typeof window !== 'undefined') window.alert(`فشل رفع المرفقات.\n${err?.message || err}`);
+		} finally {
+			setUploadingKpiEvidence(false);
+		}
+	};
 
   const createEvidenceMutation = useMutation({
     mutationFn: (data) => api.entities.Evidence.create(data),
@@ -387,123 +755,94 @@ export default function Standards() {
     }
   });
 
-  // Computed values
-  const filteredStandards = useCallback(() => {
-    let list = standards;
-    
-    if (activeAxis !== 'all') {
-      list = list.filter(s => s.axis_id === activeAxis);
-    }
-    
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      list = list.filter(s => 
-        s.title?.toLowerCase().includes(query) ||
-        s.description?.toLowerCase().includes(query) ||
-        s.code?.toLowerCase().includes(query)
-      );
-    }
-    
-    // تصفية المعايير لضمان ظهورها في المحور الصحيح فقط
-    list = list.filter(standard => {
-      const match = standard.code?.match(/^م(\d+)-(\d+)$/);
-      if (!match) return true;
-      
-      const [, axisNum] = match;
-      const axisOrder = parseInt(axisNum);
-      
-      const activeAxisOrder = activeAxis === 'all' 
-        ? null 
-        : axes.find(a => a.id === activeAxis)?.order;
-      
-      return activeAxisOrder === null || axisOrder === activeAxisOrder;
-    });
-    
-    // ترتيب المعايير حسب الرقم داخل المحور
-    if (list.length > 0) {
-      list = list.sort((a, b) => {
-        const extractNumbers = (code) => {
-          const match = code?.match(/^م(\d+)-(\d+)$/);
-          return match ? [parseInt(match[1]), parseInt(match[2])] : [0, 0];
-        };
-        
-        const [axisA, numA] = extractNumbers(a.code);
-        const [axisB, numB] = extractNumbers(b.code);
-        
-        if (axisA !== axisB) return axisA - axisB;
-        return numA - numB;
-      });
-    }
-    
-    return sortAndDeduplicateStandardsByCode(list);
-  }, [standards, activeAxis, searchQuery, axes]);
+	const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId && e.kpi_type !== 'standard');
+	const getKpiEvidence = (standardId, kpiName) => evidence.filter(e => e.standard_id === standardId && e.kpi_type === 'standard' && e.kpi_name === kpiName);
 
-  const getAxisProgress = (axisId) => {
-    const axis = axes.find(a => a.id === axisId);
-    const order = axis?.order ?? 0;
-    const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 1;
-    const completed = standards.filter(s => s.axis_id === axisId && (s.status === 'completed' || s.status === 'approved')).length;
-    return expectedCount > 0 ? Math.round((completed / expectedCount) * 100) : 0;
-  };
+const getAxisProgress = (axisId) => {
+	const axis = axes.find(a => a.id === axisId);
+	const order = axis?.order ?? 0;
+	const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 1;
+	const completed = standards.filter((s) => {
+		if (s.axis_id === axisId) return s.status === 'completed' || s.status === 'approved';
+		const codeAxisOrder = getAxisOrderFromStandardCode(s.code);
+		return codeAxisOrder != null && Number(codeAxisOrder) === Number(order) && (s.status === 'completed' || s.status === 'approved');
+	}).length;
+	return expectedCount > 0 ? Math.round((completed / expectedCount) * 100) : 0;
+};
 
-  const handleSaveAxis = async (e) => {
-    e.preventDefault();
-    await createAxisMutation.mutateAsync(axisForm);
-    setAxisFormOpen(false);
-    setAxisForm({ name: '', description: '', order: axes.length + 1 });
-  };
+const handleSaveAxis = async (e) => {
+	e.preventDefault();
+	await createAxisMutation.mutateAsync(axisForm);
+	setAxisFormOpen(false);
+	setAxisForm({ name: '', description: '', order: axes.length + 1 });
+};
 
-  const handleSaveStandard = async (e) => {
-    e.preventDefault();
-    const axis = axes.find(a => a.id === standardForm.axis_id);
-    await createStandardMutation.mutateAsync({
-      ...standardForm,
-      axis_name: axis?.name || '',
-      status: 'not_started'
-    });
-    setStandardFormOpen(false);
-    setStandardForm({ code: '', title: '', description: '', axis_id: '', required_evidence: '' });
-  };
+const handleSaveStandard = async (e) => {
+	e.preventDefault();
+	const axis = axes.find(a => a.id === standardForm.axis_id);
+	if (editStandard?.id) {
+		await updateStandardMutation.mutateAsync({
+			id: editStandard.id,
+			data: {
+				code: standardForm.code,
+				title: standardForm.title,
+				description: standardForm.description,
+				axis_id: standardForm.axis_id,
+				axis_name: axis?.name || '',
+				required_evidence: standardForm.required_evidence,
+			},
+		});
+		setEditStandard(null);
+	} else {
+		await createStandardMutation.mutateAsync({
+			...standardForm,
+			axis_name: axis?.name || '',
+			status: 'not_started'
+		});
+	}
+	setStandardFormOpen(false);
+	setStandardForm({ code: '', title: '', description: '', axis_id: '', required_evidence: '' });
+};
 
-  const handleUploadEvidence = async (e) => {
-    e.preventDefault();
-    if (!evidenceForm.file || !selectedStandard) return;
+const handleUploadEvidence = async (e) => {
+	e.preventDefault();
+	if (!evidenceForm.file || !selectedStandard) return;
 
-    setUploading(true);
-    const { file_url } = await api.integrations.Core.UploadFile({ file: evidenceForm.file });
-    
-    const fileType = evidenceForm.file.type.startsWith('image/') ? 'image' : 'document';
-    
-    await createEvidenceMutation.mutateAsync({
-      title: evidenceForm.title,
-      description: evidenceForm.description,
-      file_url,
-      file_type: fileType,
-      standard_id: selectedStandard.id,
-      standard_code: selectedStandard.code,
-      axis_id: selectedStandard.axis_id,
-      uploaded_by_name: currentUser?.full_name || currentMember?.full_name,
-      status: 'pending'
-    });
+	setUploading(true);
+	const { file_url } = await api.integrations.Core.UploadFile({ file: evidenceForm.file });
+	
+	const fileType = evidenceForm.file.type.startsWith('image/') ? 'image' : 'document';
+	
+	await createEvidenceMutation.mutateAsync({
+		title: evidenceForm.title,
+		description: evidenceForm.description,
+		file_url,
+		file_type: fileType,
+		standard_id: selectedStandard.id,
+		standard_code: selectedStandard.code,
+		axis_id: selectedStandard.axis_id,
+		uploaded_by_name: currentMember?.full_name,
+		status: 'pending'
+	});
 
-    if (selectedStandard.status === 'not_started') {
-      await updateStandardMutation.mutateAsync({
-        id: selectedStandard.id,
-        data: { status: 'in_progress' }
-      });
-    }
+	if (selectedStandard.status === 'not_started') {
+		await updateStandardMutation.mutateAsync({
+			id: selectedStandard.id,
+			data: { status: 'in_progress' }
+		});
+	}
 
-    setUploading(false);
-    setEvidenceFormOpen(false);
-    setEvidenceForm({ title: '', description: '', file: null });
-  };
+	setUploading(false);
+	setEvidenceFormOpen(false);
+	setEvidenceForm({ title: '', description: '', file: null });
+};
 
   const handleApproveEvidence = async (evidenceItem) => {
     await updateEvidenceMutation.mutateAsync({
       id: evidenceItem.id,
       data: {
         status: 'approved',
-        approved_by: currentUser?.full_name,
+        approved_by: currentMember?.full_name,
         approved_at: new Date().toISOString()
       }
     });
@@ -516,7 +855,6 @@ export default function Standards() {
     });
   };
 
-  const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId);
 
   const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
   const pageTitle = activeAxisEntity
@@ -524,6 +862,45 @@ export default function Standards() {
         ? AXIS_SHORT_NAMES[activeAxisEntity.order - 1]
         : activeAxisEntity.name)
     : 'جميع المحاور';
+
+  const filteredStandardsFn = useCallback(() => {
+    let list = Array.isArray(standards) ? standards : [];
+
+		if (activeAxis !== 'all') {
+			const activeAxisOrder = axes.find((a) => a.id === activeAxis)?.order;
+			list = list.filter((s) => {
+				if (s?.axis_id === activeAxis) return true;
+				if (!activeAxisOrder) return false;
+				const codeAxisOrder = getAxisOrderFromStandardCode(s?.code);
+				return codeAxisOrder != null && Number(codeAxisOrder) === Number(activeAxisOrder);
+			});
+		}
+
+		if (String(searchQuery || '').trim()) {
+			const query = String(searchQuery || '').toLowerCase();
+			list = list.filter((s) => {
+				const title = String(s?.title || '').toLowerCase();
+				const desc = String(s?.description || '').toLowerCase();
+				const code = String(s?.code || '').toLowerCase();
+				return title.includes(query) || desc.includes(query) || code.includes(query);
+			});
+		}
+
+		list = [...list].sort((a, b) => {
+			const ma = String(a?.code || '').match(/^م(\d+)-(\d+)$/);
+			const mb = String(b?.code || '').match(/^م(\d+)-(\d+)$/);
+			const axA = ma ? parseInt(ma[1], 10) : 0;
+			const nA = ma ? parseInt(ma[2], 10) : 0;
+			const axB = mb ? parseInt(mb[1], 10) : 0;
+			const nB = mb ? parseInt(mb[2], 10) : 0;
+			if (axA !== axB) return axA - axB;
+			return nA - nB;
+		});
+
+		return sortAndDeduplicateStandardsByCode(list);
+  }, [standards, activeAxis, searchQuery, axes]);
+
+  const filteredStandards = filteredStandardsFn();
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -583,7 +960,11 @@ export default function Standards() {
       {activeAxis === 'all' && axes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
           {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
-            const axisStandards = standards.filter(s => s.axis_id === axis.id);
+						const axisStandards = standards.filter((s) => {
+							if (s.axis_id === axis.id) return true;
+							const codeAxisOrder = getAxisOrderFromStandardCode(s.code);
+							return codeAxisOrder != null && Number(codeAxisOrder) === Number(axis.order);
+						});
             return (
               <AxisPerformanceCard
                 key={axis.id}
@@ -619,6 +1000,14 @@ export default function Standards() {
             const approvedEvidence = standardEvidence.filter(e => e.status === 'approved').length;
             const enhancedKpis = buildAdvancedKpisForStandard(standard.title, standard.global_num, standard.axis_order);
             const requiredDocuments = buildRequiredDocumentsForStandard(standard.title, standard.axis_order);
+					const standardKpis = normalizeStandardKpis(parseJsonArray(standard.kpis));
+					const valuesMap = parseJsonObject(standard.kpi_values);
+					const standardSameCommittee = Boolean(
+						standard?.committee_id &&
+						currentMember?.committee_id &&
+						String(standard.committee_id) === String(currentMember.committee_id)
+					);
+					const canEditThisStandardKpis = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
             
             return (
               <Card key={standard.id}>
@@ -642,7 +1031,7 @@ export default function Standards() {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium flex items-center gap-2">
                             <BarChart3 className="w-5 h-5" />
-                            مؤشرات الأداء المحسنة
+                            مؤشرات الأداء
                           </h4>
                           <Button
                             variant="ghost"
@@ -654,34 +1043,122 @@ export default function Standards() {
                         </div>
                         
                         {showKpis[standard.id] && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {enhancedKpis.slice(0, 4).map((kpi, index) => (
-                              <KpiIndicator
-                                key={index}
-                                kpi={kpi}
-                                value={'غير متوفر'} // سيتم استبداله بالقيم الفعلية
-                                showProgress={true}
-                              />
-                            ))}
-                          </div>
+                          <div className="space-y-3 mb-4">
+								<div className="flex items-center justify-end gap-2">
+									{canEditThisStandardKpis && (
+										<Button size="sm" onClick={() => openCreateKpiDialog(standard)} className="bg-purple-600 hover:bg-purple-700">
+											<Plus className="w-4 h-4 ml-2" />
+											مؤشر جديد
+										</Button>
+									)}
+								</div>
+
+								{standardKpis.length === 0 ? (
+									<div className="text-sm text-gray-500">لا توجد مؤشرات لهذا المعيار</div>
+								) : (
+									<div className="space-y-3">
+										{standardKpis.map((kpi, idx) => {
+											const currentValue = valuesMap[kpi.name] ?? '';
+											const score = calculateKpiScore(kpi, currentValue || 'غير متوفر');
+											const attachments = getKpiEvidence(standard.id, kpi.name);
+											return (
+												<Card key={`${standard.id}-${kpi.name}-${idx}`}> 
+													<CardContent className="p-4">
+														<div className="flex items-start justify-between gap-2">
+															<div className="flex-1 min-w-0">
+																<div className="font-semibold truncate">{kpi.name}</div>
+																{kpi.description && <div className="text-sm text-gray-500">{kpi.description}</div>}
+																<div className="text-xs text-gray-500 mt-1">الهدف: {kpi.target} {kpi.unit}</div>
+															</div>
+															<div className="flex items-center gap-2">
+																<Badge variant="outline" className="text-xs">{Math.round(score)}%</Badge>
+																{canEditThisStandardKpis && (
+																	<Button size="icon" variant="ghost" onClick={() => openEditKpiDialog(standard, standardKpis, idx)} title="تعديل">
+																		<Edit3 className="w-4 h-4" />
+																	</Button>
+																)}
+																{canEditThisStandardKpis && (
+																	<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteKpi(standard, standardKpis, idx)} title="حذف">
+																		<Trash2 className="w-4 h-4" />
+																	</Button>
+																)}
+															</div>
+														</div>
+
+														<div className="mt-3 space-y-2">
+															<Input
+																value={currentValue}
+																disabled={!canEditThisStandardKpis}
+																onChange={(e) => handleUpdateKpiValue(standard, kpi.name, e.target.value)}
+																placeholder="القيمة الحالية"
+															/>
+															<Progress value={score} className="h-2" />
+														</div>
+
+														<div className="pt-3 mt-3 border-t">
+															<div className="flex items-center justify-between">
+																<div className="text-sm text-gray-700 flex items-center gap-2">
+																	<Upload className="w-4 h-4" />
+																	<span>مرفقات المؤشر</span>
+																	<Badge variant="outline" className="text-xs">{attachments.length}</Badge>
+																</div>
+																<Button size="sm" variant="outline" disabled={!canEditThisStandardKpis} onClick={() => openKpiEvidenceDialog(standard, kpi.name)}>
+																	رفع مرفق
+																</Button>
+															</div>
+
+															{attachments.length > 0 && (
+																<div className="mt-2 space-y-2">
+																	{attachments.map((att) => (
+																		<div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+																			{att.file_type === 'image' ? (
+																				<Image className="w-4 h-4 text-blue-600" />
+																			) : (
+																				<FileText className="w-4 h-4 text-green-700" />
+																			)}
+																			<a
+																			href={att.file_url}
+																			target="_blank"
+																			rel="noreferrer"
+																			className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate"
+																			title={att.title}
+																		>
+																			{att.title || 'مرفق'}
+																		</a>
+																		{canEditThisStandardKpis && (
+																			<Button size="icon" variant="ghost" className="text-red-600" onClick={() => deleteEvidenceMutation.mutateAsync(att.id)}>
+																				<Trash2 className="w-4 h-4" />
+																			</Button>
+																		)}
+																	</div>
+																))}
+															</div>
+														)}
+													</div>
+												</CardContent>
+											</Card>
+											);
+										})}
+									</div>
+								)}
+							</div>
                         )}
                         
                         {!showKpis[standard.id] && (
                           <div className="flex flex-wrap gap-2">
-                            {enhancedKpis.slice(0, 3).map((kpi, index) => (
+								{standardKpis.slice(0, 3).map((kpi, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
-                                {kpi.name}: {kpi.target}
+									{kpi.name}: {kpi.target}
                               </Badge>
                             ))}
-                            {enhancedKpis.length > 3 && (
+								{standardKpis.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{enhancedKpis.length - 3} مؤشرات أخرى
-                              </Badge>
+									+{standardKpis.length - 3} مؤشرات أخرى
+								</Badge>
                             )}
                           </div>
                         )}
                       </div>
-                      
                       {/* Required Documents Section */}
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-3">
@@ -734,7 +1211,7 @@ export default function Standards() {
                       <div className="flex items-center gap-6 text-sm text-gray-500 border-t pt-4">
                         <span>المحور: {standard.axis_name}</span>
                         <span>الأدلة: {approvedEvidence}/{standardEvidence.length}</span>
-                        <span>المؤشرات: {enhancedKpis.length}</span>
+                        <span>المؤشرات: {standardKpis.length}</span>
                         <span>المستندات: {requiredDocuments.length}</span>
                       </div>
                     </div>
@@ -748,12 +1225,31 @@ export default function Standards() {
                             setEditStandard(standard);
                             setEditDocuments(parseJsonArray(standard.required_documents));
                             setEditKpis(parseJsonArray(standard.kpis).map(k => typeof k === 'object' ? { name: k.name ?? '', target: k.target ?? '', unit: k.unit ?? '' } : { name: String(k), target: '', unit: '' }));
+							setStandardForm({
+								code: standard.code || '',
+								title: standard.title || '',
+								description: standard.description || '',
+								axis_id: standard.axis_id || '',
+								required_evidence: standard.required_evidence || '',
+							});
+							setStandardFormOpen(true);
                           }}
                         >
                           <Edit3 className="w-4 h-4 ml-2" />
                           تعديل
                         </Button>
                       )}
+
+						{canEditThisStandardKpis && standardKpis.length > 0 && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => openKpiValuesDialog(standard)}
+							>
+								<BarChart3 className="w-4 h-4 ml-2" />
+								تحديث قيم المؤشرات
+							</Button>
+						)}
                       
                       <Button
                         variant="outline"
@@ -773,56 +1269,46 @@ export default function Standards() {
                   {standardEvidence.length > 0 && (
                     <div className="border-t pt-4 mt-4">
                       <h4 className="font-medium mb-3">الأدلة المرفوعة</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {standardEvidence.map(evidence => (
-                          <Card key={evidence.id} className="relative">
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start mb-2">
-                                <h5 className="font-medium text-sm">{evidence.title}</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                        {standardEvidence.map((evidence) => (
+                          <Card key={evidence.id} className="relative h-fit self-start">
+                            <CardContent className="p-3">
+                              <div className="flex justify-between items-start mb-1">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {evidence.file_type === 'image' ? (
+                                    <Image className="w-4 h-4 text-gray-500 shrink-0" />
+                                  ) : (
+                                    <FileText className="w-4 h-4 text-gray-500 shrink-0" />
+                                  )}
+                                  <h5 className="font-medium text-sm truncate">{evidence.title}</h5>
+                                </div>
                                 <Badge variant={evidence.status === 'approved' ? 'default' : evidence.status === 'rejected' ? 'destructive' : 'secondary'}>
                                   {evidence.status === 'approved' ? 'معتمد' : evidence.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
                                 </Badge>
                               </div>
                               
                               {evidence.description && (
-                                <p className="text-sm text-gray-600 mb-2">{evidence.description}</p>
+                                <p className="text-sm text-gray-600 mb-1">{evidence.description}</p>
                               )}
                               
-                              {evidence.file_type === 'image' ? (
-                                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <Image className="w-8 h-8 text-gray-400" />
+                              <div className="flex justify-between items-center gap-2 mt-2 text-xs text-gray-500">
+                                <span className="truncate">بواسطة: {evidence.uploaded_by_name}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span>{formatDateSafe(evidence.created_at)}</span>
+                                  {canManage && evidence.status === 'pending' && (
+                                    <div className="flex gap-2">
+                                      <Button size="sm" variant="outline" onClick={() => handleApproveEvidence(evidence)}>
+                                        <Check className="w-3 h-3 ml-1" />
+                                        اعتماد
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={() => handleRejectEvidence(evidence, 'غير مطابق للمتطلبات')}>
+                                        <X className="w-3 h-3 ml-1" />
+                                        رفض
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <FileText className="w-8 h-8 text-gray-400" />
-                                </div>
-                              )}
-                              
-                              <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
-                                <span>بواسطة: {evidence.uploaded_by_name}</span>
-                                <span>{new Date(evidence.created_at).toLocaleDateString('ar-SA')}</span>
                               </div>
-                              
-                              {canManage && evidence.status === 'pending' && (
-                                <div className="flex gap-2 mt-3">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleApproveEvidence(evidence)}
-                                  >
-                                    <Check className="w-3 h-3 ml-1" />
-                                    اعتماد
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleRejectEvidence(evidence, 'غير مطابق للمتطلبات')}
-                                  >
-                                    <X className="w-3 h-3 ml-1" />
-                                    رفض
-                                  </Button>
-                                </div>
-                              )}
                             </CardContent>
                           </Card>
                         ))}
@@ -885,10 +1371,19 @@ export default function Standards() {
       </Dialog>
 
       {/* Standard Form Dialog */}
-      <Dialog open={standardFormOpen} onOpenChange={setStandardFormOpen}>
+      <Dialog
+			open={standardFormOpen}
+			onOpenChange={(open) => {
+				setStandardFormOpen(open);
+				if (!open) {
+					setEditStandard(null);
+					setStandardForm({ code: '', title: '', description: '', axis_id: '', required_evidence: '' });
+				}
+			}}
+		>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>إضافة معيار جديد</DialogTitle>
+            <DialogTitle>{editStandard?.id ? 'تعديل المعيار' : 'إضافة معيار جديد'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveStandard} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -951,7 +1446,7 @@ export default function Standards() {
                 إلغاء
               </Button>
               <Button type="submit">
-                إضافة
+					{editStandard?.id ? 'حفظ' : 'إضافة'}
               </Button>
             </div>
           </form>
@@ -960,7 +1455,7 @@ export default function Standards() {
 
       {/* Evidence Upload Dialog */}
       <Dialog open={evidenceFormOpen} onOpenChange={setEvidenceFormOpen}>
-        <DialogContent>
+        <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>رفع دليل للمعيار: {selectedStandard?.code}</DialogTitle>
           </DialogHeader>
@@ -1014,6 +1509,113 @@ export default function Standards() {
           </form>
         </DialogContent>
       </Dialog>
+
+		{/* KPI Values Dialog */}
+		<Dialog open={kpiValuesOpen} onOpenChange={setKpiValuesOpen}>
+			<DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
+				<DialogHeader>
+					<DialogTitle>
+						تحديث قيم مؤشرات الأداء — {kpiValuesStandard?.code || ''}
+					</DialogTitle>
+				</DialogHeader>
+				<div className="space-y-4 mt-4">
+					{parseJsonArray(kpiValuesStandard?.kpis).length === 0 ? (
+						<div className="text-sm text-gray-600">لا توجد مؤشرات مسجلة لهذا المعيار.</div>
+					) : (
+						<div className="space-y-3">
+							{parseJsonArray(kpiValuesStandard?.kpis).map((kpi, idx) => (
+								<div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-2 bg-gray-50 rounded-lg">
+									<div className="md:col-span-2">
+										<div className="text-sm font-medium">{kpi?.name || ''}</div>
+										<div className="text-xs text-gray-600">الهدف: {kpi?.target || ''}</div>
+									</div>
+									<Input
+										value={kpiValuesForm?.[kpi?.name] ?? ''}
+										onChange={(e) => setKpiValuesForm((prev) => ({ ...prev, [kpi?.name]: e.target.value }))}
+										placeholder="القيمة الحالية"
+									/>
+								</div>
+							))}
+						</div>
+					)}
+					<div className="flex gap-3 justify-end pt-4 border-t">
+						<Button type="button" variant="outline" onClick={() => setKpiValuesOpen(false)}>إلغاء</Button>
+						<Button type="button" className="bg-blue-600" onClick={handleSaveKpiValues}>حفظ</Button>
+					</div>
+				</div>
+			</DialogContent>
+		</Dialog>
+
+		{/* KPI Definition Dialog */}
+		<Dialog open={kpiFormOpen} onOpenChange={setKpiFormOpen}>
+			<DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
+				<DialogHeader>
+					<DialogTitle>{editingKpiIndex != null ? 'تعديل مؤشر' : 'مؤشر جديد'}</DialogTitle>
+				</DialogHeader>
+				<form onSubmit={handleSaveKpiDefinition} className="space-y-4 mt-4">
+					<div className="space-y-2">
+						<Label>اسم المؤشر *</Label>
+						<Input value={kpiFormData.name} onChange={(e) => setKpiFormData((p) => ({ ...p, name: e.target.value }))} required />
+					</div>
+					<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<Label>الهدف</Label>
+							<Input value={kpiFormData.target} onChange={(e) => setKpiFormData((p) => ({ ...p, target: e.target.value }))} />
+						</div>
+						<div className="space-y-2">
+							<Label>الوحدة</Label>
+							<Input value={kpiFormData.unit} onChange={(e) => setKpiFormData((p) => ({ ...p, unit: e.target.value }))} />
+						</div>
+						<div className="space-y-2">
+							<Label>التصنيف</Label>
+							<Input value={kpiFormData.category} onChange={(e) => setKpiFormData((p) => ({ ...p, category: e.target.value }))} />
+						</div>
+						<div className="space-y-2">
+							<Label>الوزن</Label>
+							<Input type="number" value={kpiFormData.weight} onChange={(e) => setKpiFormData((p) => ({ ...p, weight: parseFloat(e.target.value) || 1 }))} />
+						</div>
+					</div>
+					<div className="space-y-2">
+						<Label>الوصف</Label>
+						<Textarea value={kpiFormData.description} onChange={(e) => setKpiFormData((p) => ({ ...p, description: e.target.value }))} rows={2} />
+					</div>
+					<div className="flex gap-3 justify-end pt-4 border-t">
+						<Button type="button" variant="outline" onClick={() => setKpiFormOpen(false)}>إلغاء</Button>
+						<Button type="submit" className="bg-purple-600 hover:bg-purple-700">حفظ</Button>
+					</div>
+				</form>
+			</DialogContent>
+		</Dialog>
+
+		{/* KPI Evidence Upload Dialog */}
+		<Dialog open={kpiEvidenceOpen} onOpenChange={setKpiEvidenceOpen}>
+			<DialogContent dir="rtl">
+				<DialogHeader>
+					<DialogTitle>رفع مرفقات للمؤشر: {kpiEvidenceKpiName || ''}</DialogTitle>
+				</DialogHeader>
+				<form onSubmit={handleUploadKpiEvidence} className="space-y-4 mt-4">
+					<div className="space-y-2">
+						<Label>عنوان المرفق (اختياري)</Label>
+						<Input value={kpiEvidenceForm.title} onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, title: e.target.value }))} />
+					</div>
+					<div className="space-y-2">
+						<Label>وصف (اختياري)</Label>
+						<Textarea value={kpiEvidenceForm.description} onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, description: e.target.value }))} rows={2} />
+					</div>
+					<div className="space-y-2">
+						<Label>اختر ملفات (يمكن أكثر من ملف)</Label>
+						<Input type="file" multiple accept="image/*,.pdf,.doc,.docx" onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, files: Array.from(e.target.files || []) }))} required />
+					</div>
+					<div className="flex gap-3 justify-end pt-4 border-t">
+						<Button type="button" variant="outline" onClick={() => setKpiEvidenceOpen(false)}>إلغاء</Button>
+						<Button type="submit" disabled={uploadingKpiEvidence} className="bg-purple-600 hover:bg-purple-700">
+							{uploadingKpiEvidence && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+							رفع
+						</Button>
+					</div>
+				</form>
+			</DialogContent>
+		</Dialog>
     </div>
   );
 }

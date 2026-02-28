@@ -128,7 +128,11 @@ export default function Home() {
       }
       setLoading(false);
     } catch (err) {
-      setError('حدث خطأ. يرجى المحاولة مرة أخرى.');
+      if (typeof console !== 'undefined') {
+        console.error('[Login] failed:', err);
+      }
+      const msg = (err && (err.message || err.error_description || err.details)) || 'حدث خطأ. يرجى المحاولة مرة أخرى.';
+      setError(String(msg));
       setLoading(false);
     }
   };

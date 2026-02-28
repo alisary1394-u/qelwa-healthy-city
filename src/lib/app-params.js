@@ -3,7 +3,10 @@ const windowObj = isNode ? { localStorage: new Map() } : window;
 const storage = windowObj.localStorage;
 
 const toSnakeCase = (str) => {
-	return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+	return String(str || '')
+		.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+		.replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+		.toLowerCase();
 }
 
 const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl = false } = {}) => {
@@ -48,8 +51,8 @@ const getAppParams = () => {
 		appBaseUrl: getAppParamValue("app_base_url", { defaultValue: import.meta.env.VITE_BASE44_APP_BASE_URL }),
 		useLocalBackend: import.meta.env.VITE_USE_LOCAL_BACKEND === 'true',
 		useSupabaseBackend: import.meta.env.VITE_USE_SUPABASE_BACKEND === 'true',
-		supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
-		supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+		supabaseUrl: String(import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, ''),
+		supabaseAnonKey: String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim(),
 		// تعطيل التحقق بالبريد مؤقتاً أثناء البرمجة.
 		// الافتراضي: معطّل (true). لإعادة التفعيل لاحقاً اضبط VITE_DISABLE_EMAIL_VERIFICATION=false ثم أعد البناء.
 		disableEmailVerification: import.meta.env.VITE_DISABLE_EMAIL_VERIFICATION !== 'false',

@@ -5,6 +5,8 @@ import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
 
+const SEED_MARKER_KEY = 'app_seed_completed_v1';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,16 +32,34 @@ export const AuthProvider = ({ children }) => {
         appParams.useLocalBackend ||
         useSupabaseBackend ||
         (useServerBackend && allowSeedOnServer);
+      const seedNamespace = useSupabaseBackend
+        ? 'supabase'
+        : appParams.useLocalBackend
+          ? 'local'
+          : useServerBackend
+            ? 'server'
+            : 'unknown';
+      const seedKey = `${SEED_MARKER_KEY}_${seedNamespace}`;
+      const seedAlreadyCompleted = (() => {
+        try {
+          return typeof localStorage !== 'undefined' && localStorage.getItem(seedKey) === '1';
+        } catch {
+          return false;
+        }
+      })();
 
       if (useManagedBackend) {
         setAppPublicSettings({});
         setIsLoadingPublicSettings(false);
         // حماية الإنتاج: لا نشغّل بذر البيانات على السيرفر إلا بتفعيل صريح.
-        if (shouldRunClientSeed) {
+        if (shouldRunClientSeed && !seedAlreadyCompleted) {
           try {
             await Promise.resolve(api.seedDefaultGovernorIfNeeded?.() ?? null);
             await Promise.resolve(api.seedAxesAndStandardsIfNeeded?.());
             await Promise.resolve(api.seedCommitteesTeamInitiativesTasksIfNeeded?.());
+            try {
+              if (typeof localStorage !== 'undefined') localStorage.setItem(seedKey, '1');
+            } catch {}
           } catch (e) {
             if (typeof console !== 'undefined') console.warn('Seed failed:', e);
           }
