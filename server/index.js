@@ -82,7 +82,7 @@ function enqueueMutationBackup(reason) {
 }
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 // رؤوس أمان للتطبيق المنشور (مثل qilwah.up.railway.app)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
