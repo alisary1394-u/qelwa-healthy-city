@@ -162,15 +162,24 @@ export default function Survey() {
   const currentMember = members.find(m => m.email === currentUser?.email);
   const { permissions } = usePermissions();
   const canVerify = permissions.canVerifySurvey;
+  const canCreateSurvey = permissions.canCreateSurvey === true;
+
+  const visibleSurveys = canVerify
+    ? surveys
+    : surveys.filter((survey) => {
+        const surveyorId = String(survey?.surveyor_id || '').trim();
+        const currentEmail = String(currentUser?.email || '').trim();
+        return surveyorId && currentEmail && surveyorId === currentEmail;
+      });
 
   const stats = {
-    total: surveys.length,
-    submitted: surveys.filter(s => s.status === 'submitted').length,
-    verified: surveys.filter(s => s.status === 'verified').length,
-    totalPeople: surveys.reduce((sum, s) => sum + (s.demographics_total || 0), 0)
+    total: visibleSurveys.length,
+    submitted: visibleSurveys.filter(s => s.status === 'submitted').length,
+    verified: visibleSurveys.filter(s => s.status === 'verified').length,
+    totalPeople: visibleSurveys.reduce((sum, s) => sum + (s.demographics_total || 0), 0)
   };
 
-  const filteredSurveys = surveys.filter(s => {
+  const filteredSurveys = visibleSurveys.filter(s => {
     const matchesStatus = activeStatus === 'all' || s.status === activeStatus;
     const matchesSearch = !searchQuery ||
       s.family_head_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -219,6 +228,7 @@ export default function Survey() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canCreateSurvey) return;
     setSaving(true);
     
     await createMutation.mutateAsync({
@@ -235,6 +245,7 @@ export default function Survey() {
   };
 
   const handleVerify = async (survey) => {
+    if (!canVerify) return;
     await updateMutation.mutateAsync({
       id: survey.id,
       data: { status: 'verified' }
@@ -303,10 +314,12 @@ export default function Survey() {
               className="pr-10"
             />
           </div>
-          <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
-            <Plus className="w-5 h-5 ml-2" />
-            استبيان جديد
-          </Button>
+          {canCreateSurvey && (
+            <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
+              <Plus className="w-5 h-5 ml-2" />
+              استبيان جديد
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}

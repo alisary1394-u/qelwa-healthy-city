@@ -84,9 +84,6 @@ export default function Dashboard() {
 
   const queryClient = useQueryClient();
   const currentSetting = settingsList[0] || {};
-  const userRole = currentUser?.user_role || currentUser?.role;
-  const currentMember = members.find(m => m.email === currentUser?.email);
-  const isGovernor = userRole === 'admin' || currentMember?.role === 'governor';
 
   const [logoForm, setLogoForm] = useState({
     logo_url: '',
@@ -129,6 +126,7 @@ export default function Dashboard() {
   }
 
   const handleLogoUpload = async (e) => {
+    if (!permissions.canManageSettings) return;
     const file = e.target.files?.[0];
     if (!file) return;
     setLogoUploading(true);
@@ -139,9 +137,13 @@ export default function Dashboard() {
     setLogoUploading(false);
   };
 
-  const handleRemoveLogo = () => setLogoForm(f => ({ ...f, logo_url: '' }));
+  const handleRemoveLogo = () => {
+    if (!permissions.canManageSettings) return;
+    setLogoForm(f => ({ ...f, logo_url: '' }));
+  };
 
   const handleSaveLogo = async () => {
+    if (!permissions.canManageSettings) return;
     const data = { ...logoForm };
     if (currentSetting.id) {
       await updateSettingsMutation.mutateAsync({ id: currentSetting.id, data });
@@ -245,6 +247,7 @@ export default function Dashboard() {
         </div>
 
         {/* إعدادات الشعار */}
+        {permissions.canSeeSettings && (
         <Card className="mb-6 border-blue-200 bg-blue-50/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -272,13 +275,13 @@ export default function Dashboard() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={logoUploading}
+                      disabled={logoUploading || !permissions.canManageSettings}
                       onClick={() => document.getElementById('dashboard-logo-upload').click()}
                     >
                       <Upload className="w-4 h-4 ml-2" />
                       {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
                     </Button>
-                    {logoForm.logo_url && (
+                    {logoForm.logo_url && permissions.canManageSettings && (
                       <Button variant="outline" size="sm" className="text-red-600 border-red-200" onClick={handleRemoveLogo}>
                         <Trash2 className="w-4 h-4 ml-2" />
                         حذف الشعار
@@ -297,6 +300,7 @@ export default function Dashboard() {
                       <Label className="text-sm">نص الشعار البديل</Label>
                       <Input
                         value={logoForm.logo_text}
+                        disabled={!permissions.canManageSettings}
                         onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
                         placeholder="ق"
                         maxLength={3}
@@ -307,6 +311,7 @@ export default function Dashboard() {
                       <Label className="text-sm">اسم المدينة</Label>
                       <Input
                         value={logoForm.city_name}
+                        disabled={!permissions.canManageSettings}
                         onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
                         placeholder="المدينة الصحية"
                         className="mt-1"
@@ -316,6 +321,7 @@ export default function Dashboard() {
                       <Label className="text-sm">موقع المدينة</Label>
                       <Input
                         value={logoForm.city_location}
+                        disabled={!permissions.canManageSettings}
                         onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
                         placeholder="محافظة قلوة"
                         className="mt-1"
@@ -326,7 +332,7 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       onClick={handleSaveLogo}
-                      disabled={createSettingsMutation.isPending || updateSettingsMutation.isPending}
+                      disabled={!permissions.canManageSettings || createSettingsMutation.isPending || updateSettingsMutation.isPending}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
                       <Save className="w-4 h-4 ml-2" />
@@ -343,6 +349,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+        )}
 
         {/* Alerts */}
         {(overdueTasks > 0 || pendingEvidence > 0) && (

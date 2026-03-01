@@ -323,6 +323,7 @@ const getInitiativeSuggestedKpis = (initiative, docs, tasks) => {
 
 export default function Initiatives() {
   const { permissions } = usePermissions();
+  const canManageInitiatives = permissions.canManageInitiatives === true;
   const repairingStandardsRef = useRef(false);
   const [formOpen, setFormOpen] = useState(false);
   const [openedFromStandardLabel, setOpenedFromStandardLabel] = useState('');
@@ -417,174 +418,28 @@ export default function Initiatives() {
     }
   });
 
-  if (!permissions.canSeeInitiatives) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المبادرات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const currentMember = members.find((m) => m.email === currentUser?.email);
+  const accessibleInitiatives = useMemo(() => {
+    if (canManageInitiatives) return initiatives;
 
-  const stats = {
-    total: initiatives.length,
-    planning: initiatives.filter(i => normalizeInitiativeStatus(i.status) === 'planning').length,
-    approved: initiatives.filter(i => normalizeInitiativeStatus(i.status) === 'approved').length,
-    inProgress: initiatives.filter(i => normalizeInitiativeStatus(i.status) === 'in_progress').length,
-    completed: initiatives.filter(i => normalizeInitiativeStatus(i.status) === 'completed').length,
-    totalBudget: initiatives.reduce((sum, i) => sum + (i.budget || 0), 0),
-    totalBeneficiaries: initiatives.reduce((sum, i) => sum + (i.expected_beneficiaries || 0), 0)
-  };
+    const memberId = String(currentMember?.id || '');
+    const memberCommitteeId = String(currentMember?.committee_id || '');
+    const memberName = String(currentUser?.full_name || currentMember?.full_name || '').trim();
 
-  const handleAddTeamMember = async () => {
-    if (!selectedInitiative?.id || !teamMemberToAddId) return;
-    try {
-      const currentIds = parseTeamMemberIds(selectedInitiative.team_members);
-      const mergedIds = [...new Set([...currentIds, teamMemberToAddId])];
-      const selectedMember = members.find((m) => String(m.id) === String(teamMemberToAddId));
+    return initiatives.filter((initiative) => {
+      const initiativeCommitteeId = String(initiative?.committee_id || '');
+      const linkedTeamIds = parseTeamMemberIds(initiative?.team_members);
+      const leaderId = String(initiative?.leader_id || '');
+      const leaderName = String(initiative?.leader_name || '').trim();
 
-      const updateData = {
-        team_members: mergedIds,
-        ...(!selectedInitiative.leader_id && selectedMember
-          ? { leader_id: selectedMember.id, leader_name: selectedMember.full_name }
-          : {}),
-      };
+      const matchesCommittee = memberCommitteeId && initiativeCommitteeId && initiativeCommitteeId === memberCommitteeId;
+      const isInTeam = memberId && linkedTeamIds.some((id) => String(id) === memberId);
+      const isLeader = memberId && leaderId && leaderId === memberId;
+      const matchesLeaderName = memberName && leaderName && leaderName === memberName;
 
-      await api.entities.Initiative.update(selectedInitiative.id, updateData);
-      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
-      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
-      setTeamMemberToAddId('');
-    } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر إضافة العضو للفريق.\n${err?.message || err}`);
-    }
-  };
-
-  const handleRemoveTeamMember = async (memberId) => {
-    if (!selectedInitiative?.id || !memberId) return;
-    try {
-      const currentIds = parseTeamMemberIds(selectedInitiative.team_members);
-      const nextIds = currentIds.filter((id) => String(id) !== String(memberId));
-
-      const updateData = {
-        team_members: nextIds,
-        ...(String(selectedInitiative.leader_id || '') === String(memberId)
-          ? { leader_id: null, leader_name: null }
-          : {}),
-      };
-
-      await api.entities.Initiative.update(selectedInitiative.id, updateData);
-      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
-      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
-    } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر حذف العضو من الفريق.\n${err?.message || err}`);
-    }
-  };
-
-  const handleDeleteInitiative = async (initiative) => {
-    if (!initiative?.id) return;
-    const confirmed = await requireSecureDeleteConfirmation(`المبادرة "${initiative.title}"`);
-    if (!confirmed) return;
-
-    setDeletingInitiative(true);
-    try {
-      const linkedKpis = await api.entities.InitiativeKPI.filter({ initiative_id: initiative.id });
-      for (const kpi of linkedKpis) {
-        await api.entities.InitiativeKPI.delete(kpi.id);
-      }
-
-      await api.entities.Initiative.delete(initiative.id);
-      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
-      queryClient.invalidateQueries({ queryKey: ['kpis', initiative.id] });
-
-      if (String(selectedInitiative?.id || '') === String(initiative.id)) {
-        setViewOpen(false);
-        setSelectedInitiative(null);
-      }
-    } catch (err) {
-      if (typeof window !== 'undefined') {
-        window.alert(`تعذر حذف المبادرة.\n${err?.message || err}`);
-      }
-    } finally {
-      setDeletingInitiative(false);
-    }
-  };
-
-  const handleApplySuggestedKpis = async ({ silent = false } = {}) => {
-    if (!selectedInitiative?.id) return;
-    setApplyingSuggestedKpis(true);
-    try {
-      const existing = new Set((selectedInitiativeKpis || []).map((k) => String(k.kpi_name || '').trim()));
-      const toCreate = selectedSuggestedKpis.filter((k) => !existing.has(String(k.kpi_name || '').trim()));
-
-      if (toCreate.length === 0) {
-        if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة المؤشرات المقترحة مسبقاً.');
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      for (const kpi of toCreate) {
-        await api.entities.InitiativeKPI.create({
-          ...kpi,
-          initiative_id: selectedInitiative.id,
-          initiative_title: selectedInitiative.title,
-          status: 'behind',
-          last_updated: today,
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['kpis', selectedInitiative.id] });
-      if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة مؤشرات الأداء المقترحة للمبادرة.');
-    } catch (err) {
-      if (!silent && typeof window !== 'undefined') window.alert(`تعذر إضافة المؤشرات المقترحة.\n${err?.message || err}`);
-    } finally {
-      setApplyingSuggestedKpis(false);
-    }
-  };
-
-  const handleLinkSuggestedTeam = async ({ silent = false } = {}) => {
-    if (!selectedInitiative?.id || selectedSuggestedTeam.length === 0) return;
-    setApplyingSuggestedTeam(true);
-    try {
-      const mergedIds = [
-        ...new Set([
-          ...parseTeamMemberIds(selectedInitiative.team_members),
-          ...selectedSuggestedTeam.map((m) => m.id),
-        ]),
-      ];
-
-      const updateData = {
-        team_members: mergedIds,
-      };
-
-      if (!selectedInitiative.leader_id && selectedSuggestedTeam[0]) {
-        updateData.leader_id = selectedSuggestedTeam[0].id;
-        updateData.leader_name = selectedSuggestedTeam[0].full_name;
-      }
-
-      await api.entities.Initiative.update(selectedInitiative.id, updateData);
-      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
-      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
-      if (!silent && typeof window !== 'undefined') window.alert('تم ربط الفريق المقترح بالمبادرة.');
-    } catch (err) {
-      if (!silent && typeof window !== 'undefined') window.alert(`تعذر ربط الفريق المقترح.\n${err?.message || err}`);
-    } finally {
-      setApplyingSuggestedTeam(false);
-    }
-  };
-
-  const filteredInitiatives = initiatives.filter(i => {
-    const matchesSearch = !searchQuery ||
-      i.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.code?.includes(searchQuery) ||
-      i.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = activeStatus === 'all' || normalizeInitiativeStatus(i.status) === activeStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const selectedInitiativeStatus = normalizeInitiativeStatus(selectedInitiative?.status);
+      return matchesCommittee || isInTeam || isLeader || matchesLeaderName;
+    });
+  }, [canManageInitiatives, initiatives, currentMember, currentUser]);
 
   const selectedLinkedTeam = useMemo(
     () => getInitiativeLinkedTeam(selectedInitiative, members),
@@ -711,12 +566,6 @@ export default function Initiatives() {
     };
   }, [initiatives, standards, standardsById, standardsByCode, queryClient]);
 
-  const resetForm = () => {
-    setFormData(getDefaultInitiativeFormData());
-    setKpisList([]);
-    setOpenedFromStandardLabel('');
-  };
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -727,6 +576,8 @@ export default function Initiatives() {
       const parsed = JSON.parse(raw);
       const defaults = getDefaultInitiativeFormData();
       const prefillRelated = parseRelatedStandardIds(parsed?.related_standards);
+
+      if (!canManageInitiatives) return;
 
       setFormData({
         ...defaults,
@@ -746,10 +597,191 @@ export default function Initiatives() {
     } catch {
       localStorage.removeItem(INITIATIVE_PREFILL_STORAGE_KEY);
     }
-  }, []);
+  }, [canManageInitiatives]);
+
+  if (!permissions.canSeeInitiatives) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المبادرات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const stats = {
+    total: accessibleInitiatives.length,
+    planning: accessibleInitiatives.filter(i => normalizeInitiativeStatus(i.status) === 'planning').length,
+    approved: accessibleInitiatives.filter(i => normalizeInitiativeStatus(i.status) === 'approved').length,
+    inProgress: accessibleInitiatives.filter(i => normalizeInitiativeStatus(i.status) === 'in_progress').length,
+    completed: accessibleInitiatives.filter(i => normalizeInitiativeStatus(i.status) === 'completed').length,
+    totalBudget: accessibleInitiatives.reduce((sum, i) => sum + (i.budget || 0), 0),
+    totalBeneficiaries: accessibleInitiatives.reduce((sum, i) => sum + (i.expected_beneficiaries || 0), 0)
+  };
+
+  const handleAddTeamMember = async () => {
+    if (!canManageInitiatives) return;
+    if (!selectedInitiative?.id || !teamMemberToAddId) return;
+    try {
+      const currentIds = parseTeamMemberIds(selectedInitiative.team_members);
+      const mergedIds = [...new Set([...currentIds, teamMemberToAddId])];
+      const selectedMember = members.find((m) => String(m.id) === String(teamMemberToAddId));
+
+      const updateData = {
+        team_members: mergedIds,
+        ...(!selectedInitiative.leader_id && selectedMember
+          ? { leader_id: selectedMember.id, leader_name: selectedMember.full_name }
+          : {}),
+      };
+
+      await api.entities.Initiative.update(selectedInitiative.id, updateData);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
+      setTeamMemberToAddId('');
+    } catch (err) {
+      if (typeof window !== 'undefined') window.alert(`تعذر إضافة العضو للفريق.\n${err?.message || err}`);
+    }
+  };
+
+  const handleRemoveTeamMember = async (memberId) => {
+    if (!canManageInitiatives) return;
+    if (!selectedInitiative?.id || !memberId) return;
+    try {
+      const currentIds = parseTeamMemberIds(selectedInitiative.team_members);
+      const nextIds = currentIds.filter((id) => String(id) !== String(memberId));
+
+      const updateData = {
+        team_members: nextIds,
+        ...(String(selectedInitiative.leader_id || '') === String(memberId)
+          ? { leader_id: null, leader_name: null }
+          : {}),
+      };
+
+      await api.entities.Initiative.update(selectedInitiative.id, updateData);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
+    } catch (err) {
+      if (typeof window !== 'undefined') window.alert(`تعذر حذف العضو من الفريق.\n${err?.message || err}`);
+    }
+  };
+
+  const handleDeleteInitiative = async (initiative) => {
+    if (!canManageInitiatives) return;
+    if (!initiative?.id) return;
+    const confirmed = await requireSecureDeleteConfirmation(`المبادرة "${initiative.title}"`);
+    if (!confirmed) return;
+
+    setDeletingInitiative(true);
+    try {
+      const linkedKpis = await api.entities.InitiativeKPI.filter({ initiative_id: initiative.id });
+      for (const kpi of linkedKpis) {
+        await api.entities.InitiativeKPI.delete(kpi.id);
+      }
+
+      await api.entities.Initiative.delete(initiative.id);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      queryClient.invalidateQueries({ queryKey: ['kpis', initiative.id] });
+
+      if (String(selectedInitiative?.id || '') === String(initiative.id)) {
+        setViewOpen(false);
+        setSelectedInitiative(null);
+      }
+    } catch (err) {
+      if (typeof window !== 'undefined') {
+        window.alert(`تعذر حذف المبادرة.\n${err?.message || err}`);
+      }
+    } finally {
+      setDeletingInitiative(false);
+    }
+  };
+
+  const handleApplySuggestedKpis = async ({ silent = false } = {}) => {
+    if (!canManageInitiatives) return;
+    if (!selectedInitiative?.id) return;
+    setApplyingSuggestedKpis(true);
+    try {
+      const existing = new Set((selectedInitiativeKpis || []).map((k) => String(k.kpi_name || '').trim()));
+      const toCreate = selectedSuggestedKpis.filter((k) => !existing.has(String(k.kpi_name || '').trim()));
+
+      if (toCreate.length === 0) {
+        if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة المؤشرات المقترحة مسبقاً.');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      for (const kpi of toCreate) {
+        await api.entities.InitiativeKPI.create({
+          ...kpi,
+          initiative_id: selectedInitiative.id,
+          initiative_title: selectedInitiative.title,
+          status: 'behind',
+          last_updated: today,
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['kpis', selectedInitiative.id] });
+      if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة مؤشرات الأداء المقترحة للمبادرة.');
+    } catch (err) {
+      if (!silent && typeof window !== 'undefined') window.alert(`تعذر إضافة المؤشرات المقترحة.\n${err?.message || err}`);
+    } finally {
+      setApplyingSuggestedKpis(false);
+    }
+  };
+
+  const handleLinkSuggestedTeam = async ({ silent = false } = {}) => {
+    if (!canManageInitiatives) return;
+    if (!selectedInitiative?.id || selectedSuggestedTeam.length === 0) return;
+    setApplyingSuggestedTeam(true);
+    try {
+      const mergedIds = [
+        ...new Set([
+          ...parseTeamMemberIds(selectedInitiative.team_members),
+          ...selectedSuggestedTeam.map((m) => m.id),
+        ]),
+      ];
+
+      const updateData = {
+        team_members: mergedIds,
+      };
+
+      if (!selectedInitiative.leader_id && selectedSuggestedTeam[0]) {
+        updateData.leader_id = selectedSuggestedTeam[0].id;
+        updateData.leader_name = selectedSuggestedTeam[0].full_name;
+      }
+
+      await api.entities.Initiative.update(selectedInitiative.id, updateData);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
+      if (!silent && typeof window !== 'undefined') window.alert('تم ربط الفريق المقترح بالمبادرة.');
+    } catch (err) {
+      if (!silent && typeof window !== 'undefined') window.alert(`تعذر ربط الفريق المقترح.\n${err?.message || err}`);
+    } finally {
+      setApplyingSuggestedTeam(false);
+    }
+  };
+
+  const filteredInitiatives = accessibleInitiatives.filter(i => {
+    const matchesSearch = !searchQuery ||
+      i.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      i.code?.includes(searchQuery) ||
+      i.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = activeStatus === 'all' || normalizeInitiativeStatus(i.status) === activeStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectedInitiativeStatus = normalizeInitiativeStatus(selectedInitiative?.status);
+
+  const resetForm = () => {
+    setFormData(getDefaultInitiativeFormData());
+    setKpisList([]);
+    setOpenedFromStandardLabel('');
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canManageInitiatives) return;
     setSaving(true);
 
     try {
@@ -763,6 +795,7 @@ export default function Initiatives() {
   };
 
   const handleStatusChange = async (initiative, newStatus) => {
+    if (!canManageInitiatives) return;
     await updateMutation.mutateAsync({
       id: initiative.id,
       data: { 
@@ -970,10 +1003,12 @@ export default function Initiatives() {
               className="pr-10"
             />
           </div>
-          <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-5 h-5 ml-2" />
-            مبادرة جديدة
-          </Button>
+          {canManageInitiatives && (
+            <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
+              <Plus className="w-5 h-5 ml-2" />
+              مبادرة جديدة
+            </Button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -1078,6 +1113,7 @@ export default function Initiatives() {
                         <Eye className="w-4 h-4 ml-1" />
                         عرض
                       </Button>
+                      {canManageInitiatives && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -1088,7 +1124,8 @@ export default function Initiatives() {
                         <Trash2 className="w-4 h-4 ml-1" />
                         حذف
                       </Button>
-                      {initiativeStatus === 'planning' && (
+                      )}
+                      {canManageInitiatives && initiativeStatus === 'planning' && (
                         <Button 
                           size="sm" 
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -1098,7 +1135,7 @@ export default function Initiatives() {
                           اعتماد
                         </Button>
                       )}
-                      {initiativeStatus === 'approved' && (
+                      {canManageInitiatives && initiativeStatus === 'approved' && (
                         <>
                           <Button 
                             size="sm" 
@@ -1119,7 +1156,7 @@ export default function Initiatives() {
                           </Button>
                         </>
                       )}
-                      {initiativeStatus === 'in_progress' && (
+                      {canManageInitiatives && initiativeStatus === 'in_progress' && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -1531,18 +1568,21 @@ export default function Initiatives() {
                         {selectedLinkedTeam.map((member) => (
                           <div key={member.id} className="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs bg-white">
                             <span>{member.full_name} {member.role ? `(${member.role})` : ''}</span>
-                            <button
-                              type="button"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleRemoveTeamMember(member.id)}
-                              title="حذف من الفريق"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            {canManageInitiatives && (
+                              <button
+                                type="button"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleRemoveTeamMember(member.id)}
+                                title="حذف من الفريق"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
+                    {canManageInitiatives && (
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
                       <Select value={teamMemberToAddId} onValueChange={setTeamMemberToAddId}>
                         <SelectTrigger className="sm:w-[320px]">
@@ -1566,6 +1606,7 @@ export default function Initiatives() {
                         إضافة عضو
                       </Button>
                     </div>
+                    )}
                   </div>
 
                   <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm">
@@ -1605,6 +1646,7 @@ export default function Initiatives() {
                     <p className="text-amber-600 text-xs">التسمية: <code className="bg-amber-100 px-1 rounded">A[محور]-M[معيار]-[نوع]-YYYY-MM-DD-v1.pdf</code></p>
                   </div>
 
+                  {canManageInitiatives && (
                   <div className="flex gap-2 pt-3 border-t">
                     <Button
                       size="sm"
@@ -1657,6 +1699,7 @@ export default function Initiatives() {
                       </Button>
                     )}
                   </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -53,6 +53,7 @@ import Dashboard from './pages/Dashboard';
 import Files from './pages/Files';
 import Home from './pages/Home';
 import Initiatives from './pages/Initiatives';
+import PermissionsManager from './pages/PermissionsManager';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Standards from './pages/Standards';
@@ -70,6 +71,7 @@ export const PAGES = {
     "Files": Files,
     "Home": Home,
     "Initiatives": Initiatives,
+    "PermissionsManager": PermissionsManager,
     "Reports": Reports,
     "Settings": Settings,
     "Standards": Standards,

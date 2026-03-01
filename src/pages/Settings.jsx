@@ -50,7 +50,8 @@ export default function Settings() {
     }
   });
 
-  const { isGovernor } = usePermissions();
+  const { permissions } = usePermissions();
+
   const canShowReseedTools =
     appParams.useLocalBackend ||
     appParams.useSupabaseBackend ||
@@ -79,13 +80,13 @@ export default function Settings() {
     },
   });
 
-  if (!isGovernor) {
+  if (!permissions.canSeeSettings) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى هذه الصفحة</p>
-            <p className="text-gray-500 text-sm mt-2">هذه الصفحة متاحة فقط للمشرف العام</p>
+            <p className="text-gray-500 text-sm mt-2">صلاحيات الصفحة مرتبطة بمنصبك في الفريق</p>
           </CardContent>
         </Card>
       </div>
@@ -112,6 +113,7 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
+    if (!permissions.canManageSettings) return;
     if (currentSetting.id) {
       await updateMutation.mutateAsync({ id: currentSetting.id, data: formData });
     } else {
@@ -233,7 +235,7 @@ export default function Settings() {
             {/* Save Button */}
             <Button
               onClick={handleSave}
-              disabled={createMutation.isPending || updateMutation.isPending}
+              disabled={!permissions.canManageSettings}
               className="w-full bg-blue-600 hover:bg-blue-700"
               size="lg"
             >

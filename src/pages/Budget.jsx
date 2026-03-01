@@ -266,6 +266,7 @@ export default function Budget() {
 
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
+    if (!canCreateTransactions) return;
     setSaving(true);
     
     const transactionNumber = `T${Date.now().toString().slice(-6)}`;
@@ -308,6 +309,7 @@ export default function Budget() {
   };
 
   const openBudgetForm = (budget = null) => {
+    if (!showBudgetManagement) return;
     if (budget) {
       setEditingBudget(budget);
       setBudgetForm({
@@ -334,6 +336,7 @@ export default function Budget() {
 
   const handleSaveAllocation = async (e) => {
     e.preventDefault();
+    if (!showBudgetManagement) return;
     setSaving(true);
     
     const budget = budgets.find(b => b.id === allocationForm.budget_id);
@@ -350,6 +353,7 @@ export default function Budget() {
   };
 
   const handleApproveTransaction = async (transaction) => {
+    if (!canApproveTransactions) return;
     await updateTransactionMutation.mutateAsync({
       id: transaction.id,
       data: {
@@ -361,6 +365,7 @@ export default function Budget() {
   };
 
   const handleFileUpload = async (e) => {
+    if (!canCreateTransactions) return;
     const file = e.target.files[0];
     if (!file) return;
 

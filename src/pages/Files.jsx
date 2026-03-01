@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,8 @@ export default function Files() {
   const currentMember = members.find(m => m.email === currentUser?.email);
   const userRole = currentMember?.role || currentUser?.role;
   const canUploadFiles = permissions.canUploadFiles === true;
+  const memberCommitteeId = String(currentMember?.committee_id || '');
+  const memberDisplayName = String(currentUser?.full_name || currentMember?.full_name || '').trim();
 
   const isGovernor = userRole === 'admin' || userRole === 'governor';
   const isSupervisor = userRole === 'committee_supervisor';
@@ -127,19 +130,31 @@ export default function Files() {
     })),
   ];
 
-  const filteredFiles = mergedFiles.filter(f => {
+  const visibleFiles = useMemo(() => {
+    if (isGovernor) return mergedFiles;
+
+    return mergedFiles.filter((file) => {
+      const fileCommitteeId = String(file?.committee_id || '');
+      const uploaderName = String(file?.uploaded_by_name || '').trim();
+      const matchesCommittee = memberCommitteeId && fileCommitteeId && fileCommitteeId === memberCommitteeId;
+      const isUploader = memberDisplayName && uploaderName && uploaderName === memberDisplayName;
+      return matchesCommittee || isUploader;
+    });
+  }, [isGovernor, mergedFiles, memberCommitteeId, memberDisplayName]);
+
+  const filteredFiles = visibleFiles.filter(f => {
     const matchesStatus = activeStatus === 'all' || f.status === activeStatus;
     const matchesSearch = !searchQuery || f.title?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   const stats = {
-    total: mergedFiles.length,
-    pending_supervisor: mergedFiles.filter(f => f.status === 'pending_supervisor').length,
-    pending_chairman: mergedFiles.filter(f => f.status === 'pending_chairman').length,
-    approved: mergedFiles.filter(f => f.status === 'approved').length,
-    rejected: mergedFiles.filter(f => f.status === 'rejected').length,
-    returned: mergedFiles.filter(f => f.status === 'returned').length
+    total: visibleFiles.length,
+    pending_supervisor: visibleFiles.filter(f => f.status === 'pending_supervisor').length,
+    pending_chairman: visibleFiles.filter(f => f.status === 'pending_chairman').length,
+    approved: visibleFiles.filter(f => f.status === 'approved').length,
+    rejected: visibleFiles.filter(f => f.status === 'rejected').length,
+    returned: visibleFiles.filter(f => f.status === 'returned').length
   };
 
   const handleFileChange = async (e) => {
@@ -153,6 +168,7 @@ export default function Files() {
     e.preventDefault();
     if (!canUploadFiles) return;
     if (!formData.file) return;
+    if (!isGovernor && memberCommitteeId && String(formData.committee_id || '') !== memberCommitteeId) return;
 
     setUploading(true);
     const { file_url } = await api.integrations.Core.UploadFile({ file: formData.file });
@@ -178,8 +194,15 @@ export default function Files() {
   const handleAction = async () => {
     const { file, action } = actionDialog;
     if (!file) return;
+    const fileCommitteeId = String(file?.committee_id || '');
+    const inMyCommittee = memberCommitteeId && fileCommitteeId && fileCommitteeId === memberCommitteeId;
+
+    if (action === 'approve_supervisor' && !(isSupervisor && inMyCommittee && file.status === 'pending_supervisor')) return;
+    if (action === 'approve_chairman' && !(isCommitteeChairman && inMyCommittee && file.status === 'pending_chairman')) return;
+    if ((action === 'reject' || action === 'return') && !(isSupervisor || isCommitteeChairman || isGovernor)) return;
 
     let updateData = {};
+
     const now = new Date().toISOString();
     const approverName = currentUser?.full_name || currentMember?.full_name;
 
@@ -210,9 +233,11 @@ export default function Files() {
   };
 
   const handleDelete = async () => {
+    if (!isGovernor) return;
     if (deleteDialog.file) {
       const confirmed = await requireSecureDeleteConfirmation(`الملف "${deleteDialog.file.title || 'غير معنون'}"`);
       if (!confirmed) return;
+
       if (deleteDialog.file._source === 'evidence') {
         await deleteEvidenceMutation.mutateAsync(deleteDialog.file.id);
       } else {
@@ -260,8 +285,9 @@ export default function Files() {
     }
   };
 
-  const canApproveAsSupervisor = (file) => file?._source === 'file_upload' && isSupervisor && file.status === 'pending_supervisor';
-  const canApproveAsChairman = (file) => file?._source === 'file_upload' && isCommitteeChairman && file.status === 'pending_chairman';
+  const canApproveAsSupervisor = (file) => file?._source === 'file_upload' && isSupervisor && String(file?.committee_id || '') === memberCommitteeId && file.status === 'pending_supervisor';
+  const canApproveAsChairman = (file) => file?._source === 'file_upload' && isCommitteeChairman && String(file?.committee_id || '') === memberCommitteeId && file.status === 'pending_chairman';
+
   const canModifyOrDelete = isGovernor;
 
   return (

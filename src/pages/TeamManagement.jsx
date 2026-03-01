@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -97,15 +97,30 @@ export default function TeamManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
-  const { permissions, role: userRole } = usePermissions();
-  const canAdd = permissions.canAddTeamMember !== false;
-  const canEdit = permissions.canEditTeamMember === true;
+  const { permissions, role: userRole, currentMember: authMember } = usePermissions();
+  const canAdd = permissions.canAddTeamMember === true;
   const canDelete = permissions.canDeleteTeamMember === true;
   const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
   const canAddOrEditCoordinator = permissions.canAddOrEditCoordinator === true;
   const isGovernor = userRole === 'governor' || userRole === 'admin';
-  const canEditMember = (member) => canEdit && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
+  const canEditMember = (member) => canAdd && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
   const canDeleteMember = (member) => canDelete && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
+
+  const authMemberCommitteeId = String(authMember?.committee_id || '');
+  const isGlobalTeamScope = userRole === 'governor' || userRole === 'coordinator';
+
+  const scopedMembers = useMemo(() => {
+    if (isGlobalTeamScope) return members;
+    if (!authMember) return [];
+    if (!authMemberCommitteeId) return [authMember];
+    return members.filter((m) => String(m.committee_id || '') === authMemberCommitteeId);
+  }, [isGlobalTeamScope, members, authMember, authMemberCommitteeId]);
+
+  const scopedCommittees = useMemo(() => {
+    if (isGlobalTeamScope) return committees;
+    if (!authMemberCommitteeId) return [];
+    return committees.filter((c) => String(c.id || '') === authMemberCommitteeId);
+  }, [isGlobalTeamScope, committees, authMemberCommitteeId]);
 
   if (!permissions.canSeeTeam) {
     return (
@@ -119,11 +134,11 @@ export default function TeamManagement() {
     );
   }
 
-  const supervisors = members.filter(m => 
+  const supervisors = scopedMembers.filter(m => 
     m.role === 'committee_head' || m.role === 'committee_supervisor' || m.role === 'coordinator' || m.role === 'governor'
   );
 
-  const filteredMembers = members.filter(m => {
+  const filteredMembers = scopedMembers.filter(m => {
     const matchesRole = activeRole === 'all' || m.role === activeRole;
     const matchesCommittee = !activeCommittee || m.committee_id === activeCommittee;
     const matchesSearch = !searchQuery || 
@@ -133,24 +148,30 @@ export default function TeamManagement() {
     return matchesRole && matchesCommittee && matchesSearch;
   });
 
-  const activeCommitteeName = activeCommittee ? committees.find(c => c.id === activeCommittee)?.name : '';
+  const activeCommitteeName = activeCommittee ? scopedCommittees.find(c => c.id === activeCommittee)?.name : '';
 
   const stats = {
-    total: members.length,
-    governor: members.filter(m => m.role === 'governor').length,
-    coordinator: members.filter(m => m.role === 'coordinator').length,
-    committee_head: members.filter(m => m.role === 'committee_head').length,
-    committee_coordinator: members.filter(m => m.role === 'committee_coordinator').length,
-    committee_supervisor: members.filter(m => m.role === 'committee_supervisor').length,
-    committee_member: members.filter(m => m.role === 'committee_member').length,
-    member: members.filter(m => m.role === 'member').length,
-    volunteer: members.filter(m => m.role === 'volunteer').length,
-    budget_manager: members.filter(m => m.role === 'budget_manager').length,
-    accountant: members.filter(m => m.role === 'accountant').length,
-    financial_officer: members.filter(m => m.role === 'financial_officer').length
+    total: scopedMembers.length,
+    governor: scopedMembers.filter(m => m.role === 'governor').length,
+    coordinator: scopedMembers.filter(m => m.role === 'coordinator').length,
+    committee_head: scopedMembers.filter(m => m.role === 'committee_head').length,
+    committee_coordinator: scopedMembers.filter(m => m.role === 'committee_coordinator').length,
+    committee_supervisor: scopedMembers.filter(m => m.role === 'committee_supervisor').length,
+    committee_member: scopedMembers.filter(m => m.role === 'committee_member').length,
+    member: scopedMembers.filter(m => m.role === 'member').length,
+    volunteer: scopedMembers.filter(m => m.role === 'volunteer').length,
+    budget_manager: scopedMembers.filter(m => m.role === 'budget_manager').length,
+    accountant: scopedMembers.filter(m => m.role === 'accountant').length,
+    financial_officer: scopedMembers.filter(m => m.role === 'financial_officer').length
   };
 
   const handleSave = async (data) => {
+    if (editingMember) {
+      if (!canEditMember(editingMember)) return;
+    } else if (!canAdd) {
+      return;
+    }
+
     let payload = { ...data };
     let latestMember = editingMember || null;
 
@@ -214,8 +235,10 @@ export default function TeamManagement() {
   };
 
   const handleEdit = async (member) => {
+    if (!canEditMember(member)) return;
     setEditingMember(member);
     setFormOpen(true);
+
     try {
       const fullMember = await api.entities.TeamMember.get(member.id);
       if (fullMember) setEditingMember(fullMember);
@@ -225,9 +248,11 @@ export default function TeamManagement() {
   };
 
   const handleDelete = async () => {
+    if (!canDeleteMember(deleteDialog.member || {})) return;
     if (deleteDialog.member) {
       const confirmed = await requireSecureDeleteConfirmation(`العضو "${deleteDialog.member.full_name}"`);
       if (!confirmed) return;
+
       await deleteMutation.mutateAsync(deleteDialog.member.id);
       setDeleteDialog({ open: false, member: null });
     }
@@ -323,7 +348,7 @@ export default function TeamManagement() {
         </div>
 
         {/* Committee Filter */}
-        {committees.length > 0 && (
+        {scopedCommittees.length > 0 && (
           <div className="mb-4 flex items-center gap-3">
             <Building className="w-5 h-5 text-gray-500" />
             <Select value={activeCommittee} onValueChange={setActiveCommittee}>
@@ -332,7 +357,7 @@ export default function TeamManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>جميع اللجان</SelectItem>
-                {committees.map(c => (
+                {scopedCommittees.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -432,7 +457,7 @@ export default function TeamManagement() {
         supervisors={supervisors}
         committees={committees}
         selectedCommitteeId={activeCommittee}
-        existingDepartments={[...new Set((members || []).map(m => m.department).filter(Boolean))]}
+        existingDepartments={[...new Set((scopedMembers || []).map(m => m.department).filter(Boolean))]}
         restrictedRoles={[!(canAddOrEditGovernor) && 'governor', !(canAddOrEditCoordinator) && 'coordinator'].filter(Boolean)}
       />
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -202,6 +202,7 @@ function StandardsLegacy() {
 
   const { permissions, isGovernor } = usePermissions();
   const canManageStandards = permissions.canManageStandards;
+  const canManageInitiatives = permissions.canManageInitiatives === true;
 
   const createAxisMutation = useMutation({
     mutationFn: (data) => api.entities.Axis.create(data),
@@ -249,6 +250,50 @@ function StandardsLegacy() {
   const canManage = canManageStandards;
   const canApprove = permissions.canApproveEvidence;
   const canDeleteAnyEvidence = Boolean(isGovernor);
+  const memberCommitteeId = String(currentMember?.committee_id || '');
+  const memberDisplayName = String(currentUser?.full_name || currentMember?.full_name || '').trim();
+
+  const scopedStandards = useMemo(() => {
+    if (canManageStandards || isGovernor) return standards;
+    if (!currentMember) return [];
+
+    return standards.filter((standard) => {
+      const standardId = String(standard?.id || '');
+      const standardCode = String(standard?.code || '');
+      const standardCommitteeId = String(standard?.committee_id || '');
+
+      const matchesCommittee =
+        memberCommitteeId && standardCommitteeId && standardCommitteeId === memberCommitteeId;
+
+      const hasRelevantEvidence = evidence.some((item) => {
+        if (String(item?.standard_id || '') !== standardId) return false;
+        const evidenceCommitteeId = String(item?.committee_id || '');
+        const evidenceUploader = String(item?.uploaded_by_name || '').trim();
+        return (
+          (memberCommitteeId && evidenceCommitteeId && evidenceCommitteeId === memberCommitteeId) ||
+          (memberDisplayName && evidenceUploader && evidenceUploader === memberDisplayName)
+        );
+      });
+
+      const hasRelatedInitiative = initiatives.some((initiative) => {
+        const initiativeCommitteeId = String(initiative?.committee_id || '');
+        if (memberCommitteeId && initiativeCommitteeId && initiativeCommitteeId !== memberCommitteeId) return false;
+
+        const initiativeStandardId = String(initiative?.standard_id || '');
+        const initiativeStandardCode = String(initiative?.standard_code || '');
+        const relatedIds = parseRelatedStandardIds(initiative?.related_standards).map((v) => String(v));
+
+        return (
+          (standardId && initiativeStandardId && initiativeStandardId === standardId) ||
+          (standardCode && initiativeStandardCode && initiativeStandardCode === standardCode) ||
+          (standardId && relatedIds.includes(standardId)) ||
+          (standardCode && relatedIds.includes(standardCode))
+        );
+      });
+
+      return matchesCommittee || hasRelevantEvidence || hasRelatedInitiative;
+    });
+  }, [canManageStandards, isGovernor, standards, currentMember, memberCommitteeId, memberDisplayName, evidence, initiatives]);
   const isSectionExpanded = (standardId, section) => {
     const key = `${standardId}:${section}`;
     return expandedLinkedSections[key] === true;
@@ -290,6 +335,7 @@ function StandardsLegacy() {
   };
 
   const handleCreateSuggestedInitiativeForStandard = (standard) => {
+    if (!canManageInitiatives) return;
     if (!standard?.id) return;
     const suggestion = getInitiativeSuggestionFromStandard(standard, standard.axis_name);
     const budgetLink = resolveBudgetLinkForStandard(standard);
@@ -328,23 +374,11 @@ function StandardsLegacy() {
     }
   };
 
-  if (!permissions.canSeeStandards) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // فلترة ثم ترتيب حسب الترقيم المرجعي (م1-1 … م9-7) وإزالة التكرار — نفس المنطق لجميع المحاور بما فيها 4، 7، 8، 9
   const filteredStandards = (() => {
     const query = String(searchQuery || '').trim().toLowerCase();
     const hasSearch = query.length > 0;
-    const list = standards.filter(s => {
+    const list = scopedStandards.filter(s => {
       const matchesSearch = !hasSearch ||
         (String(s?.title || '').toLowerCase().includes(query)) ||
         (String(s?.code || '').toLowerCase().includes(query)) ||
@@ -405,12 +439,13 @@ function StandardsLegacy() {
     const axis = axes.find(a => a.id === axisId);
     const order = axis?.order ?? 0;
     const expectedCount = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 1;
-    const completed = standards.filter(s => s.axis_id === axisId && (s.status === 'completed' || s.status === 'approved')).length;
+    const completed = scopedStandards.filter(s => s.axis_id === axisId && (s.status === 'completed' || s.status === 'approved')).length;
     return expectedCount > 0 ? Math.round((completed / expectedCount) * 100) : 0;
   };
 
   const handleSaveAxis = async (e) => {
     e.preventDefault();
+    if (!canManage) return;
     await createAxisMutation.mutateAsync(axisForm);
     setAxisFormOpen(false);
     setAxisForm({ name: '', description: '', order: axes.length + 1 });
@@ -418,6 +453,7 @@ function StandardsLegacy() {
 
   const handleSaveStandard = async (e) => {
     e.preventDefault();
+    if (!canManage) return;
     const axis = axes.find(a => a.id === standardForm.axis_id);
     await createStandardMutation.mutateAsync({
       ...standardForm,
@@ -430,6 +466,7 @@ function StandardsLegacy() {
 
   const handleUploadEvidence = async (e) => {
     e.preventDefault();
+    if (!canManage) return;
     if (!evidenceForm.file || !selectedStandard) return;
 
     setUploading(true);
@@ -463,6 +500,7 @@ function StandardsLegacy() {
   };
 
   const handleApproveEvidence = async (evidenceItem) => {
+    if (!canApprove) return;
     await updateEvidenceMutation.mutateAsync({
       id: evidenceItem.id,
       data: {
@@ -474,6 +512,7 @@ function StandardsLegacy() {
   };
 
   const handleRejectEvidence = async (evidenceItem, reason) => {
+    if (!canApprove) return;
     await updateEvidenceMutation.mutateAsync({
       id: evidenceItem.id,
       data: { status: 'rejected', rejection_reason: reason }
@@ -535,12 +574,24 @@ function StandardsLegacy() {
         : activeAxisEntity.name)
     : 'المعايير الدولية والأدلة';
 
+  if (!permissions.canSeeStandards) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : standards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -653,7 +704,7 @@ function StandardsLegacy() {
         {activeAxis === 'all' && axes.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
-              const axisStandards = standards.filter(s => s.axis_id === axis.id);
+              const axisStandards = scopedStandards.filter(s => s.axis_id === axis.id);
               return (
                 <EnhancedAxisCard
                   key={axis.id}
@@ -862,10 +913,10 @@ function StandardsLegacy() {
                             <Button
                               type="button"
                               size="sm"
-                              disabled={relatedInitiatives.length > 0}
+                              disabled={!canManageInitiatives || relatedInitiatives.length > 0}
                               onClick={() => handleCreateSuggestedInitiativeForStandard(standard)}
                             >
-                              {relatedInitiatives.length > 0 ? 'موجودة' : 'فتح النموذج'}
+                              {!canManageInitiatives ? 'غير مصرح' : (relatedInitiatives.length > 0 ? 'موجودة' : 'فتح النموذج')}
                             </Button>
                           </div>
                           <p className="text-xs text-purple-700 mb-2">{suggestedInitiative.description}</p>

@@ -1,0 +1,52 @@
+{
+  "name": "PermissionOverride",
+  "label": "تخصيص الصلاحيات",
+  "fields": [
+    {
+      "name": "role",
+      "type": "text",
+      "label": "المنصب",
+      "required": true,
+      "description": "اسم المنصب (governor, coordinator, committee_head, إلخ)"
+    },
+    {
+      "name": "permission_key",
+      "type": "text",
+      "label": "مفتاح الصلاحية",
+      "required": true,
+      "description": "اسم الصلاحية (canManageSettings, canManageTeam, إلخ)"
+    },
+    {
+      "name": "is_enabled",
+      "type": "boolean",
+      "label": "مفعّلة",
+      "required": true,
+      "default": false,
+      "description": "هل الصلاحية مفعّلة أم لا"
+    },
+    {
+      "name": "modified_by",
+      "type": "text",
+      "label": "تم التعديل بواسطة",
+      "description": "البريد الإلكتروني للمستخدم الذي عدّل الصلاحية"
+    },
+    {
+      "name": "modified_at",
+      "type": "datetime",
+      "label": "تاريخ التعديل",
+      "description": "تاريخ ووقت آخر تعديل"
+    },
+    {
+      "name": "notes",
+      "type": "longtext",
+      "label": "ملاحظات",
+      "description": "ملاحظات حول سبب التعديل"
+    }
+  ],
+  "indexes": [
+    {
+      "fields": ["role", "permission_key"],
+      "unique": true
+    }
+  ]
+}

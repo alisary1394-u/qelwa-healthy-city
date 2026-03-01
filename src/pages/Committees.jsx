@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,17 @@ export default function Committees() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 
-  const { permissions } = usePermissions();
+  const { permissions, role, currentMember } = usePermissions();
   const canManage = permissions.canManageCommittees;
+
+  const memberCommitteeId = String(currentMember?.committee_id || '');
+  const isGlobalCommitteeScope = role === 'governor' || role === 'coordinator';
+
+  const scopedCommittees = useMemo(() => {
+    if (isGlobalCommitteeScope) return committees;
+    if (!memberCommitteeId) return [];
+    return committees.filter((c) => String(c.id || '') === memberCommitteeId);
+  }, [isGlobalCommitteeScope, committees, memberCommitteeId]);
 
   if (!permissions.canSeeCommittees) {
     return (
@@ -81,6 +90,7 @@ export default function Committees() {
   };
 
   const handleOpenForm = (committee = null) => {
+    if (!canManage) return;
     if (committee) {
       setEditingCommittee(committee);
       setFormData({ name: committee.name, description: committee.description || '' });
@@ -93,6 +103,7 @@ export default function Committees() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!canManage) return;
     setLoading(true);
     if (editingCommittee) {
       await updateMutation.mutateAsync({ id: editingCommittee.id, data: formData });
@@ -104,6 +115,7 @@ export default function Committees() {
   };
 
   const handleDelete = async () => {
+    if (!canManage) return;
     if (deleteDialog.committee) {
       const confirmed = await requireSecureDeleteConfirmation(`اللجنة "${deleteDialog.committee.name}"`);
       if (!confirmed) return;
@@ -135,7 +147,7 @@ export default function Committees() {
           <div className="text-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
           </div>
-        ) : committees.length === 0 ? (
+        ) : scopedCommittees.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Building className="w-16 h-16 mx-auto text-gray-300 mb-4" />
@@ -149,7 +161,7 @@ export default function Committees() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {committees.map(committee => {
+            {scopedCommittees.map(committee => {
               const stats = getCommitteeStats(committee.id);
               return (
                 <Card key={committee.id} className="hover:shadow-lg transition-shadow">

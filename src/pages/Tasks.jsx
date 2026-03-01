@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,25 @@ import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
+function parseTeamMemberIds(rawValue) {
+  if (Array.isArray(rawValue)) {
+    return rawValue.map((v) => String(v)).filter(Boolean);
+  }
+  if (typeof rawValue !== 'string') return [];
+  const text = rawValue.trim();
+  if (!text) return [];
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) return parsed.map((v) => String(v)).filter(Boolean);
+  } catch {
+    // fallback below
+  }
+  return text.split(',').map((v) => v.trim()).filter(Boolean);
+}
+
 export default function Tasks() {
-  const { permissions } = usePermissions();
+  const { permissions, role, currentMember } = usePermissions();
+
   const [activeStatus, setActiveStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterInitiative, setFilterInitiative] = useState('all');
@@ -66,6 +84,63 @@ export default function Tasks() {
 
   const canManageTasks = permissions.canManageTasks === true;
 
+  const memberId = String(currentMember?.id || '');
+  const memberCommitteeId = String(currentMember?.committee_id || '');
+  const memberName = String(currentUser?.full_name || currentMember?.full_name || '').trim();
+  const isGlobalTaskScope = role === 'governor' || role === 'coordinator';
+
+  const accessibleInitiatives = useMemo(() => {
+    if (isGlobalTaskScope) return initiatives;
+    if (!currentMember) return [];
+
+    return initiatives.filter((initiative) => {
+      const initiativeCommitteeId = String(initiative?.committee_id || '');
+      const linkedTeamIds = parseTeamMemberIds(initiative?.team_members);
+      const leaderId = String(initiative?.leader_id || '');
+      const leaderName = String(initiative?.leader_name || '').trim();
+
+      const matchesCommittee = memberCommitteeId && initiativeCommitteeId && initiativeCommitteeId === memberCommitteeId;
+      const isInTeam = memberId && linkedTeamIds.some((id) => id === memberId);
+      const isLeader = memberId && leaderId && leaderId === memberId;
+      const matchesLeaderName = memberName && leaderName && leaderName === memberName;
+
+      return matchesCommittee || isInTeam || isLeader || matchesLeaderName;
+    });
+  }, [isGlobalTaskScope, currentMember, initiatives, memberCommitteeId, memberId, memberName]);
+
+  const accessibleInitiativeIds = useMemo(
+    () => new Set(accessibleInitiatives.map((i) => String(i.id || ''))),
+    [accessibleInitiatives]
+  );
+
+  const accessibleTasks = useMemo(() => {
+    if (isGlobalTaskScope) return tasks;
+    if (!currentMember) return [];
+
+    return tasks.filter((task) => {
+      const taskCommitteeId = String(task?.committee_id || '');
+      const taskAssigneeId = String(task?.assigned_to || '');
+      const taskAssigneeName = String(task?.assigned_to_name || '').trim();
+      const taskInitiativeId = String(task?.initiative_id || '');
+      const taskCreator = String(task?.assigned_by || task?.created_by || '').trim();
+      const myEmail = String(currentUser?.email || '').trim();
+
+      const matchesCommittee = memberCommitteeId && taskCommitteeId && taskCommitteeId === memberCommitteeId;
+      const assignedToMe = memberId && taskAssigneeId && taskAssigneeId === memberId;
+      const assignedToMyName = memberName && taskAssigneeName && taskAssigneeName === memberName;
+      const linkedToMyInitiative = taskInitiativeId && accessibleInitiativeIds.has(taskInitiativeId);
+      const createdByMe = myEmail && taskCreator && taskCreator === myEmail;
+
+      return matchesCommittee || assignedToMe || assignedToMyName || linkedToMyInitiative || createdByMe;
+    });
+  }, [isGlobalTaskScope, currentMember, tasks, memberCommitteeId, memberId, memberName, accessibleInitiativeIds, currentUser]);
+
+  const scopedMembers = useMemo(() => {
+    if (isGlobalTaskScope) return members;
+    if (memberCommitteeId) return members.filter((m) => String(m.committee_id || '') === memberCommitteeId);
+    return currentMember ? [currentMember] : [];
+  }, [isGlobalTaskScope, members, memberCommitteeId, currentMember]);
+
   if (!permissions.canSeeTasks) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
@@ -79,16 +154,17 @@ export default function Tasks() {
   }
 
   const stats = {
-    total: tasks.length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-    in_progress: tasks.filter(t => t.status === 'in_progress').length,
-    completed: tasks.filter(t => t.status === 'completed').length,
-    overdue: tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
+    total: accessibleTasks.length,
+    pending: accessibleTasks.filter(t => t.status === 'pending').length,
+    in_progress: accessibleTasks.filter(t => t.status === 'in_progress').length,
+    completed: accessibleTasks.filter(t => t.status === 'completed').length,
+    overdue: accessibleTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
   };
 
-  const filteredTasks = tasks.filter(t => {
+  const filteredTasks = accessibleTasks.filter(t => {
     const matchesStatus = activeStatus === 'all' || 
       (activeStatus === 'overdue' ? (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed') : t.status === activeStatus);
+
     const matchesSearch = !searchQuery ||
       t.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.assigned_to_name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -106,7 +182,7 @@ export default function Tasks() {
       await updateMutation.mutateAsync({ id: editingTask.id, data: payload });
     } else {
       const newTask = await createMutation.mutateAsync({ ...payload, assigned_by: currentUser?.email });
-      
+
       // Create notification for assigned user
       const assignedMember = members.find(m => m.id === data.assigned_to);
       if (assignedMember?.email) {
@@ -210,7 +286,7 @@ export default function Tasks() {
               className="pr-10"
             />
           </div>
-          {initiatives.length > 0 && (
+          {accessibleInitiatives.length > 0 && (
             <Select value={filterInitiative} onValueChange={setFilterInitiative}>
               <SelectTrigger className="w-[200px]">
                 <Lightbulb className="w-4 h-4 ml-1 text-purple-500" />
@@ -218,7 +294,7 @@ export default function Tasks() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">كل المبادرات</SelectItem>
-                {initiatives.map(i => (
+                {accessibleInitiatives.map(i => (
                   <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</SelectItem>
                 ))}
               </SelectContent>
@@ -280,7 +356,7 @@ export default function Tasks() {
                 onDelete={(t) => setDeleteDialog({ open: true, task: t })}
                 onStatusChange={handleStatusChange}
                 canEdit={canManageTasks}
-                initiatives={initiatives}
+                initiatives={accessibleInitiatives}
               />
             ))}
           </div>
@@ -292,8 +368,8 @@ export default function Tasks() {
         onOpenChange={setFormOpen}
         task={editingTask}
         onSave={handleSave}
-        members={members}
-        initiatives={initiatives}
+        members={scopedMembers}
+        initiatives={accessibleInitiatives}
         standards={standards}
       />
 

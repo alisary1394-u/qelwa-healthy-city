@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/AuthContext';
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { navItems, isGovernor } = usePermissions();
+  const { navItems, permissions } = usePermissions();
   const { logout } = useAuth();
 
   const { data: currentUser } = useQuery({
@@ -107,7 +107,7 @@ export default function Layout({ children }) {
                         <span>الإعدادات الشخصية</span>
                       </Link>
                     </DropdownMenuItem>
-                    {isGovernor && (
+                    {permissions.canSeeSettings && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
