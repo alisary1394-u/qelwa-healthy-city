@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileText, Image, File, Search, Check, X, RotateCcw, Trash2, Eye, Loader2, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const fileTypes = [
   { value: "image", label: "صورة", icon: Image },
@@ -210,6 +211,8 @@ export default function Files() {
 
   const handleDelete = async () => {
     if (deleteDialog.file) {
+      const confirmed = await requireSecureDeleteConfirmation(`الملف "${deleteDialog.file.title || 'غير معنون'}"`);
+      if (!confirmed) return;
       if (deleteDialog.file._source === 'evidence') {
         await deleteEvidenceMutation.mutateAsync(deleteDialog.file.id);
       } else {

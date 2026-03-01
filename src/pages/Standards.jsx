@@ -5,6 +5,7 @@ import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex
 import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode, normalizeStandardCode } from '@/api/standardsFromCsv';
 import { createAxesSelectFunction } from '@/lib/axesSort';
 import { usePermissions } from '@/hooks/usePermissions';
+import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 import StandardsEnhanced from './Standards-Enhanced';
 
@@ -42,6 +44,67 @@ function parseJsonArray(str, fallback = []) {
   }
 }
 
+const INITIATIVE_PREFILL_STORAGE_KEY = 'initiative_prefill_from_standard';
+
+function parseRelatedStandardIds(value) {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => {
+        if (item == null) return [];
+        if (typeof item === 'string' || typeof item === 'number') return [String(item)];
+        if (typeof item === 'object') {
+          return [
+            item.id,
+            item.standard_id,
+            item.standard_code,
+            item.code,
+          ]
+            .filter(Boolean)
+            .map((v) => String(v));
+        }
+        return [];
+      })
+      .filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const text = value.trim();
+    if (!text) return [];
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parseRelatedStandardIds(parsed);
+    } catch {
+      // not JSON, continue to CSV fallback
+    }
+    return text
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => String(item));
+  }
+  return [];
+}
+
+function getInitiativeSuggestionFromStandard(standard, axisName) {
+  const title = String(standard?.title || '').trim();
+  const code = String(standard?.code || '').trim();
+  const axisLabel = axisName || standard?.axis_name || 'المحور المرتبط';
+  const impactful = /سلامة|جودة|طوارئ|حوكمة|وقاية|مخاطر/i.test(title);
+
+  return {
+    standard_id: standard?.id,
+    standard_code: code,
+    title: `مبادرة تحسين ${title || code || 'المعيار'}`,
+    description: `برنامج تنفيذي لرفع مستوى الامتثال لمتطلبات ${code ? `المعيار ${code}` : 'المعيار'} ضمن ${axisLabel}.`,
+    objectives: `1) إغلاق فجوات ${code || 'المعيار'}\n2) رفع جودة التنفيذ والالتزام\n3) توثيق الإنجاز بالأدلة المطلوبة`,
+    priority: impactful ? 'high' : 'medium',
+    impact_level: impactful ? 'high' : 'medium',
+    estimated_budget: impactful ? 120000 : 70000,
+    expected_beneficiaries: impactful ? 800 : 400,
+    target_audience: 'المستفيدون من خدمات المدينة الصحية',
+    notes: `مبادرة مقترحة تلقائياً بناءً على ${code ? `المعيار ${code}` : 'المعيار المحدد'}.`,
+  };
+}
+
 const statusConfig = {
   not_started: { label: 'لم يبدأ', color: 'bg-gray-100 text-gray-700' },
   in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700' },
@@ -60,6 +123,7 @@ function buildRequiredEvidence(documents) {
 function StandardsLegacy() {
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedLinkedSections, setExpandedLinkedSections] = useState({});
   const [axisFormOpen, setAxisFormOpen] = useState(false);
   const [standardFormOpen, setStandardFormOpen] = useState(false);
   const [evidenceFormOpen, setEvidenceFormOpen] = useState(false);
@@ -116,6 +180,26 @@ function StandardsLegacy() {
     queryFn: () => api.entities.TeamMember.list()
   });
 
+  const { data: initiatives = [] } = useQuery({
+    queryKey: ['initiatives'],
+    queryFn: () => api.entities.Initiative.list('-created_date')
+  });
+
+  const { data: committees = [] } = useQuery({
+    queryKey: ['committees'],
+    queryFn: () => api.entities.Committee.list()
+  });
+
+  const { data: budgets = [] } = useQuery({
+    queryKey: ['budgets'],
+    queryFn: () => api.entities.Budget.list('-created_date')
+  });
+
+  const { data: allocations = [] } = useQuery({
+    queryKey: ['allocations'],
+    queryFn: () => api.entities.BudgetAllocation.list()
+  });
+
   const { permissions, isGovernor } = usePermissions();
   const canManageStandards = permissions.canManageStandards;
 
@@ -165,9 +249,83 @@ function StandardsLegacy() {
   const canManage = canManageStandards;
   const canApprove = permissions.canApproveEvidence;
   const canDeleteAnyEvidence = Boolean(isGovernor);
+  const isSectionExpanded = (standardId, section) => {
+    const key = `${standardId}:${section}`;
+    return expandedLinkedSections[key] === true;
+  };
+  const toggleSectionExpanded = (standardId, section) => {
+    const key = `${standardId}:${section}`;
+    setExpandedLinkedSections((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
   const isPendingEvidenceStatus = (status) => {
     if (!status) return true;
     return typeof status === 'string' && status.startsWith('pending');
+  };
+
+  const resolveBudgetLinkForStandard = (standard) => {
+    const activeBudget = budgets.find((b) => b.status === 'active') || budgets.find((b) => b.status === 'draft') || budgets[0];
+    const matchedAllocation = allocations.find((allocation) => {
+      if (!activeBudget || String(allocation.budget_id || '') !== String(activeBudget.id)) return false;
+      const committeeMatch = standard?.committee_id && String(allocation.committee_id || '') === String(standard.committee_id);
+      const axisMatch = standard?.axis_id && String(allocation.axis_id || '') === String(standard.axis_id);
+      return committeeMatch || axisMatch;
+    });
+
+    const allocationCommitteeId = matchedAllocation?.committee_id;
+    const allocationCommitteeName = allocationCommitteeId
+      ? committees.find((committee) => String(committee.id) === String(allocationCommitteeId))?.name
+      : '';
+
+    return {
+      budget_id: matchedAllocation?.budget_id || activeBudget?.id || null,
+      budget_name: matchedAllocation?.budget_name || activeBudget?.name || null,
+      budget_allocation_id: matchedAllocation?.id || null,
+      budget_allocation_category: matchedAllocation?.category || null,
+      committee_id: standard?.committee_id || allocationCommitteeId || '',
+      committee_name: standard?.committee_name || allocationCommitteeName || '',
+    };
+  };
+
+  const handleCreateSuggestedInitiativeForStandard = (standard) => {
+    if (!standard?.id) return;
+    const suggestion = getInitiativeSuggestionFromStandard(standard, standard.axis_name);
+    const budgetLink = resolveBudgetLinkForStandard(standard);
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 90);
+
+    const prefillPayload = {
+      title: suggestion.title,
+      description: suggestion.description,
+      objectives: suggestion.objectives,
+      priority: suggestion.priority,
+      impact_level: suggestion.impact_level,
+      budget: suggestion.estimated_budget,
+      expected_beneficiaries: suggestion.expected_beneficiaries,
+      target_audience: suggestion.target_audience,
+      notes: suggestion.notes,
+      axis_id: standard.axis_id || '',
+      axis_name: standard.axis_name || '',
+      standard_id: standard.id,
+      standard_code: standard.code || '',
+      standard_title: standard.title || '',
+      related_standards: [String(standard.id)],
+      start_date: start.toISOString().split('T')[0],
+      end_date: end.toISOString().split('T')[0],
+      ...budgetLink,
+    };
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(INITIATIVE_PREFILL_STORAGE_KEY, JSON.stringify(prefillPayload));
+        window.location.href = createPageUrl('Initiatives');
+      }
+    } catch (err) {
+      if (typeof window !== 'undefined') window.alert(`تعذر فتح نموذج المبادرة المقترحة.\n${err?.message || err}`);
+    }
   };
 
   if (!permissions.canSeeStandards) {
@@ -325,7 +483,7 @@ function StandardsLegacy() {
   const handleDeleteEvidence = async (evidenceItem) => {
     if (!canDeleteAnyEvidence) return;
     if (!evidenceItem?.id) return;
-    const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف الدليل؟') : false;
+    const ok = await requireSecureDeleteConfirmation(`الدليل "${evidenceItem.title || 'غير معنون'}"`);
     if (!ok) return;
     await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
   };
@@ -529,6 +687,70 @@ function StandardsLegacy() {
             {filteredStandards.map(standard => {
               const standardEvidence = getStandardEvidence(standard.id);
               const approvedEvidence = standardEvidence.filter(e => e.status === 'approved').length;
+              const suggestedInitiative = getInitiativeSuggestionFromStandard(standard, standard.axis_name);
+              const relatedInitiatives = (Array.isArray(initiatives) ? initiatives : []).filter((initiative) => {
+                const relatedIds = parseRelatedStandardIds(initiative?.related_standards);
+                const hasLinkedId = relatedIds.includes(String(standard.id));
+                const byStandardIdField = String(initiative?.standard_id || '') === String(standard.id);
+                const byStandardCodeField = String(initiative?.standard_code || '').trim() === String(standard.code || '').trim();
+                return hasLinkedId || byStandardIdField || byStandardCodeField;
+              });
+
+              const relatedCommittees = [];
+              const relatedCommitteeKeys = new Set();
+              relatedInitiatives.forEach((initiative) => {
+                const committeeId = initiative?.committee_id ? String(initiative.committee_id) : '';
+                const committeeNameFromList = committeeId
+                  ? committees.find((committee) => String(committee.id) === committeeId)?.name
+                  : '';
+                const committeeName = initiative?.committee_name || committeeNameFromList;
+                const key = committeeId || String(committeeName || '').trim();
+                if (!key || relatedCommitteeKeys.has(key)) return;
+                relatedCommitteeKeys.add(key);
+                relatedCommittees.push({ id: committeeId || key, name: committeeName || 'لجنة غير مسماة' });
+              });
+
+              const relatedBudgets = [];
+              const relatedBudgetKeys = new Set();
+              relatedInitiatives.forEach((initiative) => {
+                const allocationId = initiative?.budget_allocation_id ? String(initiative.budget_allocation_id) : '';
+                const allocation = allocationId
+                  ? allocations.find((item) => String(item?.id || '') === allocationId)
+                  : null;
+                const budgetId = initiative?.budget_id ? String(initiative.budget_id) : (allocation?.budget_id ? String(allocation.budget_id) : '');
+                const budgetNameFromList = budgetId
+                  ? budgets.find((budget) => String(budget.id) === budgetId)?.name
+                  : '';
+                const budgetName = initiative?.budget_name || budgetNameFromList || allocation?.budget_name;
+                const budgetKey = budgetId || allocationId || String(budgetName || '').trim();
+                if (!budgetKey) return;
+
+                const amount = Number(initiative?.budget || 0);
+                const existingIndex = relatedBudgets.findIndex((b) => b.key === budgetKey);
+                if (existingIndex >= 0) {
+                  relatedBudgets[existingIndex].amount += Number.isFinite(amount) ? amount : 0;
+                  relatedBudgets[existingIndex].initiativesCount += 1;
+                  return;
+                }
+
+                if (relatedBudgetKeys.has(budgetKey)) return;
+                relatedBudgetKeys.add(budgetKey);
+                relatedBudgets.push({
+                  key: budgetKey,
+                  name: budgetName || 'ميزانية مرتبطة',
+                  amount: Number.isFinite(amount) ? amount : 0,
+                  initiativesCount: 1,
+                });
+              });
+
+              const totalRelatedBudget = relatedBudgets.reduce((sum, budget) => sum + (Number(budget.amount) || 0), 0);
+              const committeesExpanded = isSectionExpanded(standard.id, 'committees');
+              const initiativesExpanded = isSectionExpanded(standard.id, 'initiatives');
+              const budgetsExpanded = isSectionExpanded(standard.id, 'budgets');
+              const visibleCommittees = committeesExpanded ? relatedCommittees : relatedCommittees.slice(0, 3);
+              const visibleInitiatives = initiativesExpanded ? relatedInitiatives : relatedInitiatives.slice(0, 2);
+              const visibleBudgets = budgetsExpanded ? relatedBudgets : relatedBudgets.slice(0, 2);
+
               return (
                 <Card key={standard.id}>
                   <CardContent className="p-4">
@@ -550,6 +772,107 @@ function StandardsLegacy() {
                             الأدلة المطلوبة: {standard.required_evidence}
                           </p>
                         )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                          <div className="rounded-lg border bg-gray-50 p-3">
+                            <p className="text-xs text-gray-500 mb-1">اللجان المرتبطة</p>
+                            <p className="text-sm font-semibold mb-2">{relatedCommittees.length} لجنة</p>
+                            <div className="flex flex-wrap gap-1">
+                              {visibleCommittees.length > 0 ? visibleCommittees.map((committee) => (
+                                <Badge key={committee.id} variant="outline" className="text-[11px]">
+                                  {committee.name}
+                                </Badge>
+                              )) : (
+                                <span className="text-xs text-gray-400">لا توجد لجان مرتبطة</span>
+                              )}
+                            </div>
+                            {relatedCommittees.length > 3 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 h-7 px-2 text-xs"
+                                onClick={() => toggleSectionExpanded(standard.id, 'committees')}
+                              >
+                                {committeesExpanded ? 'إخفاء' : `عرض الكل (${relatedCommittees.length})`}
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="rounded-lg border bg-gray-50 p-3">
+                            <p className="text-xs text-gray-500 mb-1">المبادرات المرتبطة</p>
+                            <p className="text-sm font-semibold mb-2">{relatedInitiatives.length} مبادرة</p>
+                            <div className="space-y-1">
+                              {visibleInitiatives.length > 0 ? visibleInitiatives.map((initiative) => (
+                                <p key={initiative.id} className="text-xs text-gray-700 truncate" title={initiative.title}>
+                                  • {initiative.title}
+                                </p>
+                              )) : (
+                                <span className="text-xs text-gray-400">لا توجد مبادرات مرتبطة</span>
+                              )}
+                            </div>
+                            {relatedInitiatives.length > 2 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 h-7 px-2 text-xs"
+                                onClick={() => toggleSectionExpanded(standard.id, 'initiatives')}
+                              >
+                                {initiativesExpanded ? 'إخفاء' : `عرض الكل (${relatedInitiatives.length})`}
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="rounded-lg border bg-gray-50 p-3">
+                            <p className="text-xs text-gray-500 mb-1">الميزانيات المرتبطة</p>
+                            <p className="text-sm font-semibold mb-1">{relatedBudgets.length} ميزانية</p>
+                            <p className="text-xs text-green-700 font-medium mb-2">
+                              الإجمالي: {totalRelatedBudget.toLocaleString()} ريال
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {visibleBudgets.length > 0 ? visibleBudgets.map((budget) => (
+                                <Badge key={budget.key} variant="outline" className="text-[11px]">
+                                  {budget.name}
+                                </Badge>
+                              )) : (
+                                <span className="text-xs text-gray-400">لا توجد ميزانيات مرتبطة</span>
+                              )}
+                            </div>
+                            {relatedBudgets.length > 2 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="mt-2 h-7 px-2 text-xs"
+                                onClick={() => toggleSectionExpanded(standard.id, 'budgets')}
+                              >
+                                {budgetsExpanded ? 'إخفاء' : `عرض الكل (${relatedBudgets.length})`}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border bg-purple-50 p-3 mt-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <p className="text-xs text-purple-700">مبادرة مقترحة لهذا المعيار</p>
+                              <p className="text-sm font-semibold text-purple-900">{suggestedInitiative.title}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={relatedInitiatives.length > 0}
+                              onClick={() => handleCreateSuggestedInitiativeForStandard(standard)}
+                            >
+                              {relatedInitiatives.length > 0 ? 'موجودة' : 'فتح النموذج'}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-purple-700 mb-2">{suggestedInitiative.description}</p>
+                          {relatedInitiatives.length > 0 && (
+                            <p className="text-[11px] text-green-700">تم إنشاء مبادرة مرتبطة بهذا المعيار مسبقًا.</p>
+                          )}
+                        </div>
                         
                         <StandardKPIManager standard={standard} evidence={evidence} />
 

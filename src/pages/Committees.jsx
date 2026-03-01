@@ -13,6 +13,7 @@ import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
@@ -104,6 +105,8 @@ export default function Committees() {
 
   const handleDelete = async () => {
     if (deleteDialog.committee) {
+      const confirmed = await requireSecureDeleteConfirmation(`اللجنة "${deleteDialog.committee.name}"`);
+      if (!confirmed) return;
       await deleteMutation.mutateAsync(deleteDialog.committee.id);
       setDeleteDialog({ open: false, committee: null });
     }

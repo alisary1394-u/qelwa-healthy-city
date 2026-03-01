@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, TrendingUp, TrendingDown, Minus, Loader2, Upload, Paperclip, Trash2, FileText, Image, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { usePermissions } from '@/hooks/usePermissions';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function KPIManager({ initiativeId, initiativeTitle }) {
 	const { permissions, role, currentMember } = usePermissions();
@@ -141,9 +142,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 	const handleDeleteKpi = async (kpi) => {
 		if (!canEditKpis) return;
 		if (!kpi?.id) return;
-		const ok = typeof window !== 'undefined'
-			? window.confirm('هل أنت متأكد من حذف المؤشر؟ سيتم حذف مرفقاته أيضاً.')
-			: false;
+		const ok = await requireSecureDeleteConfirmation(`المؤشر "${kpi.kpi_name || 'غير معنون'}"`);
 		if (!ok) return;
 		try {
 			const attachments = evidenceByKpiId[kpi.id] || [];
@@ -276,6 +275,8 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 	const handleDeleteEvidence = async (evidenceItem) => {
 		if (!canDeleteEvidence) return;
 		if (!evidenceItem?.id) return;
+		const ok = await requireSecureDeleteConfirmation(`مرفق المؤشر "${evidenceItem.title || evidenceItem.file_name || 'غير معنون'}"`);
+		if (!ok) return;
 		await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
 	};
 

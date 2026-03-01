@@ -11,7 +11,14 @@ import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, 
 
 // استيراد المؤشرات المحسنة
 import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard, buildVerificationMethodsForStandard } from '@/api/enhancedKpis';
-import { ENHANCED_AXIS_KPIS, calculateAxisScore, generateAxisPerformanceReport } from '@/api/enhancedAxisKpis';
+import {
+  EnhancedKpiDisplay,
+  EnhancedDocumentsDisplay,
+  EnhancedAxisCard,
+  enhanceStandardsDisplay,
+  calculateAxisPerformance,
+} from "@/components/EnhancedStandardsDisplay-Simple";
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 import { generateVerificationReport, verifyDocumentCompleteness } from '@/api/verificationGuide';
 import { buildIntegratedStandardsData, generateIntegratedPerformanceReport } from '@/api/integratedKpis';
 
@@ -28,7 +35,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { 
+  Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, 
+  BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2,
+  Sparkles, Download, Filter, Grid3X3, List, Activity, Shield, Star, Zap
+} from "lucide-react";
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -636,7 +647,7 @@ export default function Standards() {
 		if (!allow) return;
 		const kpi = kpis[index];
 		if (!kpi?.name) return;
-		const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المؤشر؟ سيتم حذف مرفقاته أيضاً.') : false;
+		const ok = await requireSecureDeleteConfirmation(`مؤشر المعيار "${kpi.name}"`);
 		if (!ok) return;
 
 		try {
@@ -861,7 +872,7 @@ const handleUploadEvidence = async (e) => {
   const handleDeleteEvidence = async (evidenceItem) => {
     if (!canDeleteAnyEvidence) return;
     if (!evidenceItem?.id) return;
-    const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المرفق؟') : false;
+    const ok = await requireSecureDeleteConfirmation(`المرفق "${evidenceItem.title || 'غير معنون'}"`);
     if (!ok) return;
     await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
   };

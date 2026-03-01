@@ -11,6 +11,7 @@ import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTo
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function Tasks() {
   const { permissions } = usePermissions();
@@ -134,6 +135,8 @@ export default function Tasks() {
   const handleDelete = async () => {
     if (!canManageTasks) return;
     if (deleteDialog.task) {
+      const confirmed = await requireSecureDeleteConfirmation(`المهمة "${deleteDialog.task.title}"`);
+      if (!confirmed) return;
       await deleteMutation.mutateAsync(deleteDialog.task.id);
       setDeleteDialog({ open: false, task: null });
     }

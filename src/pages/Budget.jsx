@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,11 @@ export default function Budget() {
     queryFn: () => api.entities.BudgetAllocation.list()
   });
 
+  const { data: initiatives = [] } = useQuery({
+    queryKey: ['initiatives'],
+    queryFn: () => api.entities.Initiative.list('-created_date')
+  });
+
   const { data: committees = [] } = useQuery({
     queryKey: ['committees'],
     queryFn: () => api.entities.Committee.list()
@@ -188,6 +193,31 @@ export default function Budget() {
     const matchesStatus = filterStatus === 'all' || t.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const allocationInitiativesMap = useMemo(() => {
+    return allocations.reduce((acc, allocation) => {
+      const directLinked = initiatives.filter((initiative) =>
+        String(initiative.budget_allocation_id || '') === String(allocation.id)
+      );
+
+      const fallbackLinked = initiatives.filter((initiative) => {
+        if (initiative.budget_allocation_id) return false;
+        if (String(initiative.budget_id || '') !== String(allocation.budget_id || '')) return false;
+        const committeeMatch = allocation.committee_id && String(initiative.committee_id || '') === String(allocation.committee_id);
+        const axisMatch = allocation.axis_id && String(initiative.axis_id || '') === String(allocation.axis_id);
+        return committeeMatch || axisMatch;
+      });
+
+      const mergedById = [...directLinked, ...fallbackLinked].reduce((list, initiative) => {
+        if (list.some((item) => String(item.id) === String(initiative.id))) return list;
+        list.push(initiative);
+        return list;
+      }, []);
+
+      acc[allocation.id] = mergedById;
+      return acc;
+    }, {});
+  }, [allocations, initiatives]);
 
   const resetTransactionForm = () => {
     setTransactionForm({
@@ -633,6 +663,16 @@ export default function Budget() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {allocations.map(allocation => (
+                (() => {
+                  const linkedInitiatives = allocationInitiativesMap[allocation.id] || [];
+                  const initiativesBudgetTotal = linkedInitiatives.reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
+                  const effectiveSpent = (Number(allocation.spent_amount) || 0) + initiativesBudgetTotal;
+                  const remaining = (Number(allocation.allocated_amount) || 0) - effectiveSpent;
+                  const spentPercentage = Number(allocation.allocated_amount) > 0
+                    ? Math.min((effectiveSpent / Number(allocation.allocated_amount)) * 100, 100)
+                    : 0;
+
+                  return (
                 <Card key={allocation.id}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -651,22 +691,38 @@ export default function Budget() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">المنفق:</span>
-                        <strong className="text-red-600">{allocation.spent_amount?.toLocaleString()} ريال</strong>
+                        <strong className="text-red-600">{effectiveSpent.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">المتبقي:</span>
-                        <strong className="text-green-600">{allocation.remaining_amount?.toLocaleString()} ريال</strong>
+                        <strong className="text-green-600">{remaining.toLocaleString()} ريال</strong>
                       </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">ميزانيات المبادرات المرتبطة:</span>
+                        <strong className="text-blue-600">{initiativesBudgetTotal.toLocaleString()} ريال</strong>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">عدد المبادرات المرتبطة:</span>
+                        <strong>{linkedInitiatives.length}</strong>
+                      </div>
+                      {linkedInitiatives.length > 0 && (
+                        <p className="text-xs text-gray-500 bg-gray-50 rounded p-2">
+                          {linkedInitiatives.slice(0, 3).map((initiative) => initiative.title).join('، ')}
+                          {linkedInitiatives.length > 3 ? ` +${linkedInitiatives.length - 3}` : ''}
+                        </p>
+                      )}
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                         <div
                           className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${allocation.percentage_spent || 0}%` }}
+                          style={{ width: `${spentPercentage}%` }}
                         />
                       </div>
-                      <p className="text-xs text-gray-500 text-center">{allocation.percentage_spent?.toFixed(1)}% منفق</p>
+                      <p className="text-xs text-gray-500 text-center">{spentPercentage.toFixed(1)}% منفق</p>
                     </div>
                   </CardContent>
                 </Card>
+                  );
+                })()
               ))}
             </div>
           </div>

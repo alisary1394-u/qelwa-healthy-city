@@ -181,6 +181,20 @@ export default function Reports() {
     { name: 'ملغي', value: filteredInitiatives.filter(i => i.status === 'cancelled').length, color: '#ef4444' },
   ];
 
+  const initiativesByCommittee = committees
+    .map(c => ({
+      name: c.name?.slice(0, 20) || 'غير محدد',
+      count: filteredInitiatives.filter(i => i.committee_id === c.id).length,
+    }))
+    .filter(item => item.count > 0);
+
+  const initiativesByPriority = [
+    { name: 'منخفضة', count: filteredInitiatives.filter(i => i.priority === 'low').length, color: '#94a3b8' },
+    { name: 'متوسطة', count: filteredInitiatives.filter(i => i.priority === 'medium').length, color: '#3b82f6' },
+    { name: 'عالية', count: filteredInitiatives.filter(i => i.priority === 'high').length, color: '#f59e0b' },
+    { name: 'عاجلة', count: filteredInitiatives.filter(i => i.priority === 'urgent').length, color: '#ef4444' },
+  ];
+
   const tasksByStatus = [
     { name: 'معلقة', value: filteredTasks.filter(t => t.status === 'pending').length, color: '#94a3b8' },
     { name: 'قيد التنفيذ', value: filteredTasks.filter(t => t.status === 'in_progress').length, color: '#f59e0b' },
@@ -500,7 +514,7 @@ export default function Reports() {
                   <CardHeader><CardTitle className="text-lg">المبادرات حسب اللجنة</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={committees.map(c => ({ name: c.name?.slice(0, 20), count: initiatives.filter(i => i.committee_id === c.id).length }))}>
+                      <BarChart data={initiativesByCommittee}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis /><Tooltip />
@@ -511,18 +525,21 @@ export default function Reports() {
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">حالة المبادرات</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">توزيع المبادرات حسب الأولوية</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="space-y-3 pt-2">
-                      {initiativesByStatus.filter(s => s.value > 0).map(s => (
-                        <div key={s.name} className="flex items-center gap-3">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
-                          <span className="text-sm flex-1">{s.name}</span>
-                          <span className="text-lg font-bold">{s.value}</span>
-                          <span className="text-xs text-gray-400">{filteredInitiatives.length > 0 ? Math.round((s.value / filteredInitiatives.length) * 100) : 0}%</span>
-                        </div>
-                      ))}
-                    </div>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={initiativesByPriority}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" name="عدد المبادرات" radius={[4, 4, 0, 0]}>
+                          {initiativesByPriority.map((item, index) => (
+                            <Cell key={`init-priority-${index}`} fill={item.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               </div>

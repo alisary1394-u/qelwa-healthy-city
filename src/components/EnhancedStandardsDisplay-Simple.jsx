@@ -110,15 +110,6 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
       return null;
     })
     .filter(Boolean);
-  const fallbackDocuments = buildRequiredDocumentsForStandard(standard.title, standard.axis_order)
-    .map((doc) => {
-      if (!doc) return null;
-      if (typeof doc === 'string') return { name: doc.trim(), type: '' };
-      const name = String(doc.name || doc.title || '').trim();
-      return name ? { ...doc, name } : null;
-    })
-    .filter((doc) => doc && doc.name);
-  const finalDocuments = normalizedDocuments.length > 0 ? normalizedDocuments : fallbackDocuments;
   
   return (
     <Collapsible className="mt-4">
@@ -132,7 +123,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
                 </svg>
                 <h4 className="font-semibold text-green-900">المستندات المطلوبة</h4>
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  {finalDocuments.length} مستند
+                  {normalizedDocuments.length} مستند
                 </span>
               </div>
               <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -143,7 +134,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
         <CollapsibleContent>
           <div className="px-4 pb-4">
             <div className="space-y-2">
-              {finalDocuments.slice(0, 5).map((doc, index) => (
+              {normalizedDocuments.slice(0, 5).map((doc, index) => (
                 <div key={index} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -160,9 +151,9 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
               ))}
             </div>
 
-            {finalDocuments.length > 5 && (
+            {normalizedDocuments.length > 5 && (
               <div className="mt-3 text-center text-sm text-gray-600">
-                و {finalDocuments.length - 5} مستندات أخرى...
+                و {normalizedDocuments.length - 5} مستندات أخرى...
               </div>
             )}
           </div>
@@ -296,14 +287,8 @@ function enhanceStandardsDisplay(standard, kpis = [], documents = []) {
   const enhancedKpis = kpis.length > 0
     ? kpis
     : buildAdvancedKpisForStandard(standard.title, standard.global_num, derivedAxisOrder);
-  const validDocuments = (Array.isArray(documents) ? documents : []).filter((doc) => {
-    if (!doc) return false;
-    if (typeof doc === 'string') return doc.trim().length > 0;
-    if (typeof doc === 'object') return String(doc.name || doc.title || '').trim().length > 0;
-    return false;
-  });
-  const enhancedDocuments = validDocuments.length > 0
-    ? validDocuments
+  const enhancedDocuments = documents.length > 0
+    ? documents
     : buildRequiredDocumentsForStandard(standard.title, derivedAxisOrder);
   
   return {

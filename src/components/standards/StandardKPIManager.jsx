@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Check, ChevronDown, Eye, FileText, Image, Loader2, Minus, Paperclip, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 function safeParseJson(value, fallback) {
 	if (value == null) return fallback;
@@ -255,9 +256,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 		if (!canEditKpis) return;
 		const kpi = normalizedKpis[idx];
 		if (!kpi?.name) return;
-		const ok = typeof window !== 'undefined'
-			? window.confirm('هل أنت متأكد من حذف المؤشر؟ سيتم حذف مرفقاته أيضاً.')
-			: false;
+		const ok = await requireSecureDeleteConfirmation(`المؤشر "${kpi.name}"`);
 		if (!ok) return;
 
 		try {
@@ -343,7 +342,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 	const handleDeleteEvidence = async (evidenceItem) => {
 		if (!canDeleteEvidence) return;
 		if (!evidenceItem?.id) return;
-		const ok = typeof window !== 'undefined' ? window.confirm('هل أنت متأكد من حذف المرفق؟') : false;
+		const ok = await requireSecureDeleteConfirmation(`مرفق المعيار "${evidenceItem.title || evidenceItem.file_name || 'غير معنون'}"`);
 		if (!ok) return;
 		await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
 	};

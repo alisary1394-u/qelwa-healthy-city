@@ -14,6 +14,7 @@ import MemberCard from "@/components/team/MemberCard";
 import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS_BY_ROLE, PERMISSION_REVIEW_KEYS, PERMISSIONS_REVIEW_ROLE_ORDER } from '@/lib/permissions';
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const roleLabels = {
   all: "الجميع",
@@ -155,7 +156,7 @@ export default function TeamManagement() {
 
     if (editingMember?.id) {
       try {
-        latestMember = await api.entities.TeamMember.get(editingMember.id) || editingMember;
+        latestMember = await api.entities.TeamMember.get(editingMember.id);
       } catch (_) {
         latestMember = editingMember;
       }
@@ -225,6 +226,8 @@ export default function TeamManagement() {
 
   const handleDelete = async () => {
     if (deleteDialog.member) {
+      const confirmed = await requireSecureDeleteConfirmation(`العضو "${deleteDialog.member.full_name}"`);
+      if (!confirmed) return;
       await deleteMutation.mutateAsync(deleteDialog.member.id);
       setDeleteDialog({ open: false, member: null });
     }

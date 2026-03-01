@@ -11,9 +11,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Bell, Check, Trash2, Clock, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function NotificationBell({ userEmail }) {
   const queryClient = useQueryClient();
+
+  const handleDeleteNotification = async (notification) => {
+    if (!notification?.id) return;
+    const confirmed = await requireSecureDeleteConfirmation(`الإشعار "${notification.title || 'غير معنون'}"`);
+    if (!confirmed) return;
+    deleteMutation.mutate(notification.id);
+  };
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', userEmail],
@@ -112,7 +120,7 @@ export default function NotificationBell({ userEmail }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => deleteMutation.mutate(notification.id)}
+                      onClick={() => handleDeleteNotification(notification)}
                     >
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
