@@ -4,6 +4,16 @@
  */
 
 const DEFAULT_MEMBER_PASSWORD = '123456';
+const TARGET_TEAM_MEMBERS = 87;
+const TARGET_INITIATIVES = 23;
+
+const EXTRA_COMMITTEES_LOCAL = [
+  { name: 'لجنة الصحة العامة', description: 'مسؤولة عن تعزيز الصحة العامة والوقاية من الأمراض' },
+  { name: 'لجنة البيئة الصحية', description: 'تهتم بالبيئة الصحية والنظافة العامة' },
+  { name: 'لجنة التوعية والتثقيف الصحي', description: 'نشر الوعي الصحي وتثقيف المجتمع' },
+  { name: 'لجنة الرياضة والنشاط البدني', description: 'تعزيز النشاط البدني والرياضة في المجتمع' },
+  { name: 'لجنة التغذية الصحية', description: 'تعزيز الأنماط الغذائية الصحية' },
+];
 
 /**
  * اللجنة الرئيسية أولاً ثم اللجان الفرعية المرتبطة بالمحاور (معايير المدينة الصحية)
@@ -33,7 +43,8 @@ export async function seedCommittees(ctx) {
   committees = committees || [];
   const existingNames = new Set(committees.map((c) => c.name));
   let added = 0;
-  for (const c of COMMITTEES_SEED) {
+  const allCommitteesSeed = [...COMMITTEES_SEED, ...EXTRA_COMMITTEES_LOCAL];
+  for (const c of allCommitteesSeed) {
     if (!existingNames.has(c.name)) {
       await Promise.resolve(entities.Committee.create({ name: c.name, description: c.description }));
       existingNames.add(c.name);
@@ -200,6 +211,34 @@ export async function seedTeamMembers(ctx) {
   }
 
   for (const data of toCreate) await Promise.resolve(entities.TeamMember.create(data));
+
+  // إكمال الأعضاء حتى نصل إلى العدد الكامل المتوقع محلياً (87)
+  let membersAfter = (await Promise.resolve(getStore('TeamMember'))) || [];
+  const committeesAfter = (await Promise.resolve(getStore('Committee'))) || [];
+  let nextFillNationalId = 1;
+  const usedAfter = membersAfter.map((m) => String(m.national_id));
+  while (usedAfter.includes(String(nextFillNationalId))) nextFillNationalId += 1;
+
+  while (membersAfter.length < TARGET_TEAM_MEMBERS && committeesAfter.length > 0) {
+    const serial = membersAfter.length + 1;
+    const committee = committeesAfter[serial % committeesAfter.length];
+    const nationalId = String(nextFillNationalId++);
+    const email = `local.member.${nationalId}@qelwa.local`;
+    await Promise.resolve(entities.TeamMember.create({
+      full_name: `عضو فريق إضافي ${serial}`,
+      national_id: nationalId,
+      password: DEFAULT_MEMBER_PASSWORD,
+      email,
+      role: 'member',
+      committee_id: committee?.id,
+      committee_name: committee?.name,
+      department: committee?.name || 'الفريق',
+      status: 'active',
+      join_date: baseDate,
+    }));
+    membersAfter = (await Promise.resolve(getStore('TeamMember'))) || [];
+  }
+
   if (toCreate.length > 0 && typeof console !== 'undefined') console.log('[seed] تم إضافة', toCreate.length, 'عضو فريق');
   return Promise.resolve(getStore('TeamMember')).then((r) => r || []);
 }
@@ -213,7 +252,6 @@ export async function seedInitiatives(ctx) {
   const committees = (await Promise.resolve(getStore('Committee'))) || [];
   const axes = (await Promise.resolve(getStore('Axis'))) || [];
   if (committees.length === 0 || axes.length === 0) return initiatives;
-  if (initiatives.length > 0) return initiatives;
 
   const list = [
     { title: 'تعزيز المشاركة المجتمعية في التخطيط الصحي', code: 'INI001', status: 'approved', priority: 'high' },
@@ -230,8 +268,10 @@ export async function seedInitiatives(ctx) {
   const baseDate = new Date().toISOString().split('T')[0];
   const endDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
+  const existingTitles = new Set((initiatives || []).map((i) => String(i.title || '').trim()));
   for (let idx = 0; idx < list.length; idx++) {
     const item = list[idx];
+    if (existingTitles.has(String(item.title).trim())) continue;
     const axis = axes[idx % axes.length];
     const committee = committees[idx % committees.length];
     const progress = item.status === 'in_progress' ? 25 + idx * 5 : item.status === 'approved' ? 15 : 0;
@@ -253,7 +293,43 @@ export async function seedInitiatives(ctx) {
       start_date: baseDate,
       end_date: endDate,
     }));
+    existingTitles.add(String(item.title).trim());
   }
+
+  // إكمال عدد المبادرات محلياً حتى الحد المتوقع
+  let initiativesAfter = (await Promise.resolve(getStore('Initiative'))) || [];
+  let nextCode = initiativesAfter.length + 1;
+  while (initiativesAfter.length < TARGET_INITIATIVES) {
+    const idx = initiativesAfter.length;
+    const axis = axes[idx % axes.length];
+    const committee = committees[idx % committees.length];
+    const title = `مبادرة محلية إضافية ${idx + 1}`;
+    if (existingTitles.has(title)) {
+      nextCode += 1;
+      continue;
+    }
+    await Promise.resolve(entities.Initiative.create({
+      code: `INI${String(nextCode++).padStart(3, '0')}`,
+      title,
+      description: `مبادرة محلية إضافية مرتبطة بمحور "${axis?.name}" ولجنة "${committee?.name}".`,
+      objectives: 'استكمال بيانات المبادرات المحلية.',
+      committee_id: committee?.id,
+      committee_name: committee?.name,
+      axis_id: axis?.id,
+      axis_name: axis?.name,
+      status: 'planning',
+      priority: 'medium',
+      impact_level: 'high',
+      progress_percentage: 0,
+      budget: 75000,
+      expected_beneficiaries: 400,
+      start_date: baseDate,
+      end_date: endDate,
+    }));
+    existingTitles.add(title);
+    initiativesAfter = (await Promise.resolve(getStore('Initiative'))) || [];
+  }
+
   if (typeof console !== 'undefined') console.log('[seed] تم إنشاء', list.length, 'مبادرة');
   return Promise.resolve(getStore('Initiative')).then((r) => r || []);
 }
