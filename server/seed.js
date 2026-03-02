@@ -97,6 +97,22 @@ export async function runSeed(options = {}) {
     COMMITTEES.forEach((c) => db.create('committee', null, { name: c.name, description: c.description }));
   }
 
+  // إضافة لجان تجريبية إضافية إذا كان مطلوباً
+  if (shouldSeedSampleTeam && committees.length < 10) {
+    const sampleCommittees = [
+      { name: 'لجنة الصحة العامة', description: 'مسؤولة عن تعزيز الصحة العامة والوقاية من الأمراض' },
+      { name: 'لجنة البيئة الصحية', description: 'تهتم بالبيئة الصحية والنظافة العامة' },
+      { name: 'لجنة التوعية والتثقيف الصحي', description: 'نشر الوعي الصحي وتثقيف المجتمع' },
+      { name: 'لجنة الرياضة والنشاط البدني', description: 'تعزيز النشاط البدني والرياضة في المجتمع' },
+      { name: 'لجنة التغذية الصحية', description: 'تعزيز الأنماط الغذائية الصحية' }
+    ];
+    sampleCommittees.forEach((c) => {
+      if (!committees.some((existing) => existing.name === c.name)) {
+        db.create('committee', null, { name: c.name, description: c.description });
+      }
+    });
+  }
+
   const committeesNow = db.list('committee');
   const membersNow = db.list('team_member');
   if (shouldSeedSampleTeam) {
@@ -122,6 +138,32 @@ export async function runSeed(options = {}) {
     }
 
     const membersAfter = db.list('team_member');
+
+    // إضافة أعضاء تجريبيين إذا كان مطلوباً
+    if (shouldSeedSampleTeam && membersAfter.length < 10) {
+      const sampleMembers = [
+        { full_name: 'د. أحمد السالم', role: 'committee_head', email: 'ahmed.salem@qelwa.sa', phone: '0501234567', national_id: '1234567890', committee_name: 'لجنة الصحة العامة' },
+        { full_name: 'د. خالد المطيري', role: 'committee_coordinator', email: 'khaled.mutairi@qelwa.sa', phone: '0501234568', national_id: '1234567891', committee_name: 'لجنة الصحة العامة' },
+        { full_name: 'أ. ريم الدوسري', role: 'committee_member', email: 'reem.dosari@qelwa.sa', phone: '0501234569', national_id: '1234567892', committee_name: 'لجنة الصحة العامة' },
+        { full_name: 'م. فاطمة الزهراني', role: 'committee_head', email: 'fatima.zahrani@qelwa.sa', phone: '0502234567', national_id: '2234567890', committee_name: 'لجنة البيئة الصحية' },
+        { full_name: 'م. ياسر القرني', role: 'committee_coordinator', email: 'yasser.qarni@qelwa.sa', phone: '0502234568', national_id: '2234567891', committee_name: 'لجنة البيئة الصحية' },
+        { full_name: 'أ. لطيفة العنزي', role: 'committee_supervisor', email: 'latifa.anzi@qelwa.sa', phone: '0502234569', national_id: '2234567892', committee_name: 'لجنة البيئة الصحية' },
+        { full_name: 'د. نورة الشهري', role: 'committee_head', email: 'noura.shehri@qelwa.sa', phone: '0505234567', national_id: '5234567890', committee_name: 'لجنة التغذية الصحية' },
+        { full_name: 'د. سلطان العمري', role: 'committee_coordinator', email: 'sultan.omari@qelwa.sa', phone: '0505234568', national_id: '5234567891', committee_name: 'لجنة التغذية الصحية' }
+      ];
+      sampleMembers.forEach((m) => {
+        if (!membersAfter.some((existing) => existing.national_id === m.national_id)) {
+          const committee = committeesNow.find((c) => c.name === m.committee_name);
+          db.create('team_member', null, {
+            ...m,
+            password: PASS,
+            committee_id: committee?.id,
+            status: 'active',
+            join_date: baseDate,
+          });
+        }
+      });
+    }
     committeesNow.forEach((c, i) => {
       const roles = ['committee_head', 'committee_coordinator', 'committee_supervisor', 'member', 'volunteer'];
       const labels = { committee_head: 'رئيس', committee_coordinator: 'منسق', committee_supervisor: 'مشرف', member: 'عضو', volunteer: 'متطوع' };
