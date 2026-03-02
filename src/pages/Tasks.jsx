@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTodo, MessageCircle, Lightbulb } from "lucide-react";
+import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTodo, MessageCircle, Lightbulb, Users, Filter } from "lucide-react";
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
@@ -42,6 +42,8 @@ export default function Tasks() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterInitiative, setFilterInitiative] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterAssignee, setFilterAssignee] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, task: null });
@@ -66,6 +68,11 @@ export default function Tasks() {
   const { data: initiatives = [] } = useQuery({
     queryKey: ['initiatives'],
     queryFn: () => api.entities.Initiative.list()
+  });
+
+  const { data: committees = [] } = useQuery({
+    queryKey: ['committees'],
+    queryFn: () => api.entities.Committee.list()
   });
 
   const { data: standards = [] } = useQuery({
@@ -164,8 +171,24 @@ export default function Tasks() {
     pending: accessibleTasks.filter(t => t.status === 'pending').length,
     in_progress: accessibleTasks.filter(t => t.status === 'in_progress').length,
     completed: accessibleTasks.filter(t => t.status === 'completed').length,
-    overdue: accessibleTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
+    overdue: accessibleTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length,
+    highPriority: accessibleTasks.filter(t => t.priority === 'high' || t.priority === 'urgent').length,
+    uniqueAssignees: new Set(accessibleTasks.map(t => t.assigned_to).filter(Boolean)).size,
   };
+
+  // الأعضاء الذين لديهم مهام
+  const assigneesWithTasks = useMemo(() => {
+    const map = new Map();
+    accessibleTasks.forEach(t => {
+      if (t.assigned_to) {
+        const member = members.find(m => String(m.id) === String(t.assigned_to));
+        const name = t.assigned_to_name || member?.full_name || 'غير محدد';
+        if (!map.has(t.assigned_to)) map.set(t.assigned_to, { id: t.assigned_to, name, count: 0 });
+        map.get(t.assigned_to).count++;
+      }
+    });
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [accessibleTasks, members]);
 
   const filteredTasks = accessibleTasks.filter(t => {
     const matchesStatus = activeStatus === 'all' || 
@@ -175,7 +198,9 @@ export default function Tasks() {
       t.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.assigned_to_name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesInitiative = filterInitiative === 'all' || t.initiative_id === filterInitiative;
-    return matchesStatus && matchesSearch && matchesInitiative;
+    const matchesPriority = filterPriority === 'all' || t.priority === filterPriority;
+    const matchesAssignee = filterAssignee === 'all' || String(t.assigned_to) === filterAssignee;
+    return matchesStatus && matchesSearch && matchesInitiative && matchesPriority && matchesAssignee;
   });
 
   const handleSave = async (data) => {
@@ -243,7 +268,7 @@ export default function Tasks() {
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
               <ListTodo className="w-6 h-6 mx-auto mb-2 text-blue-600" />
@@ -279,6 +304,13 @@ export default function Tasks() {
               <p className="text-xs text-gray-500">متأخرة</p>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Users className="w-6 h-6 mx-auto mb-2 text-indigo-600" />
+              <p className="text-2xl font-bold">{stats.uniqueAssignees}</p>
+              <p className="text-xs text-gray-500">مكلفين</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Actions */}
@@ -302,6 +334,33 @@ export default function Tasks() {
                 <SelectItem value="all">كل المبادرات</SelectItem>
                 {accessibleInitiatives.map(i => (
                   <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <SelectTrigger className="w-[140px]">
+              <Filter className="w-4 h-4 ml-1 text-orange-500" />
+              <SelectValue placeholder="الأولوية" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الأولويات</SelectItem>
+              <SelectItem value="urgent">عاجلة</SelectItem>
+              <SelectItem value="high">عالية</SelectItem>
+              <SelectItem value="medium">متوسطة</SelectItem>
+              <SelectItem value="low">منخفضة</SelectItem>
+            </SelectContent>
+          </Select>
+          {assigneesWithTasks.length > 1 && (
+            <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+              <SelectTrigger className="w-[180px]">
+                <Users className="w-4 h-4 ml-1 text-indigo-500" />
+                <SelectValue placeholder="المكلف" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">كل المكلفين</SelectItem>
+                {assigneesWithTasks.map(a => (
+                  <SelectItem key={a.id} value={String(a.id)}>{a.name} ({a.count})</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -363,6 +422,7 @@ export default function Tasks() {
                 onStatusChange={handleStatusChange}
                 canEdit={canManageTasks}
                 initiatives={accessibleInitiatives}
+                members={members}
               />
             ))}
           </div>
