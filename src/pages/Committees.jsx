@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCommittee, setEditingCommittee] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, committee: null });
-  const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -43,7 +44,12 @@ export default function Committees() {
 
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
-    queryFn: () => api.entities.Axis.list()
+    queryFn: () => api.entities.Axis.list('order')
+  });
+
+  const { data: standards = [] } = useQuery({
+    queryKey: ['standards'],
+    queryFn: () => api.entities.Standard.list()
   });
 
   const createMutation = useMutation({
@@ -128,11 +134,12 @@ export default function Committees() {
         name: committee.name, 
         description: committee.description || '',
         axis_id: committee.axis_id || '',
-        axis_name: committee.axis_name || ''
+        axis_name: committee.axis_name || '',
+        related_standards: committee.related_standards ? (Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]')) : []
       });
     } else {
       setEditingCommittee(null);
-      setFormData({ name: '', description: '', axis_id: '', axis_name: '' });
+      setFormData({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
     }
     setFormOpen(true);
   };
@@ -316,7 +323,8 @@ export default function Committees() {
                   setFormData({ 
                     ...formData, 
                     axis_id: v === 'none' ? '' : v, 
-                    axis_name: v === 'none' ? '' : axis?.name || '' 
+                    axis_name: v === 'none' ? '' : axis?.name || '',
+                    related_standards: []
                   });
                 }}
               >
@@ -328,6 +336,42 @@ export default function Committees() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>المعايير المرتبطة</Label>
+              {formData.axis_id && (() => {
+                const axisStandards = sortAndDeduplicateStandardsByCode(standards.filter(s => s.axis_id === formData.axis_id));
+                return axisStandards.length > 0 ? (
+                  <div className="border rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
+                    {axisStandards.map(standard => (
+                      <div key={standard.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.related_standards?.includes(standard.id)}
+                          onChange={() => {
+                            const current = formData.related_standards || [];
+                            const next = current.includes(standard.id)
+                              ? current.filter(id => id !== standard.id)
+                              : [...current, standard.id];
+                            setFormData({ ...formData, related_standards: next });
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm">{standard.code} - {standard.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border rounded-lg p-3 text-xs text-gray-600 bg-gray-50">
+                    لا توجد معايير متاحة لهذا المحور حالياً.
+                  </div>
+                );
+              })()}
+              {!formData.axis_id && (
+                <div className="border rounded-lg p-3 text-xs text-gray-600 bg-gray-50">
+                  اختر محوراً أولاً لعرض المعايير المرتبطة.
+                </div>
+              )}
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
