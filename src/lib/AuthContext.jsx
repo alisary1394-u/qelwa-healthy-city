@@ -48,6 +48,14 @@ export const AuthProvider = ({ children }) => {
         }
       })();
 
+      if (appParams.useLocalBackend) {
+        try {
+          await Promise.resolve(api.syncFromWebToLocalIfNeeded?.());
+        } catch (e) {
+          if (typeof console !== 'undefined') console.warn('[Auth] Web→Local sync skipped:', e?.message || e);
+        }
+      }
+
       let shouldForceReseedForMissingLocalData = false;
       if (appParams.useLocalBackend) {
         try {

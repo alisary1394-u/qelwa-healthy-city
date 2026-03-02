@@ -11,6 +11,9 @@ const DB_PREFIX = 'local_db_';
 const AUTH_KEY = 'local_current_user';
 const CSV_SYNC_VERSION = '2';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
+const WEB_SYNC_KEY = 'local_web_sync_version';
+const WEB_SYNC_VERSION = '2026-03-02';
+const DEFAULT_WEB_SYNC_BASE = String(import.meta.env.VITE_WEB_SYNC_URL || 'https://www.qeelwah.com').replace(/\/$/, '');
 
 function getId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -35,6 +38,13 @@ function setStore(entityName, arr) {
   } catch (e) {
     console.warn('localBackend setStore failed', e);
   }
+}
+
+async function fetchWebEntity(baseUrl, entityName) {
+  const res = await fetch(`${baseUrl}/api/entities/${entityName}`);
+  const data = await res.json().catch(() => []);
+  if (!res.ok) throw new Error(`web sync failed for ${entityName}: ${res.status}`);
+  return Array.isArray(data) ? data : [];
 }
 
 function uploadFileToDataUrl(file) {
@@ -411,6 +421,54 @@ export function clearLocalDataAndReseed() {
   if (typeof window !== 'undefined') window.location.reload();
 }
 
+/**
+ * مزامنة باتجاه واحد: جلب بيانات الويب ووضعها محلياً (localStorage).
+ * لا ترفع أي بيانات محلية إلى الويب.
+ */
+export async function syncFromWebToLocalIfNeeded(options = {}) {
+  if (typeof localStorage === 'undefined') return false;
+  const force = options?.force === true;
+  if (!force && localStorage.getItem(WEB_SYNC_KEY) === WEB_SYNC_VERSION) return false;
+
+  const baseUrl = DEFAULT_WEB_SYNC_BASE;
+  const entitiesToSync = [
+    'Axis', 'Standard', 'Committee', 'TeamMember', 'Initiative', 'Task',
+    'Budget', 'BudgetAllocation', 'Transaction', 'Settings', 'Evidence', 'InitiativeKPI'
+  ];
+
+  try {
+    const fetched = {};
+    for (const name of entitiesToSync) {
+      fetched[name] = await fetchWebEntity(baseUrl, name);
+    }
+
+    const standardsCount = (fetched.Standard || []).length;
+    const teamCount = (fetched.TeamMember || []).length;
+    if (standardsCount < 80 || teamCount === 0) {
+      throw new Error(`incomplete web dataset (standards=${standardsCount}, team=${teamCount})`);
+    }
+
+    for (const name of entitiesToSync) {
+      setStore(name, fetched[name]);
+    }
+
+    localStorage.setItem(CSV_SYNC_KEY, CSV_SYNC_VERSION);
+    localStorage.setItem(WEB_SYNC_KEY, WEB_SYNC_VERSION);
+    if (typeof console !== 'undefined') {
+      console.log('[localBackend] تمت مزامنة بيانات الويب إلى المحلي:', {
+        standards: standardsCount,
+        team: teamCount,
+        committees: fetched.Committee?.length || 0,
+        initiatives: fetched.Initiative?.length || 0,
+      });
+    }
+    return true;
+  } catch (e) {
+    if (typeof console !== 'undefined') console.warn('[localBackend] تعذرت مزامنة الويب → المحلي:', e?.message || e);
+    return false;
+  }
+}
+
 /** واجهة تحاكي العميل (api) للاستخدام في التطبيق */
 export const localBackend = {
   entities,
@@ -431,5 +489,6 @@ export const localBackend = {
   clearAxesAndStandardsAndReseed,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
+  syncFromWebToLocalIfNeeded,
   getDefaultLocalCredentials,
 };
