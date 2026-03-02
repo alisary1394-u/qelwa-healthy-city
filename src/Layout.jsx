@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { api } from '@/api/apiClient';
@@ -19,13 +19,15 @@ import {
 } from "@/components/ui/tooltip";
 import { 
   LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle, 
-  Moon, Sun, Monitor, Check, ChevronRight, PanelLeftClose, PanelLeft, X
+  Moon, Sun, Monitor, Check, ChevronRight, PanelLeftClose, PanelLeft, X,
+  Clock, ShieldAlert
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBackendConfigured, appParams } from '@/lib/app-params';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 
@@ -35,6 +37,18 @@ export default function Layout({ children }) {
   const { navItems, permissions } = usePermissions();
   const { logout } = useAuth();
   const { theme, setTheme, systemTheme } = useTheme();
+
+  // جلسة الخمول: تسجيل خروج تلقائي بعد 20 دقيقة من عدم النشاط
+  const handleIdleLogout = useCallback(() => {
+    try { localStorage.setItem('idle_logout_signal', 'true'); } catch {}
+    setTimeout(() => { try { localStorage.removeItem('idle_logout_signal'); } catch {} }, 1000);
+    logout(true);
+  }, [logout]);
+  const { showWarning: showIdleWarning, remainingSeconds, dismissWarning } = useIdleTimeout(
+    handleIdleLogout,
+    20 * 60 * 1000, // 20 دقيقة
+    2 * 60 * 1000   // تحذير قبل دقيقتين
+  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'; } catch { return false; }
   });
@@ -386,6 +400,46 @@ export default function Layout({ children }) {
           {children}
         </main>
       </div>
+
+      {/* ===== تحذير انتهاء الجلسة ===== */}
+      {showIdleWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" dir="rtl">
+          <div className="bg-card border shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+              <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">تحذير: انتهاء الجلسة قريباً</h3>
+            <p className="text-muted-foreground mb-4">
+              سيتم تسجيل خروجك تلقائياً بعد
+            </p>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Clock className="w-5 h-5 text-destructive" />
+              <span className="text-3xl font-bold text-destructive tabular-nums">
+                {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              بسبب عدم النشاط لفترة طويلة، اضغط آلمتابعة» للبقاء في النظام.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={dismissWarning}
+                className="flex-1 h-11 text-base font-semibold"
+              >
+                متابعة العمل
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => logout(true)}
+                className="h-11 text-destructive border-destructive/30 hover:bg-destructive/5"
+              >
+                <LogOut className="w-4 h-4 ml-1" />
+                خروج
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
