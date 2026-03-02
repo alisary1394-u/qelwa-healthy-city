@@ -314,11 +314,115 @@ async function seedData() {
     }
     console.log(`\n✅ تمت إضافة ${addedAllocations} تخصيص ميزانية\n`);
 
+    // 5. مزامنة المعاملات المالية
+    console.log('💳 مزامنة المعاملات المالية...');
+    const allocationsAfter = await api('GET', '/api/entities/BudgetAllocation');
+    const transactions = await api('GET', '/api/entities/Transaction');
+    const existingTransactionKeys = new Set(
+      (transactions || []).map((t) => `${t.initiative_id || ''}::${t.type || ''}::${t.description || ''}`)
+    );
+
+    let addedTransactions = 0;
+    let paidTotal = 0;
+    const today = new Date();
+    const fmt = (d) => d.toISOString().split('T')[0];
+
+    for (const allocation of (allocationsAfter || [])) {
+      if (!allocation?.initiative_id || Number(allocation.allocated_amount) <= 0) continue;
+
+      const allocatedAmount = Number(allocation.allocated_amount) || 0;
+      const paidAmount = Math.round(allocatedAmount * 0.2);
+      const pendingAmount = Math.round(allocatedAmount * 0.1);
+
+      const paidDesc = `صرف تشغيلي - ${allocation.initiative_title || 'مبادرة'}`;
+      const pendingDesc = `دفعة معلقة - ${allocation.initiative_title || 'مبادرة'}`;
+
+      const paidKey = `${allocation.initiative_id}::expense::${paidDesc}`;
+      if (!existingTransactionKeys.has(paidKey) && paidAmount > 0) {
+        await api('POST', '/api/entities/Transaction', {
+          transaction_number: `TXP-${Date.now().toString().slice(-6)}-${addedTransactions + 1}`,
+          type: 'expense',
+          category: 'تشغيل المبادرات',
+          amount: paidAmount,
+          description: paidDesc,
+          date: fmt(new Date(today.getTime() - (7 * 86400000))),
+          committee_id: allocation.committee_id || '',
+          committee_name: allocation.committee_name || '',
+          axis_id: allocation.axis_id || '',
+          axis_name: allocation.axis_name || '',
+          standard_id: allocation.standard_id || '',
+          standard_code: allocation.standard_code || '',
+          initiative_id: allocation.initiative_id,
+          initiative_title: allocation.initiative_title || '',
+          payment_method: 'تحويل بنكي',
+          receipt_number: `RCPT-${Date.now().toString().slice(-5)}-${addedTransactions + 1}`,
+          beneficiary: allocation.committee_name || 'اللجنة',
+          notes: 'معاملة مولدة تلقائياً ضمن التحديث الكامل',
+          attachment_url: '',
+          status: 'paid',
+          approved_by: 'المشرف',
+          approval_date: fmt(new Date(today.getTime() - (6 * 86400000))),
+        });
+        existingTransactionKeys.add(paidKey);
+        addedTransactions++;
+        paidTotal += paidAmount;
+      }
+
+      const pendingKey = `${allocation.initiative_id}::expense::${pendingDesc}`;
+      if (!existingTransactionKeys.has(pendingKey) && pendingAmount > 0) {
+        await api('POST', '/api/entities/Transaction', {
+          transaction_number: `TXN-${Date.now().toString().slice(-6)}-${addedTransactions + 1}`,
+          type: 'expense',
+          category: 'دفعات مجدولة',
+          amount: pendingAmount,
+          description: pendingDesc,
+          date: fmt(new Date(today.getTime() - (2 * 86400000))),
+          committee_id: allocation.committee_id || '',
+          committee_name: allocation.committee_name || '',
+          axis_id: allocation.axis_id || '',
+          axis_name: allocation.axis_name || '',
+          standard_id: allocation.standard_id || '',
+          standard_code: allocation.standard_code || '',
+          initiative_id: allocation.initiative_id,
+          initiative_title: allocation.initiative_title || '',
+          payment_method: 'نقدي',
+          receipt_number: `PND-${Date.now().toString().slice(-5)}-${addedTransactions + 1}`,
+          beneficiary: allocation.committee_name || 'اللجنة',
+          notes: 'دفعة قيد الاعتماد',
+          attachment_url: '',
+          status: 'pending',
+        });
+        existingTransactionKeys.add(pendingKey);
+        addedTransactions++;
+      }
+    }
+    console.log(`\n✅ تمت إضافة ${addedTransactions} معاملة مالية\n`);
+
+    // 6. تحديث ملخص الميزانية النشطة
+    const totalAllocated = (allocationsAfter || [])
+      .filter((a) => String(a.budget_id || '') === String(activeBudget.id))
+      .reduce((sum, a) => sum + (Number(a.allocated_amount) || 0), 0);
+
+    const transactionsAfter = await api('GET', '/api/entities/Transaction');
+    const totalSpentPaid = (transactionsAfter || [])
+      .filter((t) => t.status === 'paid' && t.type === 'expense')
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+    const budgetTotal = Number(activeBudget.total_budget) || 0;
+    await api('PATCH', `/api/entities/Budget/${activeBudget.id}`, {
+      allocated_budget: totalAllocated,
+      spent_amount: totalSpentPaid,
+      remaining_budget: Math.max(0, budgetTotal - totalSpentPaid),
+      status: 'active',
+    });
+    console.log(`   ✓ تم تحديث ملخص ${activeBudget.name}`);
+
     console.log('📊 ملخص البيانات المضافة:');
     console.log(`   • اللجان المتاحة: ${Object.keys(resolvedCommittees).length}`);
     console.log(`   • أعضاء الفريق: ${totalMembers}`);
     console.log(`   • المبادرات: ${totalInitiatives}`);
     console.log(`   • تخصيصات الميزانية الجديدة: ${addedAllocations}`);
+    console.log(`   • المعاملات المالية الجديدة: ${addedTransactions}`);
     console.log('\n✨ تمت الإضافة بنجاح! حدّث الصفحة (Ctrl+F5).\n');
   } catch (error) {
     console.error('\n❌ خطأ:', error?.message || error);
