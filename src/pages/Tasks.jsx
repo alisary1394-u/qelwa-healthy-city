@@ -30,10 +30,16 @@ function parseTeamMemberIds(rawValue) {
   return text.split(',').map((v) => v.trim()).filter(Boolean);
 }
 
+import { useSearchParams } from 'react-router-dom';
+
 export default function Tasks() {
   const { permissions, role, currentMember } = usePermissions();
+  const [searchParams] = useSearchParams();
 
-  const [activeStatus, setActiveStatus] = useState('all');
+  const [activeStatus, setActiveStatus] = useState(() => {
+    const f = searchParams.get('filter');
+    return f === 'overdue' ? 'overdue' : 'all';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterInitiative, setFilterInitiative] = useState('all');
   const [formOpen, setFormOpen] = useState(false);

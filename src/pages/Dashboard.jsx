@@ -361,7 +361,7 @@ export default function Dashboard() {
                     <p className="font-semibold text-red-800">{overdueTasks} مهام متأخرة</p>
                     <p className="text-sm text-red-600">تحتاج إلى متابعة عاجلة</p>
                   </div>
-                  <Link to={createPageUrl('Tasks')} className="mr-auto">
+                  <Link to={createPageUrl('Tasks') + '?filter=overdue'} className="mr-auto">
                     <Button size="sm" variant="outline" className="border-red-300 text-red-700">
                       عرض <ArrowLeft className="w-4 h-4 mr-1" />
                     </Button>
