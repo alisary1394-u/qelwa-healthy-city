@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { createPageUrl } from '@/utils';
 import { getNavItemsForRole } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
-import { Loader2, MapPin, Users, Target, Database, Heart, Leaf, Shield, ArrowLeft, Building2 } from "lucide-react";
+import { Loader2, MapPin, Users, Target, Heart, Leaf, Shield, ArrowLeft, Building2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
@@ -28,11 +28,9 @@ export default function Home() {
   const [registerSuccess, setRegisterSuccess] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
-  const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const navigate = useNavigate();
   const isEmailVerificationTemporarilyDisabled = appParams.disableEmailVerification === true;
   const apiBaseUrl = (appParams.apiUrl || '').replace(/\/$/, '');
-  const canBootstrap = !!apiBaseUrl;
 
   const { data: isAuth } = useQuery({
     queryKey: ['isAuth'],
@@ -177,26 +175,6 @@ export default function Home() {
     setError('');
     await sendVerificationCodeEmail(memberEmail);
     setResendTimer(60);
-  };
-
-  const handleBootstrap = async () => {
-    if (!canBootstrap) return;
-    setBootstrapLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/bootstrap`);
-      const data = await res.json().catch(() => ({}));
-      if (data.ok && data.message) {
-        window.alert(data.message);
-        window.location.reload();
-      } else {
-        window.alert(data.error || 'فشلت التهيئة');
-      }
-    } catch (err) {
-      window.alert('فشل الاتصال. تحقق من عنوان السيرفر.');
-    } finally {
-      setBootstrapLoading(false);
-    }
   };
 
   const handleRegisterGovernor = async (e) => {
@@ -411,23 +389,6 @@ export default function Home() {
                         {isEmailVerificationTemporarilyDisabled ? 'دخول مباشر' : 'متابعة'}
                         {!loading && <ArrowLeft className="w-4 h-4 mr-2" />}
                       </Button>
-
-                      {canBootstrap && (
-                        <div className="text-center text-sm pt-3 border-t">
-                          <p className="text-muted-foreground mb-2">لا يوجد أي عضو مسجل؟</p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={bootstrapLoading}
-                            onClick={handleBootstrap}
-                          >
-                            <Database className="w-4 h-4 ml-2" />
-                            {bootstrapLoading ? 'جاري التهيئة...' : 'تهيئة التطبيق'}
-                          </Button>
-                          <p className="text-xs text-muted-foreground mt-2">هوية: 1 | كلمة المرور: 123456</p>
-                        </div>
-                      )}
 
                       <div className="text-center text-sm text-muted-foreground pt-3 border-t">
                         <p>للحصول على حساب، تواصل مع <span className="font-semibold text-primary">مدير النظام</span></p>
