@@ -385,6 +385,7 @@ export const PERMISSIONS_BY_ROLE = {
     canSeeTeam: false,
     canSeeFiles: false,
     canSeePermissions: false,
+    canSeeSeedData: false,
   },
   committee_member: {
     label: ROLE_LABELS.committee_member,

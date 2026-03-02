@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2 } from "lucide-react";
 import { Link } from 'react-router-dom';
@@ -19,7 +20,7 @@ export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCommittee, setEditingCommittee] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, committee: null });
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '' });
   const [loading, setLoading] = useState(false);
 
   const queryClient = useQueryClient();
@@ -37,6 +38,11 @@ export default function Committees() {
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
     queryFn: () => api.entities.TeamMember.list()
+  });
+
+  const { data: axes = [] } = useQuery({
+    queryKey: ['axes'],
+    queryFn: () => api.entities.Axis.list()
   });
 
   const createMutation = useMutation({
@@ -93,10 +99,15 @@ export default function Committees() {
     if (!canManage) return;
     if (committee) {
       setEditingCommittee(committee);
-      setFormData({ name: committee.name, description: committee.description || '' });
+      setFormData({ 
+        name: committee.name, 
+        description: committee.description || '',
+        axis_id: committee.axis_id || '',
+        axis_name: committee.axis_name || ''
+      });
     } else {
       setEditingCommittee(null);
-      setFormData({ name: '', description: '' });
+      setFormData({ name: '', description: '', axis_id: '', axis_name: '' });
     }
     setFormOpen(true);
   };
@@ -167,8 +178,13 @@ export default function Committees() {
                 <Card key={committee.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-lg">{committee.name}</CardTitle>
+                        {committee.axis_name && (
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            المحور: {committee.axis_name}
+                          </Badge>
+                        )}
                         {committee.description && (
                           <p className="text-sm text-gray-500 mt-1">{committee.description}</p>
                         )}
@@ -246,6 +262,28 @@ export default function Committees() {
                 placeholder="وصف مختصر للجنة..."
                 rows={3}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>المحور</Label>
+              <Select 
+                value={formData.axis_id || 'none'} 
+                onValueChange={(v) => {
+                  const axis = axes.find(a => a.id === v);
+                  setFormData({ 
+                    ...formData, 
+                    axis_id: v === 'none' ? '' : v, 
+                    axis_name: v === 'none' ? '' : axis?.name || '' 
+                  });
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">بدون ربط</SelectItem>
+                  {axes.map(axis => (
+                    <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>

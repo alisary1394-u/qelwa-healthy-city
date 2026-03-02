@@ -84,6 +84,42 @@
 
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* انتقال سلس لجميع العناصر */
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* انتقال خاص للعناصر التفاعلية */
+  button, a, input, select, textarea {
+    transition: all 0.2s ease;
+  }
+
+  /* إصلاح الألوان المحددة مسبقاً للثيم الداكن */
+  .dark .bg-gray-50 {
+    @apply bg-gray-900;
+  }
+
+  .dark .bg-white {
+    @apply bg-gray-950;
+  }
+
+  .dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+
+  .dark .text-gray-800 {
+    @apply text-gray-200;
+  }
+
+  .dark .hover\:bg-gray-50:hover {
+    @apply hover:bg-gray-800;
+  }
+
+  .dark .hover\:bg-gray-100:hover {
+    @apply hover:bg-gray-700;
   }
 
   /* خط التقارير — وضوح أفضل للعربية وعند التصدير */

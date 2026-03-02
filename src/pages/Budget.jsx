@@ -47,6 +47,10 @@ export default function Budget() {
     committee_name: '',
     axis_id: '',
     axis_name: '',
+    standard_id: '',
+    standard_code: '',
+    initiative_id: '',
+    initiative_title: '',
     payment_method: 'نقدي',
     receipt_number: '',
     beneficiary: '',
@@ -61,7 +65,8 @@ export default function Budget() {
     end_date: '',
     total_budget: 0,
     description: '',
-    notes: ''
+    notes: '',
+    status: 'draft'
   });
 
   const [allocationForm, setAllocationForm] = useState({
@@ -71,6 +76,10 @@ export default function Budget() {
     committee_name: '',
     axis_id: '',
     axis_name: '',
+    standard_id: '',
+    standard_code: '',
+    initiative_id: '',
+    initiative_title: '',
     category: '',
     allocated_amount: 0,
     notes: ''
@@ -111,6 +120,11 @@ export default function Budget() {
   const { data: axes = [] } = useQuery({
     queryKey: ['axes'],
     queryFn: () => api.entities.Axis.list()
+  });
+
+  const { data: standards = [] } = useQuery({
+    queryKey: ['standards'],
+    queryFn: () => api.entities.Standard.list()
   });
 
   const { data: members = [] } = useQuery({
@@ -184,6 +198,19 @@ export default function Budget() {
 
   const balance = totalIncome - totalExpenses;
 
+  // Calculate total allocated budgets
+  const totalAllocatedBudgets = allocations
+    .filter(a => !activeBudget || a.budget_id === activeBudget.id)
+    .reduce((sum, a) => sum + (Number(a.allocated_amount) || 0), 0);
+
+  // Calculate total initiatives budgets linked to active budget
+  const totalInitiativesBudgets = initiatives
+    .filter(i => !activeBudget || i.budget_id === activeBudget.id)
+    .reduce((sum, i) => sum + (Number(i.budget) || 0), 0);
+
+  // Calculate total committed (allocated + initiatives)
+  const totalCommitted = totalAllocatedBudgets + totalInitiativesBudgets;
+
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = !searchQuery || 
       t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -230,6 +257,10 @@ export default function Budget() {
       committee_name: '',
       axis_id: '',
       axis_name: '',
+      standard_id: '',
+      standard_code: '',
+      initiative_id: '',
+      initiative_title: '',
       payment_method: 'نقدي',
       receipt_number: '',
       beneficiary: '',
@@ -246,7 +277,8 @@ export default function Budget() {
       end_date: '',
       total_budget: 0,
       description: '',
-      notes: ''
+      notes: '',
+      status: 'draft'
     });
   };
 
@@ -258,6 +290,10 @@ export default function Budget() {
       committee_name: '',
       axis_id: '',
       axis_name: '',
+      standard_id: '',
+      standard_code: '',
+      initiative_id: '',
+      initiative_title: '',
       category: '',
       allocated_amount: 0,
       notes: ''
@@ -293,7 +329,8 @@ export default function Budget() {
           end_date: budgetForm.end_date,
           total_budget: budgetForm.total_budget,
           description: budgetForm.description,
-          notes: budgetForm.notes
+          notes: budgetForm.notes,
+          status: budgetForm.status
         }
       });
     } else {
@@ -301,8 +338,7 @@ export default function Budget() {
         ...budgetForm,
         allocated_budget: 0,
         spent_amount: 0,
-        remaining_budget: budgetForm.total_budget,
-        status: 'draft'
+        remaining_budget: budgetForm.total_budget
       });
     }
     setSaving(false);
@@ -319,7 +355,8 @@ export default function Budget() {
         end_date: budget.end_date || '',
         total_budget: budget.total_budget ?? 0,
         description: budget.description || '',
-        notes: budget.notes || ''
+        notes: budget.notes || '',
+        status: budget.status || 'draft'
       });
     } else {
       setEditingBudget(null);
@@ -464,36 +501,61 @@ export default function Budget() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">إجمالي الميزانية</p>
                   <p className="text-2xl font-bold text-blue-600">{activeBudget.total_budget?.toLocaleString()} ريال</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">المبلغ المنفق</p>
+                  <p className="text-sm text-gray-500">التخصيصات المالية</p>
+                  <p className="text-2xl font-bold text-purple-600">{totalAllocatedBudgets.toLocaleString()} ريال</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">ميزانيات المبادرات</p>
+                  <p className="text-2xl font-bold text-indigo-600">{totalInitiativesBudgets.toLocaleString()} ريال</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">المبلغ المنفق فعلياً</p>
                   <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ريال</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">المتبقي</p>
-                  <p className="text-2xl font-bold text-green-600">{(activeBudget.total_budget - totalExpenses).toLocaleString()} ريال</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">نسبة الإنفاق</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {((totalExpenses / activeBudget.total_budget) * 100).toFixed(1)}%
-                  </p>
+                  <p className="text-2xl font-bold text-green-600">{(activeBudget.total_budget - totalCommitted - totalExpenses).toLocaleString()} ريال</p>
                 </div>
               </div>
-              <div className="mt-4">
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">إجمالي الملتزم به (تخصيصات + مبادرات):</span>
+                  <span className="font-bold text-orange-600">{totalCommitted.toLocaleString()} ريال</span>
+                </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full ${
-                      (totalExpenses / activeBudget.total_budget) * 100 > 90 ? 'bg-red-600' :
-                      (totalExpenses / activeBudget.total_budget) * 100 > 75 ? 'bg-yellow-600' :
-                      'bg-green-600'
-                    }`}
-                    style={{ width: `${Math.min((totalExpenses / activeBudget.total_budget) * 100, 100)}%` }}
-                  />
+                  <div className="relative h-3 rounded-full overflow-hidden">
+                    <div
+                      className="absolute h-3 bg-red-600"
+                      style={{ width: `${activeBudget.total_budget > 0 ? Math.min((totalExpenses / activeBudget.total_budget) * 100, 100) : 0}%` }}
+                      title={`منفق: ${totalExpenses.toLocaleString()} ريال`}
+                    />
+                    <div
+                      className="absolute h-3 bg-orange-400 opacity-60"
+                      style={{ width: `${activeBudget.total_budget > 0 ? Math.min(((totalCommitted + totalExpenses) / activeBudget.total_budget) * 100, 100) : 0}%` }}
+                      title={`ملتزم به: ${totalCommitted.toLocaleString()} ريال`}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-4 text-xs text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-red-600 rounded"></div>
+                    <span>منفق فعلياً ({activeBudget.total_budget > 0 ? ((totalExpenses / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-orange-400 rounded"></div>
+                    <span>ملتزم به ({activeBudget.total_budget > 0 ? ((totalCommitted / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-600 rounded"></div>
+                    <span>متاح ({activeBudget.total_budget > 0 ? (((activeBudget.total_budget - totalCommitted - totalExpenses) / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -502,13 +564,97 @@ export default function Budget() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-white">
+          <TabsList className="bg-white" dir="rtl">
             <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
             <TabsTrigger value="transactions">المعاملات المالية</TabsTrigger>
             <TabsTrigger value="budgets">الميزانيات</TabsTrigger>
             <TabsTrigger value="allocations">التخصيصات</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>ملخص الميزانية</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">إجمالي الميزانيات النشطة</p>
+                      <p className="text-2xl font-bold text-blue-600">{budgets.filter(b => b.status === 'active').length}</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">التخصيصات المالية</p>
+                      <p className="text-2xl font-bold text-purple-600">{allocations.length}</p>
+                      <p className="text-xs text-gray-500 mt-1">{totalAllocatedBudgets.toLocaleString()} ريال</p>
+                    </div>
+                    <div className="p-4 bg-indigo-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">المبادرات المرتبطة</p>
+                      <p className="text-2xl font-bold text-indigo-600">{initiatives.filter(i => i.budget_id === activeBudget?.id).length}</p>
+                      <p className="text-xs text-gray-500 mt-1">{totalInitiativesBudgets.toLocaleString()} ريال</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">إجمالي المعاملات</p>
+                      <p className="text-2xl font-bold text-green-600">{transactions.length}</p>
+                      <p className="text-xs text-gray-500 mt-1">{totalExpenses.toLocaleString()} ريال منفق</p>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="font-semibold mb-3">أعلى 5 فئات إنفاق</h3>
+                      <div className="space-y-2">
+                        {Object.entries(
+                          transactions
+                            .filter(t => t.type === 'expense' && t.status === 'paid')
+                            .reduce((acc, t) => {
+                              acc[t.category] = (acc[t.category] || 0) + (t.amount || 0);
+                              return acc;
+                            }, {})
+                        )
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 5)
+                          .map(([category, amount]) => (
+                            <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                              <span className="font-medium">{category}</span>
+                              <span className="text-red-600 font-bold">{amount.toLocaleString()} ريال</span>
+                            </div>
+                          ))}
+                        {Object.keys(transactions.filter(t => t.type === 'expense' && t.status === 'paid')).length === 0 && (
+                          <p className="text-gray-400 text-sm text-center py-4">لا توجد مصروفات بعد</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-semibold mb-3">أعلى 5 مبادرات من حيث الميزانية</h3>
+                      <div className="space-y-2">
+                        {initiatives
+                          .filter(i => i.budget_id === activeBudget?.id && i.budget > 0)
+                          .sort((a, b) => (b.budget || 0) - (a.budget || 0))
+                          .slice(0, 5)
+                          .map(initiative => (
+                            <div key={initiative.id} className="flex items-center justify-between p-3 bg-indigo-50 rounded">
+                              <span className="font-medium text-sm truncate flex-1">{initiative.title}</span>
+                              <span className="text-indigo-600 font-bold text-sm ml-2">{initiative.budget.toLocaleString()} ريال</span>
+                            </div>
+                          ))}
+                        {initiatives.filter(i => i.budget_id === activeBudget?.id && i.budget > 0).length === 0 && (
+                          <p className="text-gray-400 text-sm text-center py-4">لا توجد مبادرات مرتبطة بعد</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Transactions Tab */}
         {activeTab === 'transactions' && (
@@ -553,7 +699,16 @@ export default function Budget() {
             </div>
 
             <div className="space-y-3">
-              {filteredTransactions.map(transaction => (
+              {filteredTransactions.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-lg">لا توجد معاملات مالية</p>
+                    <p className="text-gray-400 text-sm mt-2">ابدأ بإضافة معاملة جديدة</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredTransactions.map(transaction => (
                 <Card key={transaction.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -576,6 +731,18 @@ export default function Budget() {
                           </Badge>
                         </div>
                         <h3 className="font-semibold text-lg mb-1">{transaction.description}</h3>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {transaction.standard_code && (
+                            <Badge variant="outline" className="text-xs">
+                              معيار: {transaction.standard_code}
+                            </Badge>
+                          )}
+                          {transaction.initiative_title && (
+                            <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
+                              مبادرة: {transaction.initiative_title}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
                           <div>المبلغ: <strong className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
                             {transaction.amount?.toLocaleString()} ريال
@@ -587,20 +754,112 @@ export default function Budget() {
                           {transaction.axis_name && <div>المحور: <strong>{transaction.axis_name}</strong></div>}
                         </div>
                       </div>
-                      {transaction.status === 'pending' && canApproveTransactions && (
+                      {canCreateTransactions && (
                         <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleApproveTransaction(transaction)}
+                          variant="outline"
+                          size="icon"
+                          className="ml-2"
+                          onClick={() => {
+                            setTransactionForm({
+                              type: transaction.type,
+                              category: transaction.category,
+                              amount: transaction.amount,
+                              description: transaction.description,
+                              date: transaction.date,
+                              committee_id: transaction.committee_id || '',
+                              committee_name: transaction.committee_name || '',
+                              axis_id: transaction.axis_id || '',
+                              axis_name: transaction.axis_name || '',
+                              standard_id: transaction.standard_id || '',
+                              standard_code: transaction.standard_code || '',
+                              initiative_id: transaction.initiative_id || '',
+                              initiative_title: transaction.initiative_title || '',
+                              payment_method: transaction.payment_method || 'نقدي',
+                              receipt_number: transaction.receipt_number || '',
+                              beneficiary: transaction.beneficiary || '',
+                              notes: transaction.notes || '',
+                              attachment_url: transaction.attachment_url || ''
+                            });
+                            setTransactionFormOpen(true);
+                          }}
+                          title="تعديل المعاملة"
                         >
-                          <CheckCircle className="w-4 h-4 ml-1" />
-                          اعتماد
+                          <Pencil className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
+                    
+                    {canApproveTransactions && (
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <div className="flex gap-2">
+                          {transaction.status !== 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+                              onClick={async () => {
+                                await updateTransactionMutation.mutateAsync({
+                                  id: transaction.id,
+                                  data: { status: 'pending' }
+                                });
+                              }}
+                            >
+                              معلقة
+                            </Button>
+                          )}
+                          {transaction.status !== 'approved' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700"
+                              onClick={async () => {
+                                await updateTransactionMutation.mutateAsync({
+                                  id: transaction.id,
+                                  data: { status: 'approved', approved_by: currentUser?.full_name, approval_date: new Date().toISOString().split('T')[0] }
+                                });
+                              }}
+                            >
+                              معتمدة
+                            </Button>
+                          )}
+                          {transaction.status !== 'paid' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-green-50 hover:bg-green-100 text-green-700"
+                              onClick={async () => {
+                                await updateTransactionMutation.mutateAsync({
+                                  id: transaction.id,
+                                  data: { status: 'paid', payment_date: new Date().toISOString().split('T')[0] }
+                                });
+                              }}
+                            >
+                              مدفوعة
+                            </Button>
+                          )}
+                          {transaction.status !== 'rejected' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-red-50 hover:bg-red-100 text-red-700"
+                              onClick={async () => {
+                                await updateTransactionMutation.mutateAsync({
+                                  id: transaction.id,
+                                  data: { status: 'rejected' }
+                                });
+                              }}
+                            >
+                              مرفوضة
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
@@ -618,7 +877,18 @@ export default function Budget() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {budgets.map(budget => (
+              {budgets.length === 0 ? (
+                <Card className="col-span-full">
+                  <CardContent className="p-12 text-center">
+                    <DollarSign className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-lg">لا توجد ميزانيات</p>
+                    {showBudgetManagement && (
+                      <p className="text-gray-400 text-sm mt-2">ابدأ بإنشاء ميزانية جديدة</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                budgets.map(budget => (
                 <Card key={budget.id}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -647,9 +917,63 @@ export default function Budget() {
                         <strong>{budget.start_date} - {budget.end_date}</strong>
                       </div>
                     </div>
+                    
+                    {showBudgetManagement && (
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <div className="flex gap-2">
+                          {budget.status !== 'draft' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs"
+                              onClick={async () => {
+                                await updateBudgetMutation.mutateAsync({
+                                  id: budget.id,
+                                  data: { status: 'draft' }
+                                });
+                              }}
+                            >
+                              مسودة
+                            </Button>
+                          )}
+                          {budget.status !== 'active' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-green-50 hover:bg-green-100 text-green-700"
+                              onClick={async () => {
+                                await updateBudgetMutation.mutateAsync({
+                                  id: budget.id,
+                                  data: { status: 'active' }
+                                });
+                              }}
+                            >
+                              تفعيل
+                            </Button>
+                          )}
+                          {budget.status !== 'closed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-red-50 hover:bg-red-100 text-red-700"
+                              onClick={async () => {
+                                await updateBudgetMutation.mutateAsync({
+                                  id: budget.id,
+                                  data: { status: 'closed' }
+                                });
+                              }}
+                            >
+                              إغلاق
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
@@ -667,7 +991,18 @@ export default function Budget() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {allocations.map(allocation => (
+              {allocations.length === 0 ? (
+                <Card className="col-span-full">
+                  <CardContent className="p-12 text-center">
+                    <DollarSign className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-lg">لا توجد تخصيصات</p>
+                    {showBudgetManagement && (
+                      <p className="text-gray-400 text-sm mt-2">ابدأ بإنشاء تخصيص جديد</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                allocations.map(allocation => (
                 (() => {
                   const linkedInitiatives = allocationInitiativesMap[allocation.id] || [];
                   const initiativesBudgetTotal = linkedInitiatives.reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
@@ -681,13 +1016,54 @@ export default function Budget() {
                 <Card key={allocation.id}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name}</h3>
-                        <p className="text-sm text-gray-500">{allocation.category}</p>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name || 'تخصيص عام'}</h3>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {allocation.category && <p className="text-sm text-gray-500">{allocation.category}</p>}
+                          {allocation.standard_code && (
+                            <Badge variant="outline" className="text-xs">
+                              معيار: {allocation.standard_code}
+                            </Badge>
+                          )}
+                          {allocation.initiative_title && (
+                            <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
+                              مبادرة: {allocation.initiative_title}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Badge className={allocation.status === 'active' ? 'bg-green-600' : 'bg-gray-600'}>
-                        {allocation.status === 'active' ? 'نشط' : 'منتهي'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {showBudgetManagement && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              setAllocationForm({
+                                budget_id: allocation.budget_id || '',
+                                budget_name: allocation.budget_name || '',
+                                committee_id: allocation.committee_id || '',
+                                committee_name: allocation.committee_name || '',
+                                axis_id: allocation.axis_id || '',
+                                axis_name: allocation.axis_name || '',
+                                standard_id: allocation.standard_id || '',
+                                standard_code: allocation.standard_code || '',
+                                initiative_id: allocation.initiative_id || '',
+                                initiative_title: allocation.initiative_title || '',
+                                category: allocation.category || '',
+                                allocated_amount: allocation.allocated_amount || 0,
+                                notes: allocation.notes || ''
+                              });
+                              setAllocationFormOpen(true);
+                            }}
+                            title="تعديل التخصيص"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Badge className={allocation.status === 'active' ? 'bg-green-600' : 'bg-gray-600'}>
+                          {allocation.status === 'active' ? 'نشط' : 'منتهي'}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
@@ -724,11 +1100,59 @@ export default function Budget() {
                       </div>
                       <p className="text-xs text-gray-500 text-center">{spentPercentage.toFixed(1)}% منفق</p>
                     </div>
+                    
+                    {showBudgetManagement && (
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <div className="flex gap-2">
+                          {allocation.status !== 'active' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-green-50 hover:bg-green-100 text-green-700"
+                              onClick={async () => {
+                                await api.entities.BudgetAllocation.update(allocation.id, { status: 'active' });
+                                queryClient.invalidateQueries({ queryKey: ['allocations'] });
+                              }}
+                            >
+                              نشط
+                            </Button>
+                          )}
+                          {allocation.status !== 'inactive' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700"
+                              onClick={async () => {
+                                await api.entities.BudgetAllocation.update(allocation.id, { status: 'inactive' });
+                                queryClient.invalidateQueries({ queryKey: ['allocations'] });
+                              }}
+                            >
+                              غير نشط
+                            </Button>
+                          )}
+                          {allocation.status !== 'closed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs bg-red-50 hover:bg-red-100 text-red-700"
+                              onClick={async () => {
+                                await api.entities.BudgetAllocation.update(allocation.id, { status: 'closed' });
+                                queryClient.invalidateQueries({ queryKey: ['allocations'] });
+                              }}
+                            >
+                              مغلق
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                   );
                 })()
-              ))}
+              ))
+              )}
             </div>
           </div>
         )}
@@ -795,15 +1219,79 @@ export default function Budget() {
                 <Input value={transactionForm.receipt_number} onChange={(e) => setTransactionForm({ ...transactionForm, receipt_number: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>اللجنة</Label>
-                <Select value={transactionForm.committee_id} onValueChange={(v) => {
-                  const committee = committees.find(c => c.id === v);
-                  setTransactionForm({ ...transactionForm, committee_id: v, committee_name: committee?.name });
+                <Label>المحور</Label>
+                <Select value={transactionForm.axis_id || 'none'} onValueChange={(v) => {
+                  const axis = axes.find(a => a.id === v);
+                  setTransactionForm({ 
+                    ...transactionForm, 
+                    axis_id: v === 'none' ? '' : v, 
+                    axis_name: v === 'none' ? '' : axis?.name,
+                    standard_id: '',
+                    standard_code: ''
+                  });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر اللجنة" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
                   <SelectContent>
-                    {committees.map(committee => (
-                      <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {axes.map(axis => (
+                      <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>المعيار</Label>
+                <Select 
+                  value={transactionForm.standard_id || 'none'} 
+                  onValueChange={(v) => {
+                    const standard = standards.find(s => s.id === v);
+                    setTransactionForm({ ...transactionForm, standard_id: v === 'none' ? '' : v, standard_code: v === 'none' ? '' : standard?.code || '' });
+                  }}
+                  disabled={!transactionForm.axis_id}
+                >
+                  <SelectTrigger><SelectValue placeholder={transactionForm.axis_id ? "اختر المعيار (اختياري)" : "اختر المحور أولاً"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {standards
+                      .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id)
+                      .map(standard => (
+                        <SelectItem key={standard.id} value={standard.id}>
+                          {standard.code} - {standard.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>اللجنة</Label>
+                <Select value={transactionForm.committee_id || 'none'} onValueChange={(v) => {
+                  const committee = committees.find(c => c.id === v);
+                  setTransactionForm({ ...transactionForm, committee_id: v === 'none' ? '' : v, committee_name: v === 'none' ? '' : committee?.name });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {committees
+                      .filter(c => !transactionForm.axis_id || c.axis_id === transactionForm.axis_id)
+                      .map(committee => (
+                        <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label>المبادرة</Label>
+                <Select value={transactionForm.initiative_id || 'none'} onValueChange={(v) => {
+                  const initiative = initiatives.find(i => i.id === v);
+                  setTransactionForm({ ...transactionForm, initiative_id: v === 'none' ? '' : v, initiative_title: v === 'none' ? '' : initiative?.title || '' });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {initiatives.map(initiative => (
+                      <SelectItem key={initiative.id} value={initiative.id}>
+                        {initiative.code} - {initiative.title}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -867,6 +1355,22 @@ export default function Budget() {
                 <Label>الوصف</Label>
                 <Textarea value={budgetForm.description} onChange={(e) => setBudgetForm({ ...budgetForm, description: e.target.value })} rows={2} />
               </div>
+              {editingBudget && (
+                <div className="col-span-2 space-y-2">
+                  <Label>حالة الميزانية *</Label>
+                  <Select value={budgetForm.status} onValueChange={(v) => setBudgetForm({ ...budgetForm, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">مسودة</SelectItem>
+                      <SelectItem value="active">نشطة</SelectItem>
+                      <SelectItem value="closed">مغلقة</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    💡 المسودة: قيد الإعداد | النشطة: قيد التنفيذ | المغلقة: منتهية
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={closeBudgetForm}>إلغاء</Button>
@@ -901,26 +1405,30 @@ export default function Budget() {
               </div>
               <div className="space-y-2">
                 <Label>اللجنة</Label>
-                <Select value={allocationForm.committee_id} onValueChange={(v) => {
+                <Select value={allocationForm.committee_id || 'none'} onValueChange={(v) => {
                   const committee = committees.find(c => c.id === v);
-                  setAllocationForm({ ...allocationForm, committee_id: v, committee_name: committee?.name });
+                  setAllocationForm({ ...allocationForm, committee_id: v === 'none' ? '' : v, committee_name: v === 'none' ? '' : committee?.name });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر اللجنة" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
                   <SelectContent>
-                    {committees.map(committee => (
-                      <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
-                    ))}
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {committees
+                      .filter(c => !allocationForm.axis_id || c.axis_id === allocationForm.axis_id)
+                      .map(committee => (
+                        <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>المحور</Label>
-                <Select value={allocationForm.axis_id} onValueChange={(v) => {
+                <Select value={allocationForm.axis_id || 'none'} onValueChange={(v) => {
                   const axis = axes.find(a => a.id === v);
-                  setAllocationForm({ ...allocationForm, axis_id: v, axis_name: axis?.name });
+                  setAllocationForm({ ...allocationForm, axis_id: v === 'none' ? '' : v, axis_name: v === 'none' ? '' : axis?.name });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
                     {axes.map(axis => (
                       <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
                     ))}
@@ -928,8 +1436,44 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>المعيار</Label>
+                <Select value={allocationForm.standard_id || 'none'} onValueChange={(v) => {
+                  const standard = standards.find(s => s.id === v);
+                  setAllocationForm({ ...allocationForm, standard_id: v === 'none' ? '' : v, standard_code: v === 'none' ? '' : standard?.code || '' });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="اختر المعيار (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {standards.map(standard => (
+                      <SelectItem key={standard.id} value={standard.id}>
+                        {standard.code} - {standard.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>المبادرة</Label>
+                <Select value={allocationForm.initiative_id || 'none'} onValueChange={(v) => {
+                  const initiative = initiatives.find(i => i.id === v);
+                  setAllocationForm({ ...allocationForm, initiative_id: v === 'none' ? '' : v, initiative_title: v === 'none' ? '' : initiative?.title || '' });
+                }}>
+                  <SelectTrigger><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {initiatives
+                      .filter(i => !allocationForm.budget_id || i.budget_id === allocationForm.budget_id)
+                      .map(initiative => (
+                        <SelectItem key={initiative.id} value={initiative.id}>
+                          {initiative.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>الفئة</Label>
-                <Input value={allocationForm.category} onChange={(e) => setAllocationForm({ ...allocationForm, category: e.target.value })} />
+                <Input value={allocationForm.category} onChange={(e) => setAllocationForm({ ...allocationForm, category: e.target.value })} placeholder="مثال: تشغيلية، رأسمالية، إلخ" />
               </div>
               <div className="space-y-2">
                 <Label>المبلغ المخصص (ريال) *</Label>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { api } from '@/api/apiClient';
@@ -11,17 +11,28 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle, Moon, Sun, Monitor, Check } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBackendConfigured, appParams } from '@/lib/app-params';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/lib/AuthContext';
+import { useTheme } from 'next-themes';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
   const { navItems, permissions } = usePermissions();
   const { logout } = useAuth();
+  const { theme, setTheme, systemTheme } = useTheme();
+
+  const effectiveTheme = theme === 'system' ? systemTheme : theme;
+  const isActive = (pageName) => currentPath === createPageUrl(pageName);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -35,12 +46,22 @@ export default function Layout({ children }) {
 
   const currentSetting = settings[0] || {};
 
-  const isActive = (pageName) => currentPath === createPageUrl(pageName);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+        event.preventDefault();
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [theme, setTheme]);
 
   const backendReady = appParams.useLocalBackend || appParams.apiUrl || appParams.useSupabaseBackend || isBackendConfigured();
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-background" dir="rtl">
       {!backendReady && (
         <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -50,7 +71,7 @@ export default function Layout({ children }) {
         </div>
       )}
       {/* Top Navigation */}
-      <nav className="bg-white border-b shadow-sm sticky top-0 z-50">
+      <nav className="bg-background border-b shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -67,8 +88,8 @@ export default function Layout({ children }) {
                 </div>
               )}
               <div className="hidden sm:block">
-                <p className="font-bold text-gray-800">{currentSetting.city_name || 'المدينة الصحية'}</p>
-                <p className="text-xs text-gray-500">{currentSetting.city_location || 'محافظة قلوة'}</p>
+                <p className="font-bold text-foreground">{currentSetting.city_name || 'المدينة الصحية'}</p>
+                <p className="text-xs text-muted-foreground">{currentSetting.city_location || 'محافظة قلوة'}</p>
               </div>
             </Link>
 
@@ -78,7 +99,7 @@ export default function Layout({ children }) {
                 <Link key={item.name} to={createPageUrl(item.name)}>
                   <Button 
                     variant={isActive(item.name) ? "default" : "ghost"}
-                    className={isActive(item.name) ? "bg-blue-600" : ""}
+                    className={isActive(item.name) ? "bg-primary" : ""}
                   >
                     <item.icon className="w-4 h-4 ml-2" />
                     {item.label}
@@ -90,6 +111,48 @@ export default function Layout({ children }) {
             {/* User Menu */}
             <div className="flex items-center gap-2">
               {currentUser && <NotificationBell userEmail={currentUser.email} />}
+              
+              {/* Theme Toggle */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-9 h-9 p-0 relative">
+                          {effectiveTheme === 'dark' ? (
+                            <Moon className="h-4 w-4" />
+                          ) : (
+                            <Sun className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">تبديل الثيم</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-32">
+                        <DropdownMenuItem onClick={() => setTheme("light")}>
+                          <Sun className="mr-2 h-4 w-4" />
+                          <span>فاتح</span>
+                          {theme === "light" && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")}>
+                          <Moon className="mr-2 h-4 w-4" />
+                          <span>داكن</span>
+                          {theme === "dark" && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("system")}>
+                          <Monitor className="mr-2 h-4 w-4" />
+                          <span>النظام</span>
+                          {theme === "system" && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>تغيير الثيم ({theme === 'system' ? 'النظام' : theme === 'dark' ? 'داكن' : 'فاتح'})</p>
+                    <p className="text-xs opacity-75">Ctrl+Shift+D للتبديل السريع</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               {currentUser && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

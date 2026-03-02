@@ -47,38 +47,25 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Budget from './pages/Budget';
-import Committees from './pages/Committees';
-import Dashboard from './pages/Dashboard';
-import Files from './pages/Files';
-import Home from './pages/Home';
-import Initiatives from './pages/Initiatives';
-import PermissionsManager from './pages/PermissionsManager';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import Standards from './pages/Standards';
-import Survey from './pages/Survey';
-import Tasks from './pages/Tasks';
-import TeamManagement from './pages/TeamManagement';
-import UserSettings from './pages/UserSettings';
+import { lazy } from 'react';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Budget": Budget,
-    "Committees": Committees,
-    "Dashboard": Dashboard,
-    "Files": Files,
-    "Home": Home,
-    "Initiatives": Initiatives,
-    "PermissionsManager": PermissionsManager,
-    "Reports": Reports,
-    "Settings": Settings,
-    "Standards": Standards,
-    "Survey": Survey,
-    "Tasks": Tasks,
-    "TeamManagement": TeamManagement,
-    "UserSettings": UserSettings,
+    "Budget": lazy(() => import('./pages/Budget')),
+    "Committees": lazy(() => import('./pages/Committees')),
+    "Dashboard": lazy(() => import('./pages/Dashboard')),
+    "Files": lazy(() => import('./pages/Files')),
+    "Home": lazy(() => import('./pages/Home')),
+    "Initiatives": lazy(() => import('./pages/Initiatives')),
+    "PermissionsManager": lazy(() => import('./pages/PermissionsManager')),
+    "Reports": lazy(() => import('./pages/Reports')),
+    "Settings": lazy(() => import('./pages/Settings')),
+    "Standards": lazy(() => import('./pages/Standards')),
+    "Survey": lazy(() => import('./pages/Survey')),
+    "Tasks": lazy(() => import('./pages/Tasks')),
+    "TeamManagement": lazy(() => import('./pages/TeamManagement')),
+    "UserSettings": lazy(() => import('./pages/UserSettings')),
 }
 
 export const pagesConfig = {

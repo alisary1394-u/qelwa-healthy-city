@@ -150,17 +150,17 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
               <div className="space-y-2">
                 <Label className="flex items-center gap-1"><Lightbulb className="w-4 h-4" /> المبادرة المرتبطة</Label>
                 <Select
-                  value={formData.initiative_id}
+                  value={formData.initiative_id || 'none'}
                   onValueChange={(v) => {
                     const init = initiatives.find(i => i.id === v);
-                    setFormData({ ...formData, initiative_id: v, initiative_title: init?.title });
+                    setFormData({ ...formData, initiative_id: v === 'none' ? '' : v, initiative_title: v === 'none' ? '' : init?.title });
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="بدون مبادرة" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">بدون مبادرة</SelectItem>
+                    <SelectItem value="none">بدون مبادرة</SelectItem>
                     {initiatives.map(i => (
                       <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 45)}{(i.title?.length || 0) > 45 ? '...' : ''}</SelectItem>
                     ))}
@@ -173,17 +173,17 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
               <div className="space-y-2 md:col-span-2">
                 <Label className="flex items-center gap-1"><Target className="w-4 h-4" /> المعيار المرتبط (للإثبات)</Label>
                 <Select
-                  value={formData.standard_id}
+                  value={formData.standard_id || 'none'}
                   onValueChange={(v) => {
                     const s = standards.find(st => st.id === v);
-                    setFormData({ ...formData, standard_id: v, standard_code: s?.code });
+                    setFormData({ ...formData, standard_id: v === 'none' ? '' : v, standard_code: v === 'none' ? '' : s?.code });
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="بدون معيار" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">بدون معيار</SelectItem>
+                    <SelectItem value="none">بدون معيار</SelectItem>
                     {standards.map(s => (
                       <SelectItem key={s.id} value={s.id}>{s.code} - {s.title?.slice(0, 50)}...</SelectItem>
                     ))}
@@ -200,6 +200,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                     <SelectValue placeholder="اختر النوع" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">بدون نوع</SelectItem>
                     {DOCUMENT_TYPES.map(d => (
                       <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
                     ))}

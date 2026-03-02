@@ -1090,6 +1090,12 @@ export default function Initiatives() {
                             <span>{initiative.budget.toLocaleString()} ريال</span>
                           </div>
                         )}
+                        {initiative.budget_allocation_id && (
+                          <div className="flex items-center gap-1 col-span-2">
+                            <DollarSign className="w-3 h-3 text-green-600" />
+                            <span className="text-green-600 text-xs">مرتبط: {initiative.budget_name || 'ميزانية'}</span>
+                          </div>
+                        )}
                         {initiative.expected_beneficiaries > 0 && (
                           <div className="flex items-center gap-1">
                             <TrendingUp className="w-3 h-3" />
@@ -1320,6 +1326,9 @@ export default function Initiatives() {
                 <Calendar className="w-5 h-5" />
                 الجدول الزمني والميزانية
               </h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                <strong>💡 ملاحظة:</strong> يمكنك ربط المبادرة بميزانية وتخصيص مالي محدد. سيتم احتساب ميزانية المبادرة ضمن التخصيص المرتبط في صفحة الميزانية.
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>تاريخ البداية *</Label>
@@ -1332,6 +1341,52 @@ export default function Initiatives() {
                 <div className="space-y-2">
                   <Label>الميزانية المطلوبة (ريال)</Label>
                   <Input type="number" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>ربط بميزانية</Label>
+                  <Select value={formData.budget_id || 'none'} onValueChange={(v) => {
+                    const budget = budgets.find(b => b.id === v);
+                    setFormData({ ...formData, budget_id: v === 'none' ? '' : v, budget_name: v === 'none' ? '' : budget?.name || '' });
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="اختر الميزانية (اختياري)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">بدون ربط</SelectItem>
+                      {budgets.filter(b => b.status === 'active' || b.status === 'draft').map(budget => (
+                        <SelectItem key={budget.id} value={budget.id}>
+                          {budget.name} ({budget.fiscal_year})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>ربط بتخصيص مالي</Label>
+                  <Select 
+                    value={formData.budget_allocation_id || 'none'} 
+                    onValueChange={(v) => {
+                      const allocation = allocations.find(a => a.id === v);
+                      setFormData({ 
+                        ...formData, 
+                        budget_allocation_id: v === 'none' ? '' : v,
+                        budget_allocation_category: v === 'none' ? '' : allocation?.category || '',
+                        budget_id: v === 'none' ? formData.budget_id : allocation?.budget_id || formData.budget_id,
+                        budget_name: v === 'none' ? formData.budget_name : allocation?.budget_name || formData.budget_name
+                      });
+                    }}
+                    disabled={!formData.budget_id && allocations.length === 0}
+                  >
+                    <SelectTrigger><SelectValue placeholder="اختر التخصيص (اختياري)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">بدون ربط</SelectItem>
+                      {allocations
+                        .filter(a => !formData.budget_id || a.budget_id === formData.budget_id)
+                        .map(allocation => (
+                          <SelectItem key={allocation.id} value={allocation.id}>
+                            {allocation.committee_name || allocation.axis_name} - {allocation.category || 'تخصيص عام'} ({allocation.allocated_amount?.toLocaleString()} ريال)
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>عدد المستفيدين المتوقع</Label>
