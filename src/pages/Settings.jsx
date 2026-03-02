@@ -12,7 +12,7 @@ import { appParams } from '@/lib/app-params';
 
 export default function Settings() {
   const [uploading, setUploading] = useState(false);
-  const [logoSectionOpen, setLogoSectionOpen] = useState(false);
+  const [logoSectionOpen, setLogoSectionOpen] = useState(true);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
