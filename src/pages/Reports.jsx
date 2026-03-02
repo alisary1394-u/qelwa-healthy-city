@@ -45,7 +45,7 @@ function StatCard({ icon: Icon, label, value, sub, color = 'blue', className = '
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">{label}</p>
-              <p className="text-3xl font-bold mt-1">{value}</p>
+              <p className="text-2xl md:text-3xl font-bold mt-1 leading-tight break-words">{value}</p>
               {sub && <p className="text-xs opacity-80 mt-1">{sub}</p>}
             </div>
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -209,7 +209,9 @@ export default function Reports() {
 
   const overdueTasks = filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
   const currencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }), []);
+  const compactCurrencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }), []);
   const formatCurrency = (value) => `${currencyFormatter.format(Number(value) || 0)} ر.س`;
+  const formatCompactCurrency = (value) => `${compactCurrencyFormatter.format(Number(value) || 0)} ر.س`;
 
   const paidIncome = filteredTransactions
     .filter((t) => t.type === 'income' && t.status === 'paid')
@@ -361,14 +363,17 @@ export default function Reports() {
       const px = cw * ch, sc = px > 14e6 ? 1 : px > 8e6 ? 1.35 : 2;
       const canvas = await html2canvas(element, {
         scale: sc, useCORS: true, logging: false, windowWidth: cw, windowHeight: ch,
-        onclone: (doc, node) => {
-          node.querySelectorAll('.recharts-responsive-container').forEach(e => {
+        onclone: (doc) => {
+          const clonedElement = doc.getElementById(elementId);
+          if (!clonedElement) return;
+
+          clonedElement.querySelectorAll('.recharts-responsive-container').forEach(e => {
             const p = doc.createElement('div');
             p.style.cssText = 'min-height:120px;padding:20px;background:#f1f5f9;color:#64748b;text-align:center;border-radius:8px;display:flex;align-items:center;justify-content:center;';
             p.textContent = 'رسم بياني (مستثنى من التصدير)';
             if (e.parentNode) e.parentNode.replaceChild(p, e);
           });
-          node.querySelectorAll('[class*="gradient"]').forEach(e => { e.style.background = '#2563eb'; e.style.backgroundImage = 'none'; });
+          clonedElement.querySelectorAll('[class*="gradient"]').forEach(e => { e.style.background = '#2563eb'; e.style.backgroundImage = 'none'; });
         },
       });
       if (!canvas.width || !canvas.height) { toast({ title: 'فشل', description: 'المحتوى فارغ', variant: 'destructive' }); return; }
@@ -720,9 +725,9 @@ export default function Reports() {
               </SectionHeader>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={TrendingUp} label="الإيرادات المدفوعة" value={formatCurrency(paidIncome)} color="green" />
-                <StatCard icon={TrendingDown} label="المصروفات المدفوعة" value={formatCurrency(paidExpenses)} color="red" />
-                <StatCard icon={Wallet} label="الرصيد الصافي" value={formatCurrency(netBalance)} color={netBalance >= 0 ? 'blue' : 'amber'} />
+                <StatCard icon={TrendingUp} label="الإيرادات المدفوعة" value={formatCompactCurrency(paidIncome)} sub={formatCurrency(paidIncome)} color="green" />
+                <StatCard icon={TrendingDown} label="المصروفات المدفوعة" value={formatCompactCurrency(paidExpenses)} sub={formatCurrency(paidExpenses)} color="red" />
+                <StatCard icon={Wallet} label="الرصيد الصافي" value={formatCompactCurrency(netBalance)} sub={formatCurrency(netBalance)} color={netBalance >= 0 ? 'blue' : 'amber'} />
                 <StatCard icon={Clock} label="عمليات معلقة" value={pendingFinancialOps} color="gray" />
               </div>
 
