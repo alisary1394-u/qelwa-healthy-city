@@ -9,6 +9,7 @@ import { STANDARDS_CSV, getStandardIndexFromCode } from '@/api/standardsFromCsv'
 const AUTH_USER_KEY = 'api_auth_user';
 const CSV_SYNC_VERSION = '2';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
+const LEGACY_FILES_MIGRATION_KEY = 'legacy_local_to_api_files_migrated_v1';
 
 function entityToTable(name) {
   return String(name || '')
@@ -268,6 +269,65 @@ async function clearAxesAndStandardsAndReseed() {
   await syncStandardsFromCsv();
 }
 
+function readLegacyLocalArray(key) {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function migrateLegacyLocalDataIfNeeded() {
+  if (typeof localStorage === 'undefined') return { migrated: false, fileUpload: 0, evidence: 0 };
+  if (localStorage.getItem(LEGACY_FILES_MIGRATION_KEY) === '1') {
+    return { migrated: false, fileUpload: 0, evidence: 0 };
+  }
+
+  const legacyFiles = readLegacyLocalArray('local_db_FileUpload');
+  const legacyEvidence = readLegacyLocalArray('local_db_Evidence');
+  if (legacyFiles.length === 0 && legacyEvidence.length === 0) {
+    localStorage.setItem(LEGACY_FILES_MIGRATION_KEY, '1');
+    return { migrated: false, fileUpload: 0, evidence: 0 };
+  }
+
+  const remoteFiles = await entities.FileUpload.list();
+  const remoteEvidence = await entities.Evidence.list();
+  const fileIds = new Set((remoteFiles || []).map((x) => x.id));
+  const evidenceIds = new Set((remoteEvidence || []).map((x) => x.id));
+
+  let migratedFileUpload = 0;
+  for (const item of legacyFiles) {
+    if (!item?.id || fileIds.has(item.id)) continue;
+    try {
+      await entities.FileUpload.create(item);
+      migratedFileUpload += 1;
+    } catch (_) {}
+  }
+
+  let migratedEvidence = 0;
+  for (const item of legacyEvidence) {
+    if (!item?.id || evidenceIds.has(item.id)) continue;
+    try {
+      await entities.Evidence.create(item);
+      migratedEvidence += 1;
+    } catch (_) {}
+  }
+
+  localStorage.setItem(LEGACY_FILES_MIGRATION_KEY, '1');
+  if (typeof console !== 'undefined' && (migratedFileUpload > 0 || migratedEvidence > 0)) {
+    console.log('[apiBackend] migrated legacy local data to API', { migratedFileUpload, migratedEvidence });
+  }
+
+  return {
+    migrated: migratedFileUpload > 0 || migratedEvidence > 0,
+    fileUpload: migratedFileUpload,
+    evidence: migratedEvidence,
+  };
+}
+
 export const apiBackend = {
   entities,
   auth,
@@ -286,6 +346,7 @@ export const apiBackend = {
   seedAxesAndStandardsIfNeeded,
   syncStandardsFromCsv,
   clearAxesAndStandardsAndReseed,
+  migrateLegacyLocalDataIfNeeded,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
   getDefaultLocalCredentials,

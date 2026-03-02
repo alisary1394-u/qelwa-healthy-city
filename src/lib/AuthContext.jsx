@@ -95,6 +95,13 @@ export const AuthProvider = ({ children }) => {
         } else if (useServerBackend && typeof console !== 'undefined') {
           console.info('[Auth] Server seed is disabled by default (set VITE_ALLOW_SERVER_RESEED=true only when explicitly needed).');
         }
+        if (useServerBackend) {
+          try {
+            await Promise.resolve(api.migrateLegacyLocalDataIfNeeded?.());
+          } catch (e) {
+            if (typeof console !== 'undefined') console.warn('[Auth] Legacy local migration skipped:', e?.message || e);
+          }
+        }
         try {
           await Promise.resolve(api.syncStandardsFromCsv?.());
         } catch {}
