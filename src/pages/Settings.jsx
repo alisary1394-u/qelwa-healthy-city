@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database, ChevronDown } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
 export default function Settings() {
   const [uploading, setUploading] = useState(false);
+  const [logoSectionOpen, setLogoSectionOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -131,14 +133,36 @@ export default function Settings() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 md:p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="w-6 h-6" />
-              تخصيص الشعار والمعلومات
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <Collapsible open={logoSectionOpen} onOpenChange={setLogoSectionOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SettingsIcon className="w-6 h-6" />
+                    إعدادات الشعار
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {!logoSectionOpen && (
+                      <div className="flex items-center gap-2">
+                        {formData.logo_url ? (
+                          <img src={formData.logo_url} alt="" className="w-8 h-8 rounded-full object-contain" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">{formData.logo_text}</span>
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-500 font-normal">{formData.city_name}</span>
+                      </div>
+                    )}
+                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${logoSectionOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-1">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-6">
             {/* Logo Preview */}
             <div className="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
               <Label className="block mb-3 font-semibold">معاينة الشعار الحالي</Label>
@@ -243,7 +267,9 @@ export default function Settings() {
               حفظ التغييرات
             </Button>
           </CardContent>
+        </CollapsibleContent>
         </Card>
+      </Collapsible>
 
         {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
         {canShowBackupRestore && (
