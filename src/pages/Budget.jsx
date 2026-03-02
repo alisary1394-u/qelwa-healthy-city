@@ -496,43 +496,43 @@ export default function Budget() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-green-600 to-blue-600 text-white p-6">
+      <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة الميزانية والحسابات</h1>
-          <p className="text-green-100">نظام محاسبي متكامل لإدارة المصروفات والإيرادات</p>
+          <p className="text-white/70">نظام محاسبي متكامل لإدارة المصروفات والإيرادات</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <Card className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm mb-1">إجمالي الإيرادات</p>
+                  <p className="text-white/70 text-sm mb-1">إجمالي الإيرادات</p>
                   <p className="text-3xl font-bold">{totalIncome.toLocaleString()}</p>
-                  <p className="text-sm text-blue-100 mt-1">ريال سعودي</p>
+                  <p className="text-sm text-white/70 mt-1">ريال سعودي</p>
                 </div>
-                <TrendingUp className="w-12 h-12 text-blue-200" />
+                <TrendingUp className="w-12 h-12 text-white/30" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
+          <Card className="bg-gradient-to-br from-red-800 to-red-900 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-red-100 text-sm mb-1">إجمالي المصروفات</p>
+                  <p className="text-white/70 text-sm mb-1">إجمالي المصروفات</p>
                   <p className="text-3xl font-bold">{totalExpenses.toLocaleString()}</p>
-                  <p className="text-sm text-red-100 mt-1">ريال سعودي</p>
+                  <p className="text-sm text-white/70 mt-1">ريال سعودي</p>
                 </div>
-                <TrendingDown className="w-12 h-12 text-red-200" />
+                <TrendingDown className="w-12 h-12 text-white/30" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className={`bg-gradient-to-br ${balance >= 0 ? 'from-green-500 to-green-600' : 'from-orange-500 to-orange-600'} text-white`}>
+          <Card className={`bg-gradient-to-br ${balance >= 0 ? 'from-[#0f766e] to-[#14918a]' : 'from-amber-700 to-amber-800'} text-white`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -545,15 +545,15 @@ export default function Budget() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
+          <Card className="bg-gradient-to-br from-amber-700 to-amber-800 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-yellow-100 text-sm mb-1">معاملات معلقة</p>
+                  <p className="text-white/70 text-sm mb-1">معاملات معلقة</p>
                   <p className="text-3xl font-bold">{pendingTransactions}</p>
-                  <p className="text-sm text-yellow-100 mt-1">بانتظار الاعتماد</p>
+                  <p className="text-sm text-white/70 mt-1">بانتظار الاعتماد</p>
                 </div>
-                <Clock className="w-12 h-12 text-yellow-200" />
+                <Clock className="w-12 h-12 text-white/30" />
               </div>
             </CardContent>
           </Card>

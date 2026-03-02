@@ -24,12 +24,12 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const statusConfig = {
-  planning: { label: 'تخطيط', color: 'bg-gray-600', icon: Clock, gradient: 'from-gray-500 to-gray-600' },
-  approved: { label: 'معتمدة', color: 'bg-primary', icon: CheckCircle, gradient: 'from-blue-500 to-blue-600' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-yellow-600', icon: Play, gradient: 'from-yellow-500 to-amber-600' },
-  completed: { label: 'مكتملة', color: 'bg-green-600', icon: CheckCircle, gradient: 'from-green-500 to-green-600' },
-  on_hold: { label: 'متوقفة', color: 'bg-orange-600', icon: Pause, gradient: 'from-orange-500 to-orange-600' },
-  cancelled: { label: 'ملغاة', color: 'bg-destructive', icon: X, gradient: 'from-red-500 to-red-600' }
+  planning: { label: 'تخطيط', color: 'bg-slate-600', icon: Clock, gradient: 'from-slate-600 to-slate-700' },
+  approved: { label: 'معتمدة', color: 'bg-primary', icon: CheckCircle, gradient: 'from-[#1e3a5f] to-[#2d5a8e]' },
+  in_progress: { label: 'قيد التنفيذ', color: 'bg-amber-700', icon: Play, gradient: 'from-amber-700 to-amber-800' },
+  completed: { label: 'مكتملة', color: 'bg-teal-700', icon: CheckCircle, gradient: 'from-[#0f766e] to-[#14918a]' },
+  on_hold: { label: 'متوقفة', color: 'bg-orange-700', icon: Pause, gradient: 'from-orange-700 to-orange-800' },
+  cancelled: { label: 'ملغاة', color: 'bg-destructive', icon: X, gradient: 'from-red-800 to-red-900' }
 };
 
 const normalizeInitiativeStatus = (status) => {
@@ -44,10 +44,10 @@ const normalizeInitiativeStatus = (status) => {
 };
 
 const priorityConfig = {
-  low: { label: 'منخفضة', color: 'bg-blue-100 text-blue-700' },
-  medium: { label: 'متوسطة', color: 'bg-yellow-100 text-yellow-700' },
-  high: { label: 'عالية', color: 'bg-orange-100 text-orange-700' },
-  urgent: { label: 'عاجلة', color: 'bg-red-100 text-red-700' }
+  low: { label: 'منخفضة', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  medium: { label: 'متوسطة', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  high: { label: 'عالية', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  urgent: { label: 'عاجلة', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
 };
 
 const impactConfig = {
@@ -1019,15 +1019,15 @@ export default function Initiatives() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-purple-700 via-purple-600 to-blue-600 text-white">
+      <div className="gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
               <Lightbulb className="w-7 h-7" />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">إدارة المبادرات</h1>
-              <p className="text-purple-100 text-sm mt-1">مبادرات المدينة الصحية — المرتبطة بالمحاور والمعايير الـ 80</p>
+              <p className="text-white/70 text-sm mt-1">مبادرات المدينة الصحية — المرتبطة بالمحاور والمعايير الـ 80</p>
             </div>
           </div>
         </div>
@@ -1038,7 +1038,7 @@ export default function Initiatives() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <Lightbulb className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <Lightbulb className="w-8 h-8 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{stats.total}</p>
               <p className="text-sm text-muted-foreground">إجمالي المبادرات</p>
             </CardContent>
@@ -1052,28 +1052,28 @@ export default function Initiatives() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Play className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
+              <Play className="w-8 h-8 mx-auto mb-2 text-amber-700 dark:text-amber-400" />
               <p className="text-2xl font-bold">{stats.inProgress}</p>
               <p className="text-sm text-muted-foreground">قيد التنفيذ</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{stats.completed}</p>
               <p className="text-sm text-muted-foreground">مكتملة</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <Users className="w-8 h-8 mx-auto mb-2 text-slate-600 dark:text-slate-400" />
               <p className="text-2xl font-bold">{stats.totalBeneficiaries}</p>
               <p className="text-sm text-muted-foreground">المستفيدون</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <DollarSign className="w-8 h-8 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{(stats.totalBudget / 1000).toFixed(0)}K</p>
               <p className="text-sm text-muted-foreground">الميزانية</p>
             </CardContent>
@@ -1092,7 +1092,7 @@ export default function Initiatives() {
             />
           </div>
           {canManageInitiatives && (
-            <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={() => { resetForm(); setFormOpen(true); }}>
               <Plus className="w-5 h-5 ml-2" />
               مبادرة جديدة
             </Button>
@@ -1178,19 +1178,19 @@ export default function Initiatives() {
                     {/* Info badges */}
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {initiative.committee_name && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           <Users className="w-3 h-3" />
                           {initiative.committee_name}
                         </span>
                       )}
                       {initiative.budget > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
                           <DollarSign className="w-3 h-3" />
                           {initiative.budget.toLocaleString()} ريال
                         </span>
                       )}
                       {initiative.expected_beneficiaries > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800/30 dark:text-slate-300 px-2 py-0.5 rounded-full">
                           <TrendingUp className="w-3 h-3" />
                           {initiative.expected_beneficiaries} مستفيد
                         </span>
@@ -1203,32 +1203,32 @@ export default function Initiatives() {
                       return (
                         <>
                           <div className="grid grid-cols-4 gap-1.5 mb-3">
-                            <div className="text-center p-2 rounded-lg bg-blue-50/80">
-                              <UserCog className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
-                              <p className="text-lg font-bold text-blue-700">{teamStats.coordinators}</p>
-                              <p className="text-[10px] text-blue-600/70">منسق</p>
+                            <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
+                              <UserCog className="w-4 h-4 text-primary mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-primary">{teamStats.coordinators}</p>
+                              <p className="text-[10px] text-primary/70">منسق</p>
                             </div>
-                            <div className="text-center p-2 rounded-lg bg-green-50/80">
-                              <Users className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
-                              <p className="text-lg font-bold text-green-700">{teamStats.members}</p>
-                              <p className="text-[10px] text-green-600/70">أعضاء</p>
+                            <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
+                              <Users className="w-4 h-4 text-secondary mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-secondary">{teamStats.members}</p>
+                              <p className="text-[10px] text-secondary/70">أعضاء</p>
                             </div>
-                            <div className="text-center p-2 rounded-lg bg-orange-50/80">
-                              <Eye className="w-4 h-4 text-orange-600 mx-auto mb-0.5" />
-                              <p className="text-lg font-bold text-orange-700">{teamStats.supervisors}</p>
-                              <p className="text-[10px] text-orange-600/70">مشرفين</p>
+                            <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
+                              <Eye className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{teamStats.supervisors}</p>
+                              <p className="text-[10px] text-amber-600/70">مشرفين</p>
                             </div>
-                            <div className="text-center p-2 rounded-lg bg-teal-50/80">
-                              <HandHelping className="w-4 h-4 text-teal-600 mx-auto mb-0.5" />
-                              <p className="text-lg font-bold text-teal-700">{teamStats.volunteers}</p>
-                              <p className="text-[10px] text-teal-600/70">متطوعين</p>
+                            <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
+                              <HandHelping className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{teamStats.volunteers}</p>
+                              <p className="text-[10px] text-slate-500">متطوعين</p>
                             </div>
                           </div>
                           {linkedTeam.length > 0 && (
                           <div className="flex items-center gap-2 mb-3">
                             <div className="flex -space-x-2 rtl:space-x-reverse">
                               {linkedTeam.slice(0, 5).map((m) => (
-                                <div key={m.id} className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
+                                <div key={m.id} className="w-7 h-7 rounded-full gradient-primary border-2 border-white dark:border-card flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
                                   {(m.full_name || '').charAt(0)}
                                 </div>
                               ))}
@@ -1265,7 +1265,7 @@ export default function Initiatives() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        className="text-destructive border-destructive/30 hover:bg-destructive/5"
                         disabled={deletingInitiative}
                         onClick={() => handleDeleteInitiative(initiative)}
                       >
@@ -1296,7 +1296,7 @@ export default function Initiatives() {
                           </Button>
                           <Button 
                             size="sm" 
-                            className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+                            className="flex-1 bg-amber-700 hover:bg-amber-800 text-white"
                             onClick={() => handleStatusChange(initiative, 'in_progress')}
                           >
                             <Play className="w-4 h-4 ml-1" />

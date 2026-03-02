@@ -125,10 +125,10 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
+      <div className="gradient-primary text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إعدادات المدينة الصحية</h1>
-          <p className="text-blue-100">إدارة شعار ومعلومات المدينة</p>
+          <p className="text-white/70">إدارة شعار ومعلومات المدينة</p>
         </div>
       </div>
 
@@ -148,7 +148,7 @@ export default function Settings() {
                         {formData.logo_url ? (
                           <img src={formData.logo_url} alt="" className="w-8 h-8 rounded-full object-contain" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{formData.logo_text}</span>
                           </div>
                         )}
@@ -174,7 +174,7 @@ export default function Settings() {
                     className="max-w-[200px] max-h-[200px] object-contain"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full gradient-primary flex items-center justify-center">
                     <span className="text-white font-bold text-4xl">{formData.logo_text}</span>
                   </div>
                 )}

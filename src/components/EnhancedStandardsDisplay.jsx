@@ -1,4 +1,4 @@
-/**
+﻿/**
  * تحديث المؤشرات في صفحة المعايير الحالية
  * إضافة المؤشرات المحسنة مع الحفاظ على التوافق
  */
@@ -41,7 +41,7 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {enhancedKpis.slice(0, 4).map((kpi, index) => (
-          <div key={index} className="bg-white p-3 rounded border border-gray-200">
+          <div key={index} className="bg-card p-3 rounded border border-border">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium text-sm">{kpi.name}</span>
               <Badge variant="outline" className="text-xs">
@@ -51,26 +51,26 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
             
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-600">الهدف:</span>
+                <span className="text-muted-foreground">الهدف:</span>
                 <span className="font-medium">{kpi.target}</span>
               </div>
               
               {kpi.unit && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">الوحدة:</span>
+                  <span className="text-muted-foreground">الوحدة:</span>
                   <span>{kpi.unit}</span>
                 </div>
               )}
               
               {kpi.weight && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">الوزن:</span>
+                  <span className="text-muted-foreground">الوزن:</span>
                   <span>{Math.round(kpi.weight * 100)}%</span>
                 </div>
               )}
               
               {kpi.description && (
-                <div className="mt-2 pt-2 border-t text-gray-500">
+                <div className="mt-2 pt-2 border-t text-muted-foreground">
                   {kpi.description}
                 </div>
               )}
@@ -108,8 +108,8 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
       
       <div className="space-y-2">
         {enhancedDocuments.slice(0, 5).map((doc, index) => (
-          <div key={index} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
-            <FileText className="w-4 h-4 text-gray-400" />
+          <div key={index} className="flex items-center gap-3 bg-card p-2 rounded border border-border">
+            <FileText className="w-4 h-4 text-muted-foreground" />
             <div className="flex-1">
               <span className="text-sm font-medium">{doc.name}</span>
               {doc.type && (
@@ -123,7 +123,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
       </div>
       
       {enhancedDocuments.length > 5 && (
-        <div className="mt-3 text-center text-sm text-gray-600">
+        <div className="mt-3 text-center text-sm text-muted-foreground">
           و {enhancedDocuments.length - 5} مستندات أخرى...
         </div>
       )}
@@ -152,13 +152,13 @@ function EnhancedAxisCard({ axis, standards }) {
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
             <h3 className="font-bold text-lg mb-1">{axis.name}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2">{axis.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{axis.description}</p>
           </div>
           <div className="text-left">
             <Badge variant="outline" className="mb-2">
               {totalStandards} معيار
             </Badge>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               المحور {axis.order}
             </div>
           </div>
@@ -194,7 +194,7 @@ function EnhancedAxisCard({ axis, standards }) {
           </div>
           
           {/* الإحصائات */}
-          <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t">
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
             <div className="flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 text-green-600" />
               <span>{completedStandards} مكتمل</span>

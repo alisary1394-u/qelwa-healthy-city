@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export default function NotificationBell({ userEmail }) {
       case 'task_due': return <AlertCircle className="w-4 h-4 text-yellow-600" />;
       case 'task_overdue': return <AlertCircle className="w-4 h-4 text-red-600" />;
       case 'warning': return <AlertCircle className="w-4 h-4 text-orange-600" />;
-      default: return <Info className="w-4 h-4 text-gray-600" />;
+      default: return <Info className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -70,7 +70,7 @@ export default function NotificationBell({ userEmail }) {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-600 text-xs">
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-destructive text-xs">
               {unreadCount}
             </Badge>
           )}
@@ -80,13 +80,13 @@ export default function NotificationBell({ userEmail }) {
         <div className="p-3 border-b">
           <h3 className="font-semibold">الإشعارات</h3>
           {unreadCount > 0 && (
-            <p className="text-xs text-gray-500">{unreadCount} إشعار غير مقروء</p>
+            <p className="text-xs text-muted-foreground">{unreadCount} إشعار غير مقروء</p>
           )}
         </div>
         
         {notifications.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+          <div className="p-6 text-center text-muted-foreground">
+            <Bell className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
             <p className="text-sm">لا توجد إشعارات</p>
           </div>
         ) : (
@@ -95,7 +95,7 @@ export default function NotificationBell({ userEmail }) {
               <div
                 key={notification.id}
                 className={cn(
-                  "p-3 hover:bg-gray-50 transition-colors",
+                  "p-3 hover:bg-muted/50 transition-colors",
                   !notification.is_read && "bg-blue-50"
                 )}
               >
@@ -103,8 +103,8 @@ export default function NotificationBell({ userEmail }) {
                   <div className="mt-1">{getIcon(notification.type)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm">{notification.title}</p>
-                    <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{getTimeAgo(notification.created_date)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{getTimeAgo(notification.created_date)}</p>
                   </div>
                   <div className="flex gap-1">
                     {!notification.is_read && (

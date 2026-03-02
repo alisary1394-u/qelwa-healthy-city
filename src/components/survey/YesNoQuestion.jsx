@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ export default function YesNoQuestion({ question, value, onChange, bgColor = "bg
           onClick={() => onChange(false)}
           className={cn(
             "flex-1",
-            value === false && "bg-red-600 hover:bg-red-700"
+            value === false && "bg-destructive hover:bg-destructive/90"
           )}
         >
           لا

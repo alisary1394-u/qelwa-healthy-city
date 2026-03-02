@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -228,7 +228,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 placeholder={member ? 'اتركه فارغاً للإبقاء على كلمة المرور الحالية' : 'اختر كلمة مرور قوية'}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {member ? 'لا تُرسل كلمة مرور جديدة إن تركت الحقل فارغاً.' : 'يستخدم رقم الهوية وكلمة المرور لتسجيل الدخول'}
               </p>
             </div>
@@ -311,7 +311,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               إلغاء
             </Button>
-            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
               {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               {member ? 'حفظ التعديلات' : 'إضافة العضو'}
             </Button>

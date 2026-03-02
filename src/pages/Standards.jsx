@@ -101,21 +101,21 @@ function getInitiativeSuggestionFromStandard(standard, axisName) {
 
 const statusConfig = {
   not_started: { label: 'لم يبدأ', color: 'bg-muted text-foreground', headerColor: 'bg-white/20 text-white' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700', headerColor: 'bg-white/25 text-white' },
-  completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700', headerColor: 'bg-white/25 text-white' },
-  approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700', headerColor: 'bg-white/25 text-white' }
+  in_progress: { label: 'قيد التنفيذ', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300', headerColor: 'bg-white/25 text-white' },
+  completed: { label: 'مكتمل', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300', headerColor: 'bg-white/25 text-white' },
+  approved: { label: 'معتمد', color: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary', headerColor: 'bg-white/25 text-white' }
 };
 
 const axisGradients = [
-  'from-blue-500 to-blue-600',
-  'from-emerald-500 to-emerald-600',
-  'from-amber-500 to-amber-600',
-  'from-red-500 to-red-600',
-  'from-violet-500 to-violet-600',
-  'from-pink-500 to-pink-600',
-  'from-cyan-500 to-cyan-600',
-  'from-lime-600 to-lime-700',
-  'from-orange-500 to-orange-600'
+  'from-[#1e3a5f] to-[#2d5a8e]',
+  'from-[#0f766e] to-[#14918a]',
+  'from-[#92640d] to-[#b07c10]',
+  'from-[#9f1239] to-[#be123c]',
+  'from-[#5b21b6] to-[#6d28d9]',
+  'from-[#0e7490] to-[#0891b2]',
+  'from-[#3730a3] to-[#4338ca]',
+  'from-[#4d7c0f] to-[#65a30d]',
+  'from-[#9a3412] to-[#c2410c]'
 ];
 
 /** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
@@ -594,7 +594,7 @@ function StandardsLegacy() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
           </CardContent>
         </Card>
       </div>
@@ -603,10 +603,10 @@ function StandardsLegacy() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
+      <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
-          <p className="text-blue-100">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-white/70">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
 
@@ -637,7 +637,7 @@ function StandardsLegacy() {
           </div>
           <Button
             variant={pendingFilter ? 'default' : 'outline'}
-            className={pendingFilter ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50'}
+            className={pendingFilter ? 'bg-amber-700 hover:bg-amber-800 text-white' : 'border-amber-400 text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:border-amber-600'}
             onClick={() => {
               const next = !pendingFilter;
               setPendingFilter(next);
@@ -702,7 +702,7 @@ function StandardsLegacy() {
         {/* Standards List */}
         {loadingStandards ? (
           <div className="text-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
           </div>
         ) : filteredStandards.length === 0 ? (
           <Card className="text-center py-12">
@@ -830,7 +830,7 @@ function StandardsLegacy() {
                           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{standard.description}</p>
                         )}
                         {standard.required_evidence && (
-                          <p className="text-xs text-blue-600 mb-3 flex items-center gap-1">
+                          <p className="text-xs text-primary mb-3 flex items-center gap-1">
                             <FileText className="w-3.5 h-3.5 shrink-0" />
                             {standard.required_evidence}
                           </p>
@@ -838,25 +838,25 @@ function StandardsLegacy() {
 
                         {/* Stats grid */}
                         <div className="grid grid-cols-4 gap-1.5 mb-3">
-                          <div className="text-center p-2 rounded-lg bg-indigo-50/80">
-                            <FileText className="w-4 h-4 text-indigo-600 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-indigo-700">{approvedEvidence}/{standardEvidence.length}</p>
-                            <p className="text-[10px] text-indigo-600/70">أدلة</p>
+                          <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
+                            <FileText className="w-4 h-4 text-primary mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-primary">{approvedEvidence}/{standardEvidence.length}</p>
+                            <p className="text-[10px] text-primary/70">أدلة</p>
                           </div>
-                          <div className="text-center p-2 rounded-lg bg-purple-50/80">
-                            <Lightbulb className="w-4 h-4 text-purple-600 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-purple-700">{relatedInitiatives.length}</p>
-                            <p className="text-[10px] text-purple-600/70">مبادرات</p>
+                          <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
+                            <Lightbulb className="w-4 h-4 text-secondary mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-secondary">{relatedInitiatives.length}</p>
+                            <p className="text-[10px] text-secondary/70">مبادرات</p>
                           </div>
-                          <div className="text-center p-2 rounded-lg bg-blue-50/80">
-                            <Users className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-blue-700">{relatedCommittees.length}</p>
-                            <p className="text-[10px] text-blue-600/70">لجان</p>
+                          <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
+                            <Users className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{relatedCommittees.length}</p>
+                            <p className="text-[10px] text-slate-500">لجان</p>
                           </div>
-                          <div className="text-center p-2 rounded-lg bg-green-50/80">
-                            <DollarSign className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-green-700">{relatedBudgets.length}</p>
-                            <p className="text-[10px] text-green-600/70">ميزانيات</p>
+                          <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
+                            <DollarSign className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{relatedBudgets.length}</p>
+                            <p className="text-[10px] text-amber-600/70">ميزانيات</p>
                           </div>
                         </div>
 
@@ -914,7 +914,7 @@ function StandardsLegacy() {
                           <div className="rounded-lg border bg-muted/50 p-3">
                             <p className="text-xs text-muted-foreground mb-1">الميزانيات المرتبطة</p>
                             <p className="text-sm font-semibold mb-1">{relatedBudgets.length} ميزانية</p>
-                            <p className="text-xs text-green-700 font-medium mb-2">
+                            <p className="text-xs text-success font-medium mb-2">
                               الإجمالي: {totalRelatedBudget.toLocaleString()} ريال
                             </p>
                             <div className="flex flex-wrap gap-1">
@@ -955,9 +955,9 @@ function StandardsLegacy() {
                               {!canManageInitiatives ? 'غير مصرح' : (relatedInitiatives.length > 0 ? 'موجودة' : 'فتح النموذج')}
                             </Button>
                           </div>
-                          <p className="text-xs text-purple-700 mb-2">{suggestedInitiative.description}</p>
+                          <p className="text-xs text-secondary mb-2">{suggestedInitiative.description}</p>
                           {relatedInitiatives.length > 0 && (
-                            <p className="text-[11px] text-green-700">تم إنشاء مبادرة مرتبطة بهذا المعيار مسبقًا.</p>
+                            <p className="text-[11px] text-success">تم إنشاء مبادرة مرتبطة بهذا المعيار مسبقًا.</p>
                           )}
                         </div>
                         
@@ -1006,17 +1006,17 @@ function StandardsLegacy() {
                               {standardEvidence.map(ev => (
                                 <div key={ev.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                   {ev.file_type === 'image' ? (
-                                    <Image className="w-5 h-5 text-blue-600" />
+                                    <Image className="w-5 h-5 text-primary" />
                                   ) : (
-                                    <FileText className="w-5 h-5 text-green-600" />
+                                    <FileText className="w-5 h-5 text-secondary" />
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium truncate">{ev.title}</p>
                                     <div className="flex items-center gap-2">
                                       <Badge className={
-                                        ev.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                        ev.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                        'bg-yellow-100 text-yellow-700'
+                                        ev.status === 'approved' ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' :
+                                        ev.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                                        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                       }>
                                         {ev.status === 'approved' ? 'معتمد' : ev.status === 'rejected' ? 'مرفوض' : 'بانتظار'}
                                       </Badge>
@@ -1026,7 +1026,7 @@ function StandardsLegacy() {
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      className="text-blue-700"
+                                      className="text-primary"
                                       title="معاينة"
                                       onClick={() => handlePreviewEvidence(ev.file_url)}
                                     >
@@ -1037,7 +1037,7 @@ function StandardsLegacy() {
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="text-green-700"
+                                          className="text-success"
                                           onClick={() => handleApproveEvidence(ev)}
                                         >
                                           يعتمد

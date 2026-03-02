@@ -6,87 +6,87 @@
 
 @layer base {
   :root {
-    /* Healthy City Branded Palette — Blue-Green Healthcare Theme */
-    --background: 210 40% 98%;
-    --foreground: 215 25% 10%;
+    /* Official Governmental Palette — Deep Navy & Teal */
+    --background: 220 30% 97%;
+    --foreground: 220 30% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 10%;
+    --card-foreground: 220 30% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 10%;
-    --primary: 210 78% 46%;
+    --popover-foreground: 220 30% 8%;
+    --primary: 217 72% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 152 44% 46%;
+    --secondary: 170 55% 35%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 30% 95%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 152 40% 94%;
-    --accent-foreground: 152 44% 25%;
-    --destructive: 0 84% 60%;
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 170 35% 93%;
+    --accent-foreground: 170 55% 22%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 210 78% 46%;
-    --chart-1: 210 78% 46%;
-    --chart-2: 152 58% 42%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --radius: 0.75rem;
-    --sidebar-background: 215 25% 10%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 210 78% 55%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 217 72% 30%;
+    --chart-1: 217 72% 30%;
+    --chart-2: 170 55% 35%;
+    --chart-3: 38 85% 50%;
+    --chart-4: 262 52% 47%;
+    --chart-5: 346 65% 47%;
+    --radius: 0.625rem;
+    --sidebar-background: 220 35% 10%;
+    --sidebar-foreground: 220 15% 88%;
+    --sidebar-primary: 170 55% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 20% 16%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 215 18% 18%;
-    --sidebar-ring: 210 78% 55%;
+    --sidebar-accent: 220 25% 15%;
+    --sidebar-accent-foreground: 220 15% 88%;
+    --sidebar-border: 220 20% 16%;
+    --sidebar-ring: 170 55% 40%;
     /* Custom tokens */
-    --success: 152 58% 42%;
+    --success: 160 60% 36%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 12%;
-    --info: 210 78% 46%;
+    --warning: 38 85% 50%;
+    --warning-foreground: 38 85% 12%;
+    --info: 217 72% 30%;
     --info-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222 22% 8%;
-    --foreground: 210 20% 95%;
-    --card: 222 18% 12%;
-    --card-foreground: 210 20% 95%;
-    --popover: 222 18% 12%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 210 78% 55%;
+    --background: 224 25% 7%;
+    --foreground: 220 15% 93%;
+    --card: 224 20% 11%;
+    --card-foreground: 220 15% 93%;
+    --popover: 224 20% 11%;
+    --popover-foreground: 220 15% 93%;
+    --primary: 217 65% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 152 50% 40%;
+    --secondary: 170 50% 38%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 222 14% 18%;
-    --muted-foreground: 215 16% 60%;
-    --accent: 222 14% 18%;
-    --accent-foreground: 210 20% 90%;
-    --destructive: 0 62% 38%;
+    --muted: 224 14% 16%;
+    --muted-foreground: 220 12% 58%;
+    --accent: 224 14% 16%;
+    --accent-foreground: 220 15% 88%;
+    --destructive: 0 62% 42%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 14% 20%;
-    --input: 222 14% 20%;
-    --ring: 210 78% 55%;
-    --chart-1: 210 70% 55%;
-    --chart-2: 152 60% 45%;
-    --chart-3: 38 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 222 22% 6%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 210 78% 55%;
+    --border: 224 14% 18%;
+    --input: 224 14% 18%;
+    --ring: 217 65% 50%;
+    --chart-1: 217 65% 50%;
+    --chart-2: 170 50% 42%;
+    --chart-3: 38 75% 52%;
+    --chart-4: 262 52% 55%;
+    --chart-5: 346 60% 52%;
+    --sidebar-background: 224 28% 5%;
+    --sidebar-foreground: 220 15% 82%;
+    --sidebar-primary: 170 50% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 14% 14%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 222 14% 14%;
-    --sidebar-ring: 210 78% 55%;
-    --success: 152 50% 40%;
+    --sidebar-accent: 224 18% 12%;
+    --sidebar-accent-foreground: 220 15% 82%;
+    --sidebar-border: 224 18% 12%;
+    --sidebar-ring: 170 50% 42%;
+    --success: 160 55% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 80% 55%;
-    --warning-foreground: 38 80% 12%;
-    --info: 210 70% 55%;
+    --warning: 38 75% 52%;
+    --warning-foreground: 38 75% 12%;
+    --info: 217 65% 50%;
     --info-foreground: 0 0% 100%;
   }
 }
@@ -154,11 +154,14 @@
 
   /* Gradient backgrounds */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    background: linear-gradient(135deg, hsl(217 72% 30%) 0%, hsl(170 55% 35%) 100%);
+  }
+  .dark .gradient-primary {
+    background: linear-gradient(135deg, hsl(217 65% 38%) 0%, hsl(170 50% 32%) 100%);
   }
 
   .gradient-primary-subtle {
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--secondary) / 0.08) 100%);
+    background: linear-gradient(135deg, hsl(217 72% 30% / 0.07) 0%, hsl(170 55% 35% / 0.07) 100%);
   }
 
   /* Stat card hover lift */

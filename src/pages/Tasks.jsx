@@ -173,7 +173,7 @@ export default function Tasks() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المهام. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة المهام. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
           </CardContent>
         </Card>
       </div>
@@ -252,7 +252,7 @@ export default function Tasks() {
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
+      <div className="gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
@@ -260,7 +260,7 @@ export default function Tasks() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">إدارة المهام والتذكيرات</h1>
-              <p className="text-blue-100 text-sm mt-1">متابعة مهام الفريق — مرتبطة بالمبادرات والمعايير</p>
+              <p className="text-white/70 text-sm mt-1">متابعة مهام الفريق — مرتبطة بالمبادرات والمعايير</p>
             </div>
           </div>
         </div>
@@ -271,42 +271,42 @@ export default function Tasks() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <ListTodo className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+              <ListTodo className="w-6 h-6 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{stats.total}</p>
               <p className="text-xs text-muted-foreground">إجمالي المهام</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Clock className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
+              <Clock className="w-6 h-6 mx-auto mb-2 text-amber-700 dark:text-amber-400" />
               <p className="text-2xl font-bold">{stats.pending}</p>
               <p className="text-xs text-muted-foreground">قيد الانتظار</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <ClipboardList className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+              <ClipboardList className="w-6 h-6 mx-auto mb-2 text-sky-700 dark:text-sky-400" />
               <p className="text-2xl font-bold">{stats.in_progress}</p>
               <p className="text-xs text-muted-foreground">قيد التنفيذ</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-green-600" />
+              <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{stats.completed}</p>
               <p className="text-xs text-muted-foreground">مكتملة</p>
             </CardContent>
           </Card>
-          <Card className={stats.overdue > 0 ? 'border-red-300 bg-red-50' : ''}>
+          <Card className={stats.overdue > 0 ? 'border-destructive/30 bg-destructive/5' : ''}>
             <CardContent className="p-4 text-center">
-              <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-red-600" />
-              <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+              <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-destructive" />
+              <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
               <p className="text-xs text-muted-foreground">متأخرة</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Users className="w-6 h-6 mx-auto mb-2 text-indigo-600" />
+              <Users className="w-6 h-6 mx-auto mb-2 text-slate-600 dark:text-slate-400" />
               <p className="text-2xl font-bold">{stats.uniqueAssignees}</p>
               <p className="text-xs text-muted-foreground">مكلفين</p>
             </CardContent>
@@ -327,7 +327,7 @@ export default function Tasks() {
           {accessibleInitiatives.length > 0 && (
             <Select value={filterInitiative} onValueChange={setFilterInitiative}>
               <SelectTrigger className="w-[200px]">
-                <Lightbulb className="w-4 h-4 ml-1 text-purple-500" />
+                <Lightbulb className="w-4 h-4 ml-1 text-primary" />
                 <SelectValue placeholder="المبادرة" />
               </SelectTrigger>
               <SelectContent>
@@ -340,7 +340,7 @@ export default function Tasks() {
           )}
           <Select value={filterPriority} onValueChange={setFilterPriority}>
             <SelectTrigger className="w-[140px]">
-              <Filter className="w-4 h-4 ml-1 text-orange-500" />
+              <Filter className="w-4 h-4 ml-1 text-amber-700 dark:text-amber-400" />
               <SelectValue placeholder="الأولوية" />
             </SelectTrigger>
             <SelectContent>
@@ -354,7 +354,7 @@ export default function Tasks() {
           {assigneesWithTasks.length > 1 && (
             <Select value={filterAssignee} onValueChange={setFilterAssignee}>
               <SelectTrigger className="w-[180px]">
-                <Users className="w-4 h-4 ml-1 text-indigo-500" />
+                <Users className="w-4 h-4 ml-1 text-slate-600 dark:text-slate-400" />
                 <SelectValue placeholder="المكلف" />
               </SelectTrigger>
               <SelectContent>
@@ -370,7 +370,7 @@ export default function Tasks() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button variant="outline" className="w-full md:w-auto bg-green-50 hover:bg-green-100 text-green-700 border-green-300">
+            <Button variant="outline" className="w-full md:w-auto bg-secondary/10 hover:bg-secondary/20 text-secondary border-secondary/30">
               <MessageCircle className="w-5 h-5 ml-2" />
               تذكيرات واتساب
             </Button>
@@ -393,7 +393,7 @@ export default function Tasks() {
             <TabsTrigger value="pending">قيد الانتظار ({stats.pending})</TabsTrigger>
             <TabsTrigger value="in_progress">قيد التنفيذ ({stats.in_progress})</TabsTrigger>
             <TabsTrigger value="completed">مكتملة ({stats.completed})</TabsTrigger>
-            <TabsTrigger value="overdue" className={stats.overdue > 0 ? 'text-red-600' : ''}>
+            <TabsTrigger value="overdue" className={stats.overdue > 0 ? 'text-destructive' : ''}>
               متأخرة ({stats.overdue})
             </TabsTrigger>
           </TabsList>
@@ -402,7 +402,7 @@ export default function Tasks() {
         {/* Tasks Grid */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
           </div>
         ) : filteredTasks.length === 0 ? (
           <Card className="text-center py-12">

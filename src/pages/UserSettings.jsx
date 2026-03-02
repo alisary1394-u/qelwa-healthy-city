@@ -78,10 +78,10 @@ export default function UserSettings() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
+      <div className="gradient-primary text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">الإعدادات الشخصية</h1>
-          <p className="text-blue-100">إدارة تفضيلات الإشعارات والحساب</p>
+          <p className="text-white/70">إدارة تفضيلات الإشعارات والحساب</p>
         </div>
       </div>
 

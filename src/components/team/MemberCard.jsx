@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const roleColors = {
   committee_supervisor: "bg-indigo-100 text-indigo-800 border-indigo-200",
   committee_member: "bg-lime-100 text-lime-800 border-lime-200",
   member: "bg-orange-100 text-orange-800 border-orange-200",
-  volunteer: "bg-gray-100 text-gray-800 border-gray-200",
+  volunteer: "bg-muted text-foreground border-border",
   budget_manager: "bg-emerald-100 text-emerald-800 border-emerald-200",
   accountant: "bg-cyan-100 text-cyan-800 border-cyan-200",
   financial_officer: "bg-teal-100 text-teal-800 border-teal-200"
@@ -39,7 +39,7 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-lg">
               {member.full_name?.charAt(0)}
             </div>
             <div>
@@ -65,7 +65,7 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
           )}
         </div>
         
-        <div className="space-y-2 text-sm text-gray-600">
+        <div className="space-y-2 text-sm text-muted-foreground">
           {member.specialization && (
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -101,7 +101,7 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
             {member.status === 'active' ? 'نشط' : 'غير نشط'}
           </Badge>
           {member.join_date && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               انضم: {new Date(member.join_date).toLocaleDateString('ar-SA')}
             </span>
           )}

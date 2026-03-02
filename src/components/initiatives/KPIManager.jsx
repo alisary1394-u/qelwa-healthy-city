@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -286,7 +286,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
       case 'on_track': return 'bg-blue-100 text-blue-700';
       case 'at_risk': return 'bg-yellow-100 text-yellow-700';
       case 'behind': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -313,10 +313,10 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
       </div>
 
       {kpis.length === 0 ? (
-        <Card className="text-center py-8 bg-gray-50">
+        <Card className="text-center py-8 bg-muted/50">
           <CardContent>
-            <TrendingUp className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-            <p className="text-gray-500 text-sm">لا توجد مؤشرات أداء بعد</p>
+            <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
+            <p className="text-muted-foreground text-sm">لا توجد مؤشرات أداء بعد</p>
           </CardContent>
         </Card>
       ) : (
@@ -332,7 +332,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h4 className="font-semibold">{kpi.kpi_name}</h4>
-                      {kpi.description && <p className="text-sm text-gray-500">{kpi.description}</p>}
+                      {kpi.description && <p className="text-sm text-muted-foreground">{kpi.description}</p>}
                     </div>
 						<div className="flex items-center gap-2">
 							{canEditKpis && (
@@ -353,11 +353,11 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">التقدم</span>
+                      <span className="text-muted-foreground">التقدم</span>
                       <span className="font-semibold">{kpi.current_value} / {kpi.target_value} {kpi.unit}</span>
                     </div>
                     <Progress value={percentage} className="h-2" />
-                    <p className="text-xs text-gray-500">{percentage.toFixed(1)}% محقق</p>
+                    <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}% محقق</p>
 
                     <div className="flex items-center gap-2 pt-2">
                       <Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, kpi.current_value - 1))}>
@@ -377,7 +377,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
                     <div className="pt-3 mt-3 border-t">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <div className="flex items-center gap-2 text-sm text-foreground">
                           <Paperclip className="w-4 h-4" />
                           <span>مرفقات المؤشر</span>
                           <Badge variant="outline" className="text-xs">{attachments.length}</Badge>
@@ -391,7 +391,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
                       {attachments.length > 0 && (
                         <div className="mt-2 space-y-2">
                           {attachments.map((att) => (
-                            <div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+                            <div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
                               {att.file_type === 'image' ? (
                                 <Image className="w-4 h-4 text-blue-600" />
                               ) : (
@@ -502,7 +502,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
                 required
               />
               {Array.isArray(evidenceForm.files) && evidenceForm.files.length > 0 && (
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   {evidenceForm.files.length} ملف(ات) محدد
                 </div>
               )}

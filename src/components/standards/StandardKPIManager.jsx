@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -76,7 +76,7 @@ function getStatusColor(status) {
 		case 'behind':
 			return 'bg-red-100 text-red-700';
 		default:
-			return 'bg-gray-100 text-gray-700';
+			return 'bg-muted text-foreground';
 	}
 }
 
@@ -417,7 +417,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 								<h3 className="font-semibold text-lg text-blue-900">مؤشرات الأداء (KPIs)</h3>
 								<Badge variant="secondary" className="text-xs">{normalizedKpis.length}</Badge>
 							</div>
-							<ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+							<ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
 						</div>
 					</button>
 				</CollapsibleTrigger>
@@ -433,9 +433,9 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 						</div>
 
 						{normalizedKpis.length === 0 ? (
-							<Card className="text-center py-8 bg-gray-50">
+							<Card className="text-center py-8 bg-muted/50">
 								<CardContent>
-									<p className="text-gray-500 text-sm">لا توجد مؤشرات أداء بعد</p>
+									<p className="text-muted-foreground text-sm">لا توجد مؤشرات أداء بعد</p>
 								</CardContent>
 							</Card>
 						) : (
@@ -450,7 +450,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 												<div className="flex items-start justify-between mb-3">
 													<div className="flex-1">
 														<h4 className="font-semibold">{kpi.name}</h4>
-														{kpi.description && <p className="text-sm text-gray-500">{kpi.description}</p>}
+														{kpi.description && <p className="text-sm text-muted-foreground">{kpi.description}</p>}
 													</div>
 													<div className="flex items-center gap-2">
 														{canEditKpis && (
@@ -469,13 +469,13 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 
 											<div className="space-y-2">
 												<div className="flex justify-between text-sm">
-													<span className="text-gray-500">التقدم</span>
+													<span className="text-muted-foreground">التقدم</span>
 								<span className="font-semibold">
 													{currentValue} / {Number(kpi.target_value) || 0} {kpi.unit === 'تحقق' ? 'مستند' : kpi.unit}
 												</span>
 												</div>
 												<Progress value={Math.min(percentage, 100)} className="h-2" />
-												<p className="text-xs text-gray-500">{Math.min(percentage, 100).toFixed(1)}% محقق</p>
+												<p className="text-xs text-muted-foreground">{Math.min(percentage, 100).toFixed(1)}% محقق</p>
 
 											<div className="flex items-center gap-2 pt-2">
 												<Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, Number(currentValue) - 1))}>
@@ -503,11 +503,11 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 													<Collapsible>
 														<div className="flex items-center justify-between gap-2">
 															<CollapsibleTrigger asChild>
-																<button type="button" className="text-right group flex items-center gap-2 text-sm text-gray-700">
+																<button type="button" className="text-right group flex items-center gap-2 text-sm text-foreground">
 																	<Paperclip className="w-4 h-4" />
 																	<span>مرفقات المؤشر</span>
 																	<Badge variant="outline" className="text-xs">{attachments.length}</Badge>
-																	<ChevronDown className="w-4 h-4 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+																	<ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
 																</button>
 															</CollapsibleTrigger>
 															<Button size="sm" variant="outline" disabled={!canUploadEvidence} onClick={() => openEvidenceDialog(kpi.name)}>
@@ -520,7 +520,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 															{attachments.length > 0 ? (
 																<div className="mt-2 space-y-2">
 																	{attachments.map((att) => (
-																		<div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+																		<div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
 																			{att.file_type === 'image' ? (
 																				<Image className="w-4 h-4 text-blue-600" />
 																			) : (
@@ -556,7 +556,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 																	))}
 																</div>
 															) : (
-																<div className="mt-2 text-sm text-gray-500">لا توجد مرفقات</div>
+																<div className="mt-2 text-sm text-muted-foreground">لا توجد مرفقات</div>
 															)}
 														</CollapsibleContent>
 													</Collapsible>
@@ -648,7 +648,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 								required
 							/>
 							{Array.isArray(evidenceForm.files) && evidenceForm.files.length > 0 && (
-								<div className="text-xs text-gray-600">{evidenceForm.files.length} ملف(ات) محدد</div>
+								<div className="text-xs text-muted-foreground">{evidenceForm.files.length} ملف(ات) محدد</div>
 							)}
 						</div>
 						<div className="flex gap-3 justify-end pt-4 border-t">

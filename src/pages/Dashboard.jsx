@@ -216,16 +216,16 @@ export default function Dashboard() {
   });
 
   const statusData = [
-    { name: 'مكتمل', value: standards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#10B981' },
-    { name: 'قيد التنفيذ', value: standards.filter(s => s.status === 'in_progress').length, color: '#3B82F6' },
+    { name: 'مكتمل', value: standards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#0f766e' },
+    { name: 'قيد التنفيذ', value: standards.filter(s => s.status === 'in_progress').length, color: '#1e3a5f' },
     { name: 'لم يبدأ', value: standards.filter(s => s.status === 'not_started' || !s.status).length, color: '#94A3B8' }
   ].filter(d => d.value > 0);
 
   const statsCards = [
     { icon: Target, label: 'المعايير الدولية', value: REFERENCE_STANDARDS_COUNT, color: 'text-primary', bgColor: 'bg-primary/10', delay: '0' },
-    { icon: Users, label: 'أعضاء الفريق', value: activeMembers, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-500/10', delay: '75' },
-    { icon: FileCheck, label: 'الأدلة المرفوعة', value: evidence.length, color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-500/10', delay: '150' },
-    { icon: ClipboardList, label: 'استبيانات المسح', value: surveys.length, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-500/10', delay: '225' },
+    { icon: Users, label: 'أعضاء الفريق', value: activeMembers, color: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-600/10', delay: '75' },
+    { icon: FileCheck, label: 'الأدلة المرفوعة', value: evidence.length, color: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-600/10', delay: '150' },
+    { icon: ClipboardList, label: 'استبيانات المسح', value: surveys.length, color: 'text-amber-700 dark:text-amber-400', bgColor: 'bg-amber-600/10', delay: '225' },
   ];
 
   return (
@@ -316,12 +316,12 @@ export default function Dashboard() {
         {/* إعدادات الشعار */}
         {permissions.canSeeSettings && (
         <Collapsible defaultOpen={false}>
-          <Card className="mb-6 border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+          <Card className="mb-6 border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/5">
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors">
+              <CardHeader className="cursor-pointer hover:bg-primary/10 dark:hover:bg-primary/10 transition-colors">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Image className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Image className="w-5 h-5 text-primary" />
                     إعدادات الشعار
                   </div>
                   <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
@@ -338,7 +338,7 @@ export default function Dashboard() {
                     {logoForm.logo_url ? (
                       <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain" />
                     ) : (
-                      <span className="text-4xl font-bold text-white bg-gradient-to-br from-blue-600 to-green-600 w-full h-full flex items-center justify-center rounded-xl">
+                      <span className="text-4xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
                         {logoForm.logo_text || 'ق'}
                       </span>
                     )}
@@ -356,7 +356,7 @@ export default function Dashboard() {
                       {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
                     </Button>
                     {logoForm.logo_url && permissions.canManageSettings && (
-                      <Button variant="outline" size="sm" className="text-red-600 border-red-200" onClick={handleRemoveLogo}>
+                      <Button variant="outline" size="sm" className="text-destructive border-destructive/30" onClick={handleRemoveLogo}>
                         <Trash2 className="w-4 h-4 ml-2" />
                         حذف الشعار
                       </Button>
@@ -407,7 +407,6 @@ export default function Dashboard() {
                       size="sm"
                       onClick={handleSaveLogo}
                       disabled={!permissions.canManageSettings || createSettingsMutation.isPending || updateSettingsMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       <Save className="w-4 h-4 ml-2" />
                       حفظ التعديلات
@@ -588,9 +587,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { href: 'Standards', icon: Target, label: 'المعايير والأدلة', color: 'text-primary', bg: 'group-hover:bg-primary/10' },
-                { href: 'Survey', icon: ClipboardList, label: 'المسح الميداني', color: 'text-emerald-600 dark:text-emerald-400', bg: 'group-hover:bg-emerald-500/10' },
-                { href: 'Tasks', icon: CheckCircle2, label: 'المهام', color: 'text-amber-600 dark:text-amber-400', bg: 'group-hover:bg-amber-500/10' },
-                { href: 'TeamManagement', icon: Users, label: 'الفريق', color: 'text-violet-600 dark:text-violet-400', bg: 'group-hover:bg-violet-500/10' },
+                { href: 'Survey', icon: ClipboardList, label: 'المسح الميداني', color: 'text-teal-700 dark:text-teal-400', bg: 'group-hover:bg-teal-600/10' },
+                { href: 'Tasks', icon: CheckCircle2, label: 'المهام', color: 'text-amber-700 dark:text-amber-400', bg: 'group-hover:bg-amber-600/10' },
+                { href: 'TeamManagement', icon: Users, label: 'الفريق', color: 'text-slate-700 dark:text-slate-400', bg: 'group-hover:bg-slate-600/10' },
               ].map((action) => (
                 <Link key={action.href} to={createPageUrl(action.href)} className="group">
                   <div className="border border-border rounded-xl p-4 text-center hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">

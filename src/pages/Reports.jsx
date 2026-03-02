@@ -24,17 +24,17 @@ const STATUS_COLORS = {
   on_hold: '#6b7280', cancelled: '#ef4444',
 };
 
-const AXIS_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316'];
+const AXIS_COLORS = ['#1e3a5f','#0f766e','#92400e','#991b1b','#5b21b6','#0e7490','#312e81','#3f6212','#9a3412'];
 
 function StatCard({ icon: Icon, label, value, sub, color = 'blue', className = '' }) {
   const colors = {
-    blue: 'from-blue-500 to-blue-600',
-    green: 'from-emerald-500 to-emerald-600',
-    amber: 'from-amber-500 to-amber-600',
-    red: 'from-red-500 to-red-600',
-    purple: 'from-purple-500 to-purple-600',
-    gray: 'from-gray-500 to-gray-600',
-    teal: 'from-teal-500 to-teal-600',
+    blue: 'from-[#1e3a5f] to-[#2d5a8e]',
+    green: 'from-[#0f766e] to-[#14918a]',
+    amber: 'from-amber-700 to-amber-800',
+    red: 'from-red-800 to-red-900',
+    purple: 'from-[#5b21b6] to-[#7c3aed]',
+    gray: 'from-slate-600 to-slate-700',
+    teal: 'from-[#0e7490] to-[#0891b2]',
   };
   return (
     <Card className={`overflow-hidden ${className}`}>

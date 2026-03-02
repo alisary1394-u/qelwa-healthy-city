@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ const ROLE_LABELS_AR = {
 };
 
 const priorityConfig = {
-  low: { label: "منخفضة", color: "bg-gray-100 text-gray-800", dot: "bg-gray-400" },
+  low: { label: "منخفضة", color: "bg-muted text-foreground", dot: "bg-gray-400" },
   medium: { label: "متوسطة", color: "bg-blue-100 text-blue-800", dot: "bg-blue-500" },
   high: { label: "عالية", color: "bg-orange-100 text-orange-800", dot: "bg-orange-500" },
   urgent: { label: "عاجلة", color: "bg-red-100 text-red-800", dot: "bg-red-500" }
@@ -32,7 +32,7 @@ const statusConfig = {
   pending: { label: "قيد الانتظار", color: "bg-yellow-100 text-yellow-800", border: "border-yellow-300" },
   in_progress: { label: "قيد التنفيذ", color: "bg-blue-100 text-blue-800", border: "border-blue-300" },
   completed: { label: "مكتملة", color: "bg-green-100 text-green-800", border: "border-green-300" },
-  cancelled: { label: "ملغاة", color: "bg-gray-100 text-gray-800", border: "border-gray-300" }
+  cancelled: { label: "ملغاة", color: "bg-muted text-foreground", border: "border-border" }
 };
 
 const categoryLabels = {
@@ -101,24 +101,24 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
         </div>
 
         {task.description && (
-          <p className="text-xs text-gray-500 mb-3 line-clamp-2">{task.description}</p>
+          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
         )}
 
         {/* Assignee card */}
-        <div className="flex items-center gap-2.5 mb-3 p-2 rounded-lg bg-gray-50/80 border border-gray-100">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+        <div className="flex items-center gap-2.5 mb-3 p-2 rounded-lg bg-muted/50/80 border border-gray-100">
+          <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-sm font-bold text-white shrink-0">
             {assigneeInitial}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">{assigneeName}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{assigneeName}</p>
             {assigneeRole && (
-              <p className="text-[11px] text-gray-500">{ROLE_LABELS_AR[assigneeRole] || assigneeRole}</p>
+              <p className="text-[11px] text-muted-foreground">{ROLE_LABELS_AR[assigneeRole] || assigneeRole}</p>
             )}
           </div>
         </div>
 
         {/* Meta info */}
-        <div className="grid grid-cols-1 gap-1.5 text-xs text-gray-600 mb-3">
+        <div className="grid grid-cols-1 gap-1.5 text-xs text-muted-foreground mb-3">
           {(initiativeTitle || task.initiative_id) && (
             <div className="flex items-center gap-1.5 text-purple-600">
               <Lightbulb className="w-3.5 h-3.5 shrink-0" />
@@ -138,7 +138,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 {dueLabel.text}
               </span>
               {dueLabel.distance && (
-                <span className={`text-[10px] mr-1 ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>({dueLabel.distance})</span>
+                <span className={`text-[10px] mr-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>({dueLabel.distance})</span>
               )}
             </div>
           )}

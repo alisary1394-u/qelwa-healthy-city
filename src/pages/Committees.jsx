@@ -163,7 +163,7 @@ export default function Committees() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة اللجان. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة اللجان. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
           </CardContent>
         </Card>
       </div>
@@ -299,21 +299,21 @@ export default function Committees() {
 
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
+      <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة اللجان</h1>
-          <p className="text-blue-100">لجان برنامج المدينة الصحية</p>
+          <p className="text-white/70">لجان برنامج المدينة الصحية</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{summaryStats.committees}</p><p className="text-sm text-muted-foreground">إجمالي اللجان</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">{summaryStats.activeCommittees}</p><p className="text-sm text-muted-foreground">لجان نشطة</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-indigo-600">{summaryStats.totalMembers}</p><p className="text-sm text-muted-foreground">إجمالي الأعضاء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-muted-foreground">المنسقون والرؤساء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.supervisors}</p><p className="text-sm text-muted-foreground">المشرفون</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-muted-foreground">المتطوعون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">{summaryStats.committees}</p><p className="text-sm text-muted-foreground">إجمالي اللجان</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.activeCommittees}</p><p className="text-sm text-muted-foreground">لجان نشطة</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{summaryStats.totalMembers}</p><p className="text-sm text-muted-foreground">إجمالي الأعضاء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-700 dark:text-sky-400">{summaryStats.coordinators}</p><p className="text-sm text-muted-foreground">المنسقون والرؤساء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summaryStats.supervisors}</p><p className="text-sm text-muted-foreground">المشرفون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.volunteers}</p><p className="text-sm text-muted-foreground">المتطوعون</p></CardContent></Card>
         </div>
 
         {/* Search + Filters */}
@@ -368,7 +368,7 @@ export default function Committees() {
 
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
           </div>
         ) : filteredCommittees.length === 0 ? (
           <Card className="text-center py-12">
@@ -391,15 +391,15 @@ export default function Committees() {
               const standardsCount = getCommitteeStandardsCount(committee);
               const committeeMembers = getCommitteeMembers(committee.id);
               const axisColors = [
-                'from-blue-500 to-blue-600',
-                'from-emerald-500 to-emerald-600',
-                'from-violet-500 to-violet-600',
-                'from-amber-500 to-amber-600',
-                'from-rose-500 to-rose-600',
-                'from-cyan-500 to-cyan-600',
-                'from-indigo-500 to-indigo-600',
-                'from-lime-600 to-lime-700',
-                'from-pink-500 to-pink-600',
+                'from-[#1e3a5f] to-[#2d5a8e]',
+                'from-[#0f766e] to-[#14918a]',
+                'from-[#92400e] to-[#b45309]',
+                'from-[#991b1b] to-[#b91c1c]',
+                'from-[#5b21b6] to-[#7c3aed]',
+                'from-[#0e7490] to-[#0891b2]',
+                'from-[#312e81] to-[#4338ca]',
+                'from-[#3f6212] to-[#4d7c0f]',
+                'from-[#9a3412] to-[#c2410c]',
               ];
               const axisIndex = resolvedAxisName ? axes.findIndex(a => a.name === resolvedAxisName) : -1;
               const gradientClass = axisIndex >= 0 ? axisColors[axisIndex % axisColors.length] : 'from-gray-400 to-gray-500';
@@ -431,20 +431,20 @@ export default function Committees() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" dir="rtl">
                               <DropdownMenuItem onClick={() => handleOpenForm(committee)} className="gap-2">
-                                <Edit className="w-4 h-4 text-blue-600" />
+                                <Edit className="w-4 h-4 text-primary" />
                                 <span>تعديل اللجنة</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleOpenAssignMember(committee)} className="gap-2">
-                                <UserPlus className="w-4 h-4 text-green-600" />
+                                <UserPlus className="w-4 h-4 text-secondary" />
                                 <span>إضافة عضو</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleStatus(committee)} className="gap-2">
-                                <Power className={`w-4 h-4 ${isActive ? 'text-orange-500' : 'text-green-600'}`} />
+                                <Power className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-secondary'}`} />
                                 <span>{isActive ? 'تعطيل اللجنة' : 'تفعيل اللجنة'}</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, committee })} className="gap-2 text-red-600 focus:text-red-600">
+                              <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, committee })} className="gap-2 text-destructive focus:text-destructive">
                                 <Trash2 className="w-4 h-4" />
                                 <span>حذف اللجنة</span>
                               </DropdownMenuItem>
@@ -463,7 +463,7 @@ export default function Committees() {
                     {/* Badges: standards count + axis */}
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {standardsCount > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           <BookOpen className="w-3 h-3" />
                           {standardsCount} معيار
                         </span>
@@ -471,7 +471,7 @@ export default function Committees() {
                       {committee.related_standards && (() => {
                         const rs = Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]');
                         return rs.length > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3 h-3" />
                             {rs.length} مرتبط
                           </span>
@@ -481,25 +481,25 @@ export default function Committees() {
 
                     {/* Stats grid */}
                     <div className="grid grid-cols-4 gap-1.5 mb-3">
-                      <div className="text-center p-2 rounded-lg bg-blue-50/80">
-                        <UserCog className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
-                        <p className="text-lg font-bold text-blue-700">{stats.coordinators}</p>
-                        <p className="text-[10px] text-blue-600/70">منسق</p>
+                      <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
+                        <UserCog className="w-4 h-4 text-primary mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-primary">{stats.coordinators}</p>
+                        <p className="text-[10px] text-primary/70">منسق</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-green-50/80">
-                        <Users className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
-                        <p className="text-lg font-bold text-green-700">{stats.committee_members}</p>
-                        <p className="text-[10px] text-green-600/70">أعضاء</p>
+                      <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
+                        <Users className="w-4 h-4 text-secondary mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-secondary">{stats.committee_members}</p>
+                        <p className="text-[10px] text-secondary/70">أعضاء</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-orange-50/80">
-                        <Eye className="w-4 h-4 text-orange-600 mx-auto mb-0.5" />
-                        <p className="text-lg font-bold text-orange-700">{stats.supervisors}</p>
-                        <p className="text-[10px] text-orange-600/70">مشرفين</p>
+                      <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
+                        <Eye className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{stats.supervisors}</p>
+                        <p className="text-[10px] text-amber-600/70">مشرفين</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-teal-50/80">
-                        <HandHelping className="w-4 h-4 text-teal-600 mx-auto mb-0.5" />
-                        <p className="text-lg font-bold text-teal-700">{stats.volunteers}</p>
-                        <p className="text-[10px] text-teal-600/70">متطوعين</p>
+                      <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
+                        <HandHelping className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{stats.volunteers}</p>
+                        <p className="text-[10px] text-slate-500">متطوعين</p>
                       </div>
                     </div>
 
@@ -508,7 +508,7 @@ export default function Committees() {
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex -space-x-2 rtl:space-x-reverse">
                           {committeeMembers.slice(0, 5).map((m, i) => (
-                            <div key={m.id} className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
+                            <div key={m.id} className="w-7 h-7 rounded-full gradient-primary border-2 border-white dark:border-card flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
                               {(m.full_name || '').charAt(0)}
                             </div>
                           ))}
@@ -531,14 +531,14 @@ export default function Committees() {
                     {/* Action buttons */}
                     <div className="flex gap-2">
                       <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300 group-hover:text-blue-700 transition-colors">
+                        <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/5 group-hover:border-primary/30 group-hover:text-primary transition-colors">
                           <Users className="w-3.5 h-3.5 ml-1" />
                           الأعضاء
                           <ChevronLeft className="w-3.5 h-3.5 mr-auto" />
                         </Button>
                       </Link>
                       {canManage && (
-                        <Button variant="outline" size="sm" className="group-hover:bg-green-50 group-hover:border-green-300 group-hover:text-green-700 transition-colors" onClick={() => handleOpenAssignMember(committee)}>
+                        <Button variant="outline" size="sm" className="group-hover:bg-secondary/5 group-hover:border-secondary/30 group-hover:text-secondary transition-colors" onClick={() => handleOpenAssignMember(committee)}>
                           <UserPlus className="w-3.5 h-3.5 ml-1" />
                           إضافة عضو
                         </Button>
@@ -668,7 +668,7 @@ export default function Committees() {
         <DialogContent dir="rtl" className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-green-600" />
+              <UserPlus className="w-5 h-5 text-secondary" />
               إضافة أعضاء إلى {assignTargetCommittee?.name}
             </DialogTitle>
           </DialogHeader>
@@ -686,8 +686,8 @@ export default function Committees() {
 
             {/* Selected count */}
             {assignSelected.length > 0 && (
-              <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
-                <span className="text-sm text-green-700 font-medium">
+              <div className="flex items-center justify-between bg-secondary/10 rounded-lg px-3 py-2">
+                <span className="text-sm text-secondary font-medium">
                   <UserCheck className="w-4 h-4 inline ml-1" />
                   تم تحديد {assignSelected.length} عضو
                 </span>
@@ -718,12 +718,12 @@ export default function Committees() {
                       key={m.id}
                       onClick={() => toggleSelectMember(m.id)}
                       className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-muted/50 ${
-                        isSelected ? 'bg-green-50/70' : ''
+                        isSelected ? 'bg-secondary/10' : ''
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 shrink-0 ${
                         isSelected
-                          ? 'bg-green-600 text-white border-green-600'
+                          ? 'bg-secondary text-white border-secondary'
                           : 'bg-muted text-muted-foreground border-border'
                       }`}>
                         {isSelected ? <UserCheck className="w-4 h-4" /> : (m.full_name || '').charAt(0)}
@@ -735,7 +735,7 @@ export default function Committees() {
                           {currentCommittee && (
                             <>
                               <span>•</span>
-                              <span className="text-orange-600">{currentCommittee.name}</span>
+                              <span className="text-amber-700 dark:text-amber-400">{currentCommittee.name}</span>
                             </>
                           )}
                           {!currentCommittee && <span className="text-muted-foreground">بدون لجنة</span>}
@@ -754,7 +754,7 @@ export default function Committees() {
               <Button
                 onClick={handleAssignMembers}
                 disabled={assignSelected.length === 0 || assignLoading}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-secondary hover:bg-secondary/90"
               >
                 {assignLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 نقل {assignSelected.length > 0 ? `(${assignSelected.length})` : ''} للجنة

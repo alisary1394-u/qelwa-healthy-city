@@ -278,7 +278,7 @@ export default function TeamManagement() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <Card className="bg-card shadow-sm border-0 overflow-hidden">
             <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white text-center">
+              <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] p-4 text-white text-center">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
                 <p className="text-2xl font-bold">{stats.total}</p>
                 <p className="text-sm opacity-90">إجمالي الأعضاء</p>

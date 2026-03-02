@@ -269,10 +269,10 @@ export default function Home() {
   }
 
   const features = [
-    { icon: Heart, title: 'الصحة والبيئة', desc: 'معايير صحية وبيئية دولية معتمدة من منظمة الصحة العالمية', color: 'text-rose-500' },
-    { icon: Target, title: '80 معياراً دولياً', desc: '9 محاور رئيسية تغطي جميع جوانب المدينة الصحية', color: 'text-primary' },
-    { icon: Shield, title: 'متابعة شاملة', desc: 'نظام متكامل لإدارة المهام والأدلة والتقارير', color: 'text-emerald-500' },
-    { icon: Leaf, title: 'التنمية المستدامة', desc: 'تطوير مستدام لجودة الحياة والخدمات المجتمعية', color: 'text-green-500' },
+    { icon: Heart, title: 'الصحة والبيئة', desc: 'معايير صحية وبيئية دولية معتمدة من منظمة الصحة العالمية', color: 'text-primary' },
+    { icon: Target, title: '80 معياراً دولياً', desc: '9 محاور رئيسية تغطي جميع جوانب المدينة الصحية', color: 'text-secondary' },
+    { icon: Shield, title: 'متابعة شاملة', desc: 'نظام متكامل لإدارة المهام والأدلة والتقارير', color: 'text-secondary' },
+    { icon: Leaf, title: 'التنمية المستدامة', desc: 'تطوير مستدام لجودة الحياة والخدمات المجتمعية', color: 'text-primary' },
   ];
 
   return (

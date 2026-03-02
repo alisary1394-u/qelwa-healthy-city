@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,14 +166,14 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                 const selected = members.find(m => m.id === formData.assigned_to);
                 return selected ? (
                   <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-50 border border-blue-200">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                    <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-sm font-bold text-white shrink-0">
                       {(selected.full_name || '').charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{selected.full_name}</p>
-                      <p className="text-[11px] text-gray-500">{ROLE_LABELS_AR[selected.role] || selected.role}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{selected.full_name}</p>
+                      <p className="text-[11px] text-muted-foreground">{ROLE_LABELS_AR[selected.role] || selected.role}</p>
                     </div>
-                    <button type="button" className="text-gray-400 hover:text-red-500" onClick={() => setFormData({ ...formData, assigned_to: '', assigned_to_name: '' })}>
+                    <button type="button" className="text-muted-foreground hover:text-red-500" onClick={() => setFormData({ ...formData, assigned_to: '', assigned_to_name: '' })}>
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -181,7 +181,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
               })()}
               {/* Search box */}
               <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
                 <Input
                   value={memberSearchQuery}
                   onChange={(e) => { setMemberSearchQuery(e.target.value); setMemberSearchOpen(true); }}
@@ -192,9 +192,9 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
               </div>
               {/* Members dropdown list */}
               {memberSearchOpen && (
-                <div className="border rounded-lg max-h-[180px] overflow-y-auto divide-y bg-white shadow-sm">
+                <div className="border rounded-lg max-h-[180px] overflow-y-auto divide-y bg-card shadow-sm">
                   {filteredMembers.length === 0 ? (
-                    <div className="p-3 text-center text-sm text-gray-400">لا توجد نتائج</div>
+                    <div className="p-3 text-center text-sm text-muted-foreground">لا توجد نتائج</div>
                   ) : (
                     filteredMembers.map(m => {
                       const isSelected = String(formData.assigned_to) === String(m.id);
@@ -206,18 +206,18 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                             setMemberSearchOpen(false);
                             setMemberSearchQuery('');
                           }}
-                          className={`flex items-center gap-2.5 p-2 cursor-pointer transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
+                          className={`flex items-center gap-2.5 p-2 cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? 'bg-blue-50' : ''}`}
                         >
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 shrink-0 ${
-                            isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-600 border-gray-200'
+                            isSelected ? 'bg-primary text-white border-blue-600' : 'bg-muted text-muted-foreground border-border'
                           }`}>
                             {isSelected ? <UserCheck className="w-3.5 h-3.5" /> : (m.full_name || '').charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{m.full_name}</p>
-                            <p className="text-[10px] text-gray-500">{ROLE_LABELS_AR[m.role] || m.role}</p>
+                            <p className="text-sm font-medium text-foreground truncate">{m.full_name}</p>
+                            <p className="text-[10px] text-muted-foreground">{ROLE_LABELS_AR[m.role] || m.role}</p>
                           </div>
-                          {m.phone && <span className="text-[10px] text-gray-400 shrink-0">{m.phone}</span>}
+                          {m.phone && <span className="text-[10px] text-muted-foreground shrink-0">{m.phone}</span>}
                         </div>
                       );
                     })
@@ -333,7 +333,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                 value={formData.reminder_date}
                 onChange={(e) => setFormData({...formData, reminder_date: e.target.value, reminder_sent: false})}
               />
-              <p className="text-xs text-gray-500">سيتم إرسال تذكير بالبريد الإلكتروني للمكلف في هذا التاريخ</p>
+              <p className="text-xs text-muted-foreground">سيتم إرسال تذكير بالبريد الإلكتروني للمكلف في هذا التاريخ</p>
             </div>
           </div>
 
@@ -351,7 +351,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               إلغاء
             </Button>
-            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
               {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               {task ? 'حفظ التعديلات' : 'إضافة المهمة'}
             </Button>
