@@ -14,7 +14,8 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Plus, Search, Lightbulb, Users, Calendar, DollarSign, 
   Target, TrendingUp, Clock, CheckCircle,
-  Loader2, Eye, Play, Pause, X, Trash2
+  Loader2, Eye, Play, Pause, X, Trash2,
+  UserCog, HandHelping
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import KPIManager from "../components/initiatives/KPIManager";
@@ -70,6 +71,32 @@ const parseTeamMemberIds = (raw) => {
     return trimmed.split(',').map((s) => s.trim()).filter(Boolean);
   }
   return [];
+};
+
+const ROLE_LABELS_AR = {
+  governor: 'المشرف العام',
+  coordinator: 'منسق',
+  committee_head: 'رئيس لجنة',
+  committee_coordinator: 'منسق لجنة',
+  committee_supervisor: 'مشرف',
+  committee_member: 'عضو',
+  member: 'عضو',
+  volunteer: 'متطوع',
+  budget_manager: 'مدير ميزانية',
+  accountant: 'محاسب',
+  financial_officer: 'مسؤول مالي',
+};
+
+const getRoleLabel = (role) => ROLE_LABELS_AR[role] || role || '';
+
+const getTeamRoleStats = (teamMembers) => {
+  return {
+    coordinators: teamMembers.filter(m => m.role === 'coordinator' || m.role === 'committee_coordinator' || m.role === 'committee_head').length,
+    members: teamMembers.filter(m => m.role === 'committee_member' || m.role === 'member').length,
+    supervisors: teamMembers.filter(m => m.role === 'committee_supervisor').length,
+    volunteers: teamMembers.filter(m => m.role === 'volunteer').length,
+    total: teamMembers.length
+  };
 };
 
 const INITIATIVE_PREFILL_STORAGE_KEY = 'initiative_prefill_from_standard';
@@ -1102,12 +1129,60 @@ export default function Initiatives() {
                             <span>{initiative.expected_beneficiaries} مستفيد</span>
                           </div>
                         )}
-                        <div className="col-span-2 flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span>فريق المبادرة: {linkedTeamText}</span>
-                        </div>
                       </div>
                     </div>
+
+                    {/* Team role stats grid */}
+                    {linkedTeam.length > 0 && (() => {
+                      const teamStats = getTeamRoleStats(linkedTeam);
+                      return (
+                        <>
+                          <div className="grid grid-cols-4 gap-1.5 mb-3">
+                            <div className="text-center p-2 rounded-lg bg-blue-50/80">
+                              <UserCog className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-blue-700">{teamStats.coordinators}</p>
+                              <p className="text-[10px] text-blue-600/70">منسق</p>
+                            </div>
+                            <div className="text-center p-2 rounded-lg bg-green-50/80">
+                              <Users className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-green-700">{teamStats.members}</p>
+                              <p className="text-[10px] text-green-600/70">أعضاء</p>
+                            </div>
+                            <div className="text-center p-2 rounded-lg bg-orange-50/80">
+                              <Eye className="w-4 h-4 text-orange-600 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-orange-700">{teamStats.supervisors}</p>
+                              <p className="text-[10px] text-orange-600/70">مشرفين</p>
+                            </div>
+                            <div className="text-center p-2 rounded-lg bg-teal-50/80">
+                              <HandHelping className="w-4 h-4 text-teal-600 mx-auto mb-0.5" />
+                              <p className="text-lg font-bold text-teal-700">{teamStats.volunteers}</p>
+                              <p className="text-[10px] text-teal-600/70">متطوعين</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="flex -space-x-2 rtl:space-x-reverse">
+                              {linkedTeam.slice(0, 5).map((m) => (
+                                <div key={m.id} className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
+                                  {(m.full_name || '').charAt(0)}
+                                </div>
+                              ))}
+                              {linkedTeam.length > 5 && (
+                                <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-semibold text-gray-600">
+                                  +{linkedTeam.length - 5}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500">{teamStats.total} عضو</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                    {linkedTeam.length === 0 && (
+                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                        <Users className="w-3.5 h-3.5" />
+                        لا يوجد فريق مرتبط بعد
+                      </div>
+                    )}
 
                     <div className="flex gap-2 pt-3 border-t">
                       <Button 
@@ -1622,7 +1697,7 @@ export default function Initiatives() {
                       <div className="flex flex-wrap gap-2">
                         {selectedLinkedTeam.map((member) => (
                           <div key={member.id} className="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs bg-white">
-                            <span>{member.full_name} {member.role ? `(${member.role})` : ''}</span>
+                            <span>{member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}</span>
                             {canManageInitiatives && (
                               <button
                                 type="button"
@@ -1646,7 +1721,7 @@ export default function Initiatives() {
                         <SelectContent>
                           {availableTeamMembersForAdd.map((member) => (
                             <SelectItem key={member.id} value={String(member.id)}>
-                              {member.full_name} {member.role ? `(${member.role})` : ''}
+                              {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1672,7 +1747,7 @@ export default function Initiatives() {
                       <div className="flex flex-wrap gap-2 mb-1">
                         {selectedSuggestedTeam.map((member) => (
                           <Badge key={member.id} className="bg-white text-blue-700 border border-blue-200">
-                            {member.full_name} {member.role ? `(${member.role})` : ''}
+                            {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
                           </Badge>
                         ))}
                       </div>
