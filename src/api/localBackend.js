@@ -12,8 +12,16 @@ const AUTH_KEY = 'local_current_user';
 const CSV_SYNC_VERSION = '2';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const WEB_SYNC_KEY = 'local_web_sync_version';
-const WEB_SYNC_VERSION = '2026-03-02';
+const WEB_SYNC_VERSION = '2026-03-02-2';
 const DEFAULT_WEB_SYNC_BASE = String(import.meta.env.VITE_WEB_SYNC_URL || 'https://www.qeelwah.com').replace(/\/$/, '');
+
+function hasSufficientLocalDataset() {
+  const standardsCount = getStore('Standard').length;
+  const teamCount = getStore('TeamMember').length;
+  const committeesCount = getStore('Committee').length;
+  const initiativesCount = getStore('Initiative').length;
+  return standardsCount >= 80 && teamCount >= 80 && committeesCount >= 12 && initiativesCount >= 20;
+}
 
 function getId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -428,7 +436,8 @@ export function clearLocalDataAndReseed() {
 export async function syncFromWebToLocalIfNeeded(options = {}) {
   if (typeof localStorage === 'undefined') return false;
   const force = options?.force === true;
-  if (!force && localStorage.getItem(WEB_SYNC_KEY) === WEB_SYNC_VERSION) return false;
+  const localIsSufficient = hasSufficientLocalDataset();
+  if (!force && localStorage.getItem(WEB_SYNC_KEY) === WEB_SYNC_VERSION && localIsSufficient) return false;
 
   const baseUrl = DEFAULT_WEB_SYNC_BASE;
   const entitiesToSync = [
@@ -444,8 +453,10 @@ export async function syncFromWebToLocalIfNeeded(options = {}) {
 
     const standardsCount = (fetched.Standard || []).length;
     const teamCount = (fetched.TeamMember || []).length;
-    if (standardsCount < 80 || teamCount === 0) {
-      throw new Error(`incomplete web dataset (standards=${standardsCount}, team=${teamCount})`);
+    const committeesCount = (fetched.Committee || []).length;
+    const initiativesCount = (fetched.Initiative || []).length;
+    if (standardsCount < 80 || teamCount < 80 || committeesCount < 12 || initiativesCount < 20) {
+      throw new Error(`incomplete web dataset (standards=${standardsCount}, team=${teamCount}, committees=${committeesCount}, initiatives=${initiativesCount})`);
     }
 
     for (const name of entitiesToSync) {
@@ -458,8 +469,8 @@ export async function syncFromWebToLocalIfNeeded(options = {}) {
       console.log('[localBackend] تمت مزامنة بيانات الويب إلى المحلي:', {
         standards: standardsCount,
         team: teamCount,
-        committees: fetched.Committee?.length || 0,
-        initiatives: fetched.Initiative?.length || 0,
+        committees: committeesCount,
+        initiatives: initiativesCount,
       });
     }
     return true;

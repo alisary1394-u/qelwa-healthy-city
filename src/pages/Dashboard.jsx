@@ -3,7 +3,6 @@ import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +12,13 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, ClipboardList, 
-  AlertTriangle, CheckCircle2, Clock, TrendingUp, Building2,
+  AlertTriangle, CheckCircle2, Clock, Building2,
   ArrowLeft, Activity, Image, Upload, Trash2, Save, Settings
 } from "lucide-react";
 
 /** عدد المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 const axisColors = [
   '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',

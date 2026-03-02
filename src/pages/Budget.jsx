@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, CheckCircle, Clock, Download, Upload, Loader2, Pencil } from "lucide-react";
+import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, Clock, Loader2, Pencil } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from '@/hooks/usePermissions';
+import { AXES_CSV } from '@/api/standardsFromCsv';
 
 const transactionCategories = {
   expense: [
@@ -121,6 +122,23 @@ export default function Budget() {
     queryKey: ['axes'],
     queryFn: () => api.entities.Axis.list()
   });
+
+  const normalizedAxes = useMemo(() => {
+    return axes.map((axis) => {
+      const order = Number(axis.order) || 0;
+      const official = AXES_CSV.find((item) => Number(item.order) === order);
+      return {
+        ...axis,
+        display_name: official?.name || axis.name,
+      };
+    });
+  }, [axes]);
+
+  const axisDisplayNameById = useMemo(() => {
+    const map = new Map();
+    normalizedAxes.forEach((axis) => map.set(String(axis.id), axis.display_name));
+    return map;
+  }, [normalizedAxes]);
 
   const { data: standards = [] } = useQuery({
     queryKey: ['standards'],
@@ -1458,11 +1476,11 @@ export default function Budget() {
               <div className="space-y-2">
                 <Label>المحور</Label>
                 <Select value={allocationForm.axis_id || 'none'} onValueChange={(v) => {
-                  const axis = axes.find(a => a.id === v);
+                  const axis = normalizedAxes.find(a => a.id === v);
                   setAllocationForm({
                     ...allocationForm,
                     axis_id: v === 'none' ? '' : v,
-                    axis_name: v === 'none' ? '' : axis?.name,
+                    axis_name: v === 'none' ? '' : axis?.display_name,
                     standard_id: '',
                     standard_code: '',
                     committee_id: '',
@@ -1474,8 +1492,8 @@ export default function Budget() {
                   <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">بدون ربط</SelectItem>
-                    {axes.map(axis => (
-                      <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                    {normalizedAxes.map(axis => (
+                      <SelectItem key={axis.id} value={axis.id}>{axis.display_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1529,7 +1547,7 @@ export default function Budget() {
                 <Select value={allocationForm.initiative_id || 'none'} onValueChange={(v) => {
                   const initiative = initiatives.find(i => i.id === v);
                   const committee = committees.find(c => c.id === initiative?.committee_id);
-                  const axis = axes.find(a => a.id === initiative?.axis_id);
+                  const axisName = axisDisplayNameById.get(String(initiative?.axis_id || ''));
                   const standard = standards.find(s => s.id === initiative?.standard_id);
                   setAllocationForm({
                     ...allocationForm,
@@ -1538,7 +1556,7 @@ export default function Budget() {
                     committee_id: v === 'none' ? allocationForm.committee_id : (initiative?.committee_id || allocationForm.committee_id),
                     committee_name: v === 'none' ? allocationForm.committee_name : (committee?.name || allocationForm.committee_name),
                     axis_id: v === 'none' ? allocationForm.axis_id : (initiative?.axis_id || allocationForm.axis_id),
-                    axis_name: v === 'none' ? allocationForm.axis_name : (axis?.name || allocationForm.axis_name),
+                    axis_name: v === 'none' ? allocationForm.axis_name : (axisName || allocationForm.axis_name),
                     standard_id: v === 'none' ? allocationForm.standard_id : (initiative?.standard_id || allocationForm.standard_id),
                     standard_code: v === 'none' ? allocationForm.standard_code : (standard?.code || allocationForm.standard_code),
                   });

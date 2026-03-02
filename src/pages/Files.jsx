@@ -89,18 +89,6 @@ export default function Files() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidence'] })
   });
 
-  if (!permissions.canSeeFiles) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الملفات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const currentMember = members.find(m => m.email === currentUser?.email);
   const userRole = currentMember?.role || currentUser?.role;
   const canUploadFiles = permissions.canUploadFiles === true;
@@ -156,6 +144,18 @@ export default function Files() {
     rejected: visibleFiles.filter(f => f.status === 'rejected').length,
     returned: visibleFiles.filter(f => f.status === 'returned').length
   };
+
+  if (!permissions.canSeeFiles) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الملفات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, TrendingUp, TrendingDown, Minus, Loader2, Upload, Paperclip, Trash2, FileText, Image, Pencil } from "lucide-react";
+import { Plus, TrendingUp, Minus, Loader2, Upload, Paperclip, Trash2, FileText, Image, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';

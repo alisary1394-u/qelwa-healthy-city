@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { createPageUrl } from '@/utils';
 import { getNavItemsForRole } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
-import { Loader2, MapPin, Users, Building2, Target, Smartphone, Database } from "lucide-react";
+import { Loader2, MapPin, Users, Target, Database } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {

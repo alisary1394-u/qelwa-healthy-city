@@ -43,13 +43,27 @@ const getAppParams = () => {
 		storage.removeItem('token');
 	}
 	const safeHref = typeof window !== 'undefined' && window.location ? window.location.href : '';
+	const explicitApiUrl = String(import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+	const databaseUrl = String(import.meta.env.VITE_DATABASE_URL || import.meta.env.VITE_WEB_SYNC_URL || '').trim().replace(/\/+$/, '');
+	const forceDatabaseBackend = import.meta.env.VITE_FORCE_DATABASE_BACKEND === 'true';
+	const prodSameOrigin = import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : '';
+	const backendFunctionsOrigin =
+		import.meta.env.VITE_USE_BACKEND_FUNCTIONS === 'true' && typeof window !== 'undefined' && window.location
+			? window.location.origin
+			: '';
+	const resolvedApiUrl =
+		explicitApiUrl ||
+		(forceDatabaseBackend ? (databaseUrl || 'https://www.qeelwah.com') : '') ||
+		prodSameOrigin ||
+		backendFunctionsOrigin;
+	const envUseLocalBackend = import.meta.env.VITE_USE_LOCAL_BACKEND === 'true';
 	return {
 		appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
 		token: getAppParamValue("access_token", { removeFromUrl: true }),
 		fromUrl: getAppParamValue("from_url", { defaultValue: safeHref }),
 		functionsVersion: getAppParamValue("functions_version", { defaultValue: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION }),
 		appBaseUrl: getAppParamValue("app_base_url", { defaultValue: import.meta.env.VITE_BASE44_APP_BASE_URL }),
-		useLocalBackend: import.meta.env.VITE_USE_LOCAL_BACKEND === 'true',
+		useLocalBackend: envUseLocalBackend && !resolvedApiUrl,
 		useSupabaseBackend: import.meta.env.VITE_USE_SUPABASE_BACKEND === 'true',
 		supabaseUrl: String(import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, ''),
 		supabaseAnonKey: String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim(),
@@ -59,9 +73,7 @@ const getAppParams = () => {
 		// دوال الخلفية (Backend Functions): عند وجود apiUrl نستخدم سيرفر التطبيق (sendVerificationCode, verifyCode, createFirstGovernor...)
 		// في الإنتاج: إن لم يُضبط VITE_API_URL نستخدم نفس النطاق (الواجهة والسيرفر معاً على Railway)
 		// لضمان التفعيل على Railway: لا تضبط VITE_API_URL أو اضبط VITE_USE_BACKEND_FUNCTIONS=true
-		apiUrl: (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') ||
-			(import.meta.env.PROD && typeof window !== 'undefined' ? window.location.origin : '') ||
-			(import.meta.env.VITE_USE_BACKEND_FUNCTIONS === 'true' && typeof window !== 'undefined' && window.location ? window.location.origin : ''),
+		apiUrl: resolvedApiUrl,
 		// حماية إضافية: لا نسمح بإعادة البذر على السيرفر الحقيقي إلا بتفعيل صريح.
 		allowServerReseed: import.meta.env.VITE_ALLOW_SERVER_RESEED === 'true',
 	}

@@ -6,7 +6,7 @@
 import React from 'react';
 import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard } from '@/api/enhancedKpis';
 import { ENHANCED_AXIS_KPIS } from '@/api/enhancedAxisKpis';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, FileText, Target, Award, Clock, CheckCircle2 } from "lucide-react";

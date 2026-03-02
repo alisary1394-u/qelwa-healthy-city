@@ -13,8 +13,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { 
   Plus, Search, Lightbulb, Users, Calendar, DollarSign, 
-  Target, TrendingUp, Clock, CheckCircle, AlertCircle,
-  Loader2, Eye, Edit, Play, Pause, X, Trash2
+  Target, TrendingUp, Clock, CheckCircle,
+  Loader2, Eye, Play, Pause, X, Trash2
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import KPIManager from "../components/initiatives/KPIManager";

@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar } from 'recharts';
-import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award, Target, Users, Lightbulb, BarChart3, ClipboardList, Shield, Activity, ChevronDown, ChevronUp } from "lucide-react";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award, Target, Users, Lightbulb, BarChart3, ClipboardList, Shield, Activity } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -129,17 +129,6 @@ export default function Reports() {
   const { data: axes = [] } = useQuery({ queryKey: ['axes'], queryFn: () => api.entities.Axis.list('order') });
   const { data: evidence = [] } = useQuery({ queryKey: ['evidence'], queryFn: () => api.entities.Evidence.list() });
   const { data: settings = [] } = useQuery({ queryKey: ['settings'], queryFn: () => api.entities.Settings.list() });
-
-  if (!permissions.canSeeReports) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md"><CardContent className="p-6 text-center">
-          <Shield className="w-12 h-12 mx-auto text-red-400 mb-3" />
-          <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة التقارير.</p>
-        </CardContent></Card>
-      </div>
-    );
-  }
 
   const filteredInitiatives = selectedCommittee === 'all' ? initiatives : initiatives.filter(i => i.committee_id === selectedCommittee);
   const filteredTasks = selectedCommittee === 'all' ? tasks : tasks.filter(t => {
@@ -304,6 +293,17 @@ export default function Reports() {
 
   const completedTasksPct = filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'completed').length / filteredTasks.length) * 100) : 0;
   const completedInitPct = filteredInitiatives.length > 0 ? Math.round((filteredInitiatives.filter(i => i.status === 'completed').length / filteredInitiatives.length) * 100) : 0;
+
+  if (!permissions?.canSeeReports) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <Card className="max-w-md"><CardContent className="p-6 text-center">
+          <Shield className="w-12 h-12 mx-auto text-red-400 mb-3" />
+          <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة التقارير.</p>
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100" dir="rtl">

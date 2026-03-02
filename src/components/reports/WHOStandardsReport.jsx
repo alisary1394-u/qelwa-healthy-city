@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, FileText, Target } from "lucide-react";
+import { CheckCircle, Clock, FileText, Target } from "lucide-react";
 import { AXIS_KPIS_CSV, AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;

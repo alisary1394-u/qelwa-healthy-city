@@ -26,15 +26,16 @@ export const AuthProvider = ({ children }) => {
 
       const useSupabaseBackend = appParams.useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey;
       const useServerBackend = !!appParams.apiUrl;
-      const useManagedBackend = appParams.useLocalBackend || useSupabaseBackend || useServerBackend;
+      const isTrueLocalBackend = appParams.useLocalBackend && !useSupabaseBackend && !useServerBackend;
+      const useManagedBackend = isTrueLocalBackend || useSupabaseBackend || useServerBackend;
       const allowSeedOnServer = appParams.allowServerReseed === true;
       const shouldRunClientSeed =
-        appParams.useLocalBackend ||
+        isTrueLocalBackend ||
         useSupabaseBackend ||
         (useServerBackend && allowSeedOnServer);
       const seedNamespace = useSupabaseBackend
         ? 'supabase'
-        : appParams.useLocalBackend
+        : isTrueLocalBackend
           ? 'local'
           : useServerBackend
             ? 'server'
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }) => {
         }
       })();
 
-      if (appParams.useLocalBackend) {
+      if (isTrueLocalBackend) {
         try {
           await Promise.resolve(api.syncFromWebToLocalIfNeeded?.());
         } catch (e) {
@@ -57,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       let shouldForceReseedForMissingLocalData = false;
-      if (appParams.useLocalBackend) {
+      if (isTrueLocalBackend) {
         try {
           const [teamMembers, committees, initiatives, standards] = await Promise.all([
             Promise.resolve(api.entities?.TeamMember?.list?.() ?? []),

@@ -6,23 +6,16 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AXES_SEED, AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, getStandardCodeFromIndex, sortAndDeduplicateStandardsByCode, normalizeStandardCode } from '@/api/standardsFromCsv';
+import { AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
+import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 // استيراد المؤشرات المحسنة
-import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard, buildVerificationMethodsForStandard } from '@/api/enhancedKpis';
-import {
-  EnhancedKpiDisplay,
-  EnhancedDocumentsDisplay,
-  EnhancedAxisCard,
-  enhanceStandardsDisplay,
-  calculateAxisPerformance,
-} from "@/components/EnhancedStandardsDisplay-Simple";
+import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard } from '@/api/enhancedKpis';
+
+
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 import { generateVerificationReport, verifyDocumentCompleteness } from '@/api/verificationGuide';
-import { buildIntegratedStandardsData, generateIntegratedPerformanceReport } from '@/api/integratedKpis';
 
-import { createAxesSelectFunction } from '@/lib/axesSort';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +26,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, 
-  BarChart3, ChevronDown, ChevronUp, TrendingUp, Users, Award, Clock, AlertCircle, CheckCircle2,
-  Sparkles, Download, Filter, Grid3X3, List, Activity, Shield, Star, Zap
+  BarChart3, ChevronDown, ChevronUp, TrendingUp, Clock, AlertCircle, CheckCircle2
 } from "lucide-react";
 
 function parseJsonArray(str, fallback = []) {
