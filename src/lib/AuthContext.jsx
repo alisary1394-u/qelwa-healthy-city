@@ -48,11 +48,31 @@ export const AuthProvider = ({ children }) => {
         }
       })();
 
+      let shouldForceReseedForMissingLocalData = false;
+      if (appParams.useLocalBackend) {
+        try {
+          const [teamMembers, committees, initiatives, standards] = await Promise.all([
+            Promise.resolve(api.entities?.TeamMember?.list?.() ?? []),
+            Promise.resolve(api.entities?.Committee?.list?.() ?? []),
+            Promise.resolve(api.entities?.Initiative?.list?.() ?? []),
+            Promise.resolve(api.entities?.Standard?.list?.() ?? []),
+          ]);
+
+          shouldForceReseedForMissingLocalData =
+            !Array.isArray(teamMembers) || teamMembers.length === 0 ||
+            !Array.isArray(committees) || committees.length === 0 ||
+            !Array.isArray(initiatives) || initiatives.length === 0 ||
+            !Array.isArray(standards) || standards.length < 80;
+        } catch {
+          shouldForceReseedForMissingLocalData = true;
+        }
+      }
+
       if (useManagedBackend) {
         setAppPublicSettings({});
         setIsLoadingPublicSettings(false);
         // حماية الإنتاج: لا نشغّل بذر البيانات على السيرفر إلا بتفعيل صريح.
-        if (shouldRunClientSeed && !seedAlreadyCompleted) {
+        if (shouldRunClientSeed && (!seedAlreadyCompleted || shouldForceReseedForMissingLocalData)) {
           try {
             await Promise.resolve(api.seedDefaultGovernorIfNeeded?.() ?? null);
             await Promise.resolve(api.seedAxesAndStandardsIfNeeded?.());
