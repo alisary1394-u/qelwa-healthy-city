@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, AXIS_KPIS_CSV as AXIS_KPIS, OVERALL_CLASSIFICATION_KPI, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -131,7 +130,6 @@ function StandardsLegacy() {
   const [editStandard, setEditStandard] = useState(null);
   const [editDocuments, setEditDocuments] = useState([]);
   const [editKpis, setEditKpis] = useState([]);
-  const [showResultTable, setShowResultTable] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -590,55 +588,6 @@ function StandardsLegacy() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* جدول النتيجة — مؤشرات الأداء لكل محور (من ملف Healthy_Cities_Criteria.csv) */}
-        <Card className="mb-6 border-blue-100 bg-blue-50/50">
-          <CardHeader
-            className="cursor-pointer flex flex-row items-center justify-between"
-            onClick={() => setShowResultTable(!showResultTable)}
-          >
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              جدول النتيجة — مؤشرات الأداء لكل محور (معايير المدن الصحية)
-            </CardTitle>
-            {showResultTable ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </CardHeader>
-          {showResultTable && (
-            <CardContent className="space-y-4 pt-0">
-              <p className="text-sm text-gray-600">
-                حسب مرجع المعايير (مرجع-معايير-المحاور-للمقارنة): 9 محاور و 80 معياراً. كل معيار يُقيّم بأدلة متوفرة (+) أو أدلة غير متوفرة (-). للاعتراف بالمدينة كـ «مدينة صحية» يجب تحقيق 80% على الأقل من معايير كل محور ومن إجمالي المعايير.
-              </p>
-              <div className="rounded-lg border bg-white p-3">
-                <h4 className="font-semibold mb-2">مؤشر التصنيف الإجمالي</h4>
-                <p><span className="text-blue-600">{OVERALL_CLASSIFICATION_KPI.name}</span>: {OVERALL_CLASSIFICATION_KPI.target} ({OVERALL_CLASSIFICATION_KPI.unit})</p>
-                <p className="text-xs text-gray-500 mt-1">{OVERALL_CLASSIFICATION_KPI.description}</p>
-              </div>
-              <Tabs defaultValue="axes" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="axes">مؤشرات كل محور</TabsTrigger>
-                </TabsList>
-                <TabsContent value="axes" className="space-y-3 mt-3">
-                  {AXIS_KPIS.map((axisKpi) => (
-                    <div key={axisKpi.axis_order} className="rounded-lg border bg-white p-3">
-                      <h4 className="font-semibold text-base mb-2">المحور {axisKpi.axis_order}: {axisKpi.axis_name}</h4>
-                      <ul className="list-disc list-inside space-y-1 text-sm">
-                        {axisKpi.kpis.map((k, i) => (
-                          <li key={i}>
-                            <span className="font-medium">{k.name}</span>
-                            {' — الهدف: '}
-                            <span className="text-green-700">{k.target}</span>
-                            {k.unit && k.unit !== '-' && ` (${k.unit})`}
-                            {k.description && <span className="text-gray-500 block mr-4 mt-0.5">{k.description}</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          )}
-        </Card>
-
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           {canManage && (
             <>
