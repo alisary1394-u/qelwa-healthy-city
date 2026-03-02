@@ -141,6 +141,22 @@ export default function Committees() {
     return list;
   }, [scopedCommittees, searchQuery, filterAxis, filterStatus, axes]);
 
+  // الأعضاء المتاحين (غير مسجلين في هذه اللجنة)
+  const availableMembers = useMemo(() => {
+    if (!assignTargetCommittee) return [];
+    return members.filter(m => m.committee_id !== assignTargetCommittee.id);
+  }, [members, assignTargetCommittee]);
+
+  const filteredAvailableMembers = useMemo(() => {
+    const q = assignSearch.trim().toLowerCase();
+    if (!q) return availableMembers;
+    return availableMembers.filter(m =>
+      (m.full_name || '').toLowerCase().includes(q) ||
+      (m.phone || '').includes(q) ||
+      (m.department || '').toLowerCase().includes(q)
+    );
+  }, [availableMembers, assignSearch]);
+
   if (!permissions.canSeeCommittees) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
@@ -245,22 +261,6 @@ export default function Committees() {
     setAssignSelected([]);
     setAssignMemberOpen(true);
   };
-
-  // الأعضاء المتاحين (غير مسجلين في هذه اللجنة)
-  const availableMembers = useMemo(() => {
-    if (!assignTargetCommittee) return [];
-    return members.filter(m => m.committee_id !== assignTargetCommittee.id);
-  }, [members, assignTargetCommittee]);
-
-  const filteredAvailableMembers = useMemo(() => {
-    const q = assignSearch.trim().toLowerCase();
-    if (!q) return availableMembers;
-    return availableMembers.filter(m =>
-      (m.full_name || '').toLowerCase().includes(q) ||
-      (m.phone || '').includes(q) ||
-      (m.department || '').toLowerCase().includes(q)
-    );
-  }, [availableMembers, assignSearch]);
 
   const handleAssignMembers = async () => {
     if (!assignTargetCommittee || assignSelected.length === 0) return;
