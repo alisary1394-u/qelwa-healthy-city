@@ -11,8 +11,12 @@ import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, ClipboardList, 
   AlertTriangle, CheckCircle2, Clock, Building2,
-  ArrowLeft, Activity, TrendingUp, Shield, Zap
+  ArrowLeft, Activity, TrendingUp, Shield, Zap,
+  Image, Upload, Trash2, Save, Settings, ChevronDown
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -114,7 +118,36 @@ export default function Dashboard() {
     queryFn: () => api.entities.Settings.list()
   });
 
+  const queryClient = useQueryClient();
   const currentSetting = settingsList[0] || {};
+
+  const [logoForm, setLogoForm] = useState({
+    logo_url: '',
+    logo_text: 'ق',
+    city_name: 'المدينة الصحية',
+    city_location: 'محافظة قلوة'
+  });
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  useEffect(() => {
+    if (currentSetting.id) {
+      setLogoForm({
+        logo_url: currentSetting.logo_url || '',
+        logo_text: currentSetting.logo_text || 'ق',
+        city_name: currentSetting.city_name || 'المدينة الصحية',
+        city_location: currentSetting.city_location || 'محافظة قلوة'
+      });
+    }
+  }, [currentSetting]);
+
+  const createSettingsMutation = useMutation({
+    mutationFn: (data) => api.entities.Settings.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
+  });
+  const updateSettingsMutation = useMutation({
+    mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
+  });
 
   if (!permissions.canSeeDashboard) {
     return (
@@ -133,6 +166,33 @@ export default function Dashboard() {
   if (axesLoading || standardsLoading) {
     return <DashboardSkeleton />;
   }
+
+  const handleLogoUpload = async (e) => {
+    if (!permissions.canManageSettings) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const result = await api.integrations?.Core?.UploadFile?.({ file });
+      if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
+    } catch (err) { console.error(err); }
+    setLogoUploading(false);
+  };
+
+  const handleRemoveLogo = () => {
+    if (!permissions.canManageSettings) return;
+    setLogoForm(f => ({ ...f, logo_url: '' }));
+  };
+
+  const handleSaveLogo = async () => {
+    if (!permissions.canManageSettings) return;
+    const data = { ...logoForm };
+    if (currentSetting.id) {
+      await updateSettingsMutation.mutateAsync({ id: currentSetting.id, data });
+    } else {
+      await createSettingsMutation.mutateAsync(data);
+    }
+  };
 
   const totalStandards = REFERENCE_STANDARDS_COUNT;
   const completedStandards = standards.filter(s => s.status === 'completed' || s.status === 'approved').length;
@@ -252,6 +312,120 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* إعدادات الشعار */}
+        {permissions.canSeeSettings && (
+        <Collapsible defaultOpen={false}>
+          <Card className="mb-6 border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Image className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    إعدادات الشعار
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex-shrink-0">
+                  <Label className="block mb-2 text-sm font-medium">معاينة الشعار</Label>
+                  <div className="w-32 h-32 rounded-xl border-2 border-border bg-card flex items-center justify-center overflow-hidden">
+                    {logoForm.logo_url ? (
+                      <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-4xl font-bold text-white bg-gradient-to-br from-blue-600 to-green-600 w-full h-full flex items-center justify-center rounded-xl">
+                        {logoForm.logo_text || 'ق'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={logoUploading || !permissions.canManageSettings}
+                      onClick={() => document.getElementById('dashboard-logo-upload').click()}
+                    >
+                      <Upload className="w-4 h-4 ml-2" />
+                      {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
+                    </Button>
+                    {logoForm.logo_url && permissions.canManageSettings && (
+                      <Button variant="outline" size="sm" className="text-red-600 border-red-200" onClick={handleRemoveLogo}>
+                        <Trash2 className="w-4 h-4 ml-2" />
+                        حذف الشعار
+                      </Button>
+                    )}
+                    <input
+                      id="dashboard-logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-sm">نص الشعار البديل</Label>
+                      <Input
+                        value={logoForm.logo_text}
+                        disabled={!permissions.canManageSettings}
+                        onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
+                        placeholder="ق"
+                        maxLength={3}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">اسم المدينة</Label>
+                      <Input
+                        value={logoForm.city_name}
+                        disabled={!permissions.canManageSettings}
+                        onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
+                        placeholder="المدينة الصحية"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label className="text-sm">موقع المدينة</Label>
+                      <Input
+                        value={logoForm.city_location}
+                        disabled={!permissions.canManageSettings}
+                        onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
+                        placeholder="محافظة قلوة"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveLogo}
+                      disabled={!permissions.canManageSettings || createSettingsMutation.isPending || updateSettingsMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Save className="w-4 h-4 ml-2" />
+                      حفظ التعديلات
+                    </Button>
+                    <Link to={createPageUrl('Settings')}>
+                      <Button variant="outline" size="sm">
+                        <Settings className="w-4 h-4 ml-2" />
+                        إعدادات المدينة الكاملة
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+        )}
 
         {/* Alerts */}
         {(overdueTasks > 0 || pendingEvidence > 0) && (
