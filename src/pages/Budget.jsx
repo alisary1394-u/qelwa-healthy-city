@@ -277,6 +277,27 @@ export default function Budget() {
     }, {});
   }, [allocations, initiatives]);
 
+  const filteredStandardsForAllocation = useMemo(() => {
+    if (!allocationForm.axis_id) return standards;
+    return standards.filter((standard) => String(standard.axis_id || '') === String(allocationForm.axis_id));
+  }, [standards, allocationForm.axis_id]);
+
+  const filteredCommitteesForAllocation = useMemo(() => {
+    if (!allocationForm.axis_id) return committees;
+    const filtered = committees.filter((committee) => String(committee.axis_id || '') === String(allocationForm.axis_id));
+    return filtered.length > 0 ? filtered : committees;
+  }, [committees, allocationForm.axis_id]);
+
+  const filteredInitiativesForAllocation = useMemo(() => {
+    return initiatives.filter((initiative) => {
+      if (allocationForm.budget_id && initiative.budget_id && String(initiative.budget_id) !== String(allocationForm.budget_id)) return false;
+      if (allocationForm.axis_id && String(initiative.axis_id || '') !== String(allocationForm.axis_id)) return false;
+      if (allocationForm.standard_id && String(initiative.standard_id || '') !== String(allocationForm.standard_id)) return false;
+      if (allocationForm.committee_id && String(initiative.committee_id || '') !== String(allocationForm.committee_id)) return false;
+      return true;
+    });
+  }, [initiatives, allocationForm.budget_id, allocationForm.axis_id, allocationForm.standard_id, allocationForm.committee_id]);
+
   const resetTransactionForm = () => {
     setTransactionForm({
       type: 'expense',
@@ -1435,27 +1456,20 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>اللجنة</Label>
-                <Select value={allocationForm.committee_id || 'none'} onValueChange={(v) => {
-                  const committee = committees.find(c => c.id === v);
-                  setAllocationForm({ ...allocationForm, committee_id: v === 'none' ? '' : v, committee_name: v === 'none' ? '' : committee?.name });
-                }}>
-                  <SelectTrigger><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
-                    {committees
-                      .filter(c => !allocationForm.axis_id || c.axis_id === allocationForm.axis_id)
-                      .map(committee => (
-                        <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label>المحور</Label>
                 <Select value={allocationForm.axis_id || 'none'} onValueChange={(v) => {
                   const axis = axes.find(a => a.id === v);
-                  setAllocationForm({ ...allocationForm, axis_id: v === 'none' ? '' : v, axis_name: v === 'none' ? '' : axis?.name });
+                  setAllocationForm({
+                    ...allocationForm,
+                    axis_id: v === 'none' ? '' : v,
+                    axis_name: v === 'none' ? '' : axis?.name,
+                    standard_id: '',
+                    standard_code: '',
+                    committee_id: '',
+                    committee_name: '',
+                    initiative_id: '',
+                    initiative_title: ''
+                  });
                 }}>
                   <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
                   <SelectContent>
@@ -1470,15 +1484,42 @@ export default function Budget() {
                 <Label>المعيار</Label>
                 <Select value={allocationForm.standard_id || 'none'} onValueChange={(v) => {
                   const standard = standards.find(s => s.id === v);
-                  setAllocationForm({ ...allocationForm, standard_id: v === 'none' ? '' : v, standard_code: v === 'none' ? '' : standard?.code || '' });
+                  setAllocationForm({
+                    ...allocationForm,
+                    standard_id: v === 'none' ? '' : v,
+                    standard_code: v === 'none' ? '' : standard?.code || '',
+                    initiative_id: '',
+                    initiative_title: ''
+                  });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المعيار (اختياري)" /></SelectTrigger>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر المعيار (اختياري)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">بدون ربط</SelectItem>
-                    {standards.map(standard => (
+                    {filteredStandardsForAllocation.map(standard => (
                       <SelectItem key={standard.id} value={standard.id}>
-                        {standard.code} - {standard.name}
+                        {standard.code} - {standard.name || standard.title}
                       </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>اللجنة</Label>
+                <Select value={allocationForm.committee_id || 'none'} onValueChange={(v) => {
+                  const committee = committees.find(c => c.id === v);
+                  setAllocationForm({
+                    ...allocationForm,
+                    committee_id: v === 'none' ? '' : v,
+                    committee_name: v === 'none' ? '' : committee?.name,
+                    initiative_id: '',
+                    initiative_title: ''
+                  });
+                }}>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون ربط</SelectItem>
+                    {filteredCommitteesForAllocation.map(committee => (
+                      <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1487,20 +1528,34 @@ export default function Budget() {
                 <Label>المبادرة</Label>
                 <Select value={allocationForm.initiative_id || 'none'} onValueChange={(v) => {
                   const initiative = initiatives.find(i => i.id === v);
-                  setAllocationForm({ ...allocationForm, initiative_id: v === 'none' ? '' : v, initiative_title: v === 'none' ? '' : initiative?.title || '' });
+                  const committee = committees.find(c => c.id === initiative?.committee_id);
+                  const axis = axes.find(a => a.id === initiative?.axis_id);
+                  const standard = standards.find(s => s.id === initiative?.standard_id);
+                  setAllocationForm({
+                    ...allocationForm,
+                    initiative_id: v === 'none' ? '' : v,
+                    initiative_title: v === 'none' ? '' : initiative?.title || '',
+                    committee_id: v === 'none' ? allocationForm.committee_id : (initiative?.committee_id || allocationForm.committee_id),
+                    committee_name: v === 'none' ? allocationForm.committee_name : (committee?.name || allocationForm.committee_name),
+                    axis_id: v === 'none' ? allocationForm.axis_id : (initiative?.axis_id || allocationForm.axis_id),
+                    axis_name: v === 'none' ? allocationForm.axis_name : (axis?.name || allocationForm.axis_name),
+                    standard_id: v === 'none' ? allocationForm.standard_id : (initiative?.standard_id || allocationForm.standard_id),
+                    standard_code: v === 'none' ? allocationForm.standard_code : (standard?.code || allocationForm.standard_code),
+                  });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">بدون ربط</SelectItem>
-                    {initiatives
-                      .filter(i => !allocationForm.budget_id || i.budget_id === allocationForm.budget_id)
-                      .map(initiative => (
+                    {filteredInitiativesForAllocation.map(initiative => (
                         <SelectItem key={initiative.id} value={initiative.id}>
                           {initiative.title}
                         </SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-gray-500">
+                  تم الترتيب: المحور ← المعيار ← اللجنة ← المبادرة، والقائمة تتفلتر تلقائياً حسب اختيارك.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>الفئة</Label>
