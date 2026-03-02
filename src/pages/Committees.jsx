@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search } from "lucide-react";
+import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search, ChevronLeft, Shield, MoreVertical, Target } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -222,65 +223,111 @@ export default function Committees() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredCommittees.map(committee => {
               const stats = getCommitteeStats(committee.id);
+              const isActive = committee.status === 'active' || !committee.status;
+              const axisColors = [
+                'from-blue-500 to-blue-600',
+                'from-emerald-500 to-emerald-600',
+                'from-violet-500 to-violet-600',
+                'from-amber-500 to-amber-600',
+                'from-rose-500 to-rose-600',
+                'from-cyan-500 to-cyan-600',
+                'from-indigo-500 to-indigo-600',
+                'from-lime-600 to-lime-700',
+                'from-pink-500 to-pink-600',
+              ];
+              const axisIndex = axes.findIndex(a => a.id === committee.axis_id);
+              const gradientClass = axisIndex >= 0 ? axisColors[axisIndex % axisColors.length] : 'from-gray-400 to-gray-500';
               return (
-                <Card key={committee.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-2">
+                <Card key={committee.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  {/* Header gradient bar */}
+                  <div className={`bg-gradient-to-l ${gradientClass} p-4 relative`}>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{committee.name}</CardTitle>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-bold text-lg leading-tight truncate">{committee.name}</h3>
                         {committee.axis_name && (
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            المحور: {committee.axis_name}
-                          </Badge>
-                        )}
-                        {committee.description && (
-                          <p className="text-sm text-gray-500 mt-1">{committee.description}</p>
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
+                            <span className="text-white/90 text-xs truncate">{committee.axis_name}</span>
+                          </div>
                         )}
                       </div>
-                      {canManage && (
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenForm(committee)}>
-                            <Edit className="w-4 h-4 text-blue-600" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({ open: true, committee })}>
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                      <div className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                        <UserCog className="w-4 h-4 text-blue-600" />
-                        <span>منسق: {stats.coordinators}</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded">
-                        <Users className="w-4 h-4 text-green-600" />
-                        <span>أعضاء: {stats.committee_members}</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-orange-50 rounded">
-                        <Eye className="w-4 h-4 text-orange-600" />
-                        <span>مشرفين: {stats.supervisors}</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-2 bg-teal-50 rounded">
-                        <HandHelping className="w-4 h-4 text-teal-600" />
-                        <span>متطوعين: {stats.volunteers}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-black/20 text-white/80'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-300' : 'bg-gray-300'}`}></span>
+                          {isActive ? 'نشطة' : 'غير نشطة'}
+                        </span>
+                        {canManage && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" dir="rtl">
+                              <DropdownMenuItem onClick={() => handleOpenForm(committee)} className="gap-2">
+                                <Edit className="w-4 h-4 text-blue-600" />
+                                <span>تعديل اللجنة</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, committee })} className="gap-2 text-red-600 focus:text-red-600">
+                                <Trash2 className="w-4 h-4" />
+                                <span>حذف اللجنة</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t">
-                      <Badge variant={committee.status === 'active' ? 'default' : 'secondary'}>
-                        {committee.status === 'active' ? 'نشطة' : 'غير نشطة'}
-                      </Badge>
-                      <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`}>
-                        <Button variant="outline" size="sm">
-                          عرض الأعضاء
-                        </Button>
-                      </Link>
+                  </div>
+
+                  <CardContent className="p-4">
+                    {committee.description && (
+                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{committee.description}</p>
+                    )}
+
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-4 gap-1.5 mb-4">
+                      <div className="text-center p-2 rounded-lg bg-blue-50/80">
+                        <UserCog className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-blue-700">{stats.coordinators}</p>
+                        <p className="text-[10px] text-blue-600/70">منسق</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg bg-green-50/80">
+                        <Users className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-green-700">{stats.committee_members}</p>
+                        <p className="text-[10px] text-green-600/70">أعضاء</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg bg-orange-50/80">
+                        <Eye className="w-4 h-4 text-orange-600 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-orange-700">{stats.supervisors}</p>
+                        <p className="text-[10px] text-orange-600/70">مشرفين</p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg bg-teal-50/80">
+                        <HandHelping className="w-4 h-4 text-teal-600 mx-auto mb-0.5" />
+                        <p className="text-lg font-bold text-teal-700">{stats.volunteers}</p>
+                        <p className="text-[10px] text-teal-600/70">متطوعين</p>
+                      </div>
                     </div>
+
+                    {/* Total members bar */}
+                    <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">إجمالي الفريق</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-800">{stats.total} عضو</span>
+                    </div>
+
+                    {/* Action button */}
+                    <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="block">
+                      <Button variant="outline" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300 group-hover:text-blue-700 transition-colors">
+                        <Users className="w-4 h-4 ml-2" />
+                        عرض الأعضاء
+                        <ChevronLeft className="w-4 h-4 mr-auto" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               );
