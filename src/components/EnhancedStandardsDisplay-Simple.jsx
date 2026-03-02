@@ -1,4 +1,4 @@
-/**
+﻿/**
  * نسخة مبسطة من مكونات المؤشرات المحسنة
  * تعمل بدون مشاكل TypeScript
  */
@@ -41,36 +41,36 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {enhancedKpis.slice(0, 4).map((kpi, index) => (
-          <div key={index} className="bg-white p-3 rounded border border-gray-200">
+          <div key={index} className="bg-card p-3 rounded border border-border">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium text-sm">{kpi.name}</span>
-              <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+              <span className="text-xs bg-muted text-foreground px-2 py-1 rounded">
                 {kpi.category}
               </span>
             </div>
             
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-600">الهدف:</span>
+                <span className="text-muted-foreground">الهدف:</span>
                 <span className="font-medium">{kpi.target}</span>
               </div>
               
               {kpi.unit && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">الوحدة:</span>
+                  <span className="text-muted-foreground">الوحدة:</span>
                   <span>{kpi.unit}</span>
                 </div>
               )}
               
               {kpi.weight && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">الوزن:</span>
+                  <span className="text-muted-foreground">الوزن:</span>
                   <span>{Math.round(kpi.weight * 100)}%</span>
                 </div>
               )}
               
               {kpi.description && (
-                <div className="mt-2 pt-2 border-t text-gray-500">
+                <div className="mt-2 pt-2 border-t text-muted-foreground">
                   {kpi.description}
                 </div>
               )}
@@ -81,7 +81,7 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
       
       {enhancedKpis.length > 4 && (
         <div className="mt-3 text-center">
-          <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
+          <span className="text-xs bg-muted text-foreground px-2 py-1 rounded">
             +{enhancedKpis.length - 4} مؤشرات أخرى
           </span>
         </div>
@@ -126,7 +126,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
                   {normalizedDocuments.length} مستند
                 </span>
               </div>
-              <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+              <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
             </div>
           </button>
         </CollapsibleTrigger>
@@ -135,14 +135,14 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
           <div className="px-4 pb-4">
             <div className="space-y-2">
               {normalizedDocuments.slice(0, 5).map((doc, index) => (
-                <div key={index} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div key={index} className="flex items-center gap-3 bg-card p-2 rounded border border-border">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <div className="flex-1">
                     <span className="text-sm font-medium">{doc.name}</span>
                     {doc.type && (
-                      <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded mr-2">
+                      <span className="text-xs bg-muted text-foreground px-2 py-1 rounded mr-2">
                         {doc.type}
                       </span>
                     )}
@@ -152,7 +152,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
             </div>
 
             {normalizedDocuments.length > 5 && (
-              <div className="mt-3 text-center text-sm text-gray-600">
+              <div className="mt-3 text-center text-sm text-muted-foreground">
                 و {normalizedDocuments.length - 5} مستندات أخرى...
               </div>
             )}
@@ -165,7 +165,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
 
 // ===== مكون بطاقة المحور المحسّن (مبسط) =====
 
-function EnhancedAxisCard({ axis, standards }) {
+function EnhancedAxisCard({ axis, standards, onSelect }) {
   // الحصول على مؤشرات المحور المحسنة
   const axisKpis = ENHANCED_AXIS_KPIS.find(k => k.axis_order === axis.order)?.kpis || [];
   
@@ -179,23 +179,22 @@ function EnhancedAxisCard({ axis, standards }) {
   
   return (
     <div 
-      className="cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 p-4 bg-white rounded-lg border border-gray-200" 
+      className="cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 p-4 bg-card rounded-lg border border-border" 
       style={{ borderLeftColor: axis.color || '#3B82F6' }}
       onClick={() => {
-        // يمكنك إضافة التنقل هنا
-        console.log('Navigate to axis:', axis.id);
+        if (onSelect) onSelect(axis.id);
       }}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="font-bold text-lg mb-1">{axis.name}</h3>
-          <p className="text-sm text-gray-600 line-clamp-2">{axis.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{axis.description}</p>
         </div>
         <div className="text-left">
-          <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded mb-2 block">
+          <span className="text-xs bg-muted text-foreground px-2 py-1 rounded mb-2 block">
             {totalStandards} معيار
           </span>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground">
             المحور {axis.order}
           </div>
         </div>
@@ -215,9 +214,9 @@ function EnhancedAxisCard({ axis, standards }) {
               {Math.round(progress)}%
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -236,7 +235,7 @@ function EnhancedAxisCard({ axis, standards }) {
               {performanceScore}/100
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
               className="bg-green-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${performanceScore}%` }}
@@ -245,7 +244,7 @@ function EnhancedAxisCard({ axis, standards }) {
         </div>
         
         {/* الإحصائيات */}
-        <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t">
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />

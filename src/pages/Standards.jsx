@@ -692,6 +692,7 @@ function StandardsLegacy() {
                   key={axis.id}
                   axis={axis}
                   standards={axisStandards}
+                  onSelect={setActiveAxis}
                 />
               );
             })}
