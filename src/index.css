@@ -40,37 +40,37 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 220 18% 11%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 220 16% 14%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 220 16% 14%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --secondary: 220 14% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
+    --muted: 220 14% 18%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 220 14% 18%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 220 14% 22%;
+    --input: 220 14% 22%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-background: 220 18% 11%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 220 14% 18%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-border: 220 14% 22%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -99,11 +99,11 @@
 
   /* إصلاح الألوان المحددة مسبقاً للثيم الداكن */
   .dark .bg-gray-50 {
-    @apply bg-gray-900;
+    @apply bg-slate-900;
   }
 
   .dark .bg-white {
-    @apply bg-gray-950;
+    @apply bg-slate-800;
   }
 
   .dark .text-gray-600 {
@@ -115,11 +115,11 @@
   }
 
   .dark .hover\:bg-gray-50:hover {
-    @apply hover:bg-gray-800;
+    @apply hover:bg-slate-800;
   }
 
   .dark .hover\:bg-gray-100:hover {
-    @apply hover:bg-gray-700;
+    @apply hover:bg-slate-700;
   }
 
   /* خط التقارير — وضوح أفضل للعربية وعند التصدير */

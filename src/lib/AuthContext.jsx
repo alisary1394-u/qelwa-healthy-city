@@ -95,16 +95,6 @@ export const AuthProvider = ({ children }) => {
         } else if (useServerBackend && typeof console !== 'undefined') {
           console.info('[Auth] Server seed is disabled by default (set VITE_ALLOW_SERVER_RESEED=true only when explicitly needed).');
         }
-        if (useServerBackend) {
-          try {
-            await Promise.resolve(api.migrateLegacyLocalDataIfNeeded?.());
-          } catch (e) {
-            if (typeof console !== 'undefined') console.warn('[Auth] Legacy local migration skipped:', e?.message || e);
-          }
-        }
-        try {
-          await Promise.resolve(api.syncStandardsFromCsv?.());
-        } catch {}
         // الدخول فقط عبر نموذج تسجيل الدخول أو جلسة محفوظة سابقاً (لا دخول تلقائي)
         try {
           const currentUser = await api.auth.me();
@@ -116,6 +106,14 @@ export const AuthProvider = ({ children }) => {
           setAuthError({ type: 'auth_required', message: 'Authentication required' });
         }
         setIsLoadingAuth(false);
+
+        // Run non-critical operations in background (don't block UI)
+        if (useServerBackend) {
+          Promise.resolve(api.migrateLegacyLocalDataIfNeeded?.()).catch((e) => {
+            if (typeof console !== 'undefined') console.warn('[Auth] Legacy local migration skipped:', e?.message || e);
+          });
+        }
+        Promise.resolve(api.syncStandardsFromCsv?.()).catch(() => {});
         return;
       }
 
