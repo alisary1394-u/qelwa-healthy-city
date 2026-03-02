@@ -133,6 +133,43 @@ export async function restoreBackup(filePath) {
   return { path: resolved, restoredCounts };
 }
 
+export async function restoreTableFromBackup(filePath, tableName, options = {}) {
+  if (!filePath) throw new Error('Backup file path is required');
+  if (!tableName) throw new Error('Table name is required');
+
+  const resolved = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+  if (!fs.existsSync(resolved)) throw new Error(`Backup file not found: ${resolved}`);
+  const payload = readBackupPayload(resolved);
+
+  const db = await import('./db.js');
+  if (!db.TABLES.includes(tableName)) {
+    throw new Error(`Unknown table: ${tableName}`);
+  }
+
+  const clearBeforeRestore = options?.clearBeforeRestore !== false;
+  if (clearBeforeRestore) {
+    db.clearTable(tableName);
+  }
+
+  const rows = Array.isArray(payload.tables?.[tableName]) ? payload.tables[tableName] : [];
+  let restoredCount = 0;
+  for (const row of rows) {
+    if (!row || typeof row !== 'object' || !row.id) continue;
+    const body = { ...row };
+    delete body.id;
+    db.create(tableName, row.id, body);
+    restoredCount += 1;
+  }
+
+  const currentCount = db.list(tableName).length;
+  return {
+    path: resolved,
+    table: tableName,
+    restoredCount,
+    currentCount,
+  };
+}
+
 export async function autoRestoreLatestBackupIfTeamLow({ reason = 'guard' } = {}) {
   const cfg = getBackupConfig();
   if (!cfg.autoRestoreOnLowTeam) {

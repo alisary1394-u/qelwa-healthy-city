@@ -17,7 +17,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { createBackup, listBackups, restoreBackup, startAutoBackup } from './backup.js';
+import { createBackup, listBackups, restoreBackup, restoreTableFromBackup, startAutoBackup } from './backup.js';
 // عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -374,6 +374,27 @@ app.post('/api/backups/restore-latest', async (req, res) => {
     const result = await restoreBackup(files[0].path);
     enqueueMutationBackup('after_restore');
     res.json({ ok: true, message: 'تمت استعادة البيانات من آخر نسخة', restoredCounts: result.restoredCounts });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// استعادة المهام فقط من أحدث نسخة احتياطية (بدون المساس ببقية الجداول)
+app.post('/api/backups/restore-tasks-latest', async (req, res) => {
+  try {
+    const files = listBackups();
+    if (files.length === 0) {
+      return res.status(404).json({ ok: false, error: 'لا توجد نسخ احتياطية' });
+    }
+    const result = await restoreTableFromBackup(files[0].path, 'task');
+    enqueueMutationBackup('after_restore_tasks');
+    res.json({
+      ok: true,
+      message: 'تمت استعادة المهام من آخر نسخة احتياطية',
+      restoredCount: result.restoredCount,
+      currentCount: result.currentCount,
+      from: files[0].name,
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
