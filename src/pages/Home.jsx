@@ -246,6 +246,18 @@ export default function Home() {
     );
   }
 
+  // إذا كان المستخدم مسجل دخول بالفعل، انتقل للوحة الرئيسية
+  if (isAuth === true && currentUser) {
+    const navItems = getNavItemsForRole(currentUser.user_role === 'admin' ? 'governor' : (currentUser.role || 'volunteer'));
+    const firstPage = navItems[0]?.name || 'Dashboard';
+    window.location.href = createPageUrl(firstPage);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-10 h-10 border-4 border-muted border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const features = [
     { icon: Heart, title: 'الصحة والبيئة', desc: 'معايير صحية وبيئية دولية معتمدة من منظمة الصحة العالمية', color: 'text-primary' },
     { icon: Target, title: '80 معياراً دولياً', desc: '9 محاور رئيسية تغطي جميع جوانب المدينة الصحية', color: 'text-secondary' },

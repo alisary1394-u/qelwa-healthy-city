@@ -185,6 +185,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError({ type: 'auth_required', message: 'تم تسجيل الخروج' });
     api.auth.logout();
     if (shouldRedirect && typeof window !== 'undefined') {
       window.location.href = '/';
