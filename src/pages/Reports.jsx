@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award, Target, Users, Lightbulb, BarChart3, ClipboardList, Shield, Activity, DollarSign, TrendingDown, Wallet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
 import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -348,6 +346,11 @@ export default function Reports() {
     setExportingPDF(true);
     let restore = [];
     try {
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
+
       const element = document.getElementById(elementId);
       if (!element) { toast({ title: 'فشل التصدير', description: 'العنصر غير موجود.', variant: 'destructive' }); return; }
       let el = element;
