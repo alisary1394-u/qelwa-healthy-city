@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileText, Target } from "lucide-react";
-import { AXIS_KPIS_CSV, AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 
@@ -254,39 +254,6 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
           </div>
         );
       })}
-
-      {/* مؤشرات الأداء لكل محور */}
-      {AXIS_KPIS_CSV && AXIS_KPIS_CSV.length > 0 && (
-        <div className="space-y-4 break-inside-avoid">
-          <h2 className="text-2xl font-bold text-gray-900 border-r-4 border-blue-600 pr-3 flex items-center gap-2">
-            <Target className="w-6 h-6" />
-            مؤشرات الأداء لكل محور
-          </h2>
-          <div className="space-y-3">
-            {AXIS_KPIS_CSV.map(axisKpi => (
-              <Card key={axisKpi.axis_order} className="break-inside-avoid">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">
-                    المحور {axisKpi.axis_order}: {axisKpi.axis_name}
-                    <span className="text-sm font-normal text-gray-500 mr-2">({axisKpi.axis_standards_count} معيار)</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    {axisKpi.kpis.map((k, i) => (
-                      <li key={i}>
-                        <span className="font-medium">{k.name}</span>
-                        {k.target && ` — الهدف: ${k.target}`}
-                        {k.unit && k.unit !== '-' && ` (${k.unit})`}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Recommendations */}
       <div className="space-y-4 break-inside-avoid">
