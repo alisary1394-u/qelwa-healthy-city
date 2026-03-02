@@ -204,9 +204,40 @@ export default function Budget() {
     .reduce((sum, a) => sum + (Number(a.allocated_amount) || 0), 0);
 
   // Calculate total initiatives budgets linked to active budget
-  const totalInitiativesBudgets = initiatives
-    .filter(i => !activeBudget || i.budget_id === activeBudget.id)
-    .reduce((sum, i) => sum + (Number(i.budget) || 0), 0);
+  const totalInitiativesBudgets = useMemo(() => {
+    if (!activeBudget) {
+      return initiatives.reduce((sum, i) => sum + (Number(i.budget) || 0), 0);
+    }
+
+    const linkedInitiativeIds = new Set();
+
+    initiatives.forEach((initiative) => {
+      if (String(initiative.budget_id || '') === String(activeBudget.id)) {
+        linkedInitiativeIds.add(String(initiative.id));
+      }
+    });
+
+    allocations
+      .filter((allocation) => String(allocation.budget_id || '') === String(activeBudget.id))
+      .forEach((allocation) => {
+        if (allocation.initiative_id) {
+          linkedInitiativeIds.add(String(allocation.initiative_id));
+          return;
+        }
+
+        initiatives.forEach((initiative) => {
+          const committeeMatch = allocation.committee_id && String(initiative.committee_id || '') === String(allocation.committee_id);
+          const axisMatch = allocation.axis_id && String(initiative.axis_id || '') === String(allocation.axis_id);
+          if (committeeMatch || axisMatch) {
+            linkedInitiativeIds.add(String(initiative.id));
+          }
+        });
+      });
+
+    return initiatives
+      .filter((initiative) => linkedInitiativeIds.has(String(initiative.id)))
+      .reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
+  }, [activeBudget, allocations, initiatives]);
 
   // Calculate total committed (allocated + initiatives)
   const totalCommitted = totalAllocatedBudgets + totalInitiativesBudgets;
@@ -229,7 +260,7 @@ export default function Budget() {
 
       const fallbackLinked = initiatives.filter((initiative) => {
         if (initiative.budget_allocation_id) return false;
-        if (String(initiative.budget_id || '') !== String(allocation.budget_id || '')) return false;
+        if (initiative.budget_id && String(initiative.budget_id) !== String(allocation.budget_id || '')) return false;
         const committeeMatch = allocation.committee_id && String(initiative.committee_id || '') === String(allocation.committee_id);
         const axisMatch = allocation.axis_id && String(initiative.axis_id || '') === String(allocation.axis_id);
         return committeeMatch || axisMatch;
