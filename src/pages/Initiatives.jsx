@@ -24,12 +24,12 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const statusConfig = {
-  planning: { label: 'تخطيط', color: 'bg-gray-600', icon: Clock },
-  approved: { label: 'معتمدة', color: 'bg-blue-600', icon: CheckCircle },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-yellow-600', icon: Play },
-  completed: { label: 'مكتملة', color: 'bg-green-600', icon: CheckCircle },
-  on_hold: { label: 'متوقفة', color: 'bg-orange-600', icon: Pause },
-  cancelled: { label: 'ملغاة', color: 'bg-red-600', icon: X }
+  planning: { label: 'تخطيط', color: 'bg-gray-600', icon: Clock, gradient: 'from-gray-500 to-gray-600' },
+  approved: { label: 'معتمدة', color: 'bg-blue-600', icon: CheckCircle, gradient: 'from-blue-500 to-blue-600' },
+  in_progress: { label: 'قيد التنفيذ', color: 'bg-yellow-600', icon: Play, gradient: 'from-yellow-500 to-amber-600' },
+  completed: { label: 'مكتملة', color: 'bg-green-600', icon: CheckCircle, gradient: 'from-green-500 to-green-600' },
+  on_hold: { label: 'متوقفة', color: 'bg-orange-600', icon: Pause, gradient: 'from-orange-500 to-orange-600' },
+  cancelled: { label: 'ملغاة', color: 'bg-red-600', icon: X, gradient: 'from-red-500 to-red-600' }
 };
 
 const normalizeInitiativeStatus = (status) => {
@@ -1132,65 +1132,69 @@ export default function Initiatives() {
                 ? linkedTeam.slice(0, 2).map((m) => m.full_name).join('، ') + (linkedTeam.length > 2 ? ` +${linkedTeam.length - 2}` : '')
                 : 'غير مرتبط';
               return (
-                <Card key={initiative.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <Badge variant="outline" className="mb-2">{initiative.code}</Badge>
-                        <h3 className="font-bold text-lg mb-1">{initiative.title}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{initiative.description}</p>
+                <Card key={initiative.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  {/* Header gradient bar */}
+                  <div className={`bg-gradient-to-l ${statusConfig[initiativeStatus]?.gradient || 'from-gray-400 to-gray-500'} p-4`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{initiative.code}</span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-white/25 text-white px-2 py-0.5 rounded-full">
+                            <StatusIcon className="w-3 h-3" />
+                            {statusConfig[initiativeStatus]?.label}
+                          </span>
+                          {initiative.priority && (
+                            <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white`}>
+                              {priorityConfig[initiative.priority]?.label}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-white font-bold text-base leading-tight truncate">{initiative.title}</h3>
+                        {initiative.axis_name && (
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
+                            <span className="text-white/90 text-xs truncate">{initiative.axis_name}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <Badge className={statusConfig[initiativeStatus]?.color}>
-                          <StatusIcon className="w-3 h-3 ml-1" />
-                          {statusConfig[initiativeStatus]?.label}
-                        </Badge>
-                        <Badge className={priorityConfig[initiative.priority]?.color}>
-                          {priorityConfig[initiative.priority]?.label}
-                        </Badge>
+                  <CardContent className="p-4">
+                    {initiative.description && (
+                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{initiative.description}</p>
+                    )}
+
+                    {initiative.progress_percentage !== undefined && (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-500">التقدم</span>
+                          <span className="font-semibold">{initiative.progress_percentage}%</span>
+                        </div>
+                        <Progress value={initiative.progress_percentage} className="h-2" />
                       </div>
+                    )}
 
-                      {initiative.progress_percentage !== undefined && (
-                        <div>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-500">التقدم</span>
-                            <span className="font-semibold">{initiative.progress_percentage}%</span>
-                          </div>
-                          <Progress value={initiative.progress_percentage} className="h-2" />
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 pt-2 border-t">
-                        <div className="flex items-center gap-1">
-                          <Target className="w-3 h-3" />
-                          <span>{initiative.axis_name || 'غير محدد'}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
+                    {/* Info badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {initiative.committee_name && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                           <Users className="w-3 h-3" />
-                          <span>{initiative.committee_name || 'غير محدد'}</span>
-                        </div>
-                        {initiative.budget > 0 && (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" />
-                            <span>{initiative.budget.toLocaleString()} ريال</span>
-                          </div>
-                        )}
-                        {initiative.budget_allocation_id && (
-                          <div className="flex items-center gap-1 col-span-2">
-                            <DollarSign className="w-3 h-3 text-green-600" />
-                            <span className="text-green-600 text-xs">مرتبط: {initiative.budget_name || 'ميزانية'}</span>
-                          </div>
-                        )}
-                        {initiative.expected_beneficiaries > 0 && (
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" />
-                            <span>{initiative.expected_beneficiaries} مستفيد</span>
-                          </div>
-                        )}
-                      </div>
+                          {initiative.committee_name}
+                        </span>
+                      )}
+                      {initiative.budget > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                          <DollarSign className="w-3 h-3" />
+                          {initiative.budget.toLocaleString()} ريال
+                        </span>
+                      )}
+                      {initiative.expected_beneficiaries > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                          <TrendingUp className="w-3 h-3" />
+                          {initiative.expected_beneficiaries} مستفيد
+                        </span>
+                      )}
                     </div>
 
                     {/* Team role stats grid */}

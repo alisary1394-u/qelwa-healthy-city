@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -100,11 +100,23 @@ function getInitiativeSuggestionFromStandard(standard, axisName) {
 }
 
 const statusConfig = {
-  not_started: { label: 'لم يبدأ', color: 'bg-gray-100 text-gray-700' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700' },
-  approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
+  not_started: { label: 'لم يبدأ', color: 'bg-gray-100 text-gray-700', headerColor: 'bg-white/20 text-white' },
+  in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700', headerColor: 'bg-white/25 text-white' },
+  completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700', headerColor: 'bg-white/25 text-white' },
+  approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700', headerColor: 'bg-white/25 text-white' }
 };
+
+const axisGradients = [
+  'from-blue-500 to-blue-600',
+  'from-emerald-500 to-emerald-600',
+  'from-amber-500 to-amber-600',
+  'from-red-500 to-red-600',
+  'from-violet-500 to-violet-600',
+  'from-pink-500 to-pink-600',
+  'from-cyan-500 to-cyan-600',
+  'from-lime-600 to-lime-700',
+  'from-orange-500 to-orange-600'
+];
 
 /** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
 const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
@@ -772,27 +784,80 @@ function StandardsLegacy() {
               const visibleInitiatives = initiativesExpanded ? relatedInitiatives : relatedInitiatives.slice(0, 2);
               const visibleBudgets = budgetsExpanded ? relatedBudgets : relatedBudgets.slice(0, 2);
 
+              const axisEntity = axes.find(a => a.id === standard.axis_id);
+              const axisOrder = axisEntity?.order ?? 0;
+              const gradientClass = axisOrder >= 1 && axisOrder <= axisGradients.length ? axisGradients[axisOrder - 1] : 'from-gray-400 to-gray-500';
+
               return (
-                <Card key={standard.id}>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge variant="outline" className="font-mono">{standard.code}</Badge>
-                          <Badge className={statusConfig[standard.status]?.color}>
+                <Card key={standard.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                  {/* Header gradient bar */}
+                  <div className={`bg-gradient-to-l ${gradientClass} p-4`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{standard.code}</span>
+                          <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusConfig[standard.status]?.headerColor || 'bg-white/20 text-white'}`}>
                             {statusConfig[standard.status]?.label}
-                          </Badge>
+                          </span>
                         </div>
-                        <h3 className="font-semibold text-lg">{standard.title}</h3>
+                        <h3 className="text-white font-bold text-base leading-tight">{standard.title}</h3>
+                        {standard.axis_name && (
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
+                            <span className="text-white/90 text-xs truncate">{standard.axis_name}</span>
+                          </div>
+                        )}
+                      </div>
+                      {canManage && (
+                        <div className="flex gap-1 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" onClick={() => {
+                            setEditStandard(standard);
+                            setEditDocuments(parseJsonArray(standard.required_documents));
+                            setEditKpis(parseJsonArray(standard.kpis));
+                            setEditStandardOpen(true);
+                          }}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <CardContent className="p-4">
+                    <div className="flex-1">
                         {standard.description && (
-                          <p className="text-sm text-gray-600 mt-1">{standard.description}</p>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{standard.description}</p>
                         )}
                         {standard.required_evidence && (
-                          <p className="text-sm text-blue-600 mt-2">
-                            <FileText className="w-4 h-4 inline ml-1" />
-                            الأدلة المطلوبة: {standard.required_evidence}
+                          <p className="text-xs text-blue-600 mb-3 flex items-center gap-1">
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            {standard.required_evidence}
                           </p>
                         )}
+
+                        {/* Stats grid */}
+                        <div className="grid grid-cols-4 gap-1.5 mb-3">
+                          <div className="text-center p-2 rounded-lg bg-indigo-50/80">
+                            <FileText className="w-4 h-4 text-indigo-600 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-indigo-700">{approvedEvidence}/{standardEvidence.length}</p>
+                            <p className="text-[10px] text-indigo-600/70">أدلة</p>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-purple-50/80">
+                            <Lightbulb className="w-4 h-4 text-purple-600 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-purple-700">{relatedInitiatives.length}</p>
+                            <p className="text-[10px] text-purple-600/70">مبادرات</p>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-blue-50/80">
+                            <Users className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-blue-700">{relatedCommittees.length}</p>
+                            <p className="text-[10px] text-blue-600/70">لجان</p>
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-green-50/80">
+                            <DollarSign className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
+                            <p className="text-lg font-bold text-green-700">{relatedBudgets.length}</p>
+                            <p className="text-[10px] text-green-600/70">ميزانيات</p>
+                          </div>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                           <div className="rounded-lg border bg-gray-50 p-3">
@@ -910,14 +975,11 @@ function StandardsLegacy() {
                           ).enhancedDocuments}
                         />
                         
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>المحور: {standard.axis_name}</span>
-                          <span>الأدلة: {approvedEvidence}/{standardEvidence.length}</span>
-                          <span>المؤشرات: {parseJsonArray(standard.kpis).length}</span>
-                          <span>المستندات: {parseJsonArray(standard.required_documents).length}</span>
+                        <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
+                          <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" /> مؤشرات: {parseJsonArray(standard.kpis).length}</span>
+                          <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> مستندات: {parseJsonArray(standard.required_documents).length}</span>
                         </div>
                       </div>
-                    </div>
 
                     {/* Evidence List */}
                     <div className="mt-4 pt-4 border-t">
