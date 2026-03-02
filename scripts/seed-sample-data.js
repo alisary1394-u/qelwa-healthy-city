@@ -5,10 +5,36 @@
 
 const API_BASE_URL = process.env.SEED_API_URL || 'http://localhost:8080';
 
+let authToken = null;
+
+async function login() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ national_id: '1', password: '123456' }),
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      authToken = data.token;
+      console.log('✅ تم تسجيل الدخول بنجاح');
+      return true;
+    } else {
+      console.log('❌ فشل تسجيل الدخول:', data.error);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ خطأ في تسجيل الدخول:', error.message);
+    return false;
+  }
+}
+
 async function api(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
@@ -105,35 +131,65 @@ async function seedData() {
   console.log('🌱 بدء إضافة البيانات التجريبية المخصصة...');
   console.log(`🔗 API: ${API_BASE_URL}\n`);
 
+  // تسجيل الدخول أولاً
+  if (!await login()) {
+    console.log('❌ لا يمكن المتابعة بدون تسجيل دخول');
+    return;
+  }
+  console.log('');
+
   try {
+    const existingCommittees = await api('GET', '/api/entities/Committee');
+    const existingMembers = await api('GET', '/api/entities/TeamMember');
+    const existingInitiatives = await api('GET', '/api/entities/Initiative');
+
+    const committeeByName = new Map((existingCommittees || []).map((c) => [c.name, c]));
+    const memberByNationalId = new Map((existingMembers || []).map((m) => [String(m.national_id || ''), m]));
+    const initiativeKeySet = new Set((existingInitiatives || []).map((i) => `${i.committee_name || ''}::${i.title || ''}`));
+
     // 1. إضافة اللجان
     console.log('📋 إضافة اللجان...');
-    const createdCommittees = {};
+    const resolvedCommittees = {};
+    let addedCommittees = 0;
     for (const committee of committees) {
+      if (committeeByName.has(committee.name)) {
+        resolvedCommittees[committee.name] = committeeByName.get(committee.name);
+        console.log(`   ↺ موجودة مسبقاً: ${committee.name}`);
+        continue;
+      }
       try {
         const created = await api('POST', '/api/entities/Committee', committee);
-        createdCommittees[committee.name] = created;
+        resolvedCommittees[committee.name] = created;
+        committeeByName.set(committee.name, created);
+        addedCommittees++;
         console.log(`   ✓ ${committee.name}`);
       } catch (error) {
         console.log(`   ✗ ${committee.name}: ${error.message}`);
       }
     }
-    console.log(`\n✅ تمت إضافة ${Object.keys(createdCommittees).length} لجنة\n`);
+    console.log(`\n✅ تمت إضافة ${addedCommittees} لجنة جديدة (الإجمالي المتاح: ${Object.keys(resolvedCommittees).length})\n`);
 
     // 2. إضافة أعضاء الفريق
     console.log('👥 إضافة أعضاء الفريق...');
     const createdMembers = {};
     let totalMembers = 0;
+    let skippedExistingMembers = 0;
     const baseDate = new Date().toISOString().split('T')[0];
 
     for (const [committeeName, members] of Object.entries(teamMembersByCommittee)) {
-      const committee = createdCommittees[committeeName];
+      const committee = resolvedCommittees[committeeName] || committeeByName.get(committeeName);
       if (!committee) {
         console.log(`   ⚠ تخطي أعضاء ${committeeName}`);
         continue;
       }
       createdMembers[committeeName] = [];
       for (const member of members) {
+        const nationalId = String(member.national_id || '');
+        if (nationalId && memberByNationalId.has(nationalId)) {
+          createdMembers[committeeName].push(memberByNationalId.get(nationalId));
+          skippedExistingMembers++;
+          continue;
+        }
         try {
           const created = await api('POST', '/api/entities/TeamMember', {
             ...member,
@@ -142,6 +198,7 @@ async function seedData() {
             join_date: baseDate
           });
           createdMembers[committeeName].push(created);
+          if (nationalId) memberByNationalId.set(nationalId, created);
           totalMembers++;
           console.log(`   ✓ ${member.full_name}`);
         } catch (error) {
@@ -149,19 +206,25 @@ async function seedData() {
         }
       }
     }
-    console.log(`\n✅ تمت إضافة ${totalMembers} عضو فريق\n`);
+    console.log(`\n✅ تمت إضافة ${totalMembers} عضو فريق جديد (الموجود مسبقاً: ${skippedExistingMembers})\n`);
 
     // 3. إضافة المبادرات
     console.log('💡 إضافة المبادرات...');
     let totalInitiatives = 0;
+    let skippedExistingInitiatives = 0;
     for (const [committeeName, initiatives] of Object.entries(initiativesByCommittee)) {
-      const committee = createdCommittees[committeeName];
+      const committee = resolvedCommittees[committeeName] || committeeByName.get(committeeName);
       const members = createdMembers[committeeName];
       if (!committee || !members || members.length === 0) {
         console.log(`   ⚠ تخطي مبادرات ${committeeName}`);
         continue;
       }
       for (const initiative of initiatives) {
+        const initiativeKey = `${committeeName}::${initiative.title}`;
+        if (initiativeKeySet.has(initiativeKey)) {
+          skippedExistingInitiatives++;
+          continue;
+        }
         try {
           const leader = members.find(m => m.role === 'committee_head') || members[0];
           const teamSize = Math.min(Math.floor(Math.random() * 3) + 3, members.length);
@@ -175,6 +238,7 @@ async function seedData() {
             team_members: teamMembers,
             code: `INI${Date.now().toString().slice(-6)}`
           });
+          initiativeKeySet.add(initiativeKey);
           totalInitiatives++;
           console.log(`   ✓ ${initiative.title}`);
           await new Promise(resolve => setTimeout(resolve, 10));
@@ -183,10 +247,10 @@ async function seedData() {
         }
       }
     }
-    console.log(`\n✅ تمت إضافة ${totalInitiatives} مبادرة\n`);
+    console.log(`\n✅ تمت إضافة ${totalInitiatives} مبادرة جديدة (الموجود مسبقاً: ${skippedExistingInitiatives})\n`);
 
     console.log('📊 ملخص البيانات المضافة:');
-    console.log(`   • اللجان: ${Object.keys(createdCommittees).length}`);
+    console.log(`   • اللجان المتاحة: ${Object.keys(resolvedCommittees).length}`);
     console.log(`   • أعضاء الفريق: ${totalMembers}`);
     console.log(`   • المبادرات: ${totalInitiatives}`);
     console.log('\n✨ تمت الإضافة بنجاح! حدّث الصفحة (Ctrl+F5).\n');
