@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search, ChevronLeft, Shield, MoreVertical, Target, Power } from "lucide-react";
+import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search, ChevronLeft, Shield, MoreVertical, Target, Power, UserPlus, Filter, CheckCircle2, BookOpen, ClipboardList } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import MemberForm from '@/components/team/MemberForm';
 
 export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
@@ -25,6 +26,12 @@ export default function Committees() {
   const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  // Quick member add
+  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [memberTargetCommittee, setMemberTargetCommittee] = useState(null);
+  // Filters
+  const [filterAxis, setFilterAxis] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const queryClient = useQueryClient();
 
@@ -68,6 +75,11 @@ export default function Committees() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 
+  const createMemberMutation = useMutation({
+    mutationFn: (data) => api.entities.TeamMember.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+  });
+
   const { permissions, role, currentMember } = usePermissions();
   const canManage = permissions.canManageCommittees;
 
@@ -94,15 +106,38 @@ export default function Committees() {
   }, [scopedCommittees, members]);
 
   const filteredCommittees = useMemo(() => {
+    let list = scopedCommittees;
+    // فلترة حسب المحور
+    if (filterAxis === 'none') {
+      list = list.filter((committee) => {
+        const axis = resolveCommitteeAxis(committee);
+        return !axis?.id;
+      });
+    } else if (filterAxis !== 'all') {
+      list = list.filter((committee) => {
+        const axis = resolveCommitteeAxis(committee);
+        return axis?.id === filterAxis;
+      });
+    }
+    // فلترة حسب الحالة
+    if (filterStatus !== 'all') {
+      list = list.filter((committee) => {
+        const isActive = committee.status === 'active' || !committee.status;
+        return filterStatus === 'active' ? isActive : !isActive;
+      });
+    }
+    // بحث نصي
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return scopedCommittees;
-    return scopedCommittees.filter((committee) => {
-      const name = String(committee.name || '').toLowerCase();
-      const description = String(committee.description || '').toLowerCase();
-      const axis = String(committee.axis_name || '').toLowerCase();
-      return name.includes(q) || description.includes(q) || axis.includes(q);
-    });
-  }, [scopedCommittees, searchQuery]);
+    if (q) {
+      list = list.filter((committee) => {
+        const name = String(committee.name || '').toLowerCase();
+        const description = String(committee.description || '').toLowerCase();
+        const axisName = String(getCommitteeAxisName(committee) || '').toLowerCase();
+        return name.includes(q) || description.includes(q) || axisName.includes(q);
+      });
+    }
+    return list;
+  }, [scopedCommittees, searchQuery, filterAxis, filterStatus, axes]);
 
   if (!permissions.canSeeCommittees) {
     return (
@@ -131,11 +166,13 @@ export default function Committees() {
     if (!canManage) return;
     if (committee) {
       setEditingCommittee(committee);
+      // حل تلقائي للمحور من اسم اللجنة
+      const resolved = resolveCommitteeAxis(committee);
       setFormData({ 
         name: committee.name, 
         description: committee.description || '',
-        axis_id: committee.axis_id || '',
-        axis_name: committee.axis_name || '',
+        axis_id: resolved?.id || committee.axis_id || '',
+        axis_name: resolved?.name || committee.axis_name || '',
         related_standards: committee.related_standards ? (Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]')) : []
       });
     } else {
@@ -178,19 +215,47 @@ export default function Committees() {
   };
 
   // ربط اسم المحور الصحيح من قائمة المحاور
-  const getCommitteeAxisName = (committee) => {
+  const resolveCommitteeAxis = (committee) => {
     // أولاً: من axis_id المربوط
     if (committee.axis_id) {
       const axis = axes.find(a => a.id === committee.axis_id);
-      if (axis) return axis.name;
+      if (axis) return axis;
     }
     // ثانياً: مطابقة اسم اللجنة مع أسماء المحاور
     const committeeName = String(committee.name || '');
     const matched = axes.find(a => committeeName.includes(a.name));
-    if (matched) return matched.name;
+    if (matched) return matched;
     // ثالثاً: اسم المحور المخزن
-    if (committee.axis_name) return committee.axis_name;
+    if (committee.axis_name) {
+      const byName = axes.find(a => a.name === committee.axis_name);
+      if (byName) return byName;
+      return { id: null, name: committee.axis_name };
+    }
     return null;
+  };
+
+  const getCommitteeAxisName = (committee) => resolveCommitteeAxis(committee)?.name || null;
+
+  // العضو السريع - إضافة عضو مباشرة للجنة
+  const handleOpenMemberForm = (committee) => {
+    setMemberTargetCommittee(committee);
+    setMemberFormOpen(true);
+  };
+
+  const handleSaveMember = async (data) => {
+    await createMemberMutation.mutateAsync(data);
+  };
+
+  // عدد المعايير المرتبطة بكل لجنة
+  const getCommitteeStandardsCount = (committee) => {
+    const axis = resolveCommitteeAxis(committee);
+    if (!axis?.id) return 0;
+    return standards.filter(s => s.axis_id === axis.id).length;
+  };
+
+  // أعضاء اللجنة (يُستخدم لعرض صور مصغرة)
+  const getCommitteeMembers = (committeeId) => {
+    return members.filter(m => m.committee_id === committeeId);
   };
 
   return (
@@ -212,24 +277,55 @@ export default function Committees() {
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-gray-600">المتطوعون</p></CardContent></Card>
         </div>
 
-        <div className="mb-4 relative">
-          <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="بحث في اللجان (الاسم، الوصف، المحور)..."
-            className="pr-9"
-          />
-        </div>
-
-        {canManage && (
-          <div className="mb-6">
-            <Button onClick={() => handleOpenForm()} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-5 h-5 ml-2" />
-              إضافة لجنة جديدة
-            </Button>
+        {/* Search + Filters */}
+        <div className="mb-4 space-y-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="بحث في اللجان (الاسم، الوصف، المحور)..."
+              className="pr-9"
+            />
           </div>
-        )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <Select value={filterAxis} onValueChange={setFilterAxis}>
+              <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
+                <SelectValue placeholder="جميع المحاور" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع المحاور</SelectItem>
+                {axes.map(axis => (
+                  <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                ))}
+                <SelectItem value="none">بدون محور</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
+                <SelectValue placeholder="جميع الحالات" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الحالات</SelectItem>
+                <SelectItem value="active">نشطة فقط</SelectItem>
+                <SelectItem value="inactive">غير نشطة</SelectItem>
+              </SelectContent>
+            </Select>
+            {(filterAxis !== 'all' || filterStatus !== 'all') && (
+              <Button variant="ghost" size="sm" className="h-9 text-sm text-gray-500" onClick={() => { setFilterAxis('all'); setFilterStatus('all'); }}>
+                إزالة الفلاتر
+              </Button>
+            )}
+            <div className="flex-1" />
+            {canManage && (
+              <Button onClick={() => handleOpenForm()} className="bg-blue-600 hover:bg-blue-700 h-9">
+                <Plus className="w-4 h-4 ml-1" />
+                إضافة لجنة
+              </Button>
+            )}
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="text-center py-12">
@@ -253,6 +349,8 @@ export default function Committees() {
               const stats = getCommitteeStats(committee.id);
               const isActive = committee.status === 'active' || !committee.status;
               const resolvedAxisName = getCommitteeAxisName(committee);
+              const standardsCount = getCommitteeStandardsCount(committee);
+              const committeeMembers = getCommitteeMembers(committee.id);
               const axisColors = [
                 'from-blue-500 to-blue-600',
                 'from-emerald-500 to-emerald-600',
@@ -267,7 +365,7 @@ export default function Committees() {
               const axisIndex = resolvedAxisName ? axes.findIndex(a => a.name === resolvedAxisName) : -1;
               const gradientClass = axisIndex >= 0 ? axisColors[axisIndex % axisColors.length] : 'from-gray-400 to-gray-500';
               return (
-                <Card key={committee.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
+                <Card key={committee.id} className={`group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md ${!isActive ? 'opacity-70' : ''}`}>
                   {/* Header gradient bar */}
                   <div className={`bg-gradient-to-l ${gradientClass} p-4 relative`}>
                     <div className="flex items-start justify-between">
@@ -297,6 +395,10 @@ export default function Committees() {
                                 <Edit className="w-4 h-4 text-blue-600" />
                                 <span>تعديل اللجنة</span>
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleOpenMemberForm(committee)} className="gap-2">
+                                <UserPlus className="w-4 h-4 text-green-600" />
+                                <span>إضافة عضو</span>
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleStatus(committee)} className="gap-2">
                                 <Power className={`w-4 h-4 ${isActive ? 'text-orange-500' : 'text-green-600'}`} />
@@ -319,8 +421,27 @@ export default function Committees() {
                       <p className="text-sm text-gray-500 mb-3 line-clamp-2">{committee.description}</p>
                     )}
 
+                    {/* Badges: standards count + axis */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {standardsCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                          <BookOpen className="w-3 h-3" />
+                          {standardsCount} معيار
+                        </span>
+                      )}
+                      {committee.related_standards && (() => {
+                        const rs = Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]');
+                        return rs.length > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            {rs.length} مرتبط
+                          </span>
+                        ) : null;
+                      })()}
+                    </div>
+
                     {/* Stats grid */}
-                    <div className="grid grid-cols-4 gap-1.5 mb-4">
+                    <div className="grid grid-cols-4 gap-1.5 mb-3">
                       <div className="text-center p-2 rounded-lg bg-blue-50/80">
                         <UserCog className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
                         <p className="text-lg font-bold text-blue-700">{stats.coordinators}</p>
@@ -343,23 +464,47 @@ export default function Committees() {
                       </div>
                     </div>
 
-                    {/* Total members bar */}
-                    <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-3">
-                      <div className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">إجمالي الفريق</span>
+                    {/* Members preview */}
+                    {committeeMembers.length > 0 && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex -space-x-2 rtl:space-x-reverse">
+                          {committeeMembers.slice(0, 5).map((m, i) => (
+                            <div key={m.id} className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white" title={m.full_name}>
+                              {(m.full_name || '').charAt(0)}
+                            </div>
+                          ))}
+                          {committeeMembers.length > 5 && (
+                            <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-semibold text-gray-600">
+                              +{committeeMembers.length - 5}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">{stats.total} عضو</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-800">{stats.total} عضو</span>
-                    </div>
+                    )}
+                    {committeeMembers.length === 0 && (
+                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                        <Users className="w-3.5 h-3.5" />
+                        لا يوجد أعضاء بعد
+                      </div>
+                    )}
 
-                    {/* Action button */}
-                    <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="block">
-                      <Button variant="outline" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300 group-hover:text-blue-700 transition-colors">
-                        <Users className="w-4 h-4 ml-2" />
-                        عرض الأعضاء
-                        <ChevronLeft className="w-4 h-4 mr-auto" />
-                      </Button>
-                    </Link>
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                      <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full group-hover:bg-blue-50 group-hover:border-blue-300 group-hover:text-blue-700 transition-colors">
+                          <Users className="w-3.5 h-3.5 ml-1" />
+                          الأعضاء
+                          <ChevronLeft className="w-3.5 h-3.5 mr-auto" />
+                        </Button>
+                      </Link>
+                      {canManage && (
+                        <Button variant="outline" size="sm" className="group-hover:bg-green-50 group-hover:border-green-300 group-hover:text-green-700 transition-colors" onClick={() => handleOpenMemberForm(committee)}>
+                          <UserPlus className="w-3.5 h-3.5 ml-1" />
+                          إضافة عضو
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -478,6 +623,18 @@ export default function Committees() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Quick Member Add Form */}
+      <MemberForm
+        open={memberFormOpen}
+        onOpenChange={setMemberFormOpen}
+        member={null}
+        onSave={handleSaveMember}
+        supervisors={members.filter(m => m.role === 'committee_head' || m.role === 'committee_supervisor' || m.role === 'coordinator' || m.role === 'governor')}
+        committees={committees}
+        selectedCommitteeId={memberTargetCommittee?.id || ''}
+        existingDepartments={[...new Set(members.map(m => m.department).filter(Boolean))]}
+      />
     </div>
   );
 }
