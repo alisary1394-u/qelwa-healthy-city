@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2 } from "lucide-react";
+import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -21,6 +21,7 @@ export default function Committees() {
   const [editingCommittee, setEditingCommittee] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, committee: null });
   const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '' });
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
   const queryClient = useQueryClient();
@@ -71,6 +72,30 @@ export default function Committees() {
     if (!memberCommitteeId) return [];
     return committees.filter((c) => String(c.id || '') === memberCommitteeId);
   }, [isGlobalCommitteeScope, committees, memberCommitteeId]);
+
+  const summaryStats = useMemo(() => {
+    const committeeIds = new Set(scopedCommittees.map((c) => String(c.id || '')));
+    const scopedMembers = members.filter((m) => committeeIds.has(String(m.committee_id || '')));
+    return {
+      committees: scopedCommittees.length,
+      activeCommittees: scopedCommittees.filter((c) => c.status === 'active' || !c.status).length,
+      totalMembers: scopedMembers.length,
+      coordinators: scopedMembers.filter((m) => m.role === 'coordinator' || m.role === 'committee_coordinator').length,
+      heads: scopedMembers.filter((m) => m.role === 'committee_head').length,
+      volunteers: scopedMembers.filter((m) => m.role === 'volunteer').length,
+    };
+  }, [scopedCommittees, members]);
+
+  const filteredCommittees = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return scopedCommittees;
+    return scopedCommittees.filter((committee) => {
+      const name = String(committee.name || '').toLowerCase();
+      const description = String(committee.description || '').toLowerCase();
+      const axis = String(committee.axis_name || '').toLowerCase();
+      return name.includes(q) || description.includes(q) || axis.includes(q);
+    });
+  }, [scopedCommittees, searchQuery]);
 
   if (!permissions.canSeeCommittees) {
     return (
@@ -145,6 +170,25 @@ export default function Committees() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{summaryStats.committees}</p><p className="text-sm text-gray-600">إجمالي اللجان</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">{summaryStats.activeCommittees}</p><p className="text-sm text-gray-600">لجان نشطة</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-indigo-600">{summaryStats.totalMembers}</p><p className="text-sm text-gray-600">إجمالي الأعضاء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-gray-600">المنسقون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.heads}</p><p className="text-sm text-gray-600">رؤساء اللجان</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-gray-600">المتطوعون</p></CardContent></Card>
+        </div>
+
+        <div className="mb-4 relative">
+          <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="بحث في اللجان (الاسم، الوصف، المحور)..."
+            className="pr-9"
+          />
+        </div>
+
         {canManage && (
           <div className="mb-6">
             <Button onClick={() => handleOpenForm()} className="bg-blue-600 hover:bg-blue-700">
@@ -158,11 +202,11 @@ export default function Committees() {
           <div className="text-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
           </div>
-        ) : scopedCommittees.length === 0 ? (
+        ) : filteredCommittees.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Building className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا توجد لجان</p>
+              <p className="text-gray-500">لا توجد نتائج مطابقة للبحث</p>
               {canManage && (
                 <Button variant="outline" className="mt-4" onClick={() => handleOpenForm()}>
                   إضافة لجنة جديدة
@@ -172,7 +216,7 @@ export default function Committees() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {scopedCommittees.map(committee => {
+            {filteredCommittees.map(committee => {
               const stats = getCommitteeStats(committee.id);
               return (
                 <Card key={committee.id} className="hover:shadow-lg transition-shadow">
