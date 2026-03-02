@@ -4,6 +4,11 @@
  */
 
 const API_BASE_URL = process.env.SEED_API_URL || 'http://localhost:8080';
+const ALLOW_REMOTE_SEED = String(process.env.ALLOW_REMOTE_SEED || '').toLowerCase() === 'true';
+
+function isLocalApi(url) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(String(url || '').replace(/\/$/, ''));
+}
 
 let authToken = null;
 
@@ -130,6 +135,13 @@ const initiativesByCommittee = {
 async function seedData() {
   console.log('🌱 بدء إضافة البيانات التجريبية المخصصة...');
   console.log(`🔗 API: ${API_BASE_URL}\n`);
+
+  if (!isLocalApi(API_BASE_URL) && !ALLOW_REMOTE_SEED) {
+    console.log('⛔ تم إيقاف العملية: هذا السكربت مخصص للوضع المحلي.');
+    console.log('للتشغيل على بيئة غير محلية استخدم: ALLOW_REMOTE_SEED=true');
+    process.exitCode = 1;
+    return;
+  }
 
   // تسجيل الدخول أولاً
   if (!await login()) {
