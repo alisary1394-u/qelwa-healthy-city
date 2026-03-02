@@ -1133,7 +1133,7 @@ export default function Initiatives() {
                     </div>
 
                     {/* Team role stats grid */}
-                    {linkedTeam.length > 0 && (() => {
+                    {(() => {
                       const teamStats = getTeamRoleStats(linkedTeam);
                       return (
                         <>
@@ -1159,6 +1159,7 @@ export default function Initiatives() {
                               <p className="text-[10px] text-teal-600/70">متطوعين</p>
                             </div>
                           </div>
+                          {linkedTeam.length > 0 && (
                           <div className="flex items-center gap-2 mb-3">
                             <div className="flex -space-x-2 rtl:space-x-reverse">
                               {linkedTeam.slice(0, 5).map((m) => (
@@ -1174,15 +1175,16 @@ export default function Initiatives() {
                             </div>
                             <span className="text-xs text-gray-500">{teamStats.total} عضو</span>
                           </div>
+                          )}
+                          {linkedTeam.length === 0 && (
+                            <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                              <Users className="w-3.5 h-3.5" />
+                              لا يوجد فريق مرتبط بعد
+                            </div>
+                          )}
                         </>
                       );
                     })()}
-                    {linkedTeam.length === 0 && (
-                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
-                        <Users className="w-3.5 h-3.5" />
-                        لا يوجد فريق مرتبط بعد
-                      </div>
-                    )}
 
                     <div className="flex gap-2 pt-3 border-t">
                       <Button 
