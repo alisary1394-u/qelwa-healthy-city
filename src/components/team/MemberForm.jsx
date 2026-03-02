@@ -40,6 +40,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     notes: ''
   });
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     if (member) {
@@ -89,8 +90,38 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     });
   };
 
+  const handleNationalIdChange = (value) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+    setFormData({ ...formData, national_id: digitsOnly });
+    if (digitsOnly.length === 10) {
+      setValidationErrors(prev => ({ ...prev, national_id: '' }));
+    }
+  };
+
+  const handlePhoneChange = (value) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+    setFormData({ ...formData, phone: digitsOnly });
+    if (digitsOnly.length === 10 && digitsOnly.startsWith('05')) {
+      setValidationErrors(prev => ({ ...prev, phone: '' }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errors = {};
+    if (!formData.national_id || formData.national_id.length !== 10) {
+      errors.national_id = 'رقم الهوية يجب أن يتكون من 10 أرقام';
+    }
+    if (!formData.phone || formData.phone.length !== 10) {
+      errors.phone = 'رقم الجوال يجب أن يتكون من 10 أرقام';
+    } else if (!formData.phone.startsWith('05')) {
+      errors.phone = 'رقم الجوال يجب أن يبدأ بـ 05';
+    }
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors({});
     setLoading(true);
     try {
       await onSave({ ...formData, department: formData.department?.trim() || '' });
@@ -122,13 +153,20 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>رقم الهوية</Label>
+              <Label>رقم الهوية *</Label>
               <Input
                 value={formData.national_id}
-                onChange={(e) => setFormData({...formData, national_id: e.target.value})}
-                placeholder="أدخل رقم الهوية"
+                onChange={(e) => handleNationalIdChange(e.target.value)}
+                placeholder="أدخل رقم الهوية (10 أرقام)"
                 dir="ltr"
+                required
+                maxLength={10}
+                inputMode="numeric"
+                className={validationErrors.national_id ? 'border-red-500' : ''}
               />
+              {validationErrors.national_id && (
+                <p className="text-xs text-red-600">{validationErrors.national_id}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -155,14 +193,20 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>رقم الهاتف *</Label>
+              <Label>رقم الجوال *</Label>
               <Input
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder="05xxxxxxxx"
                 dir="ltr"
                 required
+                maxLength={10}
+                inputMode="numeric"
+                className={validationErrors.phone ? 'border-red-500' : ''}
               />
+              {validationErrors.phone && (
+                <p className="text-xs text-red-600">{validationErrors.phone}</p>
+              )}
             </div>
             
             <div className="space-y-2">

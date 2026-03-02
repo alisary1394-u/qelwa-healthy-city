@@ -377,7 +377,7 @@ export default function Dashboard() {
                     <p className="font-semibold text-yellow-800">{pendingEvidence} دليل بانتظار المراجعة</p>
                     <p className="text-sm text-yellow-600">تحتاج إلى اعتماد</p>
                   </div>
-                  <Link to={createPageUrl('Standards')} className="mr-auto">
+                  <Link to={createPageUrl('Standards') + '?filter=pending'} className="mr-auto">
                     <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700">
                       عرض <ArrowLeft className="w-4 h-4 mr-1" />
                     </Button>

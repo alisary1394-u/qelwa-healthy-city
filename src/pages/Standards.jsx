@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS } from '@/api/seedAxesAndStandards';
@@ -13,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -114,8 +115,10 @@ function buildRequiredEvidence(documents) {
 }
 
 function StandardsLegacy() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pendingFilter, setPendingFilter] = useState(searchParams.get('filter') === 'pending');
   const [expandedLinkedSections, setExpandedLinkedSections] = useState({});
   const [axisFormOpen, setAxisFormOpen] = useState(false);
   const [standardFormOpen, setStandardFormOpen] = useState(false);
@@ -370,7 +373,7 @@ function StandardsLegacy() {
   const filteredStandards = (() => {
     const query = String(searchQuery || '').trim().toLowerCase();
     const hasSearch = query.length > 0;
-    const list = scopedStandards.filter(s => {
+    let list = scopedStandards.filter(s => {
       const matchesSearch = !hasSearch ||
         (String(s?.title || '').toLowerCase().includes(query)) ||
         (String(s?.code || '').toLowerCase().includes(query)) ||
@@ -405,6 +408,14 @@ function StandardsLegacy() {
       
       return matchesAxis;
     });
+
+    // فلترة الأدلة بانتظار المراجعة
+    if (pendingFilter) {
+      const standardsWithPending = new Set(
+        evidence.filter(e => isPendingEvidenceStatus(e.status)).map(e => e.standard_id)
+      );
+      list = list.filter(s => standardsWithPending.has(s.id));
+    }
     
     // فرز بسيط وفعال للمحاور الفردية
     if (activeAxis !== 'all') {
@@ -612,6 +623,22 @@ function StandardsLegacy() {
               autoComplete="off"
             />
           </div>
+          <Button
+            variant={pendingFilter ? 'default' : 'outline'}
+            className={pendingFilter ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'border-yellow-400 text-yellow-700 hover:bg-yellow-50'}
+            onClick={() => {
+              const next = !pendingFilter;
+              setPendingFilter(next);
+              if (next) {
+                setSearchParams({ filter: 'pending' });
+              } else {
+                setSearchParams({});
+              }
+            }}
+          >
+            <Clock className="w-4 h-4 ml-1" />
+            بانتظار المراجعة
+          </Button>
         </div>
 
         {/* Axes Tabs */}

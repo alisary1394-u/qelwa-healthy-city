@@ -86,6 +86,11 @@ export default function Home() {
     setLoading(true);
 
     try {
+      if (nationalId.length !== 10) {
+        setError('رقم الهوية يجب أن يتكون من 10 أرقام');
+        setLoading(false);
+        return;
+      }
       // Get all team members
       const members = await api.entities.TeamMember.list();
       
@@ -222,6 +227,12 @@ export default function Home() {
       email: regEmail.trim().toLowerCase(),
       password: regPassword,
     };
+
+    if (regNationalId.trim().length !== 10) {
+      setError('رقم الهوية يجب أن يتكون من 10 أرقام');
+      setRegisterLoading(false);
+      return;
+    }
 
     const onSuccess = () => {
       setRegisterSuccess('تم تسجيلك كمشرف عام. يمكنك الآن تسجيل الدخول من النموذج أعلاه.');
@@ -407,9 +418,11 @@ export default function Home() {
                       <Input
                         type="text"
                         value={nationalId}
-                        onChange={(e) => setNationalId(e.target.value)}
-                        placeholder="أدخل رقم الهوية الوطنية"
+                        onChange={(e) => setNationalId(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="أدخل رقم الهوية الوطنية (10 أرقام)"
                         required
+                        maxLength={10}
+                        inputMode="numeric"
                         className="text-lg"
                       />
                     </div>
@@ -488,7 +501,7 @@ export default function Home() {
                           </div>
                           <div>
                             <Label className="text-xs">رقم الهوية الوطنية</Label>
-                            <Input value={regNationalId} onChange={(e) => setRegNationalId(e.target.value)} placeholder="رقم الهوية" required className="mt-1" />
+                            <Input value={regNationalId} onChange={(e) => setRegNationalId(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="رقم الهوية (10 أرقام)" required maxLength={10} inputMode="numeric" className="mt-1" />
                           </div>
                           <div>
                             <Label className="text-xs">البريد الإلكتروني</Label>
