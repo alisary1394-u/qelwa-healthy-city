@@ -13,8 +13,9 @@ import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, ClipboardList, 
   AlertTriangle, CheckCircle2, Clock, Building2,
-  ArrowLeft, Activity, Image, Upload, Trash2, Save, Settings
+  ArrowLeft, Activity, Image, Upload, Trash2, Save, Settings, ChevronDown
 } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 /** عدد المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
@@ -247,14 +248,21 @@ export default function Dashboard() {
 
         {/* إعدادات الشعار */}
         {permissions.canSeeSettings && (
-        <Card className="mb-6 border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="w-5 h-5 text-blue-600" />
-                إعدادات الشعار
-              </CardTitle>
-              <p className="text-sm text-gray-500">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
-            </CardHeader>
+        <Collapsible defaultOpen={false}>
+          <Card className="mb-6 border-blue-200 bg-blue-50/50">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-blue-100/50 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Image className="w-5 h-5 text-blue-600" />
+                    إعدادات الشعار
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-gray-400 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                </CardTitle>
+                <p className="text-sm text-gray-500">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
             <CardContent className="space-y-4">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-shrink-0">
@@ -347,7 +355,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </CardContent>
+            </CollapsibleContent>
           </Card>
+        </Collapsible>
         )}
 
         {/* Alerts */}
