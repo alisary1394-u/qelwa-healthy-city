@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
@@ -226,30 +225,11 @@ export default function Settings() {
             {/* City Location */}
             <div className="space-y-2">
               <Label>موقع المدينة</Label>
-              <Select
+              <Input
                 value={formData.city_location}
-                onValueChange={(value) => setFormData({ ...formData, city_location: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الموقع" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="محافظة قلوة">محافظة قلوة</SelectItem>
-                  <SelectItem value="منطقة الباحة">منطقة الباحة</SelectItem>
-                  <SelectItem value="منطقة مكة المكرمة">منطقة مكة المكرمة</SelectItem>
-                  <SelectItem value="منطقة المدينة المنورة">منطقة المدينة المنورة</SelectItem>
-                  <SelectItem value="منطقة الرياض">منطقة الرياض</SelectItem>
-                  <SelectItem value="المنطقة الشرقية">المنطقة الشرقية</SelectItem>
-                  <SelectItem value="منطقة القصيم">منطقة القصيم</SelectItem>
-                  <SelectItem value="منطقة حائل">منطقة حائل</SelectItem>
-                  <SelectItem value="منطقة تبوك">منطقة تبوك</SelectItem>
-                  <SelectItem value="منطقة الجوف">منطقة الجوف</SelectItem>
-                  <SelectItem value="منطقة الحدود الشمالية">منطقة الحدود الشمالية</SelectItem>
-                  <SelectItem value="منطقة جازان">منطقة جازان</SelectItem>
-                  <SelectItem value="منطقة عسير">منطقة عسير</SelectItem>
-                  <SelectItem value="منطقة نجران">منطقة نجران</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(e) => setFormData({ ...formData, city_location: e.target.value })}
+                placeholder="محافظة قلوة"
+              />
             </div>
 
             {/* Save Button */}
