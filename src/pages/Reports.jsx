@@ -366,13 +366,6 @@ export default function Reports() {
         onclone: (doc) => {
           const clonedElement = doc.getElementById(elementId);
           if (!clonedElement) return;
-
-          clonedElement.querySelectorAll('.recharts-responsive-container').forEach(e => {
-            const p = doc.createElement('div');
-            p.style.cssText = 'min-height:120px;padding:20px;background:#f1f5f9;color:#64748b;text-align:center;border-radius:8px;display:flex;align-items:center;justify-content:center;';
-            p.textContent = 'رسم بياني (مستثنى من التصدير)';
-            if (e.parentNode) e.parentNode.replaceChild(p, e);
-          });
           clonedElement.querySelectorAll('[class*="gradient"]').forEach(e => { e.style.background = '#2563eb'; e.style.backgroundImage = 'none'; });
         },
       });
