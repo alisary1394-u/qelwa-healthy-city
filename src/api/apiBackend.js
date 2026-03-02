@@ -280,12 +280,9 @@ function readLegacyLocalArray(key) {
   }
 }
 
-async function migrateLegacyLocalDataIfNeeded() {
+async function migrateLegacyLocalDataIfNeeded(options = {}) {
   if (typeof localStorage === 'undefined') return { migrated: false, fileUpload: 0, evidence: 0 };
-  if (localStorage.getItem(LEGACY_FILES_MIGRATION_KEY) === '1') {
-    return { migrated: false, fileUpload: 0, evidence: 0 };
-  }
-
+  const force = options?.force === true;
   const legacyFiles = readLegacyLocalArray('local_db_FileUpload');
   const legacyEvidence = readLegacyLocalArray('local_db_Evidence');
   if (legacyFiles.length === 0 && legacyEvidence.length === 0) {
@@ -293,8 +290,15 @@ async function migrateLegacyLocalDataIfNeeded() {
     return { migrated: false, fileUpload: 0, evidence: 0 };
   }
 
+  const migrationKeyAlreadySet = localStorage.getItem(LEGACY_FILES_MIGRATION_KEY) === '1';
+
   const remoteFiles = await entities.FileUpload.list();
   const remoteEvidence = await entities.Evidence.list();
+
+  if (!force && migrationKeyAlreadySet && remoteFiles.length >= legacyFiles.length && remoteEvidence.length >= legacyEvidence.length) {
+    return { migrated: false, fileUpload: 0, evidence: 0 };
+  }
+
   const fileIds = new Set((remoteFiles || []).map((x) => x.id));
   const evidenceIds = new Set((remoteEvidence || []).map((x) => x.id));
 
@@ -328,6 +332,10 @@ async function migrateLegacyLocalDataIfNeeded() {
   };
 }
 
+async function forceMigrateLegacyLocalData() {
+  return migrateLegacyLocalDataIfNeeded({ force: true });
+}
+
 export const apiBackend = {
   entities,
   auth,
@@ -347,6 +355,7 @@ export const apiBackend = {
   syncStandardsFromCsv,
   clearAxesAndStandardsAndReseed,
   migrateLegacyLocalDataIfNeeded,
+  forceMigrateLegacyLocalData,
   seedCommitteesTeamInitiativesTasksIfNeeded,
   clearLocalDataAndReseed,
   getDefaultLocalCredentials,
