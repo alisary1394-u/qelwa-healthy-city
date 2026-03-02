@@ -101,8 +101,9 @@ export default function Committees() {
       committees: scopedCommittees.length,
       activeCommittees: scopedCommittees.filter((c) => c.status === 'active' || !c.status).length,
       totalMembers: scopedMembers.length,
-      coordinators: scopedMembers.filter((m) => m.role === 'coordinator' || m.role === 'committee_coordinator').length,
-      heads: scopedMembers.filter((m) => m.role === 'committee_head').length,
+      coordinators: scopedMembers.filter((m) => m.role === 'coordinator' || m.role === 'committee_coordinator' || m.role === 'committee_head').length,
+      members: scopedMembers.filter((m) => m.role === 'committee_member' || m.role === 'member').length,
+      supervisors: scopedMembers.filter((m) => m.role === 'committee_supervisor').length,
       volunteers: scopedMembers.filter((m) => m.role === 'volunteer').length,
     };
   }, [scopedCommittees, members]);
@@ -172,8 +173,8 @@ export default function Committees() {
   const getCommitteeStats = (committeeId) => {
     const committeeMembers = members.filter(m => m.committee_id === committeeId);
     return {
-      coordinators: committeeMembers.filter(m => m.role === 'coordinator' || m.role === 'committee_coordinator').length,
-      committee_members: committeeMembers.filter(m => m.role === 'committee_member').length,
+      coordinators: committeeMembers.filter(m => m.role === 'coordinator' || m.role === 'committee_coordinator' || m.role === 'committee_head').length,
+      committee_members: committeeMembers.filter(m => m.role === 'committee_member' || m.role === 'member').length,
       supervisors: committeeMembers.filter(m => m.role === 'committee_supervisor').length,
       volunteers: committeeMembers.filter(m => m.role === 'volunteer').length,
       total: committeeMembers.length
@@ -310,8 +311,8 @@ export default function Committees() {
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{summaryStats.committees}</p><p className="text-sm text-gray-600">إجمالي اللجان</p></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">{summaryStats.activeCommittees}</p><p className="text-sm text-gray-600">لجان نشطة</p></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-indigo-600">{summaryStats.totalMembers}</p><p className="text-sm text-gray-600">إجمالي الأعضاء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-gray-600">المنسقون</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.heads}</p><p className="text-sm text-gray-600">رؤساء اللجان</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-gray-600">المنسقون والرؤساء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.supervisors}</p><p className="text-sm text-gray-600">المشرفون</p></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-gray-600">المتطوعون</p></CardContent></Card>
         </div>
 
