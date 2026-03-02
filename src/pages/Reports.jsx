@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award, Target, Users, Lightbulb, BarChart3, ClipboardList, Shield, Activity } from "lucide-react";
+import { FileText, Download, TrendingUp, CheckCircle, Clock, AlertCircle, Award, Target, Users, Lightbulb, BarChart3, ClipboardList, Shield, Activity, DollarSign, TrendingDown, Wallet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -62,10 +62,10 @@ function SectionHeader({ icon: Icon, title, description, children }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <div className="flex items-center gap-3">
-        {Icon && <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><Icon className="w-5 h-5" /></div>}
+        {Icon && <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 flex items-center justify-center"><Icon className="w-5 h-5" /></div>}
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-          {description && <p className="text-sm text-gray-500">{description}</p>}
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
       </div>
       {children && <div className="flex flex-wrap gap-2">{children}</div>}
@@ -85,9 +85,9 @@ function ProgressRing({ value, size = 120, strokeWidth = 10, color = '#3B82F6', 
           strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-700" />
       </svg>
       <div className="absolute flex flex-col items-center justify-center" style={{ width: size, height: size }}>
-        <span className="text-2xl font-bold text-gray-900">{value}%</span>
+        <span className="text-2xl font-bold text-foreground">{value}%</span>
       </div>
-      {label && <p className="text-xs text-gray-500 text-center">{label}</p>}
+      {label && <p className="text-xs text-muted-foreground text-center">{label}</p>}
     </div>
   );
 }
@@ -95,15 +95,15 @@ function ProgressRing({ value, size = 120, strokeWidth = 10, color = '#3B82F6', 
 function AxisProgressCard({ name, order, completed, total, color }) {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-white hover:shadow-sm transition-shadow">
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow">
       <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: color }}>
         {order}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+        <p className="text-sm font-medium text-foreground truncate">{name}</p>
         <div className="flex items-center gap-2 mt-1">
           <Progress value={pct} className="h-2 flex-1" />
-          <span className="text-xs text-gray-500 whitespace-nowrap">{completed}/{total}</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{completed}/{total}</span>
         </div>
       </div>
       <Badge variant={pct >= 80 ? 'default' : pct > 0 ? 'secondary' : 'outline'} className="text-xs">{pct}%</Badge>
@@ -129,8 +129,17 @@ export default function Reports() {
   const { data: axes = [] } = useQuery({ queryKey: ['axes'], queryFn: () => api.entities.Axis.list('order') });
   const { data: evidence = [] } = useQuery({ queryKey: ['evidence'], queryFn: () => api.entities.Evidence.list() });
   const { data: settings = [] } = useQuery({ queryKey: ['settings'], queryFn: () => api.entities.Settings.list() });
+  const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.entities.Transaction.list('-date') });
+  const { data: budgets = [] } = useQuery({ queryKey: ['budgets'], queryFn: () => api.entities.Budget.list('-created_date') });
+  const { data: allocations = [] } = useQuery({ queryKey: ['allocations'], queryFn: () => api.entities.BudgetAllocation.list() });
 
   const filteredInitiatives = selectedCommittee === 'all' ? initiatives : initiatives.filter(i => i.committee_id === selectedCommittee);
+  const filteredTransactions = selectedCommittee === 'all'
+    ? transactions
+    : transactions.filter((t) => String(t.committee_id || '') === String(selectedCommittee));
+  const filteredAllocations = selectedCommittee === 'all'
+    ? allocations
+    : allocations.filter((a) => String(a.committee_id || '') === String(selectedCommittee));
   const filteredTasks = selectedCommittee === 'all' ? tasks : tasks.filter(t => {
     const member = members.find(m => m.id === t.assigned_to);
     return member?.committee_id === selectedCommittee;
@@ -199,6 +208,95 @@ export default function Reports() {
   }));
 
   const overdueTasks = filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
+  const currencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }), []);
+  const formatCurrency = (value) => `${currencyFormatter.format(Number(value) || 0)} ر.س`;
+
+  const paidIncome = filteredTransactions
+    .filter((t) => t.type === 'income' && t.status === 'paid')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+  const paidExpenses = filteredTransactions
+    .filter((t) => t.type === 'expense' && t.status === 'paid')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+  const pendingFinancialOps = filteredTransactions.filter((t) => t.status === 'pending').length;
+  const netBalance = paidIncome - paidExpenses;
+
+  const activeBudget = budgets.find((budget) => budget.status === 'active') || budgets[0] || null;
+  const activeBudgetTotal = Number(activeBudget?.total_budget) || 0;
+  const activeBudgetUsagePct = activeBudgetTotal > 0 ? Math.min(100, Math.round((paidExpenses / activeBudgetTotal) * 100)) : 0;
+
+  const expensesByCategory = useMemo(() => {
+    const grouped = filteredTransactions
+      .filter((t) => t.type === 'expense' && t.status === 'paid')
+      .reduce((acc, t) => {
+        const key = t.category || 'أخرى';
+        acc[key] = (acc[key] || 0) + (Number(t.amount) || 0);
+        return acc;
+      }, {});
+
+    return Object.entries(grouped)
+      .map(([name, amount], index) => ({
+        name,
+        amount,
+        color: AXIS_COLORS[index % AXIS_COLORS.length],
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8);
+  }, [filteredTransactions]);
+
+  const monthlyCashflow = useMemo(() => {
+    const now = new Date();
+    const months = Array.from({ length: 6 }).map((_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return {
+        key,
+        name: d.toLocaleDateString('ar-SA', { month: 'short' }),
+        income: 0,
+        expense: 0,
+      };
+    });
+
+    const indexByKey = new Map(months.map((m, index) => [m.key, index]));
+    filteredTransactions.forEach((t) => {
+      if (t.status !== 'paid' || !t.date) return;
+      const date = new Date(t.date);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const idx = indexByKey.get(key);
+      if (idx == null) return;
+      const amount = Number(t.amount) || 0;
+      if (t.type === 'income') months[idx].income += amount;
+      if (t.type === 'expense') months[idx].expense += amount;
+    });
+
+    return months;
+  }, [filteredTransactions]);
+
+  const allocationsByCommittee = useMemo(() => {
+    const grouped = filteredAllocations.reduce((acc, a) => {
+      const name = a.committee_name || committees.find((c) => String(c.id) === String(a.committee_id))?.name || 'غير محدد';
+      acc[name] = (acc[name] || 0) + (Number(a.allocated_amount) || 0);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .map(([name, amount], index) => ({
+        name,
+        amount,
+        color: AXIS_COLORS[index % AXIS_COLORS.length],
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8);
+  }, [filteredAllocations, committees]);
+
+  const topExpenses = useMemo(() => {
+    return filteredTransactions
+      .filter((t) => t.type === 'expense' && t.status === 'paid')
+      .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))
+      .slice(0, 5);
+  }, [filteredTransactions]);
 
   const getTaskCommitteeName = (t) => { const m = members.find(m2 => m2.id === t.assigned_to); return committees.find(c => c.id === m?.committee_id)?.name || ''; };
   const getTaskInitiativeTitle = (t) => initiatives.find(i => i.id === t.initiative_id)?.title || '';
@@ -213,6 +311,9 @@ export default function Reports() {
     { value: 'team', label: 'أعضاء الفريق', getData: () => members.map(m => ({ 'الاسم': m.full_name || '—', 'المنصب': m.role || '—', 'اللجنة': getMemberCommitteeName(m), 'القسم/الجهة': m.department || '—', 'البريد': m.email || '—', 'الهاتف': m.phone || '—' })) },
     { value: 'standards', label: 'المعايير', getData: () => dedupedStandards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || '—', 'الحالة': statusLabels[s.status] || s.status })) },
     { value: 'kpis', label: 'المؤشرات', getData: () => kpis.map(k => ({ 'المؤشر': k.kpi_name || '—', 'المبادرة': getKpiInitiativeTitle(k), 'القيمة الحالية': k.current_value, 'المستهدف': k.target_value, 'الوحدة': k.unit || '—', 'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
+    { value: 'budget_overview', label: 'ملخص الميزانية', getData: () => [{ 'اسم الميزانية النشطة': activeBudget?.name || '—', 'السنة المالية': activeBudget?.fiscal_year || '—', 'الإيرادات المدفوعة': paidIncome, 'المصروفات المدفوعة': paidExpenses, 'الرصيد الصافي': netBalance, 'العمليات المعلقة': pendingFinancialOps, 'إجمالي الميزانية': activeBudgetTotal, 'نسبة الصرف %': activeBudgetUsagePct }] },
+    { value: 'budget_transactions', label: 'العمليات المالية', getData: () => filteredTransactions.map(t => ({ 'التاريخ': t.date || '—', 'النوع': t.type === 'income' ? 'إيراد' : 'مصروف', 'الفئة': t.category || '—', 'القيمة': Number(t.amount) || 0, 'الحالة': t.status === 'paid' ? 'مدفوعة' : t.status === 'pending' ? 'معلقة' : t.status === 'rejected' ? 'مرفوضة' : (t.status || '—'), 'اللجنة': t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || '—', 'المستفيد/الجهة': t.beneficiary || '—', 'مرجع السند': t.receipt_number || '—' })) },
+    { value: 'budget_allocations', label: 'توزيعات الميزانية', getData: () => filteredAllocations.map(a => ({ 'الميزانية': a.budget_name || budgets.find(b => String(b.id) === String(a.budget_id))?.name || '—', 'اللجنة': a.committee_name || committees.find(c => String(c.id) === String(a.committee_id))?.name || '—', 'التصنيف': a.category || '—', 'المبلغ المخصص': Number(a.allocated_amount) || 0, 'المبلغ المتبقي': Number(a.remaining_amount) || 0, 'المبادرة': a.initiative_title || initiatives.find(i => String(i.id) === String(a.initiative_id))?.title || '—' })) },
   ];
 
   const currentDetailedData = (() => { const c = detailedReportConfig.find(c2 => c2.value === detailedReportType); return c ? c.getData() : []; })();
@@ -237,6 +338,7 @@ export default function Reports() {
     standards: { id: 'reports-standards', filename: 'تقرير-المعايير.pdf' },
     initiatives: { id: 'reports-initiatives', filename: 'تقرير-المبادرات.pdf' },
     tasks: { id: 'reports-tasks', filename: 'تقرير-المهام.pdf' },
+    budget: { id: 'reports-budget', filename: 'تقرير-الميزانية.pdf' },
     detailed: { id: 'detailed-report-content', filename: `تقرير-تفصيلي-${detailedReportFilename}.pdf` },
   };
 
@@ -296,7 +398,7 @@ export default function Reports() {
 
   if (!permissions?.canSeeReports) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
         <Card className="max-w-md"><CardContent className="p-6 text-center">
           <Shield className="w-12 h-12 mx-auto text-red-400 mb-3" />
           <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة التقارير.</p>
@@ -306,7 +408,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -341,11 +443,12 @@ export default function Reports() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 mb-6 bg-white shadow-sm rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 mb-6 bg-card border border-border shadow-sm rounded-xl p-1">
             <TabsTrigger value="overview" className="rounded-lg">نظرة عامة</TabsTrigger>
             <TabsTrigger value="standards" className="rounded-lg">المعايير</TabsTrigger>
             <TabsTrigger value="initiatives" className="rounded-lg">المبادرات</TabsTrigger>
             <TabsTrigger value="tasks" className="rounded-lg">المهام</TabsTrigger>
+            <TabsTrigger value="budget" className="rounded-lg">الميزانية</TabsTrigger>
             <TabsTrigger value="detailed" className="rounded-lg">تقارير تفصيلية</TabsTrigger>
           </TabsList>
 
@@ -364,9 +467,9 @@ export default function Reports() {
                 <Card className="col-span-1">
                   <CardHeader><CardTitle className="text-lg">نسب الإنجاز</CardTitle></CardHeader>
                   <CardContent className="flex justify-around items-center py-6">
-                    <div className="relative"><ProgressRing value={overallStandardsPct} color="#3B82F6" /><p className="text-xs text-center text-gray-500 mt-2">المعايير</p></div>
-                    <div className="relative"><ProgressRing value={completedInitPct} color="#8B5CF6" /><p className="text-xs text-center text-gray-500 mt-2">المبادرات</p></div>
-                    <div className="relative"><ProgressRing value={completedTasksPct} color="#10B981" /><p className="text-xs text-center text-gray-500 mt-2">المهام</p></div>
+                    <div className="relative"><ProgressRing value={overallStandardsPct} color="#3B82F6" /><p className="text-xs text-center text-muted-foreground mt-2">المعايير</p></div>
+                    <div className="relative"><ProgressRing value={completedInitPct} color="#8B5CF6" /><p className="text-xs text-center text-muted-foreground mt-2">المبادرات</p></div>
+                    <div className="relative"><ProgressRing value={completedTasksPct} color="#10B981" /><p className="text-xs text-center text-muted-foreground mt-2">المهام</p></div>
                   </CardContent>
                 </Card>
 
@@ -403,14 +506,14 @@ export default function Reports() {
 
               {/* Overdue Tasks Alert */}
               {overdueTasks.length > 0 && (
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg text-red-700 flex items-center gap-2"><AlertCircle className="w-5 h-5" /> مهام متأخرة ({overdueTasks.length})</CardTitle>
+                    <CardTitle className="text-lg text-red-700 dark:text-red-300 flex items-center gap-2"><AlertCircle className="w-5 h-5" /> مهام متأخرة ({overdueTasks.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {overdueTasks.slice(0, 5).map(t => (
-                        <div key={t.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-red-100">
+                        <div key={t.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-red-100 dark:border-red-900/40">
                           <span className="text-sm font-medium truncate flex-1">{t.title}</span>
                           <Badge variant="destructive" className="text-xs mr-2">{t.due_date}</Badge>
                         </div>
@@ -604,6 +707,122 @@ export default function Reports() {
             </div>
           </TabsContent>
 
+          {/* ==================== BUDGET ==================== */}
+          <TabsContent value="budget">
+            <div id="reports-budget" className="space-y-6">
+              <SectionHeader icon={DollarSign} title="تقارير إدارة الميزانية" description="ملخص احترافي قابل للمشاركة مع المسؤول">
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTransactions.map(t => ({ 'التاريخ': t.date || '—', 'النوع': t.type === 'income' ? 'إيراد' : 'مصروف', 'الفئة': t.category || '—', 'القيمة': Number(t.amount) || 0, 'الحالة': t.status === 'paid' ? 'مدفوعة' : t.status === 'pending' ? 'معلقة' : t.status === 'rejected' ? 'مرفوضة' : (t.status || '—'), 'اللجنة': t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || '—', 'المستفيد/الجهة': t.beneficiary || '—', 'الوصف': t.description || '—' })), 'العمليات-المالية')}>
+                  <Download className="w-4 h-4 ml-1" /> CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-budget', 'تقرير-إدارة-الميزانية.pdf')} disabled={exportingPDF}>
+                  <Download className="w-4 h-4 ml-1" /> PDF
+                </Button>
+              </SectionHeader>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard icon={TrendingUp} label="الإيرادات المدفوعة" value={formatCurrency(paidIncome)} color="green" />
+                <StatCard icon={TrendingDown} label="المصروفات المدفوعة" value={formatCurrency(paidExpenses)} color="red" />
+                <StatCard icon={Wallet} label="الرصيد الصافي" value={formatCurrency(netBalance)} color={netBalance >= 0 ? 'blue' : 'amber'} />
+                <StatCard icon={Clock} label="عمليات معلقة" value={pendingFinancialOps} color="gray" />
+              </div>
+
+              <Card className="border-emerald-100 dark:border-emerald-900/30">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center justify-between gap-2">
+                    <span>حالة الميزانية النشطة</span>
+                    <Badge variant="secondary">{activeBudget?.name || 'لا توجد ميزانية نشطة'}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">السنة المالية:</span> <span className="font-semibold">{activeBudget?.fiscal_year || '—'}</span></div>
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">إجمالي الميزانية:</span> <span className="font-semibold">{formatCurrency(activeBudgetTotal)}</span></div>
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">نسبة الصرف:</span> <span className="font-semibold">{activeBudgetUsagePct}%</span></div>
+                  </div>
+                  <Progress value={activeBudgetUsagePct} className="h-3" />
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader><CardTitle className="text-lg">المصروفات حسب الفئة</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={expensesByCategory}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis />
+                        <Tooltip formatter={(v) => formatCurrency(v)} />
+                        <Bar dataKey="amount" name="إجمالي المصروف" radius={[4, 4, 0, 0]}>
+                          {expensesByCategory.map((item, index) => (
+                            <Cell key={`expense-cat-${index}`} fill={item.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-lg">التدفق المالي (آخر 6 أشهر)</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={monthlyCashflow}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(v) => formatCurrency(v)} />
+                        <Legend />
+                        <Bar dataKey="income" fill="#10b981" name="إيرادات" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="expense" fill="#ef4444" name="مصروفات" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader><CardTitle className="text-lg">أعلى المصروفات المعتمدة</CardTitle></CardHeader>
+                <CardContent>
+                  {topExpenses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">لا توجد مصروفات مدفوعة لعرضها حالياً.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {topExpenses.map((t) => (
+                        <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{t.description || t.category || 'مصروف'}</p>
+                            <p className="text-xs text-muted-foreground">{t.date || '—'} • {t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || 'غير محدد'}</p>
+                          </div>
+                          <Badge variant="destructive">{formatCurrency(t.amount)}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="text-lg">توزيعات الميزانية حسب اللجنة</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={allocationsByCommittee} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(v) => formatCurrency(v)} />
+                      <Bar dataKey="amount" name="المبلغ المخصص" radius={[0, 4, 4, 0]}>
+                        {allocationsByCommittee.map((item, index) => (
+                          <Cell key={`alloc-committee-${index}`} fill={item.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           {/* ==================== DETAILED ==================== */}
           <TabsContent value="detailed">
             <div id="detailed-report-content" className="space-y-6">
@@ -631,7 +850,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   {currentDetailedData.length === 0 ? (
-                    <div className="text-center py-12 text-gray-400">
+                    <div className="text-center py-12 text-muted-foreground">
                       <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>لا توجد بيانات لهذا التقرير</p>
                     </div>
@@ -639,15 +858,15 @@ export default function Reports() {
                     <div className="overflow-x-auto rounded-lg border">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-gray-50">
+                          <TableRow className="bg-muted/50">
                             {Object.keys(currentDetailedData[0]).map(key => (
-                              <TableHead key={key} className="whitespace-nowrap text-right font-bold text-gray-700">{key}</TableHead>
+                              <TableHead key={key} className="whitespace-nowrap text-right font-bold text-foreground">{key}</TableHead>
                             ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {currentDetailedData.map((row, idx) => (
-                            <TableRow key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                            <TableRow key={idx} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/30'}>
                               {Object.keys(currentDetailedData[0]).map(key => (
                                 <TableCell key={key} className="text-right max-w-[280px] break-words">{String(row[key] ?? '—')}</TableCell>
                               ))}
