@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -122,7 +122,7 @@ export default function TeamManagement() {
 
   if (!permissions.canSeeTeam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الفريق. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -257,7 +257,7 @@ export default function TeamManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -276,7 +276,7 @@ export default function TeamManagement() {
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <Card className="bg-white shadow-sm border-0 overflow-hidden">
+          <Card className="bg-card shadow-sm border-0 overflow-hidden">
             <CardContent className="p-0">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white text-center">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
@@ -286,11 +286,11 @@ export default function TeamManagement() {
             </CardContent>
           </Card>
           {Object.entries(roleIcons).map(([role, Icon]) => (
-            <Card key={role} className="bg-white shadow-sm border-0 overflow-hidden">
+            <Card key={role} className="bg-card shadow-sm border-0 overflow-hidden">
               <CardContent className="p-4 text-center hover:shadow-md transition-shadow">
-                <Icon className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                <Icon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-xl font-bold">{stats[role]}</p>
-                <p className="text-xs text-gray-500">{roleLabels[role]}</p>
+                <p className="text-xs text-muted-foreground">{roleLabels[role]}</p>
               </CardContent>
             </Card>
           ))}
@@ -299,7 +299,7 @@ export default function TeamManagement() {
         {/* Committee Filter */}
         {scopedCommittees.length > 0 && (
           <div className="mb-4 flex items-center gap-3">
-            <Building className="w-5 h-5 text-gray-500" />
+            <Building className="w-5 h-5 text-muted-foreground" />
             <Select value={activeCommittee} onValueChange={setActiveCommittee}>
               <SelectTrigger className="w-64">
                 <SelectValue placeholder="جميع اللجان" />
@@ -322,7 +322,7 @@ export default function TeamManagement() {
         {/* Actions Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="بحث بالاسم أو الهاتف أو القسم..."
               value={searchQuery}
@@ -333,7 +333,7 @@ export default function TeamManagement() {
           {canAdd && (
             <Button 
               onClick={() => { setEditingMember(null); setFormOpen(true); }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <UserPlus className="w-5 h-5 ml-2" />
               إضافة عضو جديد
@@ -343,7 +343,7 @@ export default function TeamManagement() {
 
         {/* Tabs */}
         <Tabs value={activeRole} onValueChange={setActiveRole} className="mb-6">
-          <TabsList className="flex-wrap h-auto gap-1 bg-white p-1">
+          <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
             <TabsTrigger value="all">الجميع ({stats.total})</TabsTrigger>
             <TabsTrigger value="governor">المشرف العام ({stats.governor})</TabsTrigger>
             <TabsTrigger value="coordinator">المنسق ({stats.coordinator})</TabsTrigger>
@@ -363,13 +363,13 @@ export default function TeamManagement() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-gray-500">جاري التحميل...</p>
+            <p className="mt-4 text-muted-foreground">جاري التحميل...</p>
           </div>
         ) : filteredMembers.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <Users className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا يوجد أعضاء</p>
+              <Users className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">لا يوجد أعضاء</p>
               {canAdd && (
                 <Button 
                   variant="outline" 
@@ -422,7 +422,7 @@ export default function TeamManagement() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               حذف
             </AlertDialogAction>
           </AlertDialogFooter>

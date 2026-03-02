@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -170,7 +170,7 @@ export default function Tasks() {
 
   if (!permissions.canSeeTasks) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المهام. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -250,7 +250,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -273,42 +273,42 @@ export default function Tasks() {
             <CardContent className="p-4 text-center">
               <ListTodo className="w-6 h-6 mx-auto mb-2 text-blue-600" />
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-xs text-gray-500">إجمالي المهام</p>
+              <p className="text-xs text-muted-foreground">إجمالي المهام</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Clock className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
               <p className="text-2xl font-bold">{stats.pending}</p>
-              <p className="text-xs text-gray-500">قيد الانتظار</p>
+              <p className="text-xs text-muted-foreground">قيد الانتظار</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <ClipboardList className="w-6 h-6 mx-auto mb-2 text-blue-600" />
               <p className="text-2xl font-bold">{stats.in_progress}</p>
-              <p className="text-xs text-gray-500">قيد التنفيذ</p>
+              <p className="text-xs text-muted-foreground">قيد التنفيذ</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-green-600" />
               <p className="text-2xl font-bold">{stats.completed}</p>
-              <p className="text-xs text-gray-500">مكتملة</p>
+              <p className="text-xs text-muted-foreground">مكتملة</p>
             </CardContent>
           </Card>
           <Card className={stats.overdue > 0 ? 'border-red-300 bg-red-50' : ''}>
             <CardContent className="p-4 text-center">
               <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-red-600" />
               <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-              <p className="text-xs text-gray-500">متأخرة</p>
+              <p className="text-xs text-muted-foreground">متأخرة</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-6 h-6 mx-auto mb-2 text-indigo-600" />
               <p className="text-2xl font-bold">{stats.uniqueAssignees}</p>
-              <p className="text-xs text-gray-500">مكلفين</p>
+              <p className="text-xs text-muted-foreground">مكلفين</p>
             </CardContent>
           </Card>
         </div>
@@ -316,7 +316,7 @@ export default function Tasks() {
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="بحث في المهام..."
               value={searchQuery}
@@ -378,7 +378,7 @@ export default function Tasks() {
           {canManageTasks && (
             <Button
               onClick={() => { setEditingTask(null); setFormOpen(true); }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="w-5 h-5 ml-2" />
               إضافة مهمة
@@ -388,7 +388,7 @@ export default function Tasks() {
 
         {/* Tabs */}
         <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
-          <TabsList className="flex-wrap h-auto gap-1 bg-white p-1">
+          <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
             <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
             <TabsTrigger value="pending">قيد الانتظار ({stats.pending})</TabsTrigger>
             <TabsTrigger value="in_progress">قيد التنفيذ ({stats.in_progress})</TabsTrigger>
@@ -407,8 +407,8 @@ export default function Tasks() {
         ) : filteredTasks.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <ClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا توجد مهام</p>
+              <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">لا توجد مهام</p>
             </CardContent>
           </Card>
         ) : (
@@ -449,7 +449,7 @@ export default function Tasks() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               حذف
             </AlertDialogAction>
           </AlertDialogFooter>

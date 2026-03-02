@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -262,7 +262,7 @@ export default function Survey() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-green-600 to-blue-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">المسح الأساسي للعائلة</h1>
@@ -277,28 +277,28 @@ export default function Survey() {
             <CardContent className="p-4 text-center">
               <ClipboardList className="w-8 h-8 mx-auto mb-2 text-blue-600" />
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-gray-500">إجمالي الاستبيانات</p>
+              <p className="text-sm text-muted-foreground">إجمالي الاستبيانات</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
               <p className="text-2xl font-bold">{stats.totalPeople}</p>
-              <p className="text-sm text-gray-500">إجمالي الأفراد</p>
+              <p className="text-sm text-muted-foreground">إجمالي الأفراد</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
               <p className="text-2xl font-bold">{stats.submitted}</p>
-              <p className="text-sm text-gray-500">بانتظار التحقق</p>
+              <p className="text-sm text-muted-foreground">بانتظار التحقق</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
               <p className="text-2xl font-bold">{stats.verified}</p>
-              <p className="text-sm text-gray-500">تم التحقق</p>
+              <p className="text-sm text-muted-foreground">تم التحقق</p>
             </CardContent>
           </Card>
         </div>
@@ -306,7 +306,7 @@ export default function Survey() {
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="بحث بالاسم أو رقم العائلة أو الحي..."
               value={searchQuery}
@@ -324,7 +324,7 @@ export default function Survey() {
 
         {/* Tabs */}
         <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
-          <TabsList className="bg-white">
+          <TabsList className="bg-card">
             <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
             <TabsTrigger value="submitted">بانتظار التحقق ({stats.submitted})</TabsTrigger>
             <TabsTrigger value="verified">تم التحقق ({stats.verified})</TabsTrigger>
@@ -339,8 +339,8 @@ export default function Survey() {
         ) : filteredSurveys.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <ClipboardList className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا توجد استبيانات</p>
+              <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">لا توجد استبيانات</p>
             </CardContent>
           </Card>
         ) : (
@@ -352,7 +352,7 @@ export default function Survey() {
                     <div>
                       <Badge variant="outline" className="mb-2">{survey.survey_number || 'غير محدد'}</Badge>
                       <h3 className="font-semibold">{survey.family_head_name}</h3>
-                      <p className="text-sm text-gray-500">{survey.volunteer_name}</p>
+                      <p className="text-sm text-muted-foreground">{survey.volunteer_name}</p>
                     </div>
                     <Badge className={survey.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
                       {survey.status === 'verified' ? 'تم التحقق' : 'بانتظار'}
@@ -361,11 +361,11 @@ export default function Survey() {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
                       <span>{survey.district}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-400" />
+                      <Users className="w-4 h-4 text-muted-foreground" />
                       <span>{survey.demographics_total} أفراد</span>
                     </div>
                   </div>
@@ -471,32 +471,32 @@ export default function Survey() {
                     <Input type="number" value={formData.demographics_females} onChange={(e) => setFormData({ ...formData, demographics_females: parseInt(e.target.value) || 0 })} />
                   </div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">الأطفال أصغر من عام واحد</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">الأطفال أصغر من عام واحد</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.infants_total} onChange={(e) => setFormData({ ...formData, infants_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.infants_males} onChange={(e) => setFormData({ ...formData, infants_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.infants_females} onChange={(e) => setFormData({ ...formData, infants_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">الأطفال من سن 1-4 سنوات</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">الأطفال من سن 1-4 سنوات</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.children_1_4_total} onChange={(e) => setFormData({ ...formData, children_1_4_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.children_1_4_males} onChange={(e) => setFormData({ ...formData, children_1_4_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.children_1_4_females} onChange={(e) => setFormData({ ...formData, children_1_4_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">الأطفال من سن 5-14 سنة (سن الالتحاق بالمدرسة)</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">الأطفال من سن 5-14 سنة (سن الالتحاق بالمدرسة)</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.children_5_14_total} onChange={(e) => setFormData({ ...formData, children_5_14_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.children_5_14_males} onChange={(e) => setFormData({ ...formData, children_5_14_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.children_5_14_females} onChange={(e) => setFormData({ ...formData, children_5_14_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">البالغون 15-44 سنة</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">البالغون 15-44 سنة</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.adults_15_44_total} onChange={(e) => setFormData({ ...formData, adults_15_44_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.adults_15_44_males} onChange={(e) => setFormData({ ...formData, adults_15_44_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.adults_15_44_females} onChange={(e) => setFormData({ ...formData, adults_15_44_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">البالغون 45-65 سنة</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">البالغون 45-65 سنة</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.adults_45_65_total} onChange={(e) => setFormData({ ...formData, adults_45_65_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.adults_45_65_males} onChange={(e) => setFormData({ ...formData, adults_45_65_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.adults_45_65_females} onChange={(e) => setFormData({ ...formData, adults_45_65_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">البالغون 65+ سنة</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">البالغون 65+ سنة</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.seniors_65_plus_total} onChange={(e) => setFormData({ ...formData, seniors_65_plus_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.seniors_65_plus_males} onChange={(e) => setFormData({ ...formData, seniors_65_plus_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.seniors_65_plus_females} onChange={(e) => setFormData({ ...formData, seniors_65_plus_females: parseInt(e.target.value) || 0 })} /></div>
@@ -519,7 +519,7 @@ export default function Survey() {
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.children_enrolled_school_males} onChange={(e) => setFormData({ ...formData, children_enrolled_school_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.children_enrolled_school_females} onChange={(e) => setFormData({ ...formData, children_enrolled_school_females: parseInt(e.target.value) || 0 })} /></div>
 
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded mt-2">عدد الملمين بالقراءة والكتابة</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded mt-2">عدد الملمين بالقراءة والكتابة</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.literate_total} onChange={(e) => setFormData({ ...formData, literate_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.literate_males} onChange={(e) => setFormData({ ...formData, literate_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.literate_females} onChange={(e) => setFormData({ ...formData, literate_females: parseInt(e.target.value) || 0 })} /></div>
@@ -549,7 +549,7 @@ export default function Survey() {
                   value={formData.safe_water_access}
                   onChange={(v) => setFormData({ ...formData, safe_water_access: v })}
                 />
-                <p className="text-sm text-gray-500">الوصول معناه توافر المياه على مدى فترة زمنية لا تتعدى 15 دقيقة سيراً على الأقدام</p>
+                <p className="text-sm text-muted-foreground">الوصول معناه توافر المياه على مدى فترة زمنية لا تتعدى 15 دقيقة سيراً على الأقدام</p>
 
                 <Separator />
 
@@ -559,19 +559,19 @@ export default function Survey() {
                     question="هل تمتلك العائلة مراحيضاً صحية داخل المنزل؟"
                     value={formData.has_toilet}
                     onChange={(v) => setFormData({ ...formData, has_toilet: v })}
-                    bgColor="bg-gray-50"
+                    bgColor="bg-muted/50"
                   />
                   <YesNoQuestion
                     question="هل تمتلك العائلة حماماً داخل المنزل؟"
                     value={formData.has_bathroom}
                     onChange={(v) => setFormData({ ...formData, has_bathroom: v })}
-                    bgColor="bg-gray-50"
+                    bgColor="bg-muted/50"
                   />
                   <YesNoQuestion
                     question="هل هناك نظام لجمع القمامة أو وعاء للقمامة لدى العائلة؟"
                     value={formData.has_garbage_system}
                     onChange={(v) => setFormData({ ...formData, has_garbage_system: v })}
-                    bgColor="bg-gray-50"
+                    bgColor="bg-muted/50"
                   />
                 </div>
               </div>
@@ -664,7 +664,7 @@ export default function Survey() {
                     onChange={(v) => setFormData({ ...formData, births_last_12months: v })}
                   />
                   {formData.births_last_12months && (
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded">
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded">
                       <div className="space-y-2"><Label>صبيان</Label><Input type="number" value={formData.births_boys} onChange={(e) => setFormData({ ...formData, births_boys: parseInt(e.target.value) || 0 })} /></div>
                       <div className="space-y-2"><Label>بنات</Label><Input type="number" value={formData.births_girls} onChange={(e) => setFormData({ ...formData, births_girls: parseInt(e.target.value) || 0 })} /></div>
                       <div className="space-y-2">
@@ -682,7 +682,7 @@ export default function Survey() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-3 font-medium text-gray-600 bg-gray-50 p-2 rounded">المواليد أقل من 2500 غرام</div>
+                  <div className="col-span-3 font-medium text-muted-foreground bg-muted/50 p-2 rounded">المواليد أقل من 2500 غرام</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.low_birth_weight_total} onChange={(e) => setFormData({ ...formData, low_birth_weight_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>صبيان</Label><Input type="number" value={formData.low_birth_weight_boys} onChange={(e) => setFormData({ ...formData, low_birth_weight_boys: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>بنات</Label><Input type="number" value={formData.low_birth_weight_girls} onChange={(e) => setFormData({ ...formData, low_birth_weight_girls: parseInt(e.target.value) || 0 })} /></div>
@@ -710,7 +710,7 @@ export default function Survey() {
                     bgColor="bg-red-50"
                   />
                   {formData.infant_deaths_last_year && (
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded">
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded">
                       <div className="space-y-2"><Label>صبيان</Label><Input type="number" value={formData.infant_deaths_boys} onChange={(e) => setFormData({ ...formData, infant_deaths_boys: parseInt(e.target.value) || 0 })} /></div>
                       <div className="space-y-2"><Label>بنات</Label><Input type="number" value={formData.infant_deaths_girls} onChange={(e) => setFormData({ ...formData, infant_deaths_girls: parseInt(e.target.value) || 0 })} /></div>
                       <div className="col-span-3 space-y-2"><Label>سبب الوفاة</Label><Input value={formData.infant_death_cause} onChange={(e) => setFormData({ ...formData, infant_death_cause: e.target.value })} /></div>
@@ -726,7 +726,7 @@ export default function Survey() {
                     bgColor="bg-red-50"
                   />
                   {formData.child_deaths_1_5_years && (
-                    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded">
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded">
                       <div className="space-y-2"><Label>صبيان</Label><Input type="number" value={formData.child_deaths_1_5_boys} onChange={(e) => setFormData({ ...formData, child_deaths_1_5_boys: parseInt(e.target.value) || 0 })} /></div>
                       <div className="space-y-2"><Label>بنات</Label><Input type="number" value={formData.child_deaths_1_5_girls} onChange={(e) => setFormData({ ...formData, child_deaths_1_5_girls: parseInt(e.target.value) || 0 })} /></div>
                       <div className="col-span-3 space-y-2"><Label>سبب الوفاة</Label><Input value={formData.child_death_1_5_cause} onChange={(e) => setFormData({ ...formData, child_death_1_5_cause: e.target.value })} /></div>
@@ -742,7 +742,7 @@ export default function Survey() {
                     bgColor="bg-red-50"
                   />
                   {formData.maternal_death_last_year && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded">
                       <div className="space-y-2"><Label>العدد</Label><Input type="number" value={formData.maternal_death_count} onChange={(e) => setFormData({ ...formData, maternal_death_count: parseInt(e.target.value) || 0 })} /></div>
                       <div className="col-span-2 space-y-2"><Label>سبب الوفاة</Label><Input value={formData.maternal_death_cause} onChange={(e) => setFormData({ ...formData, maternal_death_cause: e.target.value })} /></div>
                     </div>
@@ -764,14 +764,14 @@ export default function Survey() {
                     bgColor="bg-purple-50"
                   />
                   {formData.has_pregnant_woman && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded">
                       <div className="space-y-2"><Label>العدد</Label><Input type="number" value={formData.pregnant_count} onChange={(e) => setFormData({ ...formData, pregnant_count: parseInt(e.target.value) || 0 })} /></div>
                       <div className="col-span-2">
                         <YesNoQuestion
                           question="هل تلقت الحامل تمنيعاً ضد التيتانوس؟"
                           value={formData.pregnant_tetanus_vaccination}
                           onChange={(v) => setFormData({ ...formData, pregnant_tetanus_vaccination: v })}
-                          bgColor="bg-white"
+                          bgColor="bg-card"
                         />
                       </div>
                       <div className="col-span-2">
@@ -779,7 +779,7 @@ export default function Survey() {
                           question="هل زار أي شخص مدرب الحامل؟"
                           value={formData.pregnant_visited_by_trained}
                           onChange={(v) => setFormData({ ...formData, pregnant_visited_by_trained: v })}
-                          bgColor="bg-white"
+                          bgColor="bg-card"
                         />
                       </div>
                     </div>
@@ -974,7 +974,7 @@ export default function Survey() {
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
                 {currentStep < 9 ? (
-                  <Button type="button" onClick={() => setCurrentStep(currentStep + 1)} className="bg-blue-600">
+                  <Button type="button" onClick={() => setCurrentStep(currentStep + 1)} className="bg-primary">
                     التالي
                   </Button>
                 ) : (
@@ -1000,20 +1000,20 @@ export default function Survey() {
               <Card>
                 <CardHeader><CardTitle className="text-base">معلومات أساسية</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-gray-500">رقم العائلة:</span> <strong>{selectedSurvey.survey_number}</strong></div>
-                  <div><span className="text-gray-500">رب العائلة:</span> <strong>{selectedSurvey.family_head_name}</strong></div>
-                  <div><span className="text-gray-500">الحي:</span> <strong>{selectedSurvey.district}</strong></div>
-                  <div><span className="text-gray-500">المتطوع:</span> <strong>{selectedSurvey.volunteer_name}</strong></div>
+                  <div><span className="text-muted-foreground">رقم العائلة:</span> <strong>{selectedSurvey.survey_number}</strong></div>
+                  <div><span className="text-muted-foreground">رب العائلة:</span> <strong>{selectedSurvey.family_head_name}</strong></div>
+                  <div><span className="text-muted-foreground">الحي:</span> <strong>{selectedSurvey.district}</strong></div>
+                  <div><span className="text-muted-foreground">المتطوع:</span> <strong>{selectedSurvey.volunteer_name}</strong></div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader><CardTitle className="text-base">المعطيات الديموغرافية</CardTitle></CardHeader>
                 <CardContent className="grid grid-cols-3 gap-3 text-sm">
-                  <div><span className="text-gray-500">إجمالي الأفراد:</span> <strong>{selectedSurvey.demographics_total}</strong></div>
-                  <div><span className="text-gray-500">رجال:</span> <strong>{selectedSurvey.demographics_males}</strong></div>
-                  <div><span className="text-gray-500">نساء:</span> <strong>{selectedSurvey.demographics_females}</strong></div>
-                  <div className="col-span-3 text-gray-600 mt-2">الأطفال &lt;1: {selectedSurvey.infants_total} | 1-4: {selectedSurvey.children_1_4_total} | 5-14: {selectedSurvey.children_5_14_total}</div>
+                  <div><span className="text-muted-foreground">إجمالي الأفراد:</span> <strong>{selectedSurvey.demographics_total}</strong></div>
+                  <div><span className="text-muted-foreground">رجال:</span> <strong>{selectedSurvey.demographics_males}</strong></div>
+                  <div><span className="text-muted-foreground">نساء:</span> <strong>{selectedSurvey.demographics_females}</strong></div>
+                  <div className="col-span-3 text-muted-foreground mt-2">الأطفال &lt;1: {selectedSurvey.infants_total} | 1-4: {selectedSurvey.children_1_4_total} | 5-14: {selectedSurvey.children_5_14_total}</div>
                 </CardContent>
               </Card>
 
@@ -1031,7 +1031,7 @@ export default function Survey() {
                 </CardContent>
               </Card>
 
-              <div className="text-sm text-gray-500 pt-3 border-t">
+              <div className="text-sm text-muted-foreground pt-3 border-t">
                 الباحث: {selectedSurvey.surveyor_name} | التاريخ: {selectedSurvey.survey_date}
               </div>
             </div>

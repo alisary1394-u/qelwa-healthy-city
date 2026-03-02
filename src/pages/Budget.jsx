@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -484,7 +484,7 @@ export default function Budget() {
 
   if (!canViewFinancials) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الميزانية. صلاحيات العرض والمالية مرتبطة بمنصبك في الفريق.</p>
@@ -495,7 +495,7 @@ export default function Budget() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-green-600 to-blue-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة الميزانية والحسابات</h1>
@@ -573,36 +573,36 @@ export default function Budget() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">إجمالي الميزانية</p>
+                  <p className="text-sm text-muted-foreground">إجمالي الميزانية</p>
                   <p className="text-2xl font-bold text-blue-600">{activeBudget.total_budget?.toLocaleString()} ريال</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">التخصيصات المالية</p>
+                  <p className="text-sm text-muted-foreground">التخصيصات المالية</p>
                   <p className="text-2xl font-bold text-purple-600">{totalAllocatedBudgets.toLocaleString()} ريال</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">ميزانيات المبادرات</p>
+                  <p className="text-sm text-muted-foreground">ميزانيات المبادرات</p>
                   <p className="text-2xl font-bold text-indigo-600">{totalInitiativesBudgets.toLocaleString()} ريال</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">المبلغ المنفق فعلياً</p>
+                  <p className="text-sm text-muted-foreground">المبلغ المنفق فعلياً</p>
                   <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ريال</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">المتبقي</p>
+                  <p className="text-sm text-muted-foreground">المتبقي</p>
                   <p className="text-2xl font-bold text-green-600">{(activeBudget.total_budget - totalCommitted - totalExpenses).toLocaleString()} ريال</p>
                 </div>
               </div>
               
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">إجمالي الملتزم به (تخصيصات + مبادرات):</span>
+                  <span className="text-muted-foreground">إجمالي الملتزم به (تخصيصات + مبادرات):</span>
                   <span className="font-bold text-orange-600">{totalCommitted.toLocaleString()} ريال</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-muted rounded-full h-3">
                   <div className="relative h-3 rounded-full overflow-hidden">
                     <div
-                      className="absolute h-3 bg-red-600"
+                      className="absolute h-3 bg-destructive"
                       style={{ width: `${activeBudget.total_budget > 0 ? Math.min((totalExpenses / activeBudget.total_budget) * 100, 100) : 0}%` }}
                       title={`منفق: ${totalExpenses.toLocaleString()} ريال`}
                     />
@@ -613,9 +613,9 @@ export default function Budget() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-4 text-xs text-gray-600">
+                <div className="flex gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-red-600 rounded"></div>
+                    <div className="w-3 h-3 bg-destructive rounded"></div>
                     <span>منفق فعلياً ({activeBudget.total_budget > 0 ? ((totalExpenses / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -634,7 +634,7 @@ export default function Budget() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-white" dir="rtl">
+          <TabsList className="bg-card" dir="rtl">
             <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
             <TabsTrigger value="transactions">المعاملات المالية</TabsTrigger>
             <TabsTrigger value="budgets">الميزانيات</TabsTrigger>
@@ -653,23 +653,23 @@ export default function Budget() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">إجمالي الميزانيات النشطة</p>
+                      <p className="text-sm text-muted-foreground mb-1">إجمالي الميزانيات النشطة</p>
                       <p className="text-2xl font-bold text-blue-600">{budgets.filter(b => b.status === 'active').length}</p>
                     </div>
                     <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">التخصيصات المالية</p>
+                      <p className="text-sm text-muted-foreground mb-1">التخصيصات المالية</p>
                       <p className="text-2xl font-bold text-purple-600">{allocations.length}</p>
-                      <p className="text-xs text-gray-500 mt-1">{totalAllocatedBudgets.toLocaleString()} ريال</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalAllocatedBudgets.toLocaleString()} ريال</p>
                     </div>
                     <div className="p-4 bg-indigo-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">المبادرات المرتبطة</p>
+                      <p className="text-sm text-muted-foreground mb-1">المبادرات المرتبطة</p>
                       <p className="text-2xl font-bold text-indigo-600">{initiatives.filter(i => i.budget_id === activeBudget?.id).length}</p>
-                      <p className="text-xs text-gray-500 mt-1">{totalInitiativesBudgets.toLocaleString()} ريال</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalInitiativesBudgets.toLocaleString()} ريال</p>
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">إجمالي المعاملات</p>
+                      <p className="text-sm text-muted-foreground mb-1">إجمالي المعاملات</p>
                       <p className="text-2xl font-bold text-green-600">{transactions.length}</p>
-                      <p className="text-xs text-gray-500 mt-1">{totalExpenses.toLocaleString()} ريال منفق</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalExpenses.toLocaleString()} ريال منفق</p>
                     </div>
                   </div>
                   
@@ -690,13 +690,13 @@ export default function Budget() {
                           .sort((a, b) => b[1] - a[1])
                           .slice(0, 5)
                           .map(([category, amount]) => (
-                            <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <div key={category} className="flex items-center justify-between p-3 bg-muted/50 rounded">
                               <span className="font-medium">{category}</span>
                               <span className="text-red-600 font-bold">{amount.toLocaleString()} ريال</span>
                             </div>
                           ))}
                         {Object.keys(transactions.filter(t => t.type === 'expense' && t.status === 'paid')).length === 0 && (
-                          <p className="text-gray-400 text-sm text-center py-4">لا توجد مصروفات بعد</p>
+                          <p className="text-muted-foreground text-sm text-center py-4">لا توجد مصروفات بعد</p>
                         )}
                       </div>
                     </div>
@@ -715,7 +715,7 @@ export default function Budget() {
                             </div>
                           ))}
                         {initiatives.filter(i => i.budget_id === activeBudget?.id && i.budget > 0).length === 0 && (
-                          <p className="text-gray-400 text-sm text-center py-4">لا توجد مبادرات مرتبطة بعد</p>
+                          <p className="text-muted-foreground text-sm text-center py-4">لا توجد مبادرات مرتبطة بعد</p>
                         )}
                       </div>
                     </div>
@@ -731,7 +731,7 @@ export default function Budget() {
           <div>
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="بحث بالوصف، المستفيد، أو رقم المعاملة..."
                   value={searchQuery}
@@ -772,9 +772,9 @@ export default function Budget() {
               {filteredTransactions.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center">
-                    <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500 text-lg">لا توجد معاملات مالية</p>
-                    <p className="text-gray-400 text-sm mt-2">ابدأ بإضافة معاملة جديدة</p>
+                    <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-lg">لا توجد معاملات مالية</p>
+                    <p className="text-muted-foreground text-sm mt-2">ابدأ بإضافة معاملة جديدة</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -791,9 +791,9 @@ export default function Budget() {
                           <Badge variant="outline">{transaction.category}</Badge>
                           <Badge className={
                             transaction.status === 'paid' ? 'bg-green-600' :
-                            transaction.status === 'approved' ? 'bg-blue-600' :
+                            transaction.status === 'approved' ? 'bg-primary' :
                             transaction.status === 'pending' ? 'bg-yellow-600' :
-                            'bg-red-600'
+                            'bg-destructive'
                           }>
                             {transaction.status === 'paid' ? 'مدفوعة' :
                              transaction.status === 'approved' ? 'معتمدة' :
@@ -813,7 +813,7 @@ export default function Budget() {
                             </Badge>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
                           <div>المبلغ: <strong className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
                             {transaction.amount?.toLocaleString()} ريال
                           </strong></div>
@@ -861,7 +861,7 @@ export default function Budget() {
                     
                     {canApproveTransactions && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
                         <div className="flex gap-2">
                           {transaction.status !== 'pending' && (
                             <Button
@@ -939,7 +939,7 @@ export default function Budget() {
           <div>
             {showBudgetManagement && (
               <div className="flex justify-end mb-6">
-                <Button onClick={() => openBudgetForm()} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => openBudgetForm()} className="bg-primary hover:bg-primary/90">
                   <Plus className="w-5 h-5 ml-2" />
                   ميزانية جديدة
                 </Button>
@@ -950,10 +950,10 @@ export default function Budget() {
               {budgets.length === 0 ? (
                 <Card className="col-span-full">
                   <CardContent className="p-12 text-center">
-                    <DollarSign className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500 text-lg">لا توجد ميزانيات</p>
+                    <DollarSign className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-lg">لا توجد ميزانيات</p>
                     {showBudgetManagement && (
-                      <p className="text-gray-400 text-sm mt-2">ابدأ بإنشاء ميزانية جديدة</p>
+                      <p className="text-muted-foreground text-sm mt-2">ابدأ بإنشاء ميزانية جديدة</p>
                     )}
                   </CardContent>
                 </Card>
@@ -964,7 +964,7 @@ export default function Budget() {
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="font-bold text-lg">{budget.name}</h3>
-                        <p className="text-sm text-gray-500">{budget.fiscal_year}</p>
+                        <p className="text-sm text-muted-foreground">{budget.fiscal_year}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {showBudgetManagement && (
@@ -972,25 +972,25 @@ export default function Budget() {
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
-                        <Badge className={budget.status === 'active' ? 'bg-green-600' : budget.status === 'draft' ? 'bg-gray-600' : 'bg-red-600'}>
+                        <Badge className={budget.status === 'active' ? 'bg-green-600' : budget.status === 'draft' ? 'bg-gray-600' : 'bg-destructive'}>
                           {budget.status === 'active' ? 'نشطة' : budget.status === 'draft' ? 'مسودة' : 'مغلقة'}
                         </Badge>
                       </div>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">إجمالي الميزانية:</span>
+                        <span className="text-muted-foreground">إجمالي الميزانية:</span>
                         <strong className="text-blue-600">{budget.total_budget?.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">الفترة:</span>
+                        <span className="text-muted-foreground">الفترة:</span>
                         <strong>{budget.start_date} - {budget.end_date}</strong>
                       </div>
                     </div>
                     
                     {showBudgetManagement && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
                         <div className="flex gap-2">
                           {budget.status !== 'draft' && (
                             <Button
@@ -1064,10 +1064,10 @@ export default function Budget() {
               {allocations.length === 0 ? (
                 <Card className="col-span-full">
                   <CardContent className="p-12 text-center">
-                    <DollarSign className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500 text-lg">لا توجد تخصيصات</p>
+                    <DollarSign className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-lg">لا توجد تخصيصات</p>
                     {showBudgetManagement && (
-                      <p className="text-gray-400 text-sm mt-2">ابدأ بإنشاء تخصيص جديد</p>
+                      <p className="text-muted-foreground text-sm mt-2">ابدأ بإنشاء تخصيص جديد</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1089,7 +1089,7 @@ export default function Budget() {
                       <div className="flex-1">
                         <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name || 'تخصيص عام'}</h3>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {allocation.category && <p className="text-sm text-gray-500">{allocation.category}</p>}
+                          {allocation.category && <p className="text-sm text-muted-foreground">{allocation.category}</p>}
                           {allocation.standard_code && (
                             <Badge variant="outline" className="text-xs">
                               معيار: {allocation.standard_code}
@@ -1137,43 +1137,43 @@ export default function Budget() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">المبلغ المخصص:</span>
+                        <span className="text-muted-foreground">المبلغ المخصص:</span>
                         <strong>{allocation.allocated_amount?.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">المنفق:</span>
+                        <span className="text-muted-foreground">المنفق:</span>
                         <strong className="text-red-600">{effectiveSpent.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">المتبقي:</span>
+                        <span className="text-muted-foreground">المتبقي:</span>
                         <strong className="text-green-600">{remaining.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">ميزانيات المبادرات المرتبطة:</span>
+                        <span className="text-muted-foreground">ميزانيات المبادرات المرتبطة:</span>
                         <strong className="text-blue-600">{initiativesBudgetTotal.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">عدد المبادرات المرتبطة:</span>
+                        <span className="text-muted-foreground">عدد المبادرات المرتبطة:</span>
                         <strong>{linkedInitiatives.length}</strong>
                       </div>
                       {linkedInitiatives.length > 0 && (
-                        <p className="text-xs text-gray-500 bg-gray-50 rounded p-2">
+                        <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
                           {linkedInitiatives.slice(0, 3).map((initiative) => initiative.title).join('، ')}
                           {linkedInitiatives.length > 3 ? ` +${linkedInitiatives.length - 3}` : ''}
                         </p>
                       )}
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div className="w-full bg-muted rounded-full h-2 mt-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-primary h-2 rounded-full"
                           style={{ width: `${spentPercentage}%` }}
                         />
                       </div>
-                      <p className="text-xs text-gray-500 text-center">{spentPercentage.toFixed(1)}% منفق</p>
+                      <p className="text-xs text-muted-foreground text-center">{spentPercentage.toFixed(1)}% منفق</p>
                     </div>
                     
                     {showBudgetManagement && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-gray-500 mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
                         <div className="flex gap-2">
                           {allocation.status !== 'active' && (
                             <Button
@@ -1192,7 +1192,7 @@ export default function Budget() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="flex-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700"
+                              className="flex-1 text-xs bg-muted/50 hover:bg-muted text-foreground"
                               onClick={async () => {
                                 await api.entities.BudgetAllocation.update(allocation.id, { status: 'inactive' });
                                 queryClient.invalidateQueries({ queryKey: ['allocations'] });
@@ -1436,7 +1436,7 @@ export default function Budget() {
                       <SelectItem value="closed">مغلقة</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     💡 المسودة: قيد الإعداد | النشطة: قيد التنفيذ | المغلقة: منتهية
                   </p>
                 </div>
@@ -1444,7 +1444,7 @@ export default function Budget() {
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={closeBudgetForm}>إلغاء</Button>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 {editingBudget ? 'حفظ التعديلات' : 'حفظ الميزانية'}
               </Button>
@@ -1571,7 +1571,7 @@ export default function Budget() {
                       ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   تم الترتيب: المحور ← المعيار ← اللجنة ← المبادرة، والقائمة تتفلتر تلقائياً حسب اختيارك.
                 </p>
               </div>

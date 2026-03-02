@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
@@ -160,7 +160,7 @@ export default function Committees() {
 
   if (!permissions.canSeeCommittees) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة اللجان. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -298,7 +298,7 @@ export default function Committees() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة اللجان</h1>
@@ -308,18 +308,18 @@ export default function Committees() {
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{summaryStats.committees}</p><p className="text-sm text-gray-600">إجمالي اللجان</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">{summaryStats.activeCommittees}</p><p className="text-sm text-gray-600">لجان نشطة</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-indigo-600">{summaryStats.totalMembers}</p><p className="text-sm text-gray-600">إجمالي الأعضاء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-gray-600">المنسقون والرؤساء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.supervisors}</p><p className="text-sm text-gray-600">المشرفون</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-gray-600">المتطوعون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{summaryStats.committees}</p><p className="text-sm text-muted-foreground">إجمالي اللجان</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">{summaryStats.activeCommittees}</p><p className="text-sm text-muted-foreground">لجان نشطة</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-indigo-600">{summaryStats.totalMembers}</p><p className="text-sm text-muted-foreground">إجمالي الأعضاء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-600">{summaryStats.coordinators}</p><p className="text-sm text-muted-foreground">المنسقون والرؤساء</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{summaryStats.supervisors}</p><p className="text-sm text-muted-foreground">المشرفون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-teal-600">{summaryStats.volunteers}</p><p className="text-sm text-muted-foreground">المتطوعون</p></CardContent></Card>
         </div>
 
         {/* Search + Filters */}
         <div className="mb-4 space-y-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -328,7 +328,7 @@ export default function Committees() {
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <Select value={filterAxis} onValueChange={setFilterAxis}>
               <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
                 <SelectValue placeholder="جميع المحاور" />
@@ -352,13 +352,13 @@ export default function Committees() {
               </SelectContent>
             </Select>
             {(filterAxis !== 'all' || filterStatus !== 'all') && (
-              <Button variant="ghost" size="sm" className="h-9 text-sm text-gray-500" onClick={() => { setFilterAxis('all'); setFilterStatus('all'); }}>
+              <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={() => { setFilterAxis('all'); setFilterStatus('all'); }}>
                 إزالة الفلاتر
               </Button>
             )}
             <div className="flex-1" />
             {canManage && (
-              <Button onClick={() => handleOpenForm()} className="bg-blue-600 hover:bg-blue-700 h-9">
+              <Button onClick={() => handleOpenForm()} className="bg-primary hover:bg-primary/90 h-9">
                 <Plus className="w-4 h-4 ml-1" />
                 إضافة لجنة
               </Button>
@@ -373,8 +373,8 @@ export default function Committees() {
         ) : filteredCommittees.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <Building className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا توجد نتائج مطابقة للبحث</p>
+              <Building className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">لا توجد نتائج مطابقة للبحث</p>
               {canManage && (
                 <Button variant="outline" className="mt-4" onClick={() => handleOpenForm()}>
                   إضافة لجنة جديدة
@@ -457,7 +457,7 @@ export default function Committees() {
 
                   <CardContent className="p-4">
                     {committee.description && (
-                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{committee.description}</p>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{committee.description}</p>
                     )}
 
                     {/* Badges: standards count + axis */}
@@ -513,16 +513,16 @@ export default function Committees() {
                             </div>
                           ))}
                           {committeeMembers.length > 5 && (
-                            <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-semibold text-gray-600">
+                            <div className="w-7 h-7 rounded-full bg-muted border-2 border-white flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
                               +{committeeMembers.length - 5}
                             </div>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500">{stats.total} عضو</span>
+                        <span className="text-xs text-muted-foreground">{stats.total} عضو</span>
                       </div>
                     )}
                     {committeeMembers.length === 0 && (
-                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
                         <Users className="w-3.5 h-3.5" />
                         لا يوجد أعضاء بعد
                       </div>
@@ -625,20 +625,20 @@ export default function Committees() {
                     ))}
                   </div>
                 ) : (
-                  <div className="border rounded-lg p-3 text-xs text-gray-600 bg-gray-50">
+                  <div className="border rounded-lg p-3 text-xs text-muted-foreground bg-muted/50">
                     لا توجد معايير متاحة لهذا المحور حالياً.
                   </div>
                 );
               })()}
               {!formData.axis_id && (
-                <div className="border rounded-lg p-3 text-xs text-gray-600 bg-gray-50">
+                <div className="border rounded-lg p-3 text-xs text-muted-foreground bg-muted/50">
                   اختر محوراً أولاً لعرض المعايير المرتبطة.
                 </div>
               )}
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
                 {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 {editingCommittee ? 'حفظ' : 'إضافة'}
               </Button>
@@ -658,7 +658,7 @@ export default function Committees() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">حذف</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -675,7 +675,7 @@ export default function Committees() {
           <div className="space-y-3 mt-2">
             {/* Search */}
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
               <Input
                 value={assignSearch}
                 onChange={(e) => setAssignSearch(e.target.value)}
@@ -691,7 +691,7 @@ export default function Committees() {
                   <UserCheck className="w-4 h-4 inline ml-1" />
                   تم تحديد {assignSelected.length} عضو
                 </span>
-                <Button variant="ghost" size="sm" className="text-xs text-gray-500 h-7" onClick={() => setAssignSelected([])}>
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7" onClick={() => setAssignSelected([])}>
                   إلغاء التحديد
                 </Button>
               </div>
@@ -700,7 +700,7 @@ export default function Committees() {
             {/* Members list */}
             <div className="border rounded-lg max-h-[320px] overflow-y-auto divide-y">
               {filteredAvailableMembers.length === 0 ? (
-                <div className="p-6 text-center text-sm text-gray-400">
+                <div className="p-6 text-center text-sm text-muted-foreground">
                   {assignSearch ? 'لا توجد نتائج مطابقة' : 'جميع الأعضاء مسجلون في هذه اللجنة'}
                 </div>
               ) : (
@@ -717,20 +717,20 @@ export default function Committees() {
                     <div
                       key={m.id}
                       onClick={() => toggleSelectMember(m.id)}
-                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-muted/50 ${
                         isSelected ? 'bg-green-50/70' : ''
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 shrink-0 ${
                         isSelected
                           ? 'bg-green-600 text-white border-green-600'
-                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                          : 'bg-muted text-muted-foreground border-border'
                       }`}>
                         {isSelected ? <UserCheck className="w-4 h-4" /> : (m.full_name || '').charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{m.full_name}</p>
-                        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <p className="text-sm font-semibold text-foreground truncate">{m.full_name}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{roleLabels[m.role] || m.role}</span>
                           {currentCommittee && (
                             <>
@@ -738,10 +738,10 @@ export default function Committees() {
                               <span className="text-orange-600">{currentCommittee.name}</span>
                             </>
                           )}
-                          {!currentCommittee && <span className="text-gray-400">بدون لجنة</span>}
+                          {!currentCommittee && <span className="text-muted-foreground">بدون لجنة</span>}
                         </div>
                       </div>
-                      {m.phone && <span className="text-[11px] text-gray-400 shrink-0 dir-ltr">{m.phone}</span>}
+                      {m.phone && <span className="text-[11px] text-muted-foreground shrink-0 dir-ltr">{m.phone}</span>}
                     </div>
                   );
                 })

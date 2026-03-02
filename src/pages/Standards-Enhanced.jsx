@@ -1,4 +1,4 @@
-/**
+﻿/**
  * تحديث صفحة المعايير لاستخدام المؤشرات المحسنة
  * إضافة المؤشرات المتقدمة والعرض المحسّن
  */
@@ -91,7 +91,7 @@ function formatDateSafe(value) {
 }
 
 const statusConfig = {
-  not_started: { label: 'لم يبدأ', color: 'bg-gray-100 text-gray-700' },
+  not_started: { label: 'لم يبدأ', color: 'bg-muted text-foreground' },
   in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700' },
   completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700' },
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
@@ -173,7 +173,7 @@ function KpiIndicator({ kpi, value, showProgress = true }) {
   };
 
   return (
-    <div className="border rounded-lg p-3 bg-gray-50">
+    <div className="border rounded-lg p-3 bg-muted/50">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getStatusIcon()}
@@ -186,21 +186,21 @@ function KpiIndicator({ kpi, value, showProgress = true }) {
       
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">القيمة:</span>
+          <span className="text-muted-foreground">القيمة:</span>
           <span className={`font-medium ${getStatusColor()}`}>
             {value || 'غير متوفر'}
           </span>
         </div>
         
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">الهدف:</span>
+          <span className="text-muted-foreground">الهدف:</span>
           <span className="font-medium">{kpi.target}</span>
         </div>
         
         {showProgress && (
           <div>
             <Progress value={score} className="h-2" />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>الإنجاز: {Math.round(score)}%</span>
               <span>الوزن: {Math.round(kpi.weight * 100)}%</span>
             </div>
@@ -208,7 +208,7 @@ function KpiIndicator({ kpi, value, showProgress = true }) {
         )}
         
         {kpi.description && (
-          <p className="text-xs text-gray-500 mt-2">{kpi.description}</p>
+          <p className="text-xs text-muted-foreground mt-2">{kpi.description}</p>
         )}
       </div>
     </div>
@@ -239,7 +239,7 @@ function StandardKpisCard({ standard, kpis, values = {} }) {
         </div>
         
         {enhancedKpis.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p>لا توجد مؤشرات أداء محددة لهذا المعيار</p>
           </div>
@@ -285,7 +285,7 @@ function AxisPerformanceCard({ axis, standards }) {
         <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="font-semibold text-lg">{axis.name}</h3>
-            <p className="text-sm text-gray-500 mt-1">{axis.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{axis.description}</p>
           </div>
           <Badge variant="outline" className="text-sm">
             {standards.length} معيار
@@ -295,7 +295,7 @@ function AxisPerformanceCard({ axis, standards }) {
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">مستوى الإنجاز</span>
+              <span className="text-muted-foreground">مستوى الإنجاز</span>
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -303,7 +303,7 @@ function AxisPerformanceCard({ axis, standards }) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">نقاط الأداء</span>
+              <span className="text-muted-foreground">نقاط الأداء</span>
               <span className={`font-medium ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {Math.round(score)}/100
               </span>
@@ -311,7 +311,7 @@ function AxisPerformanceCard({ axis, standards }) {
             <Progress value={score} className="h-2" />
           </div>
           
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
               <span>{completedStandards} مكتمل</span>
@@ -365,7 +365,7 @@ function VerificationStatusCard({ standard, documents = [] }) {
             </div>
             
             {documentStatus.missing.length > 0 && (
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 <p className="font-medium mb-1">المستندات المفقودة:</p>
                 <ul className="list-disc list-inside space-y-1">
                   {documentStatus.missing.slice(0, 3).map((doc, index) => (
@@ -959,11 +959,11 @@ const handleUploadEvidence = async (e) => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">المعايير والمؤشرات</h1>
-          <p className="text-gray-600 mt-1">{pageTitle}</p>
+          <p className="text-muted-foreground mt-1">{pageTitle}</p>
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="البحث في المعايير (العنوان، الرمز، الوصف)..."
               value={searchQuery}
@@ -1038,8 +1038,8 @@ const handleUploadEvidence = async (e) => {
       ) : filteredStandards.length === 0 ? (
         <Card className="text-center py-12">
           <CardContent>
-            <Target className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">لا توجد معايير</p>
+            <Target className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground">لا توجد معايير</p>
             {canManage && (
               <Button variant="outline" className="mt-4" onClick={() => setStandardFormOpen(true)}>
                 إضافة معيار جديد
@@ -1077,7 +1077,7 @@ const handleUploadEvidence = async (e) => {
                       
                       <h3 className="font-semibold text-xl mb-2">{standard.title}</h3>
                       {standard.description && (
-                        <p className="text-gray-600 mb-4">{standard.description}</p>
+                        <p className="text-muted-foreground mb-4">{standard.description}</p>
                       )}
                       
                       {/* Enhanced KPIs Section */}
@@ -1108,7 +1108,7 @@ const handleUploadEvidence = async (e) => {
 								</div>
 
 								{standardKpis.length === 0 ? (
-									<div className="text-sm text-gray-500">لا توجد مؤشرات لهذا المعيار</div>
+									<div className="text-sm text-muted-foreground">لا توجد مؤشرات لهذا المعيار</div>
 								) : (
 									<div className="space-y-3">
 										{standardKpis.map((kpi, idx) => {
@@ -1121,8 +1121,8 @@ const handleUploadEvidence = async (e) => {
 														<div className="flex items-start justify-between gap-2">
 															<div className="flex-1 min-w-0">
 																<div className="font-semibold truncate">{kpi.name}</div>
-																{kpi.description && <div className="text-sm text-gray-500">{kpi.description}</div>}
-																<div className="text-xs text-gray-500 mt-1">الهدف: {kpi.target} {kpi.unit}</div>
+																{kpi.description && <div className="text-sm text-muted-foreground">{kpi.description}</div>}
+																<div className="text-xs text-muted-foreground mt-1">الهدف: {kpi.target} {kpi.unit}</div>
 															</div>
 															<div className="flex items-center gap-2">
 																<Badge variant="outline" className="text-xs">{Math.round(score)}%</Badge>
@@ -1151,7 +1151,7 @@ const handleUploadEvidence = async (e) => {
 
 														<div className="pt-3 mt-3 border-t">
 															<div className="flex items-center justify-between">
-																<div className="text-sm text-gray-700 flex items-center gap-2">
+																<div className="text-sm text-foreground flex items-center gap-2">
 																	<Upload className="w-4 h-4" />
 																	<span>مرفقات المؤشر</span>
 																	<Badge variant="outline" className="text-xs">{attachments.length}</Badge>
@@ -1164,7 +1164,7 @@ const handleUploadEvidence = async (e) => {
 															{attachments.length > 0 && (
 																<div className="mt-2 space-y-2">
 																	{attachments.map((att) => (
-																		<div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-gray-50">
+																		<div key={att.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
 																			{att.file_type === 'image' ? (
 																				<Image className="w-4 h-4 text-blue-600" />
 																			) : (
@@ -1241,7 +1241,7 @@ const handleUploadEvidence = async (e) => {
                         {showVerification[standard.id] ? (
                           <div className="space-y-2 mb-4">
                             {requiredDocuments.slice(0, 5).map((doc, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                              <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <FileText className="w-4 h-4" />
                                 <span>{doc.name}</span>
                                 <Badge variant="outline" className="text-xs">
@@ -1250,7 +1250,7 @@ const handleUploadEvidence = async (e) => {
                               </div>
                             ))}
                             {requiredDocuments.length > 5 && (
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-muted-foreground">
                                 و {requiredDocuments.length - 5} مستندات أخرى...
                               </p>
                             )}
@@ -1271,7 +1271,7 @@ const handleUploadEvidence = async (e) => {
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-6 text-sm text-gray-500 border-t pt-4">
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground border-t pt-4">
                         <span>المحور: {standard.axis_name}</span>
                         <span>الأدلة: {approvedEvidence}/{standardEvidence.length}</span>
                         <span>المؤشرات: {standardKpis.length}</span>
@@ -1339,9 +1339,9 @@ const handleUploadEvidence = async (e) => {
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex items-center gap-2 min-w-0">
                                   {evidence.file_type === 'image' ? (
-                                    <Image className="w-4 h-4 text-gray-500 shrink-0" />
+                                    <Image className="w-4 h-4 text-muted-foreground shrink-0" />
                                   ) : (
-                                    <FileText className="w-4 h-4 text-gray-500 shrink-0" />
+                                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                                   )}
                                   <h5 className="font-medium text-sm truncate">{evidence.title}</h5>
                                 </div>
@@ -1351,10 +1351,10 @@ const handleUploadEvidence = async (e) => {
                               </div>
                               
                               {evidence.description && (
-                                <p className="text-sm text-gray-600 mb-1">{evidence.description}</p>
+                                <p className="text-sm text-muted-foreground mb-1">{evidence.description}</p>
                               )}
                               
-                              <div className="flex justify-between items-center gap-2 mt-2 text-xs text-gray-500">
+                              <div className="flex justify-between items-center gap-2 mt-2 text-xs text-muted-foreground">
                                 <span className="truncate">بواسطة: {evidence.uploaded_by_name}</span>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span>{formatDateSafe(evidence.created_at)}</span>
@@ -1591,14 +1591,14 @@ const handleUploadEvidence = async (e) => {
 				</DialogHeader>
 				<div className="space-y-4 mt-4">
 					{parseJsonArray(kpiValuesStandard?.kpis).length === 0 ? (
-						<div className="text-sm text-gray-600">لا توجد مؤشرات مسجلة لهذا المعيار.</div>
+						<div className="text-sm text-muted-foreground">لا توجد مؤشرات مسجلة لهذا المعيار.</div>
 					) : (
 						<div className="space-y-3">
 							{parseJsonArray(kpiValuesStandard?.kpis).map((kpi, idx) => (
-								<div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-2 bg-gray-50 rounded-lg">
+								<div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-2 bg-muted/50 rounded-lg">
 									<div className="md:col-span-2">
 										<div className="text-sm font-medium">{kpi?.name || ''}</div>
-										<div className="text-xs text-gray-600">الهدف: {kpi?.target || ''}</div>
+										<div className="text-xs text-muted-foreground">الهدف: {kpi?.target || ''}</div>
 									</div>
 									<Input
 										value={kpiValuesForm?.[kpi?.name] ?? ''}
@@ -1611,7 +1611,7 @@ const handleUploadEvidence = async (e) => {
 					)}
 					<div className="flex gap-3 justify-end pt-4 border-t">
 						<Button type="button" variant="outline" onClick={() => setKpiValuesOpen(false)}>إلغاء</Button>
-						<Button type="button" className="bg-blue-600" onClick={handleSaveKpiValues}>حفظ</Button>
+						<Button type="button" className="bg-primary" onClick={handleSaveKpiValues}>حفظ</Button>
 					</div>
 				</div>
 			</DialogContent>

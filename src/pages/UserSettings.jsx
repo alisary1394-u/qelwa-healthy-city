@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,7 @@ export default function UserSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">الإعدادات الشخصية</h1>
@@ -104,12 +104,12 @@ export default function UserSettings() {
                 الإعدادات العامة
               </h3>
               
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-blue-600" />
                   <div>
                     <Label className="text-base">الإشعارات داخل التطبيق</Label>
-                    <p className="text-sm text-gray-500">إظهار الإشعارات في التطبيق</p>
+                    <p className="text-sm text-muted-foreground">إظهار الإشعارات في التطبيق</p>
                   </div>
                 </div>
                 <Switch
@@ -118,12 +118,12 @@ export default function UserSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-green-600" />
                   <div>
                     <Label className="text-base">إشعارات البريد الإلكتروني</Label>
-                    <p className="text-sm text-gray-500">إرسال إشعارات عبر البريد</p>
+                    <p className="text-sm text-muted-foreground">إرسال إشعارات عبر البريد</p>
                   </div>
                 </div>
                 <Switch
@@ -143,7 +143,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <Label>عند تعيين مهمة جديدة</Label>
-                    <p className="text-xs text-gray-500">داخل التطبيق</p>
+                    <p className="text-xs text-muted-foreground">داخل التطبيق</p>
                   </div>
                   <Switch
                     checked={formData.task_assigned_app}
@@ -155,7 +155,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <Label>عند تعيين مهمة جديدة</Label>
-                    <p className="text-xs text-gray-500">عبر البريد الإلكتروني</p>
+                    <p className="text-xs text-muted-foreground">عبر البريد الإلكتروني</p>
                   </div>
                   <Switch
                     checked={formData.task_assigned_email}
@@ -167,7 +167,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <Label>تذكير بموعد المهمة</Label>
-                    <p className="text-xs text-gray-500">داخل التطبيق</p>
+                    <p className="text-xs text-muted-foreground">داخل التطبيق</p>
                   </div>
                   <Switch
                     checked={formData.task_due_app}
@@ -179,7 +179,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <Label>تذكير بموعد المهمة</Label>
-                    <p className="text-xs text-gray-500">عبر البريد الإلكتروني</p>
+                    <p className="text-xs text-muted-foreground">عبر البريد الإلكتروني</p>
                   </div>
                   <Switch
                     checked={formData.task_due_email}
@@ -191,7 +191,7 @@ export default function UserSettings() {
             </div>
 
             <div className="flex items-center gap-3 pt-4">
-              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 {saved && <CheckCircle className="w-4 h-4 ml-2" />}
                 حفظ الإعدادات

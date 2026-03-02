@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -84,11 +84,11 @@ export default function Settings() {
 
   if (!permissions.canSeeSettings) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى هذه الصفحة</p>
-            <p className="text-gray-500 text-sm mt-2">صلاحيات الصفحة مرتبطة بمنصبك في الفريق</p>
+            <p className="text-muted-foreground text-sm mt-2">صلاحيات الصفحة مرتبطة بمنصبك في الفريق</p>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +124,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إعدادات المدينة الصحية</h1>
@@ -136,7 +136,7 @@ export default function Settings() {
         <Collapsible open={logoSectionOpen} onOpenChange={setLogoSectionOpen}>
           <Card>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg">
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <SettingsIcon className="w-6 h-6" />
@@ -152,19 +152,19 @@ export default function Settings() {
                             <span className="text-white font-bold text-sm">{formData.logo_text}</span>
                           </div>
                         )}
-                        <span className="text-sm text-gray-500 font-normal">{formData.city_name}</span>
+                        <span className="text-sm text-muted-foreground font-normal">{formData.city_name}</span>
                       </div>
                     )}
-                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${logoSectionOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${logoSectionOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
+                <p className="text-sm text-muted-foreground mt-1">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
               </CardHeader>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="space-y-6">
             {/* Logo Preview */}
-            <div className="bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
+            <div className="bg-muted/50 p-6 rounded-lg border-2 border-dashed border-border">
               <Label className="block mb-3 font-semibold">معاينة الشعار الحالي</Label>
               <div className="flex items-center justify-center">
                 {formData.logo_url ? (
@@ -217,7 +217,7 @@ export default function Settings() {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 يُفضل استخدام صورة مربعة بحجم 200x200 بكسل أو أكبر
               </p>
             </div>
@@ -231,7 +231,7 @@ export default function Settings() {
                 placeholder="الحرف الذي يظهر في حال عدم وجود صورة"
                 maxLength={3}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 هذا النص يظهر إذا لم يتم تحميل صورة للشعار
               </p>
             </div>
@@ -260,7 +260,7 @@ export default function Settings() {
             <Button
               onClick={handleSave}
               disabled={!permissions.canManageSettings}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-primary hover:bg-primary/90"
               size="lg"
             >
               <Save className="w-5 h-5 ml-2" />
@@ -279,15 +279,15 @@ export default function Settings() {
                 <Database className="w-5 h-5" />
                 استعادة البيانات من نسخة احتياطية
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 إذا انحذفت البيانات (الفريق، المهام، اللجان…) وكان السيرفر يحفظ نسخاً احتياطية تلقائياً، يمكنك استعادة آخر نسخة. بعد الاستعادة سيتم إعادة تحميل الصفحة.
               </p>
               {backupsLoading ? (
-                <p className="text-sm text-gray-500">جاري التحقق من النسخ الاحتياطية...</p>
+                <p className="text-sm text-muted-foreground">جاري التحقق من النسخ الاحتياطية...</p>
               ) : backupsList.length === 0 ? (
                 <p className="text-sm text-amber-700">لا توجد نسخ احتياطية حالياً. استخدم الخيار أدناه لإعادة تحميل بيانات التجربة.</p>
               ) : (
-                <p className="text-sm text-gray-600">آخر نسخة: {backupsList[0]?.name || ''}</p>
+                <p className="text-sm text-muted-foreground">آخر نسخة: {backupsList[0]?.name || ''}</p>
               )}
             </CardHeader>
             <CardContent>
@@ -311,7 +311,7 @@ export default function Settings() {
               <CardTitle className="text-lg">
                 {reseedSourceLabel}
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 إذا لم تظهر اللجان أو الفريق أو المبادرات أو المهام أو الميزانيات، اضغط الزر أدناه لمسح البيانات وإعادة تحميل بيانات التجربة. بعد إعادة التحميل سجّل الدخول برقم الهوية <strong>1</strong> وكلمة المرور <strong>123456</strong>.
               </p>
               {appParams.apiUrl && (

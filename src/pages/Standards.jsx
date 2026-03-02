@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+﻿import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -100,7 +100,7 @@ function getInitiativeSuggestionFromStandard(standard, axisName) {
 }
 
 const statusConfig = {
-  not_started: { label: 'لم يبدأ', color: 'bg-gray-100 text-gray-700', headerColor: 'bg-white/20 text-white' },
+  not_started: { label: 'لم يبدأ', color: 'bg-muted text-foreground', headerColor: 'bg-white/20 text-white' },
   in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700', headerColor: 'bg-white/25 text-white' },
   completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700', headerColor: 'bg-white/25 text-white' },
   approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700', headerColor: 'bg-white/25 text-white' }
@@ -591,7 +591,7 @@ function StandardsLegacy() {
 
   if (!permissions.canSeeStandards) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -602,7 +602,7 @@ function StandardsLegacy() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="bg-gradient-to-l from-blue-600 to-green-600 text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
@@ -618,14 +618,14 @@ function StandardsLegacy() {
                 <Plus className="w-4 h-4 ml-2" />
                 إضافة محور
               </Button>
-              <Button onClick={() => setStandardFormOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => setStandardFormOpen(true)} className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 ml-2" />
                 إضافة معيار
               </Button>
             </>
           )}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="بحث في المعايير (العنوان، الرمز، الوصف)..."
               value={searchQuery}
@@ -706,8 +706,8 @@ function StandardsLegacy() {
         ) : filteredStandards.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <Target className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">لا توجد معايير</p>
+              <Target className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">لا توجد معايير</p>
               {canManage && (
                 <Button variant="outline" className="mt-4" onClick={() => setStandardFormOpen(true)}>
                   إضافة معيار جديد
@@ -826,7 +826,7 @@ function StandardsLegacy() {
                   <CardContent className="p-4">
                     <div className="flex-1">
                         {standard.description && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{standard.description}</p>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{standard.description}</p>
                         )}
                         {standard.required_evidence && (
                           <p className="text-xs text-blue-600 mb-3 flex items-center gap-1">
@@ -860,8 +860,8 @@ function StandardsLegacy() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-                          <div className="rounded-lg border bg-gray-50 p-3">
-                            <p className="text-xs text-gray-500 mb-1">اللجان المرتبطة</p>
+                          <div className="rounded-lg border bg-muted/50 p-3">
+                            <p className="text-xs text-muted-foreground mb-1">اللجان المرتبطة</p>
                             <p className="text-sm font-semibold mb-2">{relatedCommittees.length} لجنة</p>
                             <div className="flex flex-wrap gap-1">
                               {visibleCommittees.length > 0 ? visibleCommittees.map((committee) => (
@@ -869,7 +869,7 @@ function StandardsLegacy() {
                                   {committee.name}
                                 </Badge>
                               )) : (
-                                <span className="text-xs text-gray-400">لا توجد لجان مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">لا توجد لجان مرتبطة</span>
                               )}
                             </div>
                             {relatedCommittees.length > 3 && (
@@ -885,16 +885,16 @@ function StandardsLegacy() {
                             )}
                           </div>
 
-                          <div className="rounded-lg border bg-gray-50 p-3">
-                            <p className="text-xs text-gray-500 mb-1">المبادرات المرتبطة</p>
+                          <div className="rounded-lg border bg-muted/50 p-3">
+                            <p className="text-xs text-muted-foreground mb-1">المبادرات المرتبطة</p>
                             <p className="text-sm font-semibold mb-2">{relatedInitiatives.length} مبادرة</p>
                             <div className="space-y-1">
                               {visibleInitiatives.length > 0 ? visibleInitiatives.map((initiative) => (
-                                <p key={initiative.id} className="text-xs text-gray-700 truncate" title={initiative.title}>
+                                <p key={initiative.id} className="text-xs text-foreground truncate" title={initiative.title}>
                                   • {initiative.title}
                                 </p>
                               )) : (
-                                <span className="text-xs text-gray-400">لا توجد مبادرات مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">لا توجد مبادرات مرتبطة</span>
                               )}
                             </div>
                             {relatedInitiatives.length > 2 && (
@@ -910,8 +910,8 @@ function StandardsLegacy() {
                             )}
                           </div>
 
-                          <div className="rounded-lg border bg-gray-50 p-3">
-                            <p className="text-xs text-gray-500 mb-1">الميزانيات المرتبطة</p>
+                          <div className="rounded-lg border bg-muted/50 p-3">
+                            <p className="text-xs text-muted-foreground mb-1">الميزانيات المرتبطة</p>
                             <p className="text-sm font-semibold mb-1">{relatedBudgets.length} ميزانية</p>
                             <p className="text-xs text-green-700 font-medium mb-2">
                               الإجمالي: {totalRelatedBudget.toLocaleString()} ريال
@@ -922,7 +922,7 @@ function StandardsLegacy() {
                                   {budget.name}
                                 </Badge>
                               )) : (
-                                <span className="text-xs text-gray-400">لا توجد ميزانيات مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">لا توجد ميزانيات مرتبطة</span>
                               )}
                             </div>
                             {relatedBudgets.length > 2 && (
@@ -975,7 +975,7 @@ function StandardsLegacy() {
                           ).enhancedDocuments}
                         />
                         
-                        <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" /> مؤشرات: {parseJsonArray(standard.kpis).length}</span>
                           <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> مستندات: {parseJsonArray(standard.required_documents).length}</span>
                         </div>
@@ -986,24 +986,24 @@ function StandardsLegacy() {
                       <Collapsible className="w-full">
                         <CollapsibleTrigger asChild>
                           <button type="button" className="w-full text-right group">
-                            <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 p-4 hover:bg-gray-100 transition-colors">
+                            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/50 p-4 hover:bg-muted transition-colors">
                               <div className="flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-gray-600" />
+                                <FileText className="w-5 h-5 text-muted-foreground" />
                                 <p className="text-sm font-medium">الأدلة المرفوعة</p>
                                 <Badge variant="secondary" className="text-xs">{standardEvidence.length}</Badge>
                               </div>
-                              <ChevronDown className="w-5 h-5 text-gray-500 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+                              <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
                             </div>
                           </button>
                         </CollapsibleTrigger>
 
                         <CollapsibleContent>
                           {standardEvidence.length === 0 ? (
-                            <div className="mt-3 text-sm text-gray-500">لا توجد أدلة مرفوعة</div>
+                            <div className="mt-3 text-sm text-muted-foreground">لا توجد أدلة مرفوعة</div>
                           ) : (
                             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                               {standardEvidence.map(ev => (
-                                <div key={ev.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <div key={ev.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                                   {ev.file_type === 'image' ? (
                                     <Image className="w-5 h-5 text-blue-600" />
                                   ) : (
@@ -1097,7 +1097,7 @@ function StandardsLegacy() {
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setAxisFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="bg-blue-600">حفظ</Button>
+              <Button type="submit" className="bg-primary">حفظ</Button>
             </div>
           </form>
         </DialogContent>
@@ -1140,7 +1140,7 @@ function StandardsLegacy() {
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setStandardFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="bg-blue-600">حفظ</Button>
+              <Button type="submit" className="bg-primary">حفظ</Button>
             </div>
           </form>
         </DialogContent>
@@ -1181,7 +1181,7 @@ function StandardsLegacy() {
               <Label className="font-medium">مؤشرات الأداء (KPI)</Label>
               <div className="mt-2 space-y-3">
                 {editKpis.map((kpi, i) => (
-                  <div key={i} className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                  <div key={i} className="flex flex-wrap items-center gap-2 p-2 bg-muted/50 rounded-lg">
                     <Input value={kpi.name} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], name: e.target.value }; setEditKpis(n); }} placeholder="اسم المؤشر" className="flex-1 min-w-[120px]" />
                     <Input value={kpi.target} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], target: e.target.value }; setEditKpis(n); }} placeholder="الهدف" className="w-24" />
                     <Input value={kpi.unit} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], unit: e.target.value }; setEditKpis(n); }} placeholder="الوحدة" className="w-20" />
@@ -1198,7 +1198,7 @@ function StandardsLegacy() {
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setEditStandardOpen(false)}>إلغاء</Button>
               <Button
-                className="bg-blue-600"
+                className="bg-primary"
                 onClick={async () => {
                   if (!editStandard?.id) return;
                   await updateStandardMutation.mutateAsync({
@@ -1240,7 +1240,7 @@ function StandardsLegacy() {
             </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setEvidenceFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" disabled={uploading} className="bg-blue-600">
+              <Button type="submit" disabled={uploading} className="bg-primary">
                 {uploading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 رفع الدليل
               </Button>

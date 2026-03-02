@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,12 +82,12 @@ export default function PermissionsManager() {
 
   if (!canManagePermissions) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <Lock className="w-16 h-16 mx-auto text-red-300 mb-4" />
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى لوحة الصلاحيات.</p>
-            <p className="text-gray-500 text-sm mt-2">هذه الصفحة متاحة للمشرف العام ومنسق المدينة الصحية فقط.</p>
+            <p className="text-muted-foreground text-sm mt-2">هذه الصفحة متاحة للمشرف العام ومنسق المدينة الصحية فقط.</p>
           </CardContent>
         </Card>
       </div>
@@ -204,7 +204,7 @@ export default function PermissionsManager() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-l from-purple-700 via-purple-600 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -237,10 +237,10 @@ export default function PermissionsManager() {
                   <p className="text-purple-600">مُفعّلة</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-500">
+                  <p className="text-2xl font-bold text-muted-foreground">
                     {Object.values(activeRolePermissions).filter(v => !v).length}
                   </p>
-                  <p className="text-gray-600">معطّلة</p>
+                  <p className="text-muted-foreground">معطّلة</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-700">
@@ -302,7 +302,7 @@ export default function PermissionsManager() {
         {/* Actions Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="بحث في الصلاحيات..."
               value={searchQuery}
@@ -341,7 +341,7 @@ export default function PermissionsManager() {
           </CardHeader>
           <CardContent>
             <Tabs value={activeRole} onValueChange={setActiveRole}>
-              <TabsList className="flex-wrap h-auto gap-1 bg-gray-100 p-1 flex-row-reverse justify-end">
+              <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 flex-row-reverse justify-end">
                 {allRoles.map((roleKey) => (
                   <TabsTrigger 
                     key={roleKey} 
@@ -366,8 +366,8 @@ export default function PermissionsManager() {
           </CardHeader>
           <CardContent>
             {filteredPermissionKeys.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
                 <p>لا توجد صلاحيات تطابق البحث</p>
               </div>
             ) : (
@@ -377,13 +377,13 @@ export default function PermissionsManager() {
                   return (
                     <div 
                       key={key}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-white hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         {isEnabled ? (
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                          <div className="w-5 h-5 rounded-full border-2 border-border" />
                         )}
                         <div>
                           <Label 
@@ -392,7 +392,7 @@ export default function PermissionsManager() {
                           >
                             {label}
                           </Label>
-                          <p className="text-xs text-gray-500 mt-0.5">{key}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{key}</p>
                         </div>
                       </div>
                       <Switch
