@@ -11,13 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search, ChevronLeft, Shield, MoreVertical, Target, Power, UserPlus, Filter, CheckCircle2, BookOpen, ClipboardList } from "lucide-react";
+import { Plus, Users, UserCog, Eye, HandHelping, Edit, Trash2, Building, Loader2, Search, ChevronLeft, Shield, MoreVertical, Target, Power, UserPlus, Filter, CheckCircle2, BookOpen, ClipboardList, UserCheck, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
-import MemberForm from '@/components/team/MemberForm';
 
 export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
@@ -26,9 +25,12 @@ export default function Committees() {
   const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  // Quick member add
-  const [memberFormOpen, setMemberFormOpen] = useState(false);
-  const [memberTargetCommittee, setMemberTargetCommittee] = useState(null);
+  // Assign existing member dialog
+  const [assignMemberOpen, setAssignMemberOpen] = useState(false);
+  const [assignTargetCommittee, setAssignTargetCommittee] = useState(null);
+  const [assignSearch, setAssignSearch] = useState('');
+  const [assignSelected, setAssignSelected] = useState([]);
+  const [assignLoading, setAssignLoading] = useState(false);
   // Filters
   const [filterAxis, setFilterAxis] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -75,8 +77,8 @@ export default function Committees() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committees'] })
   });
 
-  const createMemberMutation = useMutation({
-    mutationFn: (data) => api.entities.TeamMember.create(data),
+  const updateMemberMutation = useMutation({
+    mutationFn: ({ id, data }) => api.entities.TeamMember.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
@@ -236,14 +238,50 @@ export default function Committees() {
 
   const getCommitteeAxisName = (committee) => resolveCommitteeAxis(committee)?.name || null;
 
-  // العضو السريع - إضافة عضو مباشرة للجنة
-  const handleOpenMemberForm = (committee) => {
-    setMemberTargetCommittee(committee);
-    setMemberFormOpen(true);
+  // إضافة أعضاء حاليين للجنة
+  const handleOpenAssignMember = (committee) => {
+    setAssignTargetCommittee(committee);
+    setAssignSearch('');
+    setAssignSelected([]);
+    setAssignMemberOpen(true);
   };
 
-  const handleSaveMember = async (data) => {
-    await createMemberMutation.mutateAsync(data);
+  // الأعضاء المتاحين (غير مسجلين في هذه اللجنة)
+  const availableMembers = useMemo(() => {
+    if (!assignTargetCommittee) return [];
+    return members.filter(m => m.committee_id !== assignTargetCommittee.id);
+  }, [members, assignTargetCommittee]);
+
+  const filteredAvailableMembers = useMemo(() => {
+    const q = assignSearch.trim().toLowerCase();
+    if (!q) return availableMembers;
+    return availableMembers.filter(m =>
+      (m.full_name || '').toLowerCase().includes(q) ||
+      (m.phone || '').includes(q) ||
+      (m.department || '').toLowerCase().includes(q)
+    );
+  }, [availableMembers, assignSearch]);
+
+  const handleAssignMembers = async () => {
+    if (!assignTargetCommittee || assignSelected.length === 0) return;
+    setAssignLoading(true);
+    try {
+      for (const memberId of assignSelected) {
+        await updateMemberMutation.mutateAsync({
+          id: memberId,
+          data: { committee_id: assignTargetCommittee.id, committee_name: assignTargetCommittee.name }
+        });
+      }
+      setAssignMemberOpen(false);
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
+  const toggleSelectMember = (memberId) => {
+    setAssignSelected(prev =>
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    );
   };
 
   // عدد المعايير المرتبطة بكل لجنة
@@ -395,7 +433,7 @@ export default function Committees() {
                                 <Edit className="w-4 h-4 text-blue-600" />
                                 <span>تعديل اللجنة</span>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleOpenMemberForm(committee)} className="gap-2">
+                              <DropdownMenuItem onClick={() => handleOpenAssignMember(committee)} className="gap-2">
                                 <UserPlus className="w-4 h-4 text-green-600" />
                                 <span>إضافة عضو</span>
                               </DropdownMenuItem>
@@ -499,7 +537,7 @@ export default function Committees() {
                         </Button>
                       </Link>
                       {canManage && (
-                        <Button variant="outline" size="sm" className="group-hover:bg-green-50 group-hover:border-green-300 group-hover:text-green-700 transition-colors" onClick={() => handleOpenMemberForm(committee)}>
+                        <Button variant="outline" size="sm" className="group-hover:bg-green-50 group-hover:border-green-300 group-hover:text-green-700 transition-colors" onClick={() => handleOpenAssignMember(committee)}>
                           <UserPlus className="w-3.5 h-3.5 ml-1" />
                           إضافة عضو
                         </Button>
@@ -624,17 +662,106 @@ export default function Committees() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Quick Member Add Form */}
-      <MemberForm
-        open={memberFormOpen}
-        onOpenChange={setMemberFormOpen}
-        member={null}
-        onSave={handleSaveMember}
-        supervisors={members.filter(m => m.role === 'committee_head' || m.role === 'committee_supervisor' || m.role === 'coordinator' || m.role === 'governor')}
-        committees={committees}
-        selectedCommitteeId={memberTargetCommittee?.id || ''}
-        existingDepartments={[...new Set(members.map(m => m.department).filter(Boolean))]}
-      />
+      {/* Assign Existing Members Dialog */}
+      <Dialog open={assignMemberOpen} onOpenChange={setAssignMemberOpen}>
+        <DialogContent dir="rtl" className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-green-600" />
+              إضافة أعضاء إلى {assignTargetCommittee?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <Input
+                value={assignSearch}
+                onChange={(e) => setAssignSearch(e.target.value)}
+                placeholder="بحث بالاسم أو الجوال أو الجهة..."
+                className="pr-9"
+              />
+            </div>
+
+            {/* Selected count */}
+            {assignSelected.length > 0 && (
+              <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
+                <span className="text-sm text-green-700 font-medium">
+                  <UserCheck className="w-4 h-4 inline ml-1" />
+                  تم تحديد {assignSelected.length} عضو
+                </span>
+                <Button variant="ghost" size="sm" className="text-xs text-gray-500 h-7" onClick={() => setAssignSelected([])}>
+                  إلغاء التحديد
+                </Button>
+              </div>
+            )}
+
+            {/* Members list */}
+            <div className="border rounded-lg max-h-[320px] overflow-y-auto divide-y">
+              {filteredAvailableMembers.length === 0 ? (
+                <div className="p-6 text-center text-sm text-gray-400">
+                  {assignSearch ? 'لا توجد نتائج مطابقة' : 'جميع الأعضاء مسجلون في هذه اللجنة'}
+                </div>
+              ) : (
+                filteredAvailableMembers.map(m => {
+                  const isSelected = assignSelected.includes(m.id);
+                  const currentCommittee = m.committee_id ? committees.find(c => c.id === m.committee_id) : null;
+                  const roleLabels = {
+                    governor: 'المشرف العام', coordinator: 'منسق', committee_head: 'رئيس لجنة',
+                    committee_coordinator: 'منسق لجنة', committee_supervisor: 'مشرف', committee_member: 'عضو',
+                    member: 'عضو', volunteer: 'متطوع', budget_manager: 'مدير ميزانية',
+                    accountant: 'محاسب', financial_officer: 'موظف مالي'
+                  };
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() => toggleSelectMember(m.id)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                        isSelected ? 'bg-green-50/70' : ''
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 shrink-0 ${
+                        isSelected
+                          ? 'bg-green-600 text-white border-green-600'
+                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}>
+                        {isSelected ? <UserCheck className="w-4 h-4" /> : (m.full_name || '').charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{m.full_name}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                          <span>{roleLabels[m.role] || m.role}</span>
+                          {currentCommittee && (
+                            <>
+                              <span>•</span>
+                              <span className="text-orange-600">{currentCommittee.name}</span>
+                            </>
+                          )}
+                          {!currentCommittee && <span className="text-gray-400">بدون لجنة</span>}
+                        </div>
+                      </div>
+                      {m.phone && <span className="text-[11px] text-gray-400 shrink-0 dir-ltr">{m.phone}</span>}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button type="button" variant="outline" onClick={() => setAssignMemberOpen(false)}>إلغاء</Button>
+              <Button
+                onClick={handleAssignMembers}
+                disabled={assignSelected.length === 0 || assignLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {assignLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                نقل {assignSelected.length > 0 ? `(${assignSelected.length})` : ''} للجنة
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
