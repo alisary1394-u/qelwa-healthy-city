@@ -154,6 +154,20 @@ export default function Tasks() {
     return currentMember ? [currentMember] : [];
   }, [isGlobalTaskScope, members, memberCommitteeId, currentMember]);
 
+  // الأعضاء الذين لديهم مهام
+  const assigneesWithTasks = useMemo(() => {
+    const map = new Map();
+    accessibleTasks.forEach(t => {
+      if (t.assigned_to) {
+        const member = members.find(m => String(m.id) === String(t.assigned_to));
+        const name = t.assigned_to_name || member?.full_name || 'غير محدد';
+        if (!map.has(t.assigned_to)) map.set(t.assigned_to, { id: t.assigned_to, name, count: 0 });
+        map.get(t.assigned_to).count++;
+      }
+    });
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [accessibleTasks, members]);
+
   if (!permissions.canSeeTasks) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
@@ -175,20 +189,6 @@ export default function Tasks() {
     highPriority: accessibleTasks.filter(t => t.priority === 'high' || t.priority === 'urgent').length,
     uniqueAssignees: new Set(accessibleTasks.map(t => t.assigned_to).filter(Boolean)).size,
   };
-
-  // الأعضاء الذين لديهم مهام
-  const assigneesWithTasks = useMemo(() => {
-    const map = new Map();
-    accessibleTasks.forEach(t => {
-      if (t.assigned_to) {
-        const member = members.find(m => String(m.id) === String(t.assigned_to));
-        const name = t.assigned_to_name || member?.full_name || 'غير محدد';
-        if (!map.has(t.assigned_to)) map.set(t.assigned_to, { id: t.assigned_to, name, count: 0 });
-        map.get(t.assigned_to).count++;
-      }
-    });
-    return [...map.values()].sort((a, b) => b.count - a.count);
-  }, [accessibleTasks, members]);
 
   const filteredTasks = accessibleTasks.filter(t => {
     const matchesStatus = activeStatus === 'all' || 
