@@ -249,10 +249,76 @@ async function seedData() {
     }
     console.log(`\n✅ تمت إضافة ${totalInitiatives} مبادرة جديدة (الموجود مسبقاً: ${skippedExistingInitiatives})\n`);
 
+    // 4. مزامنة الميزانيات
+    console.log('💰 مزامنة الميزانيات...');
+    const budgets = await api('GET', '/api/entities/Budget');
+    const nowYear = new Date().getFullYear();
+    let activeBudget = (budgets || []).find((b) => String(b.fiscal_year) === String(nowYear));
+    if (!activeBudget) {
+      activeBudget = await api('POST', '/api/entities/Budget', {
+        name: `ميزانية ${nowYear}`,
+        fiscal_year: String(nowYear),
+        start_date: `${nowYear}-01-01`,
+        end_date: `${nowYear}-12-31`,
+        total_budget: 2000000,
+        allocated_budget: 0,
+        spent_amount: 0,
+        remaining_budget: 2000000,
+        description: 'ميزانية سنوية تشغيلية',
+        notes: 'تم إنشاؤها عبر سكربت التحديث الكامل',
+        status: 'active',
+      });
+      console.log(`   ✓ تم إنشاء ${activeBudget.name}`);
+    } else {
+      console.log(`   ↺ موجودة مسبقاً: ${activeBudget.name}`);
+    }
+
+    const initiativesAll = await api('GET', '/api/entities/Initiative');
+    const initiativeByKey = new Map((initiativesAll || []).map((i) => [`${i.committee_name || ''}::${i.title || ''}`, i]));
+    const allocations = await api('GET', '/api/entities/BudgetAllocation');
+    const allocationKeySet = new Set((allocations || []).map((a) => `${a.budget_id || ''}::${a.initiative_id || ''}`));
+
+    let addedAllocations = 0;
+    for (const [committeeName, initiatives] of Object.entries(initiativesByCommittee)) {
+      for (const initiative of initiatives) {
+        const initiativeEntity = initiativeByKey.get(`${committeeName}::${initiative.title}`);
+        if (!initiativeEntity?.id) continue;
+        const allocKey = `${activeBudget.id}::${initiativeEntity.id}`;
+        if (allocationKeySet.has(allocKey)) continue;
+
+        const amount = Number(initiative.budget) || 0;
+        if (amount <= 0) continue;
+
+        await api('POST', '/api/entities/BudgetAllocation', {
+          budget_id: activeBudget.id,
+          budget_name: activeBudget.name,
+          committee_id: initiativeEntity.committee_id || '',
+          committee_name: committeeName,
+          axis_id: initiativeEntity.axis_id || '',
+          axis_name: initiativeEntity.axis_name || '',
+          standard_id: initiativeEntity.standard_id || '',
+          standard_code: initiativeEntity.standard_code || '',
+          initiative_id: initiativeEntity.id,
+          initiative_title: initiativeEntity.title,
+          category: 'مبادرات',
+          allocated_amount: amount,
+          spent_amount: 0,
+          remaining_amount: amount,
+          percentage_spent: 0,
+          status: 'active',
+          notes: `تخصيص تلقائي للمبادرة: ${initiativeEntity.title}`,
+        });
+        allocationKeySet.add(allocKey);
+        addedAllocations++;
+      }
+    }
+    console.log(`\n✅ تمت إضافة ${addedAllocations} تخصيص ميزانية\n`);
+
     console.log('📊 ملخص البيانات المضافة:');
     console.log(`   • اللجان المتاحة: ${Object.keys(resolvedCommittees).length}`);
     console.log(`   • أعضاء الفريق: ${totalMembers}`);
     console.log(`   • المبادرات: ${totalInitiatives}`);
+    console.log(`   • تخصيصات الميزانية الجديدة: ${addedAllocations}`);
     console.log('\n✨ تمت الإضافة بنجاح! حدّث الصفحة (Ctrl+F5).\n');
   } catch (error) {
     console.error('\n❌ خطأ:', error?.message || error);
