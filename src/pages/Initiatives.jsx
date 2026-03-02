@@ -15,7 +15,7 @@ import {
   Plus, Search, Lightbulb, Users, Calendar, DollarSign, 
   Target, TrendingUp, Clock, CheckCircle,
   Loader2, Eye, Play, Pause, X, Trash2,
-  UserCog, HandHelping
+  UserCog, HandHelping, UserCheck, UserPlus
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import KPIManager from "../components/initiatives/KPIManager";
@@ -365,6 +365,11 @@ export default function Initiatives() {
   const [autoAppliedInitiativeId, setAutoAppliedInitiativeId] = useState(null);
   const [autoLinkedTeamInitiativeId, setAutoLinkedTeamInitiativeId] = useState(null);
   const [teamMemberToAddId, setTeamMemberToAddId] = useState('');
+  const [teamMemberSearch, setTeamMemberSearch] = useState('');
+  const [assignTeamOpen, setAssignTeamOpen] = useState(false);
+  const [assignTeamSearch, setAssignTeamSearch] = useState('');
+  const [assignTeamSelected, setAssignTeamSelected] = useState([]);
+  const [assignTeamLoading, setAssignTeamLoading] = useState(false);
 
   const [formData, setFormData] = useState(getDefaultInitiativeFormData());
 
@@ -478,6 +483,18 @@ export default function Initiatives() {
     const linkedIds = new Set(selectedLinkedTeam.map((member) => String(member.id)));
     return members.filter((member) => !linkedIds.has(String(member.id)));
   }, [selectedInitiative, selectedLinkedTeam, members]);
+
+  const filteredTeamMembersForQuickAdd = useMemo(() => {
+    const q = teamMemberSearch.trim().toLowerCase();
+    if (!q) return availableTeamMembersForAdd;
+
+    return availableTeamMembersForAdd.filter((member) =>
+      (member.full_name || '').toLowerCase().includes(q) ||
+      (member.phone || '').includes(q) ||
+      (member.department || '').toLowerCase().includes(q) ||
+      (getRoleLabel(member.role) || '').toLowerCase().includes(q)
+    );
+  }, [availableTeamMembersForAdd, teamMemberSearch]);
 
   const selectedSuggestedTeam = useMemo(() => {
     if (!selectedInitiative) return [];
@@ -646,6 +663,50 @@ export default function Initiatives() {
     completed: accessibleInitiatives.filter(i => normalizeInitiativeStatus(i.status) === 'completed').length,
     totalBudget: accessibleInitiatives.reduce((sum, i) => sum + (i.budget || 0), 0),
     totalBeneficiaries: accessibleInitiatives.reduce((sum, i) => sum + (i.expected_beneficiaries || 0), 0)
+  };
+
+  // فتح نافذة البحث والاختيار المتعدد
+  const handleOpenAssignTeam = () => {
+    setAssignTeamSearch('');
+    setAssignTeamSelected([]);
+    setAssignTeamOpen(true);
+  };
+
+  const toggleAssignTeamMember = (memberId) => {
+    setAssignTeamSelected(prev =>
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    );
+  };
+
+  const filteredAssignTeamMembers = (() => {
+    const q = assignTeamSearch.trim().toLowerCase();
+    const list = availableTeamMembersForAdd;
+    if (!q) return list;
+    return list.filter(m =>
+      (m.full_name || '').toLowerCase().includes(q) ||
+      (m.phone || '').includes(q) ||
+      (m.email || '').toLowerCase().includes(q) ||
+      (getRoleLabel(m.role) || '').includes(q)
+    );
+  })();
+
+  const handleAssignTeamMembers = async () => {
+    if (!selectedInitiative?.id || assignTeamSelected.length === 0) return;
+    setAssignTeamLoading(true);
+    try {
+      const currentIds = parseTeamMemberIds(selectedInitiative.team_members);
+      const mergedIds = [...new Set([...currentIds, ...assignTeamSelected.map(String)])];
+      const updateData = { team_members: mergedIds };
+
+      await api.entities.Initiative.update(selectedInitiative.id, updateData);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
+      setAssignTeamOpen(false);
+    } catch (err) {
+      if (typeof window !== 'undefined') window.alert(`تعذر إضافة الأعضاء للفريق.\n${err?.message || err}`);
+    } finally {
+      setAssignTeamLoading(false);
+    }
   };
 
   const handleAddTeamMember = async () => {
@@ -1715,28 +1776,47 @@ export default function Initiatives() {
                       </div>
                     )}
                     {canManageInitiatives && (
-                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      <Select value={teamMemberToAddId} onValueChange={setTeamMemberToAddId}>
-                        <SelectTrigger className="sm:w-[320px]">
-                          <SelectValue placeholder="اختر عضوًا لإضافته لفريق المبادرة" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableTeamMembersForAdd.map((member) => (
-                            <SelectItem key={member.id} value={String(member.id)}>
-                              {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="mt-3 space-y-2">
                       <Button
                         type="button"
-                        variant="outline"
-                        onClick={handleAddTeamMember}
-                        disabled={!teamMemberToAddId}
+                        onClick={handleOpenAssignTeam}
+                        className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                       >
-                        <Plus className="w-4 h-4 ml-1" />
-                        إضافة عضو
+                        <UserPlus className="w-4 h-4 ml-2" />
+                        إضافة أعضاء للفريق
                       </Button>
+                          <div className="relative">
+                            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                            <Input
+                              value={teamMemberSearch}
+                              onChange={(e) => setTeamMemberSearch(e.target.value)}
+                              placeholder="بحث سريع بالاسم أو الجوال أو الجهة..."
+                              className="pr-9 sm:w-[320px]"
+                            />
+                          </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Select value={teamMemberToAddId} onValueChange={setTeamMemberToAddId}>
+                          <SelectTrigger className="sm:w-[320px]">
+                            <SelectValue placeholder="أو اختر عضوًا سريعًا..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                                {filteredTeamMembersForQuickAdd.map((member) => (
+                              <SelectItem key={member.id} value={String(member.id)}>
+                                {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddTeamMember}
+                          disabled={!teamMemberToAddId}
+                        >
+                          <Plus className="w-4 h-4 ml-1" />
+                          إضافة
+                        </Button>
+                      </div>
                     </div>
                     )}
                   </div>
@@ -1838,6 +1918,100 @@ export default function Initiatives() {
               <KPIManager initiativeId={selectedInitiative.id} initiativeTitle={selectedInitiative.title} />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Team Members Dialog */}
+      <Dialog open={assignTeamOpen} onOpenChange={setAssignTeamOpen}>
+        <DialogContent dir="rtl" className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-green-600" />
+              إضافة أعضاء لفريق المبادرة
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+              <Input
+                value={assignTeamSearch}
+                onChange={(e) => setAssignTeamSearch(e.target.value)}
+                placeholder="بحث بالاسم أو الجوال أو الدور..."
+                className="pr-9"
+              />
+            </div>
+
+            {/* Selected count */}
+            {assignTeamSelected.length > 0 && (
+              <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
+                <span className="text-sm text-green-700 font-medium">
+                  <UserCheck className="w-4 h-4 inline ml-1" />
+                  تم تحديد {assignTeamSelected.length} عضو
+                </span>
+                <Button variant="ghost" size="sm" className="text-xs text-gray-500 h-7" onClick={() => setAssignTeamSelected([])}>
+                  إلغاء التحديد
+                </Button>
+              </div>
+            )}
+
+            {/* Members list */}
+            <div className="border rounded-lg max-h-[320px] overflow-y-auto divide-y">
+              {filteredAssignTeamMembers.length === 0 ? (
+                <div className="p-6 text-center text-sm text-gray-400">
+                  {assignTeamSearch ? 'لا توجد نتائج مطابقة' : 'لا يوجد أعضاء متاحون'}
+                </div>
+              ) : (
+                filteredAssignTeamMembers.map(m => {
+                  const isSelected = assignTeamSelected.includes(m.id);
+                  const memberCommittee = m.committee_id ? committees.find(c => c.id === m.committee_id) : null;
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() => toggleAssignTeamMember(m.id)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                        isSelected ? 'bg-green-50/70' : ''
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 shrink-0 ${
+                        isSelected
+                          ? 'bg-green-600 text-white border-green-600'
+                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}>
+                        {isSelected ? <UserCheck className="w-4 h-4" /> : (m.full_name || '').charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{m.full_name}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                          <span>{getRoleLabel(m.role)}</span>
+                          {memberCommittee && (
+                            <>
+                              <span>•</span>
+                              <span className="text-purple-600">{memberCommittee.name}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {m.phone && <span className="text-[11px] text-gray-400 shrink-0 dir-ltr">{m.phone}</span>}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button type="button" variant="outline" onClick={() => setAssignTeamOpen(false)}>إلغاء</Button>
+              <Button
+                onClick={handleAssignTeamMembers}
+                disabled={assignTeamSelected.length === 0 || assignTeamLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {assignTeamLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                إضافة {assignTeamSelected.length > 0 ? `(${assignTeamSelected.length})` : ''} للفريق
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
