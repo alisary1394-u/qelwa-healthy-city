@@ -111,7 +111,7 @@ export default function Layout({ children }) {
       )}
 
       {/* ===== Mobile Top Bar ===== */}
-      <header className="md:hidden sticky top-0 z-50 bg-card border-b shadow-sm">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b shadow-sm">
         <div className="flex items-center justify-between h-14 px-4">
           <button 
             onClick={() => setMobileMenuOpen(true)}
@@ -135,6 +135,8 @@ export default function Layout({ children }) {
           </div>
         </div>
       </header>
+      {/* Spacer to push content below the fixed mobile header */}
+      <div className="md:hidden h-14" />
 
       {/* ===== Mobile Overlay Menu ===== */}
       {mobileMenuOpen && (
@@ -378,7 +380,7 @@ export default function Layout({ children }) {
         </aside>
 
         {/* ===== Main Content ===== */}
-        <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:mr-[68px]' : 'md:mr-64'}`}>
+        <main className={`flex-1 min-h-[calc(100vh-3.5rem)] md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:mr-[68px]' : 'md:mr-64'}`}>
           {/* Top bar for desktop — breadcrumb + notifications */}
           <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
