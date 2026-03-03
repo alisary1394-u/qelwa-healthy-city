@@ -4,7 +4,7 @@ import { api } from '@/api/apiClient';
 import { getPermissions, getNavItemsForRole, PERMISSIONS_BY_ROLE } from '@/lib/permissions';
 import {
   LayoutDashboard,
-  FileSearch,
+  BarChart3,
   Target,
   Lightbulb,
   ClipboardList,
@@ -20,7 +20,7 @@ import {
 
 const ICON_MAP = {
   LayoutDashboard,
-  FileSearch,
+  BarChart3,
   Target,
   Lightbulb,
   ClipboardList,

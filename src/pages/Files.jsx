@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileText, Image, File, Search, Check, X, RotateCcw, Trash2, Eye, Loader2, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Upload, FileText, Image, File, Search, Check, X, RotateCcw, Trash2, Eye, Loader2, Clock, CheckCircle, XCircle, AlertTriangle, FolderOpen } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -294,7 +294,10 @@ export default function Files() {
     <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة الملفات والصور</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
+            <FolderOpen className="w-8 h-8" />
+            إدارة الملفات والصور
+          </h1>
           <p className="text-white/70">رفع واعتماد ملفات برنامج المدينة الصحية</p>
         </div>
       </div>

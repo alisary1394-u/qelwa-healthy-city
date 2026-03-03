@@ -521,7 +521,7 @@ export function getPermissions(role) {
 /** عناصر القائمة الافتراضية مع مفتاح الصلاحية لكل عنصر */
 export const NAV_ITEMS = [
   { name: 'Dashboard', label: 'لوحة التحكم', icon: 'LayoutDashboard', permission: 'canSeeDashboard' },
-  { name: 'Reports', label: 'التقارير', icon: 'FileSearch', permission: 'canSeeReports' },
+  { name: 'Reports', label: 'التقارير', icon: 'BarChart3', permission: 'canSeeReports' },
   { name: 'Standards', label: 'المعايير', icon: 'Target', permission: 'canSeeStandards' },
   { name: 'Initiatives', label: 'المبادرات', icon: 'Lightbulb', permission: 'canSeeInitiatives' },
   { name: 'Tasks', label: 'المهام', icon: 'ClipboardList', permission: 'canSeeTasks' },

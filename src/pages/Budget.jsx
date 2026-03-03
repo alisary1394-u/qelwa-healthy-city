@@ -498,7 +498,10 @@ export default function Budget() {
     <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إدارة الميزانية والحسابات</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
+            <DollarSign className="w-8 h-8" />
+            إدارة الميزانية والحسابات
+          </h1>
           <p className="text-white/70">نظام محاسبي متكامل لإدارة المصروفات والإيرادات</p>
         </div>
       </div>

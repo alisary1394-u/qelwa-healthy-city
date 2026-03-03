@@ -9,7 +9,7 @@ import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
-  BarChart3, Target, Users, FileCheck, MapPinned, 
+  BarChart3, Target, Users, FileCheck, MapPinned, LayoutDashboard,
   AlertTriangle, CheckCircle2, Clock, Building2,
   ArrowLeft, Activity, TrendingUp, Shield, Zap,
   Image, Upload, Trash2, Save, Settings, ChevronDown
@@ -239,7 +239,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
+                  <LayoutDashboard className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-white">لوحة التحكم</h1>

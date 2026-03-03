@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -605,7 +605,10 @@ function StandardsLegacy() {
     <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{pageTitle}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
+            <Target className="w-8 h-8" />
+            {pageTitle}
+          </h1>
           <p className="text-white/70">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
         </div>
       </div>
