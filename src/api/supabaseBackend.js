@@ -284,6 +284,38 @@ function buildRequiredEvidence(documents) {
   return 'أدلة مطلوبة: ' + list.join('، ');
 }
 
+/** إزالة المعايير المكررة — الإبقاء على أحدث نسخة فقط لكل رمز */
+async function deduplicateStandards() {
+  const standards = await entities.Standard.list();
+  const codeMap = {};
+  for (const s of standards) {
+    const code = (s.code || '').trim().replace(/\s+/g, '');
+    if (!code) continue;
+    if (!codeMap[code]) {
+      codeMap[code] = [];
+    }
+    codeMap[code].push(s);
+  }
+  let removed = 0;
+  for (const code of Object.keys(codeMap)) {
+    const items = codeMap[code];
+    if (items.length <= 1) continue;
+    // ترتيب: الأحدث تحديثاً أولاً، ثم الذي يحتوي على عنوان حقيقي (ليس placeholder)
+    items.sort((a, b) => {
+      const aReal = a.title && !a.title.startsWith('معيار ') ? 1 : 0;
+      const bReal = b.title && !b.title.startsWith('معيار ') ? 1 : 0;
+      if (bReal !== aReal) return bReal - aReal;
+      return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+    });
+    // حذف الكل ما عدا الأول (الأفضل)
+    for (let i = 1; i < items.length; i++) {
+      try { await entities.Standard.delete(items[i].id); removed++; } catch {}
+    }
+  }
+  if (removed > 0 && typeof console !== 'undefined') console.log(`[Supabase] إزالة ${removed} معيار مكرر`);
+  return removed;
+}
+
 /** مزامنة المعايير من المرجع (standardsFromCsv): تحديث الموجودة وإضافة الناقصة — 9 محاور، 80 معياراً */
 async function syncStandardsKpisFromPdf() {
   let axesList = await entities.Axis.list('order');
@@ -294,6 +326,8 @@ async function syncStandardsKpisFromPdf() {
     }
     axesList = await entities.Axis.list('order');
   }
+  // إزالة المعايير المكررة قبل المزامنة
+  await deduplicateStandards();
   const standards = await entities.Standard.list();
   const existingCodes = new Set(standards.map((s) => (s.code || '').trim().replace(/\s+/g, '')));
   let updated = 0;

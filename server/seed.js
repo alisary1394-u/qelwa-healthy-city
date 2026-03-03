@@ -68,12 +68,13 @@ export async function runSeed(options = {}) {
     });
   }
 
-  const axes = db.list('axis');
+  const axes = db.list('axis').sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
   if (db.list('standard').length === 0 && axes.length > 0) {
-    axes.forEach((axis, idx) => {
-      const count = AXIS_COUNTS[idx] ?? 9;
+    axes.forEach((axis) => {
+      const axisOrder = Number(axis.order) || 1;
+      const count = AXIS_COUNTS[axisOrder - 1] ?? 9;
       for (let i = 1; i <= count; i++) {
-        const code = `م${idx + 1}-${i}`;
+        const code = `م${axisOrder}-${i}`;
         db.create('standard', null, {
           code,
           title: `معيار ${axis.name} ${code}`,
@@ -88,6 +89,31 @@ export async function runSeed(options = {}) {
       }
     });
   }
+
+  // إزالة المعايير المكررة — الإبقاء على أفضل نسخة لكل رمز
+  const allStandards = db.list('standard');
+  const codeMap = {};
+  for (const s of allStandards) {
+    const code = (s.code || '').trim().replace(/\s+/g, '');
+    if (!code) continue;
+    if (!codeMap[code]) codeMap[code] = [];
+    codeMap[code].push(s);
+  }
+  let removedDuplicates = 0;
+  for (const code of Object.keys(codeMap)) {
+    const items = codeMap[code];
+    if (items.length <= 1) continue;
+    items.sort((a, b) => {
+      const aReal = a.title && !a.title.startsWith('معيار ') ? 1 : 0;
+      const bReal = b.title && !b.title.startsWith('معيار ') ? 1 : 0;
+      if (bReal !== aReal) return bReal - aReal;
+      return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+    });
+    for (let i = 1; i < items.length; i++) {
+      try { db.remove('standard', items[i].id); removedDuplicates++; } catch {}
+    }
+  }
+  if (removedDuplicates > 0) console.log(`[seed] إزالة ${removedDuplicates} معيار مكرر`);
 
   const committees = db.list('committee');
   if (committees.length === 0) {
