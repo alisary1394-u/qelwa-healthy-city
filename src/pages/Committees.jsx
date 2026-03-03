@@ -22,7 +22,7 @@ export default function Committees() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCommittee, setEditingCommittee] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, committee: null });
-  const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
+  const [formData, setFormData] = useState({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [], parent_committee_id: '', parent_committee_name: '', level: 'primary' });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   // Assign existing member dialog
@@ -192,11 +192,14 @@ export default function Committees() {
         description: committee.description || '',
         axis_id: resolved?.id || committee.axis_id || '',
         axis_name: resolved?.name || committee.axis_name || '',
-        related_standards: committee.related_standards ? (Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]')) : []
+        related_standards: committee.related_standards ? (Array.isArray(committee.related_standards) ? committee.related_standards : JSON.parse(committee.related_standards || '[]')) : [],
+        parent_committee_id: committee.parent_committee_id || '',
+        parent_committee_name: committee.parent_committee_name || '',
+        level: committee.level || 'primary'
       });
     } else {
       setEditingCommittee(null);
-      setFormData({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [] });
+      setFormData({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [], parent_committee_id: '', parent_committee_name: '', level: 'primary' });
     }
     setFormOpen(true);
   };
@@ -441,6 +444,14 @@ export default function Committees() {
                                 <UserPlus className="w-4 h-4 text-secondary" />
                                 <span>إضافة عضو</span>
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setEditingCommittee(null);
+                                setFormData({ name: '', description: '', axis_id: '', axis_name: '', related_standards: [], parent_committee_id: committee.id, parent_committee_name: committee.name, level: committee.level === 'main' ? 'primary' : 'sub' });
+                                setFormOpen(true);
+                              }} className="gap-2">
+                                <Building className="w-4 h-4 text-indigo-600" />
+                                <span>إضافة لجنة فرعية</span>
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleStatus(committee)} className="gap-2">
                                 <Power className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-secondary'}`} />
@@ -462,6 +473,37 @@ export default function Committees() {
                     {committee.description && (
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{committee.description}</p>
                     )}
+
+                    {/* Parent committee & level badge */}
+                    {committee.parent_committee_name && (
+                      <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
+                        <Building className="w-3.5 h-3.5 text-primary/70" />
+                        <span>تابعة لـ: <strong className="text-foreground">{committee.parent_committee_name}</strong></span>
+                        <span className={`mr-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          committee.level === 'main' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                          committee.level === 'primary' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                          'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                        }`}>
+                          {committee.level === 'main' ? '🏢 رئيسية' : committee.level === 'primary' ? '📋 رئيسية' : '📌 فرعية'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Sub-committees count */}
+                    {(() => {
+                      const subCommittees = committees.filter(c => c.parent_committee_id === committee.id);
+                      return subCommittees.length > 0 ? (
+                        <div className="flex items-center gap-1.5 mb-2 text-xs">
+                          <span className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-medium">
+                            <Building className="w-3 h-3" />
+                            {subCommittees.length} لجنة فرعية
+                          </span>
+                          <span className="text-muted-foreground truncate">
+                            ({subCommittees.map(s => s.name).join('، ')})
+                          </span>
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Badges: standards count + axis */}
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
@@ -562,6 +604,58 @@ export default function Committees() {
             <DialogTitle>{editingCommittee ? 'تعديل اللجنة' : 'إضافة لجنة جديدة'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 mt-4">
+            {/* حقل اللجنة الأم */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Building className="w-4 h-4 text-primary" />
+                تابعة لـ (اللجنة الأم)
+              </Label>
+              <Select
+                value={formData.parent_committee_id || 'none'}
+                onValueChange={(v) => {
+                  if (v === 'none') {
+                    setFormData({ ...formData, parent_committee_id: '', parent_committee_name: '', level: 'primary' });
+                  } else {
+                    const parent = committees.find(c => c.id === v);
+                    const parentLevel = parent?.level || parent?.type || '';
+                    let childLevel = 'sub';
+                    if (parentLevel === 'main') childLevel = 'primary';
+                    else if (parentLevel === 'primary') childLevel = 'sub';
+                    setFormData({
+                      ...formData,
+                      parent_committee_id: v,
+                      parent_committee_name: parent?.name || '',
+                      level: childLevel
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر اللجنة الأم (اختياري)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">بدون ربط (لجنة مستقلة)</SelectItem>
+                  {committees
+                    .filter(c => !editingCommittee || c.id !== editingCommittee.id)
+                    .filter(c => c.level === 'main' || c.type === 'main' || !c.parent_committee_id)
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.level === 'main' || c.type === 'main' ? '🏢' : '📋'} {c.name}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+              {formData.parent_committee_id && (
+                <div className="flex items-center gap-2 text-xs px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <span className="text-green-700 dark:text-green-300 font-semibold">
+                    {formData.level === 'primary' ? '📋 ستُنشأ كـ: لجنة رئيسية' : '📌 ستُنشأ كـ: لجنة فرعية'}
+                  </span>
+                  <span className="text-green-600 dark:text-green-400">← تابعة لـ {formData.parent_committee_name}</span>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label>اسم اللجنة *</Label>
               <Input

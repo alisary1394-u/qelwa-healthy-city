@@ -83,10 +83,139 @@ function enqueueMutationBackup(reason) {
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
-// رؤوس أمان للتطبيق المنشور (مثل qilwah.up.railway.app)
+
+// ============ حماية الموقع من النسخ والسحب ============
+
+// قائمة User-Agents المحظورة (بوتات، أدوات سحب، ذكاء اصطناعي)
+const BLOCKED_USER_AGENTS = [
+  // أدوات سحب المواقع
+  'httrack', 'sitesucker', 'webcopier', 'wget', 'curl', 'scrapy',
+  'phantomjs', 'headlesschrome', 'puppeteer', 'playwright',
+  'selenium', 'webdriver', 'crawl', 'spider', 'scrape',
+  // بوتات SEO
+  'mj12bot', 'ahrefsbot', 'semrushbot', 'dotbot', 'screaming frog',
+  'dataforseobot', 'blexbot', 'megaindex', 'serpstatbot',
+  // بوتات ذكاء اصطناعي
+  'gptbot', 'chatgpt-user', 'google-extended', 'ccbot', 'anthropic-ai',
+  'claude-web', 'bytespider', 'omgilibot', 'diffbot', 'perplexitybot',
+  'youbot', 'amazonbot', 'cohere-ai', 'meta-externalagent',
+  'applebot-extended', 'webzio-extended', 'img2dataset',
+  // بوتات أرشفة
+  'ia_archiver', 'archive.org_bot',
+];
+
+// Rate Limiting — حماية من الطلبات المفرطة
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // دقيقة واحدة
+const RATE_LIMIT_MAX = 120; // أقصى عدد طلبات في الدقيقة
+const API_RATE_LIMIT_MAX = 60; // أقصى عدد طلبات API في الدقيقة
+
+function getRateLimitKey(req) {
+  return req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+}
+
+// تنظيف دوري لمنع تسرب الذاكرة
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, data] of rateLimitMap.entries()) {
+    if (now - data.windowStart > RATE_LIMIT_WINDOW * 2) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// Middleware: كشف وحظر البوتات
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  
+  // فحص User-Agent ضد القائمة المحظورة
+  const isBlocked = BLOCKED_USER_AGENTS.some(bot => ua.includes(bot));
+  if (isBlocked) {
+    console.warn(`[Security] Blocked bot: ${ua.substring(0, 80)} — IP: ${getRateLimitKey(req)}`);
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  // حظر الطلبات بدون User-Agent (غالباً بوتات)
+  if (!req.headers['user-agent'] && req.path !== '/api/health') {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  next();
+});
+
+// Middleware: Rate Limiting
+app.use((req, res, next) => {
+  const key = getRateLimitKey(req);
+  const now = Date.now();
+  const isApi = req.path.startsWith('/api/');
+  const maxReqs = isApi ? API_RATE_LIMIT_MAX : RATE_LIMIT_MAX;
+  
+  let entry = rateLimitMap.get(key);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW) {
+    entry = { count: 1, windowStart: now };
+    rateLimitMap.set(key, entry);
+  } else {
+    entry.count++;
+  }
+  
+  // إضافة headers للـ rate limit
+  res.setHeader('X-RateLimit-Limit', maxReqs);
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, maxReqs - entry.count));
+  
+  if (entry.count > maxReqs) {
+    console.warn(`[Security] Rate limit exceeded: ${key} — ${entry.count} requests`);
+    return res.status(429).json({ 
+      error: 'تجاوزت الحد المسموح من الطلبات. حاول لاحقاً.',
+      retryAfter: Math.ceil((entry.windowStart + RATE_LIMIT_WINDOW - now) / 1000)
+    });
+  }
+  
+  next();
+});
+
+// Honeypot trap لكشف البوتات
+app.get('/api/trap', (req, res) => {
+  const ip = getRateLimitKey(req);
+  console.warn(`[Security] Bot trap triggered by IP: ${ip} — UA: ${(req.headers['user-agent'] || '').substring(0, 80)}`);
+  // حظر هذا الـ IP مؤقتاً بزيادة عداده
+  const entry = rateLimitMap.get(ip);
+  if (entry) {
+    entry.count = RATE_LIMIT_MAX + 100;
+  } else {
+    rateLimitMap.set(ip, { count: RATE_LIMIT_MAX + 100, windowStart: Date.now() });
+  }
+  res.status(403).json({ error: 'Access denied' });
+});
+
+// رؤوس أمان شاملة للتطبيق المنشور
+app.use((req, res, next) => {
+  // منع تضمين الموقع في iframe
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // منع MIME sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // حماية XSS
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // منع الإحالة
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Content Security Policy — منع تحميل المحتوى من مصادر خارجية غير مصرح بها
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob: https:; " +
+    "connect-src 'self' https://www.qeelwah.com https://*.railway.app; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self';"
+  );
+  // Permissions Policy — تقييد الوصول للمتصفح APIs
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), clipboard-read=(self)');
+  // منع التخزين المؤقت لصفحات HTML
+  if (req.path.endsWith('.html') || (!req.path.includes('.') && !req.path.startsWith('/api'))) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+  }
   next();
 });
 

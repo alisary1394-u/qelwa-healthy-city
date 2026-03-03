@@ -117,7 +117,58 @@ export async function runSeed(options = {}) {
 
   const committees = db.list('committee');
   if (committees.length === 0) {
-    COMMITTEES.forEach((c) => db.create('committee', null, { name: c.name, description: c.description }));
+    // إنشاء اللجنة الرئيسية أولاً
+    const mainCommittee = db.create('committee', null, {
+      name: 'اللجنة الرئيسية',
+      description: 'اللجنة الرئيسية لبرنامج مدينة قلوة الصحية — تشرف على جميع اللجان وتنسق العمل بينها',
+      level: 'main',
+      type: 'main',
+      parent_committee_id: null,
+      parent_committee_name: null,
+      status: 'active',
+      order: 0
+    });
+    // إنشاء اللجان الرئيسية تابعة للجنة الرئيسية
+    COMMITTEES.forEach((c) => db.create('committee', null, {
+      name: c.name,
+      description: c.description,
+      level: 'primary',
+      type: 'primary',
+      parent_committee_id: mainCommittee.id,
+      parent_committee_name: 'اللجنة الرئيسية',
+      status: 'active'
+    }));
+  } else {
+    // التأكد من وجود اللجنة الرئيسية وربط اللجان بها
+    let mainCommittee = committees.find(c => c.level === 'main' || c.type === 'main' || c.name === 'اللجنة الرئيسية');
+    if (!mainCommittee) {
+      mainCommittee = db.create('committee', null, {
+        name: 'اللجنة الرئيسية',
+        description: 'اللجنة الرئيسية لبرنامج مدينة قلوة الصحية',
+        level: 'main',
+        type: 'main',
+        parent_committee_id: null,
+        parent_committee_name: null,
+        status: 'active',
+        order: 0
+      });
+      console.log('[seed] تم إنشاء اللجنة الرئيسية');
+    }
+    // ربط اللجان التي ليس لها أم باللجنة الرئيسية
+    for (const c of committees) {
+      if (c.id === mainCommittee.id) continue;
+      if (!c.parent_committee_id && c.level !== 'main' && c.type !== 'main') {
+        try {
+          db.update('committee', c.id, {
+            ...c,
+            parent_committee_id: mainCommittee.id,
+            parent_committee_name: 'اللجنة الرئيسية',
+            level: c.level || 'primary',
+            type: c.type || 'primary'
+          });
+        } catch (e) { /* تجاهل */ }
+      }
+    }
   }
 
   // إضافة لجان تجريبية إضافية إذا كان مطلوباً
