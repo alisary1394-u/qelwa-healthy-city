@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, ClipboardList, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import { Plus, Search, ClipboardList, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle, FileText, BarChart3, Home, Filter, Calendar, TrendingUp, Heart, Shield, Droplets, GraduationCap } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import YesNoQuestion from "../components/survey/YesNoQuestion";
 import { usePermissions } from '@/hooks/usePermissions';
@@ -30,6 +30,7 @@ export default function Survey() {
   const [activeStatus, setActiveStatus] = useState('all');
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [districtFilter, setDistrictFilter] = useState('all');
 
   const [formData, setFormData] = useState({
     survey_number: '',
@@ -181,11 +182,12 @@ export default function Survey() {
 
   const filteredSurveys = visibleSurveys.filter(s => {
     const matchesStatus = activeStatus === 'all' || s.status === activeStatus;
+    const matchesDistrict = districtFilter === 'all' || s.district === districtFilter;
     const matchesSearch = !searchQuery ||
       s.family_head_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.survey_number?.includes(searchQuery) ||
       s.district?.includes(searchQuery);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesSearch && matchesDistrict;
   });
 
   const resetForm = () => {
@@ -261,50 +263,232 @@ export default function Survey() {
     }
   };
 
+  // District distribution
+  const districtStats = useMemo(() => {
+    const distMap = {};
+    districts.forEach(d => { distMap[d] = { total: 0, verified: 0, people: 0 }; });
+    visibleSurveys.forEach(s => {
+      const d = s.district || 'أخرى';
+      if (!distMap[d]) distMap[d] = { total: 0, verified: 0, people: 0 };
+      distMap[d].total++;
+      if (s.status === 'verified') distMap[d].verified++;
+      distMap[d].people += (s.demographics_total || 0);
+    });
+    return Object.entries(distMap)
+      .filter(([, v]) => v.total > 0)
+      .sort((a, b) => b[1].total - a[1].total);
+  }, [visibleSurveys]);
+
+  // Health indicators summary
+  const healthIndicators = useMemo(() => {
+    if (visibleSurveys.length === 0) return null;
+    const total = visibleSurveys.length;
+    const safeWater = visibleSurveys.filter(s => s.safe_water_access).length;
+    const hasToilet = visibleSurveys.filter(s => s.has_toilet).length;
+    const vaccinated = visibleSurveys.filter(s => s.children_fully_vaccinated).length;
+    const balancedDiet = visibleSurveys.filter(s => s.balanced_diet).length;
+    const chronicDiseases = visibleSurveys.filter(s => s.has_chronic_diseases).length;
+    return { total, safeWater, hasToilet, vaccinated, balancedDiet, chronicDiseases };
+  }, [visibleSurveys]);
+
+  const verificationRate = stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
+      {/* Header */}
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">المسح الأساسي للعائلة</h1>
-          <p className="text-white/70">نموذج المسح وفق معايير منظمة الصحة العالمية</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
+                <ClipboardList className="w-8 h-8" />
+                المسح الميداني للعائلة
+              </h1>
+              <p className="text-white/70">نموذج المسح وفق معايير منظمة الصحة العالمية</p>
+            </div>
+            {canCreateSurvey && (
+              <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-white/20 hover:bg-white/30 text-white border border-white/30">
+                <Plus className="w-5 h-5 ml-2" />
+                استبيان جديد
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <ClipboardList className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">إجمالي الاستبيانات</p>
+      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-t-4 border-t-[#1e3a5f] shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center">
+                  <ClipboardList className="w-6 h-6 text-[#1e3a5f]" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#1e3a5f]">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">إجمالي الاستبيانات</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <p className="text-2xl font-bold">{stats.totalPeople}</p>
-              <p className="text-sm text-muted-foreground">إجمالي الأفراد</p>
+          <Card className="border-t-4 border-t-[#0f766e] shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#0f766e]/10 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-[#0f766e]" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#0f766e]">{stats.totalPeople}</p>
+                  <p className="text-xs text-muted-foreground">إجمالي الأفراد</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
-              <p className="text-2xl font-bold">{stats.submitted}</p>
-              <p className="text-sm text-muted-foreground">بانتظار التحقق</p>
+          <Card className="border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">{stats.submitted}</p>
+                  <p className="text-xs text-muted-foreground">بانتظار التحقق</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <p className="text-2xl font-bold">{stats.verified}</p>
-              <p className="text-sm text-muted-foreground">تم التحقق</p>
+          <Card className="border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600">{stats.verified}</p>
+                  <p className="text-xs text-muted-foreground">تم التحقق</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        {/* Verification Progress + District Distribution */}
+        {stats.total > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Verification Progress */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2 text-[#1e3a5f]">
+                  <TrendingUp className="w-5 h-5" />
+                  نسبة التحقق
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${verificationRate}%`,
+                          background: 'linear-gradient(135deg, #0f766e, #1e3a5f)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-[#1e3a5f]">{verificationRate}%</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>تم التحقق: {stats.verified}</span>
+                  <span>بانتظار: {stats.submitted}</span>
+                  <span>الإجمالي: {stats.total}</span>
+                </div>
+
+                {/* Health Indicators */}
+                {healthIndicators && (
+                  <div className="mt-5 pt-4 border-t">
+                    <h4 className="text-sm font-semibold text-[#1e3a5f] mb-3 flex items-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      المؤشرات الصحية
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Droplets className="w-4 h-4 text-blue-500" />
+                        <span className="text-muted-foreground">مياه آمنة:</span>
+                        <span className="font-semibold">{healthIndicators.safeWater}/{healthIndicators.total}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Shield className="w-4 h-4 text-emerald-500" />
+                        <span className="text-muted-foreground">محصنون:</span>
+                        <span className="font-semibold">{healthIndicators.vaccinated}/{healthIndicators.total}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Home className="w-4 h-4 text-[#0f766e]" />
+                        <span className="text-muted-foreground">مرافق صحية:</span>
+                        <span className="font-semibold">{healthIndicators.hasToilet}/{healthIndicators.total}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <span className="text-muted-foreground">أمراض مزمنة:</span>
+                        <span className="font-semibold text-red-600">{healthIndicators.chronicDiseases}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* District Distribution */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2 text-[#1e3a5f]">
+                  <BarChart3 className="w-5 h-5" />
+                  توزيع الأحياء
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {districtStats.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">لا توجد بيانات</p>
+                ) : (
+                  <div className="space-y-3">
+                    {districtStats.map(([district, data]) => {
+                      const maxCount = districtStats[0]?.[1]?.total || 1;
+                      const widthPct = Math.max((data.total / maxCount) * 100, 8);
+                      return (
+                        <div key={district}>
+                          <div className="flex justify-between items-center text-sm mb-1">
+                            <span className="font-medium flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-[#0f766e]" />
+                              {district}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{data.total} استبيان</span>
+                              <span>•</span>
+                              <span>{data.people} فرد</span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${widthPct}%`,
+                                background: `linear-gradient(135deg, #0f766e, #1e3a5f)`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Search, Filter & Actions */}
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -314,69 +498,116 @@ export default function Survey() {
               className="pr-10"
             />
           </div>
-          {canCreateSurvey && (
-            <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
-              <Plus className="w-5 h-5 ml-2" />
-              استبيان جديد
-            </Button>
-          )}
+          <Select value={districtFilter} onValueChange={setDistrictFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <SelectValue placeholder="كل الأحياء" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الأحياء</SelectItem>
+              {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
+        <Tabs value={activeStatus} onValueChange={setActiveStatus}>
           <TabsList className="bg-card">
-            <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
-            <TabsTrigger value="submitted">بانتظار التحقق ({stats.submitted})</TabsTrigger>
-            <TabsTrigger value="verified">تم التحقق ({stats.verified})</TabsTrigger>
+            <TabsTrigger value="all" className="data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white">الكل ({stats.total})</TabsTrigger>
+            <TabsTrigger value="submitted" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">بانتظار التحقق ({stats.submitted})</TabsTrigger>
+            <TabsTrigger value="verified" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">تم التحقق ({stats.verified})</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Surveys List */}
         {isLoading ? (
           <div className="text-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-green-600" />
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1e3a5f]" />
+            <p className="text-sm text-muted-foreground mt-2">جاري تحميل الاستبيانات...</p>
           </div>
         ) : filteredSurveys.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-16 shadow-sm">
             <CardContent>
-              <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا توجد استبيانات</p>
+              <div className="w-20 h-20 mx-auto rounded-full bg-[#1e3a5f]/10 flex items-center justify-center mb-4">
+                <ClipboardList className="w-10 h-10 text-[#1e3a5f]/40" />
+              </div>
+              <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد استبيانات</p>
+              <p className="text-sm text-muted-foreground/70">
+                {searchQuery || districtFilter !== 'all' ? 'جرب تغيير معايير البحث أو الفلتر' : 'ابدأ بإنشاء أول استبيان ميداني'}
+              </p>
+              {canCreateSurvey && !searchQuery && districtFilter === 'all' && (
+                <Button onClick={() => { resetForm(); setFormOpen(true); }} className="mt-4 gradient-primary text-white">
+                  <Plus className="w-5 h-5 ml-2" />
+                  استبيان جديد
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSurveys.map(survey => (
-              <Card key={survey.id} className="hover:shadow-md transition-shadow">
+              <Card key={survey.id} className="hover:shadow-lg transition-all duration-200 border-r-4 group"
+                style={{ borderRightColor: survey.status === 'verified' ? '#0f766e' : '#f59e0b' }}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <Badge variant="outline" className="mb-2">{survey.survey_number || 'غير محدد'}</Badge>
-                      <h3 className="font-semibold">{survey.family_head_name}</h3>
+                      <Badge variant="outline" className="mb-2 text-[#1e3a5f] border-[#1e3a5f]/30 bg-[#1e3a5f]/5">{survey.survey_number || 'غير محدد'}</Badge>
+                      <h3 className="font-semibold text-[#1e3a5f]">{survey.family_head_name}</h3>
                       <p className="text-sm text-muted-foreground">{survey.volunteer_name}</p>
                     </div>
-                    <Badge className={survey.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
-                      {survey.status === 'verified' ? 'تم التحقق' : 'بانتظار'}
+                    <Badge className={survey.status === 'verified' 
+                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                      : 'bg-amber-100 text-amber-700 border border-amber-200'}>
+                      {survey.status === 'verified' ? '✓ تم التحقق' : '⏳ بانتظار'}
                     </Badge>
                   </div>
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <MapPin className="w-4 h-4 text-[#0f766e]" />
                       <span>{survey.district}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <Users className="w-4 h-4 text-[#1e3a5f]" />
                       <span>{survey.demographics_total} أفراد</span>
                     </div>
+                    {survey.survey_date && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{survey.survey_date}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick health indicators */}
+                  <div className="flex gap-1.5 mt-3 flex-wrap">
+                    {survey.safe_water_access && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                        <Droplets className="w-3 h-3 ml-1" />مياه آمنة
+                      </Badge>
+                    )}
+                    {survey.children_fully_vaccinated && (
+                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-600 border-emerald-200">
+                        <Shield className="w-3 h-3 ml-1" />محصنون
+                      </Badge>
+                    )}
+                    {survey.has_chronic_diseases && (
+                      <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
+                        <Heart className="w-3 h-3 ml-1" />أمراض مزمنة
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex gap-2 mt-4 pt-3 border-t">
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedSurvey(survey); setViewOpen(true); }}>
+                    <Button variant="outline" size="sm" onClick={() => { setSelectedSurvey(survey); setViewOpen(true); }}
+                      className="flex-1 hover:bg-[#1e3a5f]/5 hover:text-[#1e3a5f] hover:border-[#1e3a5f]/30">
                       <Eye className="w-4 h-4 ml-1" />
-                      عرض
+                      عرض التفاصيل
                     </Button>
                     {canVerify && survey.status === 'submitted' && (
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleVerify(survey)}>
+                      <Button size="sm" className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white" onClick={() => handleVerify(survey)}>
                         <CheckCircle className="w-4 h-4 ml-1" />
                         تحقق
                       </Button>
@@ -403,7 +634,7 @@ export default function Survey() {
                 variant={currentStep === step ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setCurrentStep(step)}
-                className="w-8 h-8 p-0"
+                className={`w-8 h-8 p-0 ${currentStep === step ? 'gradient-primary text-white' : ''}`}
               >
                 {step}
               </Button>
@@ -457,7 +688,7 @@ export default function Survey() {
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">1. معطيات ديموغرافية</h3>
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-3 font-medium text-blue-600 bg-blue-50 p-2 rounded">أفراد العائلة</div>
+                  <div className="col-span-3 font-medium text-[#1e3a5f] bg-[#1e3a5f]/10 p-2 rounded">أفراد العائلة</div>
                   <div className="space-y-2">
                     <Label>الإجمالي</Label>
                     <Input type="number" value={formData.demographics_total} onChange={(e) => setFormData({ ...formData, demographics_total: parseInt(e.target.value) || 0 })} />
@@ -514,7 +745,7 @@ export default function Survey() {
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">2. التعليم والإلمام بالقراءة والكتابة</h3>
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-3 font-medium text-blue-600 bg-blue-50 p-2 rounded">عدد الأطفال الملتحقين بالمدرسة (5-14 عاماً)</div>
+                  <div className="col-span-3 font-medium text-[#1e3a5f] bg-[#1e3a5f]/10 p-2 rounded">عدد الأطفال الملتحقين بالمدرسة (5-14 عاماً)</div>
                   <div className="space-y-2"><Label>الإجمالي</Label><Input type="number" value={formData.children_enrolled_school_total} onChange={(e) => setFormData({ ...formData, children_enrolled_school_total: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>ذكور</Label><Input type="number" value={formData.children_enrolled_school_males} onChange={(e) => setFormData({ ...formData, children_enrolled_school_males: parseInt(e.target.value) || 0 })} /></div>
                   <div className="space-y-2"><Label>إناث</Label><Input type="number" value={formData.children_enrolled_school_females} onChange={(e) => setFormData({ ...formData, children_enrolled_school_females: parseInt(e.target.value) || 0 })} /></div>
@@ -978,7 +1209,7 @@ export default function Survey() {
                     التالي
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={saving} className="bg-green-600 hover:bg-green-700">
+                  <Button type="submit" disabled={saving} className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white">
                     {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                     حفظ الاستبيان
                   </Button>
@@ -993,45 +1224,58 @@ export default function Survey() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تفاصيل الاستبيان - {selectedSurvey?.survey_number}</DialogTitle>
+            <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              تفاصيل الاستبيان - {selectedSurvey?.survey_number}
+            </DialogTitle>
           </DialogHeader>
           {selectedSurvey && (
             <div className="space-y-4 mt-4">
-              <Card>
-                <CardHeader><CardTitle className="text-base">معلومات أساسية</CardTitle></CardHeader>
+              <Card className="border-r-4 border-r-[#1e3a5f]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-[#1e3a5f]">معلومات أساسية</CardTitle>
+                </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">رقم العائلة:</span> <strong>{selectedSurvey.survey_number}</strong></div>
+                  <div><span className="text-muted-foreground">رقم العائلة:</span> <strong className="text-[#1e3a5f]">{selectedSurvey.survey_number}</strong></div>
                   <div><span className="text-muted-foreground">رب العائلة:</span> <strong>{selectedSurvey.family_head_name}</strong></div>
-                  <div><span className="text-muted-foreground">الحي:</span> <strong>{selectedSurvey.district}</strong></div>
+                  <div className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#0f766e]" /><span className="text-muted-foreground">الحي:</span> <strong>{selectedSurvey.district}</strong></div>
                   <div><span className="text-muted-foreground">المتطوع:</span> <strong>{selectedSurvey.volunteer_name}</strong></div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle className="text-base">المعطيات الديموغرافية</CardTitle></CardHeader>
+              <Card className="border-r-4 border-r-[#0f766e]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-[#0f766e]">المعطيات الديموغرافية</CardTitle>
+                </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">إجمالي الأفراد:</span> <strong>{selectedSurvey.demographics_total}</strong></div>
-                  <div><span className="text-muted-foreground">رجال:</span> <strong>{selectedSurvey.demographics_males}</strong></div>
-                  <div><span className="text-muted-foreground">نساء:</span> <strong>{selectedSurvey.demographics_females}</strong></div>
+                  <div className="bg-[#1e3a5f]/5 p-2 rounded text-center"><span className="text-muted-foreground block text-xs">إجمالي الأفراد</span> <strong className="text-lg text-[#1e3a5f]">{selectedSurvey.demographics_total}</strong></div>
+                  <div className="bg-blue-50 p-2 rounded text-center"><span className="text-muted-foreground block text-xs">رجال</span> <strong className="text-lg">{selectedSurvey.demographics_males}</strong></div>
+                  <div className="bg-pink-50 p-2 rounded text-center"><span className="text-muted-foreground block text-xs">نساء</span> <strong className="text-lg">{selectedSurvey.demographics_females}</strong></div>
                   <div className="col-span-3 text-muted-foreground mt-2">الأطفال &lt;1: {selectedSurvey.infants_total} | 1-4: {selectedSurvey.children_1_4_total} | 5-14: {selectedSurvey.children_5_14_total}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle className="text-base">التعليم والصحة</CardTitle></CardHeader>
+              <Card className="border-r-4 border-r-emerald-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-emerald-700">التعليم والصحة</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <div>ملتحقون بالمدرسة: <strong>{selectedSurvey.children_enrolled_school_total}</strong></div>
-                  <div>ملمون بالقراءة والكتابة: <strong>{selectedSurvey.literate_total}</strong></div>
-                  <div>مياه شرب مأمونة: {selectedSurvey.safe_water_access ? '✓ نعم' : '✗ لا'}</div>
-                  <div>مراحيض صحية: {selectedSurvey.has_toilet ? '✓ نعم' : '✗ لا'}</div>
-                  <div>التحصينات الكاملة: {selectedSurvey.children_fully_vaccinated ? '✓ نعم' : '✗ لا'}</div>
+                  <div className="flex items-center gap-2"><GraduationCap className="w-4 h-4 text-[#1e3a5f]" />ملتحقون بالمدرسة: <strong>{selectedSurvey.children_enrolled_school_total}</strong></div>
+                  <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-[#1e3a5f]" />ملمون بالقراءة والكتابة: <strong>{selectedSurvey.literate_total}</strong></div>
+                  <div className="flex items-center gap-2"><Droplets className="w-4 h-4 text-blue-500" />مياه شرب مأمونة: <strong className={selectedSurvey.safe_water_access ? 'text-emerald-600' : 'text-red-500'}>{selectedSurvey.safe_water_access ? '✓ نعم' : '✗ لا'}</strong></div>
+                  <div className="flex items-center gap-2"><Home className="w-4 h-4 text-[#0f766e]" />مراحيض صحية: <strong className={selectedSurvey.has_toilet ? 'text-emerald-600' : 'text-red-500'}>{selectedSurvey.has_toilet ? '✓ نعم' : '✗ لا'}</strong></div>
+                  <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-emerald-500" />التحصينات الكاملة: <strong className={selectedSurvey.children_fully_vaccinated ? 'text-emerald-600' : 'text-red-500'}>{selectedSurvey.children_fully_vaccinated ? '✓ نعم' : '✗ لا'}</strong></div>
                   {selectedSurvey.has_chronic_diseases && (
-                    <div className="p-2 bg-red-50 rounded">أمراض مزمنة: {selectedSurvey.chronic_diseases_details}</div>
+                    <div className="p-2 bg-red-50 rounded border border-red-200 flex items-start gap-2">
+                      <Heart className="w-4 h-4 text-red-500 mt-0.5" />
+                      <span>أمراض مزمنة: {selectedSurvey.chronic_diseases_details}</span>
+                    </div>
                   )}
                 </CardContent>
               </Card>
 
-              <div className="text-sm text-muted-foreground pt-3 border-t">
+              <div className="text-sm text-muted-foreground pt-3 border-t flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
                 الباحث: {selectedSurvey.surveyor_name} | التاريخ: {selectedSurvey.survey_date}
               </div>
             </div>
