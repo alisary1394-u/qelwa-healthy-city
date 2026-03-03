@@ -61,7 +61,7 @@ function uploadFileToDataUrl(file) {
 const ENTITY_NAMES = [
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
-  'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode',
+  'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',
 ];
 
 let supabase = null;

@@ -1,0 +1,55 @@
+{
+  "name": "VolunteerOpportunity",
+  "type": "object",
+  "title": "فرصة تطوعية",
+  "description": "فرص التطوع في برنامج المدينة الصحية",
+  "properties": {
+    "title": { "type": "string", "maxLength": 300 },
+    "description": { "type": "string", "maxLength": 3000 },
+    "type": {
+      "type": "string",
+      "enum": ["field_survey", "initiative_support", "committee_work", "community_event", "training", "awareness", "other"],
+      "default": "other"
+    },
+    "committee_id": { "type": "string", "maxLength": 100 },
+    "committee_name": { "type": "string", "maxLength": 200 },
+    "initiative_id": { "type": "string", "maxLength": 100 },
+    "initiative_name": { "type": "string", "maxLength": 200 },
+    "axis_id": { "type": "string", "maxLength": 100 },
+    "axis_name": { "type": "string", "maxLength": 200 },
+    "required_skills": { "type": "string", "maxLength": 1000 },
+    "min_volunteers": { "type": "integer", "minimum": 0, "default": 1 },
+    "max_volunteers": { "type": "integer", "minimum": 0, "default": 10 },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": "string", "format": "date" },
+    "location": { "type": "string", "maxLength": 300 },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "open", "in_progress", "closed", "cancelled"],
+      "default": "draft"
+    },
+    "volunteers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "volunteer_id": { "type": "string" },
+          "volunteer_name": { "type": "string" },
+          "volunteer_phone": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "approved", "rejected", "completed"] },
+          "applied_date": { "type": "string", "format": "date" },
+          "approved_date": { "type": "string", "format": "date" },
+          "hours_worked": { "type": "number", "default": 0 },
+          "notes": { "type": "string" }
+        }
+      },
+      "default": []
+    },
+    "created_by": { "type": "string", "maxLength": 200 },
+    "created_by_name": { "type": "string", "maxLength": 200 },
+    "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"], "default": "medium" },
+    "notes": { "type": "string", "maxLength": 2000 }
+  },
+  "required": ["title"],
+  "rls": { "create": true, "read": true, "update": true, "delete": true }
+}

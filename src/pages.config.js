@@ -66,6 +66,7 @@ export const PAGES = {
     "Tasks": lazy(() => import('./pages/Tasks')),
     "TeamManagement": lazy(() => import('./pages/TeamManagement')),
     "UserSettings": lazy(() => import('./pages/UserSettings')),
+    "Volunteering": lazy(() => import('./pages/Volunteering')),
 }
 
 export const pagesConfig = {
