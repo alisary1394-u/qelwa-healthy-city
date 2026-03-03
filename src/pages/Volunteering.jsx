@@ -836,7 +836,7 @@ export default function Volunteering() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
               <HandHelping className="w-5 h-5" />
@@ -984,7 +984,7 @@ export default function Volunteering() {
 
       {/* View Opportunity Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
               <Eye className="w-5 h-5" />
@@ -1116,7 +1116,7 @@ export default function Volunteering() {
 
       {/* Assign Volunteer Dialog */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-[#1e3a5f] flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
