@@ -746,25 +746,14 @@ function StandardsLegacy() {
               /** عدد المعايير من مرجع المعايير لكل محور (1–9)، وليس من البيانات الحالية */
               const count = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 0;
               return (
-                <div key={axis.id} className="relative group/axis inline-flex">
-                  <Button
-                    variant={activeAxis === axis.id ? 'default' : 'outline'}
-                    onClick={() => setActiveAxis(axis.id)}
-                    className="whitespace-nowrap"
-                  >
-                    {tabLabel} ({count})
-                  </Button>
-                  {canManage && (
-                    <div className="absolute -top-2 -left-2 hidden group-hover/axis:flex gap-0.5 z-10">
-                      <Button variant="secondary" size="icon" className="h-5 w-5 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); setEditAxisData({ id: axis.id, name: axis.name, description: axis.description || '', order: axis.order ?? 0 }); setEditAxisOpen(true); }}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button variant="destructive" size="icon" className="h-5 w-5 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); handleDeleteAxis(axis); }}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <Button
+                  key={axis.id}
+                  variant={activeAxis === axis.id ? 'default' : 'outline'}
+                  onClick={() => setActiveAxis(axis.id)}
+                  className="whitespace-nowrap"
+                >
+                  {tabLabel} ({count})
+                </Button>
               );
             })}
           </div>
@@ -776,12 +765,23 @@ function StandardsLegacy() {
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
               const axisStandards = scopedStandards.filter(s => s.axis_id === axis.id);
               return (
-                <EnhancedAxisCard
-                  key={axis.id}
-                  axis={axis}
-                  standards={axisStandards}
-                  onSelect={setActiveAxis}
-                />
+                <div key={axis.id} className="relative group/axiscard">
+                  <EnhancedAxisCard
+                    axis={axis}
+                    standards={axisStandards}
+                    onSelect={setActiveAxis}
+                  />
+                  {canManage && (
+                    <div className="absolute top-2 left-2 hidden group-hover/axiscard:flex gap-1 z-10">
+                      <Button variant="secondary" size="icon" className="h-7 w-7 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); setEditAxisData({ id: axis.id, name: axis.name, description: axis.description || '', order: axis.order ?? 0 }); setEditAxisOpen(true); }}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="destructive" size="icon" className="h-7 w-7 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); handleDeleteAxis(axis); }}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
