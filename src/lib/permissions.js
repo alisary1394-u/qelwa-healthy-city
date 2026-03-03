@@ -527,7 +527,7 @@ export const NAV_ITEMS = [
   { name: 'Tasks', label: 'المهام', icon: 'ClipboardList', permission: 'canSeeTasks' },
   { name: 'Budget', label: 'الميزانية', icon: 'DollarSign', permission: 'canSeeBudget' },
   { name: 'Committees', label: 'اللجان', icon: 'Building', permission: 'canSeeCommittees' },
-  { name: 'Survey', label: 'المسح الميداني', icon: 'ClipboardList', permission: 'canSeeSurvey' },
+  { name: 'Survey', label: 'المسح الميداني', icon: 'MapPinned', permission: 'canSeeSurvey' },
   { name: 'Volunteering', label: 'التطوع', icon: 'HandHelping', permission: 'canSeeVolunteering' },
   { name: 'TeamManagement', label: 'الفريق', icon: 'Users', permission: 'canSeeTeam' },
   { name: 'Files', label: 'الملفات', icon: 'FolderOpen', permission: 'canSeeFiles' },

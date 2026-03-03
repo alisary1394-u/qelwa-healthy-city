@@ -14,6 +14,8 @@ import {
   FolderOpen,
   Menu,
   Shield,
+  HandHelping,
+  MapPinned,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -27,6 +29,8 @@ const ICON_MAP = {
   Users,
   FolderOpen,
   Shield,
+  HandHelping,
+  MapPinned,
 };
 
 /**
