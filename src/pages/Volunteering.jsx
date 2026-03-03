@@ -836,15 +836,16 @@ export default function Volunteering() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent dir="rtl" className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
               <HandHelping className="w-5 h-5" />
               {editingOpp ? 'تعديل الفرصة التطوعية' : 'فرصة تطوعية جديدة'}
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSave} className="space-y-6 mt-4">
+          <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-6 pl-1 pb-2">
             {/* Basic Info */}
             <div className="space-y-4">
               <h3 className="font-semibold text-[#1e3a5f] flex items-center gap-2 bg-[#1e3a5f]/5 p-2 rounded">
@@ -971,8 +972,9 @@ export default function Volunteering() {
                 <Textarea value={formData.notes} onChange={e => setFormData(p => ({ ...p, notes: e.target.value }))} rows={2} />
               </div>
             </div>
+            </div>{/* end scrollable area */}
 
-            <div className="flex gap-3 justify-end pt-4 border-t">
+            <div className="flex gap-3 justify-end pt-4 border-t flex-shrink-0">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
               <Button type="submit" className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white">
                 {editingOpp ? 'تحديث' : 'إنشاء الفرصة'}
