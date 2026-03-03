@@ -452,24 +452,6 @@ function StandardsLegacy() {
       list = list.filter(s => standardsWithPending.has(s.id));
     }
     
-    // فرز بسيط وفعال للمحاور الفردية
-    if (activeAxis !== 'all') {
-      return list.sort((a, b) => {
-        // استخراج رقم المحور والمعيار من الرمز
-        const extractNumbers = (code) => {
-          const match = code?.match(/م(\d+)-(\d+)/);
-          return match ? [parseInt(match[1]), parseInt(match[2])] : [0, 0];
-        };
-        
-        const [axisA, numA] = extractNumbers(a.code);
-        const [axisB, numB] = extractNumbers(b.code);
-        
-        // فرز حسب رقم المحور ثم رقم المعيار
-        if (axisA !== axisB) return axisA - axisB;
-        return numA - numB;
-      });
-    }
-    
     return sortAndDeduplicateStandardsByCode(list);
   })();
 

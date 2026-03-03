@@ -11,7 +11,7 @@ import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedC
 
 const AUTH_KEY = 'local_current_user';
 const SEEDED_KEY = 'local_seeded_governor';
-const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_VERSION = '3';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const DEFAULT_NATIONAL_ID = '1';
 const DEFAULT_PASSWORD = '123456';

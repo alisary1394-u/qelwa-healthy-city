@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, Clock, Loader2, Pencil } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from '@/hooks/usePermissions';
-import { AXES_CSV } from '@/api/standardsFromCsv';
+import { AXES_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const transactionCategories = {
   expense: [
@@ -296,8 +296,8 @@ export default function Budget() {
   }, [allocations, initiatives]);
 
   const filteredStandardsForAllocation = useMemo(() => {
-    if (!allocationForm.axis_id) return standards;
-    return standards.filter((standard) => String(standard.axis_id || '') === String(allocationForm.axis_id));
+    if (!allocationForm.axis_id) return sortAndDeduplicateStandardsByCode(standards);
+    return sortAndDeduplicateStandardsByCode(standards.filter((standard) => String(standard.axis_id || '') === String(allocationForm.axis_id)));
   }, [standards, allocationForm.axis_id]);
 
   const filteredCommitteesForAllocation = useMemo(() => {
@@ -1325,8 +1325,8 @@ export default function Budget() {
                   <SelectTrigger><SelectValue placeholder={transactionForm.axis_id ? "اختر المعيار (اختياري)" : "اختر المحور أولاً"} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">بدون ربط</SelectItem>
-                    {standards
-                      .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id)
+                    {sortAndDeduplicateStandardsByCode(standards
+                      .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id))
                       .map(standard => (
                         <SelectItem key={standard.id} value={standard.id}>
                           {standard.code} - {standard.name}

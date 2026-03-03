@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
-import { STANDARDS_CSV } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, MapPinned, LayoutDashboard,
   AlertTriangle, CheckCircle2, Clock, Building2,
@@ -194,8 +194,10 @@ export default function Dashboard() {
     }
   };
 
+  const dedupedStandards = React.useMemo(() => sortAndDeduplicateStandardsByCode(standards), [standards]);
+
   const totalStandards = REFERENCE_STANDARDS_COUNT;
-  const completedStandards = standards.filter(s => s.status === 'completed' || s.status === 'approved').length;
+  const completedStandards = dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
   const overallProgress = totalStandards > 0 ? Math.round((completedStandards / totalStandards) * 100) : 0;
   const pendingTasks = tasks.filter(t => t.status === 'pending' || t.status === 'in_progress').length;
   const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length;
@@ -203,7 +205,7 @@ export default function Dashboard() {
   const activeMembers = members.filter(m => m.status === 'active').length;
 
   const axisProgress = axes.map((axis, index) => {
-    const axisStandards = standards.filter(s => s.axis_id === axis.id);
+    const axisStandards = dedupedStandards.filter(s => s.axis_id === axis.id);
     const completed = axisStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
     const total = axisStandards.length;
     return {
@@ -216,9 +218,9 @@ export default function Dashboard() {
   });
 
   const statusData = [
-    { name: 'مكتمل', value: standards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#0f766e' },
-    { name: 'قيد التنفيذ', value: standards.filter(s => s.status === 'in_progress').length, color: '#1e3a5f' },
-    { name: 'لم يبدأ', value: standards.filter(s => s.status === 'not_started' || !s.status).length, color: '#94A3B8' }
+    { name: 'مكتمل', value: dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#0f766e' },
+    { name: 'قيد التنفيذ', value: dedupedStandards.filter(s => s.status === 'in_progress').length, color: '#1e3a5f' },
+    { name: 'لم يبدأ', value: dedupedStandards.filter(s => s.status === 'not_started' || !s.status).length, color: '#94A3B8' }
   ].filter(d => d.value > 0);
 
   const statsCards = [
@@ -525,7 +527,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {standards.length === 0 ? (
+              {dedupedStandards.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <p>لا توجد بيانات</p>
                 </div>

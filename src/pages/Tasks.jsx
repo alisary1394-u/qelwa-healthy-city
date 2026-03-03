@@ -12,6 +12,7 @@ import { Plus, Search, ClipboardList, Clock, CheckCircle2, AlertTriangle, ListTo
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
+import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 function parseTeamMemberIds(rawValue) {
@@ -436,7 +437,7 @@ export default function Tasks() {
         onSave={handleSave}
         members={scopedMembers}
         initiatives={accessibleInitiatives}
-        standards={standards}
+        standards={sortAndDeduplicateStandardsByCode(standards)}
       />
 
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>

@@ -9,7 +9,7 @@ import { seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInit
 
 const DB_PREFIX = 'local_db_';
 const AUTH_KEY = 'local_current_user';
-const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_VERSION = '3';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const WEB_SYNC_KEY = 'local_web_sync_version';
 const WEB_SYNC_VERSION = '2026-03-02-2';
