@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle, Edit, Pencil } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -146,6 +146,14 @@ function StandardsLegacy() {
   const [editDocuments, setEditDocuments] = useState([]);
   const [editKpis, setEditKpis] = useState([]);
 
+  // --- Axis edit/delete ---
+  const [editAxisOpen, setEditAxisOpen] = useState(false);
+  const [editAxisData, setEditAxisData] = useState(null);
+
+  // --- Standard basic info edit ---
+  const [editStandardInfoOpen, setEditStandardInfoOpen] = useState(false);
+  const [editStandardInfo, setEditStandardInfo] = useState(null);
+
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -223,6 +231,21 @@ function StandardsLegacy() {
 
   const updateStandardMutation = useMutation({
     mutationFn: ({ id, data }) => api.entities.Standard.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
+  });
+
+  const updateAxisMutation = useMutation({
+    mutationFn: ({ id, data }) => api.entities.Axis.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['axes'] })
+  });
+
+  const deleteAxisMutation = useMutation({
+    mutationFn: (id) => api.entities.Axis.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['axes'] })
+  });
+
+  const deleteStandardMutation = useMutation({
+    mutationFn: (id) => api.entities.Standard.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['standards'] })
   });
 
@@ -466,6 +489,57 @@ function StandardsLegacy() {
     setAxisForm({ name: '', description: '', order: axes.length + 1 });
   };
 
+  const handleUpdateAxis = async (e) => {
+    e.preventDefault();
+    if (!canManage || !editAxisData?.id) return;
+    await updateAxisMutation.mutateAsync({
+      id: editAxisData.id,
+      data: { name: editAxisData.name, description: editAxisData.description, order: editAxisData.order }
+    });
+    // update axis_name in related standards
+    const relatedStds = standards.filter(s => s.axis_id === editAxisData.id && s.axis_name !== editAxisData.name);
+    for (const s of relatedStds) {
+      await updateStandardMutation.mutateAsync({ id: s.id, data: { axis_name: editAxisData.name } });
+    }
+    setEditAxisOpen(false);
+    setEditAxisData(null);
+  };
+
+  const handleDeleteAxis = async (axis) => {
+    if (!canManage) return;
+    const ok = await requireSecureDeleteConfirmation(`المحور "${axis.name}"`);
+    if (!ok) return;
+    await deleteAxisMutation.mutateAsync(axis.id);
+    if (activeAxis === axis.id) setActiveAxis('all');
+  };
+
+  const handleUpdateStandardInfo = async (e) => {
+    e.preventDefault();
+    if (!canManage || !editStandardInfo?.id) return;
+    const axis = axes.find(a => a.id === editStandardInfo.axis_id);
+    await updateStandardMutation.mutateAsync({
+      id: editStandardInfo.id,
+      data: {
+        code: editStandardInfo.code,
+        title: editStandardInfo.title,
+        description: editStandardInfo.description,
+        status: editStandardInfo.status,
+        axis_id: editStandardInfo.axis_id,
+        axis_name: axis?.name || editStandardInfo.axis_name || '',
+        required_evidence: editStandardInfo.required_evidence,
+      }
+    });
+    setEditStandardInfoOpen(false);
+    setEditStandardInfo(null);
+  };
+
+  const handleDeleteStandard = async (standard) => {
+    if (!canManage) return;
+    const ok = await requireSecureDeleteConfirmation(`المعيار "${standard.code} - ${standard.title}"`);
+    if (!ok) return;
+    await deleteStandardMutation.mutateAsync(standard.id);
+  };
+
   const handleSaveStandard = async (e) => {
     e.preventDefault();
     if (!canManage) return;
@@ -672,14 +746,25 @@ function StandardsLegacy() {
               /** عدد المعايير من مرجع المعايير لكل محور (1–9)، وليس من البيانات الحالية */
               const count = (order >= 1 && order <= AXIS_COUNTS.length) ? AXIS_COUNTS[order - 1] : 0;
               return (
-                <Button
-                  key={axis.id}
-                  variant={activeAxis === axis.id ? 'default' : 'outline'}
-                  onClick={() => setActiveAxis(axis.id)}
-                  className="whitespace-nowrap"
-                >
-                  {tabLabel} ({count})
-                </Button>
+                <div key={axis.id} className="relative group/axis inline-flex">
+                  <Button
+                    variant={activeAxis === axis.id ? 'default' : 'outline'}
+                    onClick={() => setActiveAxis(axis.id)}
+                    className="whitespace-nowrap"
+                  >
+                    {tabLabel} ({count})
+                  </Button>
+                  {canManage && (
+                    <div className="absolute -top-2 -left-2 hidden group-hover/axis:flex gap-0.5 z-10">
+                      <Button variant="secondary" size="icon" className="h-5 w-5 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); setEditAxisData({ id: axis.id, name: axis.name, description: axis.description || '', order: axis.order ?? 0 }); setEditAxisOpen(true); }}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="destructive" size="icon" className="h-5 w-5 rounded-full shadow-md" onClick={(e) => { e.stopPropagation(); handleDeleteAxis(axis); }}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -814,13 +899,31 @@ function StandardsLegacy() {
                       </div>
                       {canManage && (
                         <div className="flex gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" onClick={() => {
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="تعديل بيانات المعيار" onClick={() => {
+                            setEditStandardInfo({
+                              id: standard.id,
+                              code: standard.code || '',
+                              title: standard.title || '',
+                              description: standard.description || '',
+                              status: standard.status || 'not_started',
+                              axis_id: standard.axis_id || '',
+                              axis_name: standard.axis_name || '',
+                              required_evidence: standard.required_evidence || '',
+                            });
+                            setEditStandardInfoOpen(true);
+                          }}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="المستندات والمؤشرات" onClick={() => {
                             setEditStandard(standard);
                             setEditDocuments(parseJsonArray(standard.required_documents));
                             setEditKpis(parseJsonArray(standard.kpis));
                             setEditStandardOpen(true);
                           }}>
                             <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="حذف المعيار" onClick={() => handleDeleteStandard(standard)}>
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       )}
@@ -1220,6 +1323,92 @@ function StandardsLegacy() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Axis Dialog */}
+      <Dialog open={editAxisOpen} onOpenChange={setEditAxisOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تعديل المحور</DialogTitle></DialogHeader>
+          {editAxisData && (
+            <form onSubmit={handleUpdateAxis} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>اسم المحور *</Label>
+                <Input value={editAxisData.name} onChange={(e) => setEditAxisData({ ...editAxisData, name: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>الوصف</Label>
+                <Textarea value={editAxisData.description} onChange={(e) => setEditAxisData({ ...editAxisData, description: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>الترتيب</Label>
+                <Input type="number" value={editAxisData.order} onChange={(e) => setEditAxisData({ ...editAxisData, order: parseInt(e.target.value) || 0 })} />
+              </div>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button type="button" variant="outline" onClick={() => setEditAxisOpen(false)}>إلغاء</Button>
+                <Button type="submit" className="bg-primary">حفظ التعديلات</Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Standard Info Dialog */}
+      <Dialog open={editStandardInfoOpen} onOpenChange={setEditStandardInfoOpen}>
+        <DialogContent dir="rtl" className="max-w-2xl">
+          <DialogHeader><DialogTitle>تعديل بيانات المعيار — {editStandardInfo?.code}</DialogTitle></DialogHeader>
+          {editStandardInfo && (
+            <form onSubmit={handleUpdateStandardInfo} className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>رمز المعيار *</Label>
+                  <Input value={editStandardInfo.code} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, code: e.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>المحور</Label>
+                  <Select value={editStandardInfo.axis_id} onValueChange={(v) => setEditStandardInfo({ ...editStandardInfo, axis_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
+                    <SelectContent>
+                      {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
+                        const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
+                        return <SelectItem key={a.id} value={a.id}>{label}</SelectItem>;
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>عنوان المعيار *</Label>
+                <Input value={editStandardInfo.title} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, title: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>الوصف</Label>
+                <Textarea value={editStandardInfo.description} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, description: e.target.value })} rows={3} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>الحالة</Label>
+                  <Select value={editStandardInfo.status} onValueChange={(v) => setEditStandardInfo({ ...editStandardInfo, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_started">لم يبدأ</SelectItem>
+                      <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
+                      <SelectItem value="completed">مكتمل</SelectItem>
+                      <SelectItem value="approved">معتمد</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>الأدلة المطلوبة</Label>
+                  <Input value={editStandardInfo.required_evidence} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, required_evidence: e.target.value })} placeholder="مثال: صور، تقارير" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button type="button" variant="outline" onClick={() => setEditStandardInfoOpen(false)}>إلغاء</Button>
+                <Button type="submit" className="bg-primary">حفظ التعديلات</Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
