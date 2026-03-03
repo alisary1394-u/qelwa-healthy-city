@@ -354,6 +354,39 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+// إزالة المعايير المكررة من قاعدة البيانات — يُستدعى تلقائياً أو يدوياً
+app.post('/api/deduplicate-standards', async (req, res) => {
+  try {
+    const db = await getDb();
+    const standards = db.list('standard');
+    const codeMap = {};
+    for (const s of standards) {
+      const code = (s.code || '').trim().replace(/\s+/g, '');
+      if (!code) continue;
+      if (!codeMap[code]) codeMap[code] = [];
+      codeMap[code].push(s);
+    }
+    let removed = 0;
+    for (const code of Object.keys(codeMap)) {
+      const items = codeMap[code];
+      if (items.length <= 1) continue;
+      items.sort((a, b) => {
+        const aReal = a.title && !a.title.startsWith('معيار ') ? 1 : 0;
+        const bReal = b.title && !b.title.startsWith('معيار ') ? 1 : 0;
+        if (bReal !== aReal) return bReal - aReal;
+        return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+      });
+      for (let i = 1; i < items.length; i++) {
+        try { db.remove('standard', items[i].id); removed++; } catch {}
+      }
+    }
+    const remaining = db.list('standard').length;
+    res.json({ ok: true, removed, remaining, message: `تم إزالة ${removed} معيار مكرر. المتبقي: ${remaining}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // قائمة النسخ الاحتياطية (تُستدعى من صفحة الإعدادات للمشرف)
 app.get('/api/backups', async (req, res) => {
   try {

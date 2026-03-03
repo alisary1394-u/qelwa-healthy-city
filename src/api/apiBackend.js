@@ -7,7 +7,7 @@ import { AXES_SEED, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequir
 import { STANDARDS_CSV, getStandardIndexFromCode } from '@/api/standardsFromCsv';
 
 const AUTH_USER_KEY = 'api_auth_user';
-const CSV_SYNC_VERSION = '2';
+const CSV_SYNC_VERSION = '3';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const LEGACY_FILES_MIGRATION_KEY = 'legacy_local_to_api_files_migrated_v1';
 
@@ -196,6 +196,8 @@ function buildRequiredEvidenceApi(documents) {
 async function syncStandardsFromCsv() {
   try {
     if (typeof localStorage !== 'undefined' && localStorage.getItem(CSV_SYNC_KEY) === CSV_SYNC_VERSION) return;
+    // إزالة المعايير المكررة على السيرفر أولاً
+    try { await api('POST', '/api/deduplicate-standards'); } catch {}
     const standards = await entities.Standard.list();
     if (!standards || standards.length === 0) return;
     let updated = 0;
