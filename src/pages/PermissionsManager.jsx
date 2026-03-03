@@ -78,7 +78,7 @@ export default function PermissionsManager() {
   const activeRolePermissions = editedPermissions[activeRole] || {};
   const activeRoleLabel = ROLE_LABELS[activeRole] || activeRole;
 
-  const canManagePermissions = role === 'governor' || role === 'coordinator';
+  const canManagePermissions = role === 'governor';
 
   if (!canManagePermissions) {
     return (
