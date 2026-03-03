@@ -149,6 +149,8 @@ export default function Dashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
 
+  const dedupedStandards = React.useMemo(() => sortAndDeduplicateStandardsByCode(standards), [standards]);
+
   if (!permissions.canSeeDashboard) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
@@ -193,8 +195,6 @@ export default function Dashboard() {
       await createSettingsMutation.mutateAsync(data);
     }
   };
-
-  const dedupedStandards = React.useMemo(() => sortAndDeduplicateStandardsByCode(standards), [standards]);
 
   const totalStandards = REFERENCE_STANDARDS_COUNT;
   const completedStandards = dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
