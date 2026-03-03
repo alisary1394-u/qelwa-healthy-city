@@ -17,7 +17,7 @@ import {
   HandHelping, Plus, Search, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle,
   Clock, Calendar, Target, Building, Lightbulb, ClipboardList, UserPlus, UserCheck,
   UserX, Filter, TrendingUp, BarChart3, Star, Heart, Edit, Trash2, X, ChevronDown,
-  Award, Briefcase, GraduationCap, Megaphone, Activity
+  Award, Briefcase, GraduationCap, Megaphone, Activity, Lock, Shield
 } from "lucide-react";
 
 // --- Constants ---
@@ -77,7 +77,7 @@ export default function Volunteering() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { permissions } = usePermissions();
+  const { permissions, role, currentMember } = usePermissions();
   const canManage = permissions.canManageVolunteering === true;
 
   // --- Data queries ---
@@ -104,6 +104,41 @@ export default function Volunteering() {
     mutationFn: (id) => api.entities.VolunteerOpportunity.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['volunteerOpportunities'] }),
   });
+
+  // --- Committee-head level permissions ---
+  const isTopLevel = role === 'governor' || role === 'coordinator';
+  const isCommitteeHead = role === 'committee_head';
+  const myCommitteeId = currentMember?.committee_id || null;
+
+  // هل المستخدم هو رئيس لجنة الفرصة؟
+  const isHeadOfOppCommittee = (opp) => {
+    if (!isCommitteeHead || !myCommitteeId) return false;
+    return String(opp?.committee_id || '') === String(myCommitteeId);
+  };
+
+  // هل يستطيع تعديل الفرصة؟ (المشرف/المنسق أو رئيس اللجنة المسؤولة)
+  const canEditOpp = (opp) => {
+    if (isTopLevel && canManage) return true;
+    if (isCommitteeHead && isHeadOfOppCommittee(opp)) return true;
+    return false;
+  };
+
+  // هل يستطيع مراجعة طلبات المتطوعين في الفرصة؟
+  const canReviewOppApplications = (opp) => canEditOpp(opp);
+
+  // هل يستطيع رؤية تاب المتطوعين وتاب الطلبات؟
+  const canSeeVolunteersTab = isTopLevel || isCommitteeHead;
+  const canSeeApplicationsTab = isTopLevel || isCommitteeHead;
+
+  // اللجان المتاحة عند إنشاء فرصة جديدة
+  const availableCommitteesForForm = useMemo(() => {
+    if (isTopLevel) return committees;
+    if (isCommitteeHead && myCommitteeId) return committees.filter(c => String(c.id) === String(myCommitteeId));
+    return [];
+  }, [committees, isTopLevel, isCommitteeHead, myCommitteeId]);
+
+  // هل يمكنه إنشاء فرصة جديدة؟
+  const canCreateOpp = isTopLevel ? canManage : (isCommitteeHead && !!myCommitteeId);
 
   // --- Computed data ---
   const volunteers = useMemo(() => members.filter(m => m.role === 'volunteer' && m.status !== 'inactive'), [members]);
@@ -192,7 +227,8 @@ export default function Volunteering() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!canManage) return;
+    if (editingOpp && !canEditOpp(editingOpp)) return;
+    if (!editingOpp && !canCreateOpp) return;
     try {
       const payload = { ...formData, created_by: currentUser?.email, created_by_name: currentUser?.full_name };
       if (editingOpp) {
@@ -210,7 +246,7 @@ export default function Volunteering() {
   };
 
   const handleDelete = async (opp) => {
-    if (!canManage) return;
+    if (!canEditOpp(opp)) return;
     if (!confirm(`هل تريد حذف الفرصة "${opp.title}"؟`)) return;
     try {
       await deleteMutation.mutateAsync(opp.id);
@@ -376,7 +412,7 @@ export default function Volunteering() {
                 <p className="text-white/70 text-sm mt-1">الفرص التطوعية — إدارة المتطوعين — الأدوار والتوزيع</p>
               </div>
             </div>
-            {canManage && (
+            {canCreateOpp && (
               <Button onClick={openCreateForm} className="bg-white/20 hover:bg-white/30 text-white border border-white/30">
                 <Plus className="w-5 h-5 ml-2" />
                 فرصة تطوعية جديدة
@@ -520,12 +556,16 @@ export default function Volunteering() {
             <TabsTrigger value="opportunities" className="data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white">
               الفرص التطوعية ({stats.total})
             </TabsTrigger>
-            <TabsTrigger value="volunteers" className="data-[state=active]:bg-[#0f766e] data-[state=active]:text-white">
-              المتطوعون ({volunteers.length})
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-              الطلبات ({stats.pendingApps})
-            </TabsTrigger>
+            {canSeeVolunteersTab && (
+              <TabsTrigger value="volunteers" className="data-[state=active]:bg-[#0f766e] data-[state=active]:text-white">
+                المتطوعون ({volunteers.length})
+              </TabsTrigger>
+            )}
+            {canSeeApplicationsTab && (
+              <TabsTrigger value="applications" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+                الطلبات ({stats.pendingApps})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               لوحة الشرف ({volunteerDistribution.length})
             </TabsTrigger>
@@ -577,7 +617,7 @@ export default function Volunteering() {
                   <p className="text-sm text-muted-foreground/70">
                     {searchQuery || statusFilter !== 'all' || typeFilter !== 'all' ? 'جرب تغيير معايير البحث' : 'ابدأ بإنشاء أول فرصة تطوعية'}
                   </p>
-                  {canManage && !searchQuery && statusFilter === 'all' && (
+                  {canCreateOpp && !searchQuery && statusFilter === 'all' && (
                     <Button onClick={openCreateForm} className="mt-4 gradient-primary text-white">
                       <Plus className="w-5 h-5 ml-2" />
                       فرصة تطوعية جديدة
@@ -650,13 +690,13 @@ export default function Volunteering() {
                             onClick={() => { setSelectedOpp(opp); setViewOpen(true); }}>
                             <Eye className="w-3.5 h-3.5 ml-1" />عرض
                           </Button>
-                          {opp.status === 'open' && !canManage && (
+                          {opp.status === 'open' && !canEditOpp(opp) && (
                             <Button size="sm" className="flex-1 text-xs bg-[#0f766e] hover:bg-[#0f766e]/90 text-white"
                               onClick={() => handleApplyToOpportunity(opp)}>
                               <UserPlus className="w-3.5 h-3.5 ml-1" />تسجيل
                             </Button>
                           )}
-                          {canManage && (
+                          {canEditOpp(opp) && (
                             <>
                               <Button variant="outline" size="sm" className="text-xs" onClick={() => openEditForm(opp)}>
                                 <Edit className="w-3.5 h-3.5" />
@@ -676,19 +716,39 @@ export default function Volunteering() {
           </>
         )}
 
-        {/* TAB: Volunteers */}
-        {activeTab === 'volunteers' && (
+        {/* TAB: Volunteers — visible only to committee heads+ */}
+        {activeTab === 'volunteers' && canSeeVolunteersTab && (
           <div className="space-y-4">
+            {isCommitteeHead && !isTopLevel && (
+              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                <Shield className="w-5 h-5" />
+                <span>يتم عرض متطوعي لجنتك فقط.</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {volunteers.length === 0 ? (
+              {(() => {
+                // فلترة المتطوعين: رئيس اللجنة يرى فقط متطوعي فرص لجنته
+                const visibleVolunteers = isTopLevel
+                  ? volunteers
+                  : volunteers.filter(vol => {
+                      return opportunities.some(o =>
+                        isHeadOfOppCommittee(o) &&
+                        (o.volunteers || []).some(v =>
+                          (v.volunteer_id === vol.id || v.volunteer_id === vol.email) &&
+                          (v.status === 'approved' || v.status === 'completed')
+                        )
+                      );
+                    });
+                return visibleVolunteers.length === 0 ? (
                 <Card className="col-span-full text-center py-12">
                   <CardContent>
                     <Users className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-muted-foreground">لا يوجد متطوعون مسجلون</p>
                   </CardContent>
                 </Card>
-              ) : volunteers.map(vol => {
+              ) : visibleVolunteers.map(vol => {
                 const assignedOpps = opportunities.filter(o =>
+                  (isTopLevel || isHeadOfOppCommittee(o)) &&
                   (o.volunteers || []).some(v => (v.volunteer_id === vol.id || v.volunteer_id === vol.email) && (v.status === 'approved' || v.status === 'completed'))
                 );
                 const totalHours = assignedOpps.reduce((sum, o) => {
@@ -743,53 +803,65 @@ export default function Volunteering() {
                     </CardContent>
                   </Card>
                 );
-              })}
+              });
+              })()}
             </div>
           </div>
         )}
 
-        {/* TAB: Applications */}
-        {activeTab === 'applications' && (
+        {/* TAB: Applications — visible only to committee heads+ */}
+        {activeTab === 'applications' && canSeeApplicationsTab && (
           <div className="space-y-4">
-            {allPendingApplications.length === 0 ? (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <CheckCircle className="w-12 h-12 mx-auto text-emerald-500/40 mb-3" />
-                  <p className="text-muted-foreground">لا توجد طلبات بانتظار المراجعة</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {allPendingApplications.map((app, idx) => (
-                  <Card key={idx} className="border-r-4 border-r-amber-400 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-[#1e3a5f]">{app.volunteer_name}</h4>
-                          <p className="text-xs text-muted-foreground">تقدم لـ: {app.opportunityTitle}</p>
-                          <p className="text-xs text-muted-foreground">تاريخ التقديم: {app.applied_date}</p>
-                        </div>
-                      </div>
-                      {canManage && (
-                        <div className="flex gap-2">
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-                            onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'approved')}>
-                            <UserCheck className="w-4 h-4 ml-1" />قبول
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-red-500 hover:text-red-700 text-xs"
-                            onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'rejected')}>
-                            <UserX className="w-4 h-4 ml-1" />رفض
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+            {isCommitteeHead && !isTopLevel && (
+              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                <Shield className="w-5 h-5" />
+                <span>يتم عرض الطلبات الخاصة بلجنتك فقط.</span>
               </div>
             )}
+            {(() => {
+              const visibleApps = isTopLevel
+                ? allPendingApplications
+                : allPendingApplications.filter(app => isHeadOfOppCommittee(app.opportunity));
+              return visibleApps.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <CheckCircle className="w-12 h-12 mx-auto text-emerald-500/40 mb-3" />
+                    <p className="text-muted-foreground">لا توجد طلبات بانتظار المراجعة</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {visibleApps.map((app, idx) => (
+                    <Card key={idx} className="border-r-4 border-r-amber-400 hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-[#1e3a5f]">{app.volunteer_name}</h4>
+                            <p className="text-xs text-muted-foreground">تقدم لـ: {app.opportunityTitle}</p>
+                            <p className="text-xs text-muted-foreground">تاريخ التقديم: {app.applied_date}</p>
+                          </div>
+                        </div>
+                        {canReviewOppApplications(app.opportunity) && (
+                          <div className="flex gap-2">
+                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                              onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'approved')}>
+                              <UserCheck className="w-4 h-4 ml-1" />قبول
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-red-500 hover:text-red-700 text-xs"
+                              onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'rejected')}>
+                              <UserX className="w-4 h-4 ml-1" />رفض
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -918,8 +990,8 @@ export default function Volunteering() {
                   <Select value={formData.committee_id || 'none'} onValueChange={v => handleCommitteeChange(v === 'none' ? '' : v)}>
                     <SelectTrigger><SelectValue placeholder="اختر اللجنة" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">بدون لجنة</SelectItem>
-                      {committees.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {isTopLevel && <SelectItem value="none">بدون لجنة</SelectItem>}
+                      {availableCommitteesForForm.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1044,7 +1116,7 @@ export default function Volunteering() {
                         <Users className="w-5 h-5" />
                         المتطوعون ({volList.length})
                       </CardTitle>
-                      {canManage && (
+                      {canEditOpp(selectedOpp) && (
                         <Button size="sm" variant="outline" className="text-xs" onClick={() => { setAssignTarget(selectedOpp); setAssignSearch(''); setAssignOpen(true); }}>
                           <UserPlus className="w-4 h-4 ml-1" />تعيين متطوع
                         </Button>
@@ -1074,7 +1146,7 @@ export default function Volunteering() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {canManage && (v.status === 'approved' || v.status === 'completed') && (
+                                {canEditOpp(selectedOpp) && (v.status === 'approved' || v.status === 'completed') && (
                                   <div className="flex items-center gap-1 text-xs">
                                     <Input type="number" className="w-16 h-7 text-center text-xs" min="0" step="0.5"
                                       defaultValue={v.hours_worked || 0}
@@ -1082,7 +1154,7 @@ export default function Volunteering() {
                                     <span className="text-muted-foreground">ساعة</span>
                                   </div>
                                 )}
-                                {canManage && v.status === 'pending' && (
+                                {canEditOpp(selectedOpp) && v.status === 'pending' && (
                                   <div className="flex gap-1">
                                     <Button size="sm" className="h-7 px-2 bg-emerald-600 text-white text-xs"
                                       onClick={() => handleVolunteerAction(selectedOpp, v.volunteer_id, 'approved')}>
@@ -1094,7 +1166,7 @@ export default function Volunteering() {
                                     </Button>
                                   </div>
                                 )}
-                                {canManage && v.status === 'approved' && (
+                                {canEditOpp(selectedOpp) && v.status === 'approved' && (
                                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-blue-600"
                                     onClick={() => handleVolunteerAction(selectedOpp, v.volunteer_id, 'completed')}>
                                     <Award className="w-3.5 h-3.5 ml-1" />أكمل
