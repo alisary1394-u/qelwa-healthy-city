@@ -9,7 +9,7 @@ import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { STANDARDS_CSV } from '@/api/standardsFromCsv';
 import { 
-  BarChart3, Target, Users, FileCheck, ClipboardList, 
+  BarChart3, Target, Users, FileCheck, MapPinned, 
   AlertTriangle, CheckCircle2, Clock, Building2,
   ArrowLeft, Activity, TrendingUp, Shield, Zap,
   Image, Upload, Trash2, Save, Settings, ChevronDown
@@ -225,7 +225,7 @@ export default function Dashboard() {
     { icon: Target, label: 'المعايير الدولية', value: REFERENCE_STANDARDS_COUNT, color: 'text-primary', bgColor: 'bg-primary/10', delay: '0' },
     { icon: Users, label: 'أعضاء الفريق', value: activeMembers, color: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-600/10', delay: '75' },
     { icon: FileCheck, label: 'الأدلة المرفوعة', value: evidence.length, color: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-600/10', delay: '150' },
-    { icon: ClipboardList, label: 'استبيانات المسح', value: surveys.length, color: 'text-amber-700 dark:text-amber-400', bgColor: 'bg-amber-600/10', delay: '225' },
+    { icon: MapPinned, label: 'استبيانات المسح', value: surveys.length, color: 'text-amber-700 dark:text-amber-400', bgColor: 'bg-amber-600/10', delay: '225' },
   ];
 
   return (
@@ -587,7 +587,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { href: 'Standards', icon: Target, label: 'المعايير والأدلة', color: 'text-primary', bg: 'group-hover:bg-primary/10' },
-                { href: 'Survey', icon: ClipboardList, label: 'المسح الميداني', color: 'text-teal-700 dark:text-teal-400', bg: 'group-hover:bg-teal-600/10' },
+                { href: 'Survey', icon: MapPinned, label: 'المسح الميداني', color: 'text-teal-700 dark:text-teal-400', bg: 'group-hover:bg-teal-600/10' },
                 { href: 'Tasks', icon: CheckCircle2, label: 'المهام', color: 'text-amber-700 dark:text-amber-400', bg: 'group-hover:bg-amber-600/10' },
                 { href: 'TeamManagement', icon: Users, label: 'الفريق', color: 'text-slate-700 dark:text-slate-400', bg: 'group-hover:bg-slate-600/10' },
               ].map((action) => (

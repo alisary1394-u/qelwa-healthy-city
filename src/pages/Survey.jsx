@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, ClipboardList, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle, FileText, BarChart3, Home, Filter, Calendar, TrendingUp, Heart, Shield, Droplets, GraduationCap } from "lucide-react";
+import { Plus, Search, MapPinned, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle, FileText, BarChart3, Home, Filter, Calendar, TrendingUp, Heart, Shield, Droplets, GraduationCap } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import YesNoQuestion from "../components/survey/YesNoQuestion";
 import { usePermissions } from '@/hooks/usePermissions';
@@ -301,7 +301,7 @@ export default function Survey() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
-                <ClipboardList className="w-8 h-8" />
+                <MapPinned className="w-8 h-8" />
                 المسح الميداني للعائلة
               </h1>
               <p className="text-white/70">نموذج المسح وفق معايير منظمة الصحة العالمية</p>
@@ -323,7 +323,7 @@ export default function Survey() {
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center">
-                  <ClipboardList className="w-6 h-6 text-[#1e3a5f]" />
+                  <MapPinned className="w-6 h-6 text-[#1e3a5f]" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-[#1e3a5f]">{stats.total}</p>
@@ -531,7 +531,7 @@ export default function Survey() {
           <Card className="text-center py-16 shadow-sm">
             <CardContent>
               <div className="w-20 h-20 mx-auto rounded-full bg-[#1e3a5f]/10 flex items-center justify-center mb-4">
-                <ClipboardList className="w-10 h-10 text-[#1e3a5f]/40" />
+                <MapPinned className="w-10 h-10 text-[#1e3a5f]/40" />
               </div>
               <p className="text-lg font-medium text-muted-foreground mb-1">لا توجد استبيانات</p>
               <p className="text-sm text-muted-foreground/70">
@@ -1225,7 +1225,7 @@ export default function Survey() {
         <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
-              <ClipboardList className="w-5 h-5" />
+              <MapPinned className="w-5 h-5" />
               تفاصيل الاستبيان - {selectedSurvey?.survey_number}
             </DialogTitle>
           </DialogHeader>
