@@ -100,9 +100,9 @@ export default function Layout({ children }) {
   const sidebarWidth = sidebarCollapsed ? 'w-[68px]' : 'w-64';
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <div className="bg-background flex flex-col h-[100dvh] md:block md:h-auto md:min-h-screen" dir="rtl">
       {!backendReady && (
-        <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center z-[60] relative">
+        <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center z-[60] relative shrink-0">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <span>
             إعداد النظام مطلوب: افتح ملف <strong>.env.local</strong> وضع فيه <strong>VITE_BASE44_APP_ID</strong> و <strong>VITE_BASE44_APP_BASE_URL</strong> من لوحة الإدارة.
@@ -110,8 +110,8 @@ export default function Layout({ children }) {
         </div>
       )}
 
-      {/* ===== Mobile Top Bar ===== */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b shadow-sm">
+      {/* ===== Mobile Top Bar — in normal flow, never scrolls ===== */}
+      <header className="md:hidden shrink-0 bg-card border-b shadow-sm z-50">
         <div className="flex items-center justify-between h-14 px-4">
           <button 
             onClick={() => setMobileMenuOpen(true)}
@@ -135,8 +135,6 @@ export default function Layout({ children }) {
           </div>
         </div>
       </header>
-      {/* Spacer to push content below the fixed mobile header */}
-      <div className="md:hidden h-14" />
 
       {/* ===== Mobile Overlay Menu ===== */}
       {mobileMenuOpen && (
@@ -200,7 +198,8 @@ export default function Layout({ children }) {
         </>
       )}
 
-      <div className="flex">
+      {/* ===== Main scrollable area (mobile: overflow-y-auto, desktop: normal) ===== */}
+      <div className="flex-1 overflow-y-auto md:overflow-visible md:flex">
         {/* ===== Desktop Sidebar ===== */}
         <aside className={`hidden md:flex flex-col fixed top-0 right-0 bottom-0 ${sidebarWidth} bg-sidebar border-l border-sidebar-border z-40 transition-all duration-300`}>
           {/* Logo */}
@@ -380,7 +379,7 @@ export default function Layout({ children }) {
         </aside>
 
         {/* ===== Main Content ===== */}
-        <main className={`flex-1 min-h-[calc(100vh-3.5rem)] md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:mr-[68px]' : 'md:mr-64'}`}>
+        <main className={`flex-1 md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:mr-[68px]' : 'md:mr-64'}`}>
           {/* Top bar for desktop — breadcrumb + notifications */}
           <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
