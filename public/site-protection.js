@@ -492,6 +492,155 @@
     lastH = window.outerHeight;
   }, 400);
 
+  // ========== 14. حماية الأجهزة المحمولة من لقطات الشاشة ==========
+  var isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  if (isMobile || isTouchDevice) {
+
+    // --- أ) كشف لقطة شاشة عبر تغير حجم الشاشة المفاجئ (Android) ---
+    // عند أخذ لقطة شاشة على Android، يتغير حجم النافذة لحظياً
+    var mobileLastW = screen.width, mobileLastH = screen.height;
+    var lastResizeTime = 0;
+    window.addEventListener('resize', function() {
+      if (isScreenshotAllowed()) return;
+      var now = Date.now();
+      var wChanged = Math.abs(screen.width - mobileLastW) > 0;
+      var hChanged = Math.abs(screen.height - mobileLastH) > 0;
+      // لقطة شاشة على بعض الأجهزة تسبب resize سريع
+      if (now - lastResizeTime < 500 && (wChanged || hChanged)) {
+        showOverlayNow();
+        clearClipboard();
+        hideOverlayDelayed(3000);
+      }
+      lastResizeTime = now;
+      mobileLastW = screen.width;
+      mobileLastH = screen.height;
+    });
+
+    // --- ب) كشف لقطة شاشة عبر Visibility API (iOS + Android) ---
+    // بعض الأجهزة تُطلق visibilitychange عند أخذ لقطة
+    var lastVisibilityChange = 0;
+    document.addEventListener('visibilitychange', function() {
+      if (isScreenshotAllowed()) return;
+      var now = Date.now();
+      if (document.hidden) {
+        lastVisibilityChange = now;
+      } else {
+        // العودة خلال أقل من 2 ثانية = لقطة شاشة محتملة
+        if (now - lastVisibilityChange < 2000) {
+          showOverlayNow();
+          clearClipboard();
+          hideOverlayDelayed(3000);
+        }
+      }
+    });
+
+    // --- ج) كشف لقطة شاشة عبر فقدان/استعادة التركيز السريع ---
+    var lastBlurTime = 0;
+    window.addEventListener('blur', function() {
+      if (isScreenshotAllowed()) return;
+      lastBlurTime = Date.now();
+      showOverlayNow();
+    });
+    window.addEventListener('focus', function() {
+      if (isScreenshotAllowed()) return;
+      var now = Date.now();
+      // Blur ثم Focus خلال أقل من 3 ثوانٍ = لقطة شاشة محتملة
+      if (lastBlurTime > 0 && now - lastBlurTime < 3000) {
+        clearClipboard();
+      }
+      hideOverlayDelayed(500);
+    });
+
+    // --- د) حماية عبر CSS خاصة بالموبايل ---
+    var mobileProtectStyle = document.createElement('style');
+    mobileProtectStyle.textContent =
+      // منع التحديد على الشاشات اللمسية
+      '* { -webkit-touch-callout: none !important; -webkit-tap-highlight-color: transparent !important; }' +
+      // لا يمكن حفظ الصور بالضغط المطول
+      'img, canvas, video, svg { -webkit-touch-callout: none !important; pointer-events: none !important; }' +
+      // منع التكبير عبر القرص (pinch zoom) الذي قد يستخدم لالتقاط التفاصيل
+      'html { touch-action: manipulation; }' +
+      // إقفال اتجاه الشاشة على الوضع الطبيعي
+      '@media screen and (orientation: landscape) {' +
+      '  body::before {' +
+      '    content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;' +
+      '    z-index: 2147483646; pointer-events: none;' +
+      '  }' +
+      '}';
+    document.head.appendChild(mobileProtectStyle);
+
+    // --- هـ) منع حفظ الصور بالضغط المطول (Long Press) ---
+    document.addEventListener('touchstart', function(e) {
+      if (isScreenshotAllowed()) return;
+      var tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'img' || tag === 'canvas' || tag === 'video') {
+        e.target.style.pointerEvents = 'none';
+        setTimeout(function() { e.target.style.pointerEvents = ''; }, 100);
+      }
+    }, { passive: true });
+
+    // منع القائمة المنبثقة عند الضغط المطول
+    document.addEventListener('touchstart', function() {
+      if (isScreenshotAllowed()) return;
+      var timer = setTimeout(function() {}, 500);
+      document.addEventListener('touchend', function() { clearTimeout(timer); }, { once: true });
+      document.addEventListener('touchmove', function() { clearTimeout(timer); }, { once: true });
+    }, { passive: true });
+
+    // --- و) حماية إضافية لـ iOS: كشف لقطة شاشة عبر حجم الفيديو ---
+    if (isIOS) {
+      // على iOS، بعض التطبيقات تطلق إشعاراً عند Screenshot
+      // نعتمد على حيلة: إنشاء عنصر video فارغ مخفي
+      // تغيّر حالة الفيديو يمكن أن يكشف بعض أحداث النظام
+      try {
+        var detector = document.createElement('video');
+        detector.setAttribute('playsinline', '');
+        detector.muted = true;
+        detector.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+        document.documentElement.appendChild(detector);
+        // مراقبة أحداث pause/play التي قد تحدث عند لقطة شاشة
+        detector.addEventListener('pause', function() {
+          if (isScreenshotAllowed()) return;
+          showOverlayNow();
+          clearClipboard();
+          hideOverlayDelayed(3000);
+        });
+      } catch(ex) {}
+    }
+
+    // --- ز) حماية Android عبر Capacitor Plugin (FLAG_SECURE) ---
+    // إذا كان التطبيق يعمل داخل Capacitor، نستدعي Plugin أصلي
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      try {
+        // استدعاء Plugin ScreenProtection
+        var Plugins = window.Capacitor.Plugins;
+        if (Plugins && Plugins.ScreenProtection) {
+          if (!isScreenshotAllowed()) {
+            Plugins.ScreenProtection.enable();
+          }
+        }
+      } catch(ex) {
+        console.warn('[Security] Capacitor ScreenProtection plugin not available');
+      }
+    }
+
+    console.log('[Security] Mobile screenshot protection active (' + (isIOS ? 'iOS' : isAndroid ? 'Android' : 'Touch') + ')');
+  }
+
+  // ========== 15. حماية إضافية: منع تسجيل الشاشة على الموبايل ==========
+  // كشف تسجيل الشاشة عبر mediaDevices
+  if (navigator.mediaDevices) {
+    navigator.mediaDevices.addEventListener('devicechange', function() {
+      if (isScreenshotAllowed()) return;
+      showOverlayNow();
+      hideOverlayDelayed(2000);
+    });
+  }
+
   // ========== التشغيل ==========
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {

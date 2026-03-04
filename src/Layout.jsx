@@ -40,6 +40,17 @@ export default function Layout({ children }) {
   // السماح بلقطات الشاشة للمشرف العام فقط
   useEffect(() => {
     window.__ALLOW_SCREENSHOTS = isGovernor === true;
+    
+    // حماية Capacitor الأصلية للموبايل
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      import('@/mobile/screen-protection-plugin').then(({ enableScreenProtection, disableScreenProtection }) => {
+        if (isGovernor) {
+          disableScreenProtection();
+        } else {
+          enableScreenProtection();
+        }
+      }).catch(() => {});
+    }
   }, [isGovernor]);
   const { theme, setTheme, systemTheme } = useTheme();
 
