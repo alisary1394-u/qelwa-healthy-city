@@ -528,7 +528,7 @@ export default function Home() {
       <footer className="bg-card border-t py-6">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-muted-foreground text-sm">نظام المدينة الصحية — {currentSetting.city_location || 'محافظة قلوة'}</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">© {new Date().getFullYear()} جميع الحقوق محفوظة</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">© {new Date().getFullYear()} جميع الحقوق محفوظة لـ علي الشهري</p>
         </div>
       </footer>
     </div>
