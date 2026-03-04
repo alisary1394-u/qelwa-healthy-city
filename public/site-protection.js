@@ -297,9 +297,11 @@
     return window.__ALLOW_SCREENSHOTS === true;
   }
 
-  // --- الغطاء الواقي الدائم (يظهر فوراً عند أي محاولة تصوير) ---
+  // --- الغطاء الواقي الدائم ---
   var protectionOverlay = null;
   var overlayVisible = false;
+  var winKeyTimer = null;
+  var winKeyDown = false;
 
   function createProtectionOverlay() {
     if (protectionOverlay) return;
@@ -307,180 +309,188 @@
     protectionOverlay.id = 'screenshot-protection-overlay';
     protectionOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
       'background:linear-gradient(135deg,#1e3a5f 0%,#0f1b2d 100%);z-index:2147483647;' +
-      'display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Tajawal,sans-serif;' +
-      'pointer-events:all;';
+      'display:none;align-items:center;justify-content:center;direction:rtl;font-family:Tajawal,sans-serif;' +
+      'pointer-events:all;transition:none;';
     protectionOverlay.innerHTML = '<div style="text-align:center;color:white;">' +
       '<div style="font-size:4rem;margin-bottom:20px;">🛡️</div>' +
       '<h2 style="font-size:1.8rem;margin-bottom:10px;">المحتوى محمي</h2>' +
       '<p style="color:#94a3b8;font-size:1.1rem;">لقطات الشاشة غير مسموح بها</p>' +
       '<p style="color:#64748b;font-size:0.85rem;margin-top:8px;">نظام المدينة الصحية - محافظة قلوة</p>' +
       '</div>';
-    // إضافة الغطاء مسبقاً لكن مخفي
-    protectionOverlay.style.display = 'none';
     document.documentElement.appendChild(protectionOverlay);
   }
 
-  function showProtectionOverlay() {
+  // إنشاء الغطاء فوراً عند تحميل الصفحة ليكون جاهزاً
+  if (document.readyState !== 'loading') {
+    createProtectionOverlay();
+  } else {
+    document.addEventListener('DOMContentLoaded', createProtectionOverlay);
+  }
+
+  function showOverlayNow() {
     if (isScreenshotAllowed() || overlayVisible) return;
     createProtectionOverlay();
-    if (protectionOverlay) {
-      protectionOverlay.style.display = 'flex';
-      overlayVisible = true;
-    }
+    protectionOverlay.style.display = 'flex';
+    overlayVisible = true;
   }
 
-  function hideProtectionOverlay() {
-    if (protectionOverlay && overlayVisible) {
-      protectionOverlay.style.display = 'none';
-      overlayVisible = false;
-    }
+  function hideOverlayDelayed(delay) {
+    setTimeout(function() {
+      if (protectionOverlay && overlayVisible) {
+        protectionOverlay.style.display = 'none';
+        overlayVisible = false;
+      }
+    }, delay || 500);
   }
 
-  // --- أ) اعتراض PrintScreen وتنظيف الحافظة فوراً ---
-  document.addEventListener('keyup', function(e) {
-    if (isScreenshotAllowed()) return;
-    if (e.key === 'PrintScreen' || e.keyCode === 44) {
-      // عرض الغطاء فوراً
-      showProtectionOverlay();
-      // تنظيف الحافظة
-      try { navigator.clipboard.writeText('').catch(function(){}); } catch(ex) {}
-      try {
-        var canvas = document.createElement('canvas');
-        canvas.width = 1; canvas.height = 1;
-        var ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#1e3a5f';
-        ctx.fillRect(0, 0, 1, 1);
-        canvas.toBlob(function(blob) {
-          try {
-            var item = new ClipboardItem({ 'image/png': blob });
-            navigator.clipboard.write([item]).catch(function(){});
-          } catch(ex2) {}
-        });
-      } catch(ex3) {}
-      e.preventDefault();
-      // إخفاء بعد ثانيتين
-      setTimeout(hideProtectionOverlay, 2000);
-    }
-  });
+  function clearClipboard() {
+    try { navigator.clipboard.writeText('').catch(function(){}); } catch(ex) {}
+    try {
+      var c = document.createElement('canvas');
+      c.width = 1; c.height = 1;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#1e3a5f';
+      ctx.fillRect(0,0,1,1);
+      c.toBlob(function(blob) {
+        try {
+          navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).catch(function(){});
+        } catch(e) {}
+      });
+    } catch(e) {}
+  }
 
-  // --- ب) اعتراض جميع اختصارات التصوير ---
+  // ★★★ الحيلة الرئيسية: إظهار الغطاء فوراً عند الضغط على مفتاح Windows ★★★
+  // مفتاح Windows (Meta) يُضغط أولاً قبل أي اختصار تصوير:
+  // Win+Shift+S → Meta keydown يأتي أولاً
+  // Win+PrtScn → Meta keydown يأتي أولاً  
+  // Win+G → Meta keydown يأتي أولاً
+  // لذا نعرض الغطاء عند Meta keydown فوراً!
+
   document.addEventListener('keydown', function(e) {
     if (isScreenshotAllowed()) return;
 
-    var blocked = false;
+    // ★ عند الضغط على مفتاح Windows/Meta → إظهار فوري
+    if (e.key === 'Meta' || e.key === 'OS') {
+      winKeyDown = true;
+      showOverlayNow();
+      // إذا كان مجرد ضغطة عابرة (مثل فتح قائمة Start)، نخفي بعد 3 ثوانٍ
+      if (winKeyTimer) clearTimeout(winKeyTimer);
+      winKeyTimer = setTimeout(function() {
+        if (document.hasFocus() && !document.hidden) {
+          hideOverlayDelayed(0);
+        }
+        winKeyDown = false;
+      }, 3000);
+      return;
+    }
 
-    // PrintScreen (مباشر أو مع أي مفتاح)
+    // PrintScreen بأي شكل
     if (e.key === 'PrintScreen' || e.keyCode === 44) {
-      blocked = true;
-    }
-    // Win+Shift+S (أداة القص)
-    if (e.shiftKey && (e.key === 'S' || e.key === 's') && (e.metaKey || e.ctrlKey)) {
-      blocked = true;
-    }
-    // Win+PrtScn
-    if (e.metaKey && (e.key === 'PrintScreen' || e.keyCode === 44)) {
-      blocked = true;
-    }
-    // Alt+PrintScreen
-    if (e.altKey && (e.key === 'PrintScreen' || e.keyCode === 44)) {
-      blocked = true;
-    }
-    // Ctrl+PrintScreen
-    if (e.ctrlKey && (e.key === 'PrintScreen' || e.keyCode === 44)) {
-      blocked = true;
-    }
-    // Win+G (Game Bar recording)
-    if (e.metaKey && (e.key === 'G' || e.key === 'g')) {
-      blocked = true;
-    }
-    // Win+Alt+PrtScn (Game Bar screenshot)
-    if (e.metaKey && e.altKey && (e.key === 'PrintScreen' || e.keyCode === 44)) {
-      blocked = true;
-    }
-
-    if (blocked) {
-      showProtectionOverlay();
+      showOverlayNow();
       e.preventDefault();
       e.stopImmediatePropagation();
-      // تنظيف الحافظة
-      try { navigator.clipboard.writeText('').catch(function(){}); } catch(ex) {}
-      setTimeout(hideProtectionOverlay, 2000);
+      clearClipboard();
+      hideOverlayDelayed(3000);
       return false;
+    }
+
+    // Ctrl+Shift+S
+    if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      showOverlayNow();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      hideOverlayDelayed(3000);
+      return false;
+    }
+
+    // Win+G (Game Bar)
+    if (e.metaKey && (e.key === 'G' || e.key === 'g')) {
+      showOverlayNow();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      hideOverlayDelayed(3000);
+      return false;
+    }
+  }, true); // capture phase — أسرع ما يمكن
+
+  // عند رفع مفتاح Windows — إخفاء بعد تأخير (للسماح للمستخدم العادي)
+  document.addEventListener('keyup', function(e) {
+    if (isScreenshotAllowed()) return;
+
+    if (e.key === 'Meta' || e.key === 'OS') {
+      winKeyDown = false;
+      // تأخير قصير: إذا كان الـ focus مازال هنا، أخفِ الغطاء
+      setTimeout(function() {
+        if (document.hasFocus() && !document.hidden && !winKeyDown) {
+          hideOverlayDelayed(0);
+        }
+      }, 800);
+    }
+
+    // PrintScreen keyup — تنظيف الحافظة
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+      showOverlayNow();
+      clearClipboard();
+      e.preventDefault();
+      hideOverlayDelayed(3000);
     }
   }, true);
 
-  // --- ج) حماية عند فقدان التركيز (Snipping Tool / Alt+Tab / تبديل نوافذ) ---
-  // عند إخفاء التبويب
+  // --- حماية عند فقدان التركيز (أداة القص / Alt+Tab / أي تبديل) ---
   document.addEventListener('visibilitychange', function() {
     if (isScreenshotAllowed()) return;
     if (document.hidden) {
-      showProtectionOverlay();
+      showOverlayNow();
     } else {
-      setTimeout(hideProtectionOverlay, 500);
+      hideOverlayDelayed(600);
     }
   });
 
-  // عند فقدان تركيز النافذة (أداة القص، Alt+Tab)
   window.addEventListener('blur', function() {
     if (isScreenshotAllowed()) return;
-    showProtectionOverlay();
+    showOverlayNow();
   });
 
-  // عند استعادة التركيز
   window.addEventListener('focus', function() {
     if (isScreenshotAllowed()) return;
-    setTimeout(hideProtectionOverlay, 400);
+    hideOverlayDelayed(500);
   });
 
-  // --- د) تنظيف الحافظة دورياً عندما لا يكون المتصفح في التركيز ---
+  // --- تنظيف الحافظة دورياً ---
   setInterval(function() {
     if (isScreenshotAllowed()) return;
-    if (document.hasFocus()) return;
-    try { navigator.clipboard.writeText('').catch(function(){}); } catch(ex) {}
+    if (!document.hasFocus()) {
+      clearClipboard();
+    }
   }, 1500);
 
-  // --- هـ) حظر Screen Capture API (مشاركة الشاشة / تسجيل الشاشة) ---
+  // --- حظر Screen Capture API ---
   if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     var originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getDisplayMedia = function(constraints) {
-      if (isScreenshotAllowed()) {
-        return originalGetDisplayMedia(constraints);
-      }
-      console.warn('[Security] Screen capture blocked');
+      if (isScreenshotAllowed()) return originalGetDisplayMedia(constraints);
       return Promise.reject(new DOMException('Screen capture is not allowed', 'NotAllowedError'));
     };
   }
 
-  // --- و) CSS شامل: حماية المحتوى من التصوير والتسجيل ---
+  // --- CSS حماية شاملة ---
   var screenshotStyle = document.createElement('style');
   screenshotStyle.textContent =
-    '/* إخفاء المحتوى في وضع Picture-in-Picture */' +
-    '@media (display-mode: picture-in-picture) {' +
-    '  body { visibility: hidden !important; }' +
-    '  body::after { visibility: visible !important; content: "محتوى محمي"; display:flex; align-items:center; justify-content:center; height:100vh; font-size:2rem; color:white; background:#1e3a5f; }' +
-    '}' +
-    '/* حماية الطباعة */' +
-    '@media print {' +
-    '  body * { display: none !important; }' +
-    '  body::after { content: "⛔ طباعة هذا المحتوى غير مسموح بها"; display: block !important; font-size: 24px; text-align: center; padding: 50px; direction: rtl; }' +
-    '}';
+    '@media (display-mode: picture-in-picture) { body { visibility: hidden !important; } }' +
+    '@media print { body * { display: none !important; } body::after { content: "⛔ طباعة غير مسموح بها"; display: block !important; font-size: 24px; text-align: center; padding: 50px; direction: rtl; } }';
   document.head.appendChild(screenshotStyle);
 
-  // --- ز) مراقبة تغيرات حجم النافذة (قد تشير لأداة تصوير) ---
-  var lastWidth = window.outerWidth;
-  var lastHeight = window.outerHeight;
+  // --- مراقبة حجم النافذة ---
+  var lastW = window.outerWidth, lastH = window.outerHeight;
   setInterval(function() {
     if (isScreenshotAllowed()) return;
-    var wDiff = Math.abs(window.outerWidth - lastWidth);
-    var hDiff = Math.abs(window.outerHeight - lastHeight);
-    // تغير مفاجئ كبير → قد تكون أداة تصوير
-    if (wDiff > 200 || hDiff > 200) {
-      showProtectionOverlay();
-      setTimeout(hideProtectionOverlay, 1500);
+    if (Math.abs(window.outerWidth - lastW) > 200 || Math.abs(window.outerHeight - lastH) > 200) {
+      showOverlayNow();
+      hideOverlayDelayed(1500);
     }
-    lastWidth = window.outerWidth;
-    lastHeight = window.outerHeight;
-  }, 500);
+    lastW = window.outerWidth;
+    lastH = window.outerHeight;
+  }, 400);
 
   // ========== التشغيل ==========
   if (document.readyState === 'loading') {
