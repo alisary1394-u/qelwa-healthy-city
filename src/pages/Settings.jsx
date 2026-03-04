@@ -1074,7 +1074,7 @@ export default function Settings() {
                         {filteredPermissionKeys.map(({ key, label }) => {
                           const isEnabled = activeRolePermissions[key] === true;
                           return (
-                            <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                            <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex-row-reverse">
                               <div className="flex items-center gap-3">
                                 {isEnabled ? (
                                   <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
