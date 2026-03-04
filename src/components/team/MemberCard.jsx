@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, Building2, Edit, Trash2, User } from "lucide-react";
+import T from "@/components/T";
 
 const roleLabels = {
   governor: "المشرف العام",
@@ -43,7 +44,7 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
               {member.full_name?.charAt(0)}
             </div>
             <div>
-              <h3 className="font-semibold text-lg">{member.full_name}</h3>
+              <h3 className="font-semibold text-lg"><T>{member.full_name}</T></h3>
               <Badge className={`${roleColors[member.role]} border mt-1`}>
                 {roleLabels[member.role]}
               </Badge>
@@ -69,19 +70,19 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
           {member.specialization && (
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span>{member.specialization}</span>
+              <span><T>{member.specialization}</T></span>
             </div>
           )}
           {member.committee_name && (
             <div className="flex items-center gap-2 text-blue-600">
               <Building2 className="w-4 h-4" />
-              <span>{member.committee_name}</span>
+              <span><T>{member.committee_name}</T></span>
             </div>
           )}
           {member.department && (
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              <span>{member.department}</span>
+              <span><T>{member.department}</T></span>
             </div>
           )}
           <div className="flex items-center gap-2">

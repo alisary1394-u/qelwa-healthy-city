@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, ChevronUp, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle, Edit, Pencil } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import T from "@/components/T";
 
 
 import StandardKPIManager from '@/components/standards/StandardKPIManager';
@@ -879,11 +880,11 @@ function StandardsLegacy() {
                             {statusConfig[standard.status]?.label}
                           </span>
                         </div>
-                        <h3 className="text-white font-bold text-base leading-tight">{getShortTitleByCode(standard.code) || standard.title}</h3>
+                        <h3 className="text-white font-bold text-base leading-tight"><T>{getShortTitleByCode(standard.code) || standard.title}</T></h3>
                         {standard.axis_name && (
                           <div className="flex items-center gap-1.5 mt-1.5">
                             <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
-                            <span className="text-white/90 text-xs truncate">{standard.axis_name}</span>
+                            <span className="text-white/90 text-xs truncate"><T>{standard.axis_name}</T></span>
                           </div>
                         )}
                         {/* Stats badges */}
@@ -942,7 +943,7 @@ function StandardsLegacy() {
                   <CardContent className="p-4">
                     <div className="flex-1">
                         {/* نص المعيار الكامل */}
-                        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{standard.title}</p>
+                        <p className="text-sm text-muted-foreground mb-3 leading-relaxed"><T>{standard.title}</T></p>
                         {standard.required_evidence && (
                           <p className="text-xs text-primary mb-3 flex items-center gap-1">
                             <FileText className="w-3.5 h-3.5 shrink-0" />
@@ -959,7 +960,7 @@ function StandardsLegacy() {
                             <div className="flex flex-wrap gap-1">
                               {visibleCommittees.length > 0 ? visibleCommittees.map((committee) => (
                                 <Badge key={committee.id} variant="outline" className="text-[11px]">
-                                  {committee.name}
+                                  <T>{committee.name}</T>
                                 </Badge>
                               )) : (
                                 <span className="text-xs text-muted-foreground">لا توجد لجان مرتبطة</span>
@@ -984,7 +985,7 @@ function StandardsLegacy() {
                             <div className="space-y-1">
                               {visibleInitiatives.length > 0 ? visibleInitiatives.map((initiative) => (
                                 <p key={initiative.id} className="text-xs text-foreground truncate" title={initiative.title}>
-                                  • {initiative.title}
+                                  • <T>{initiative.title}</T>
                                 </p>
                               )) : (
                                 <span className="text-xs text-muted-foreground">لا توجد مبادرات مرتبطة</span>

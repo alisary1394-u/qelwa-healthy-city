@@ -6,6 +6,7 @@ import { Calendar, Clock, User, Edit, Trash2, CheckCircle, AlertCircle, Lightbul
 import { DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 import { format, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import T from "@/components/T";
 
 const ROLE_LABELS_AR = {
   governor: 'المشرف العام',
@@ -71,7 +72,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
             <div className="flex items-center gap-2 mb-1">
               {isOverdue && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
               <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig[task.priority]?.dot || 'bg-gray-400'}`} title={priorityConfig[task.priority]?.label} />
-              <h3 className="font-semibold text-base truncate">{task.title}</h3>
+              <h3 className="font-semibold text-base truncate"><T>{task.title}</T></h3>
             </div>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               <Badge className={`text-[10px] px-1.5 py-0.5 ${statusConfig[task.status]?.color}`}>
@@ -101,7 +102,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
         </div>
 
         {task.description && (
-          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
+          <p className="text-xs text-muted-foreground mb-3 line-clamp-2"><T>{task.description}</T></p>
         )}
 
         {/* Assignee card */}
@@ -110,7 +111,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
             {assigneeInitial}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{assigneeName}</p>
+            <p className="text-sm font-semibold text-foreground truncate"><T>{assigneeName}</T></p>
             {assigneeRole && (
               <p className="text-[11px] text-muted-foreground">{ROLE_LABELS_AR[assigneeRole] || assigneeRole}</p>
             )}
@@ -122,7 +123,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
           {(initiativeTitle || task.initiative_id) && (
             <div className="flex items-center gap-1.5 text-purple-600">
               <Lightbulb className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{initiativeTitle || '—'}</span>
+              <span className="truncate"><T>{initiativeTitle || '—'}</T></span>
             </div>
           )}
           {(task.standard_code || task.standard_id) && (

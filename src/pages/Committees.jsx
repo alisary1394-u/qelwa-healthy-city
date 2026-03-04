@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import T from "@/components/T";
 
 export default function Committees() {
   const { t, i18n } = useTranslation();
@@ -418,11 +419,11 @@ export default function Committees() {
                   <div className={`bg-gradient-to-l ${gradientClass} p-4 relative`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-bold text-lg leading-tight truncate">{committee.name}</h3>
+                        <h3 className="text-white font-bold text-lg leading-tight truncate"><T>{committee.name}</T></h3>
                         {resolvedAxisName && (
                           <div className="flex items-center gap-1.5 mt-1.5">
                             <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
-                            <span className="text-white/90 text-xs truncate">{resolvedAxisName}</span>
+                            <span className="text-white/90 text-xs truncate"><T>{resolvedAxisName}</T></span>
                           </div>
                         )}
                       </div>
@@ -474,14 +475,14 @@ export default function Committees() {
 
                   <CardContent className="p-4">
                     {committee.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{committee.description}</p>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2"><T>{committee.description}</T></p>
                     )}
 
                     {/* Parent committee & level badge */}
                     {committee.parent_committee_name && (
                       <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
                         <Building className="w-3.5 h-3.5 text-primary/70" />
-                        <span>تابعة لـ: <strong className="text-foreground">{committee.parent_committee_name}</strong></span>
+                        <span>تابعة لـ: <strong className="text-foreground"><T>{committee.parent_committee_name}</T></strong></span>
                         <span className={`mr-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           committee.level === 'main' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
                           committee.level === 'primary' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :

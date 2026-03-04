@@ -23,6 +23,7 @@ import KPIManager from "../components/initiatives/KPIManager";
 import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import T from "@/components/T";
 
 const statusConfig = {
   planning: { label: 'تخطيط', color: 'bg-slate-600', icon: Clock, gradient: 'from-slate-600 to-slate-700' },
@@ -1153,11 +1154,11 @@ export default function Initiatives() {
                             </span>
                           )}
                         </div>
-                        <h3 className="text-white font-bold text-base leading-tight truncate">{initiative.title}</h3>
+                        <h3 className="text-white font-bold text-base leading-tight truncate"><T>{initiative.title}</T></h3>
                         {initiative.axis_name && (
                           <div className="flex items-center gap-1.5 mt-1.5">
                             <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
-                            <span className="text-white/90 text-xs truncate">{initiative.axis_name}</span>
+                            <span className="text-white/90 text-xs truncate"><T>{initiative.axis_name}</T></span>
                           </div>
                         )}
                       </div>
@@ -1166,7 +1167,7 @@ export default function Initiatives() {
 
                   <CardContent className="p-4">
                     {initiative.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{initiative.description}</p>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2"><T>{initiative.description}</T></p>
                     )}
 
                     {initiative.progress_percentage !== undefined && (
@@ -1184,7 +1185,7 @@ export default function Initiatives() {
                       {initiative.committee_name && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           <Users className="w-3 h-3" />
-                          {initiative.committee_name}
+                          <T>{initiative.committee_name}</T>
                         </span>
                       )}
                       {initiative.budget > 0 && (

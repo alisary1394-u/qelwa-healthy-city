@@ -14,6 +14,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, Building2,
   ArrowLeft, ArrowRight, Activity, TrendingUp, Shield, Zap
 } from "lucide-react";
+import T from "@/components/T";
 
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -200,7 +201,7 @@ export default function Dashboard() {
             {currentUser && (
               <div className="hidden md:block text-left">
                 <p className="text-white/70 text-sm">{t('dashboard.welcome')}</p>
-                <p className="text-white font-semibold">{currentUser.full_name}</p>
+                <p className="text-white font-semibold"><T>{currentUser.full_name}</T></p>
               </div>
             )}
           </div>
@@ -331,7 +332,7 @@ export default function Dashboard() {
                     {axisProgress.map((axis, index) => (
                       <div key={index} className="group">
                         <div className="flex justify-between mb-1.5">
-                          <span className="text-sm font-medium text-foreground">{axis.name}</span>
+                          <span className="text-sm font-medium text-foreground"><T>{axis.name}</T></span>
                           <span className="text-sm text-muted-foreground tabular-nums">
                             {axis.completed}/{axis.total} 
                             <span className="mr-1 font-medium" style={{ color: axis.color }}>({axis.progress}%)</span>
@@ -403,7 +404,7 @@ export default function Dashboard() {
                     {statusData.map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-muted-foreground">{item.name}</span>
+                        <span className="text-sm text-muted-foreground"><T>{item.name}</T></span>
                         <span className="text-sm font-semibold text-foreground">{item.value}</span>
                       </div>
                     ))}
