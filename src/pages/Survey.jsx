@@ -15,10 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import YesNoQuestion from "../components/survey/YesNoQuestion";
 import { usePermissions } from '@/hooks/usePermissions';
 
-const districts = [
-  'حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية',
-  'حي الشروق', 'أخرى'
-];
+const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
 const livelihoodOptions = ['زراعة', 'تجارة صغيرة', 'عمل فني', 'عمل', 'وظيفة', 'أخرى'];
 
@@ -149,6 +146,18 @@ export default function Survey() {
     queryKey: ['surveys'],
     queryFn: () => api.entities.FamilySurvey.list('-created_date')
   });
+
+  const { data: settingsList = [] } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.entities.Settings.list()
+  });
+
+  // Load districts from settings or use defaults
+  const districts = useMemo(() => {
+    const saved = settingsList[0]?.districts;
+    const base = (saved && Array.isArray(saved) && saved.length > 0) ? saved : DEFAULT_DISTRICTS;
+    return [...base, 'أخرى'];
+  }, [settingsList]);
 
   const createMutation = useMutation({
     mutationFn: (data) => api.entities.FamilySurvey.create(data),

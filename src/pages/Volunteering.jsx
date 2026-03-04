@@ -926,7 +926,7 @@ export default function Volunteering() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2 space-y-2">
                   <Label>عنوان الفرصة *</Label>
-                  <Input value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} required placeholder="مثال: مسح ميداني لحي الشمال" />
+                  <Input value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} required placeholder="مثال: مسح ميداني لحي الشفاء" />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label>الوصف</Label>
@@ -961,7 +961,7 @@ export default function Volunteering() {
                 </div>
                 <div className="space-y-2">
                   <Label>الموقع</Label>
-                  <Input value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))} placeholder="مثال: حي المركز" />
+                  <Input value={formData.location} onChange={e => setFormData(p => ({ ...p, location: e.target.value }))} placeholder="مثال: حي الخالدية" />
                 </div>
               </div>
             </div>

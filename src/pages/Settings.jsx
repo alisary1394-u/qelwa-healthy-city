@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database, ChevronDown } from "lucide-react";
+import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database, ChevronDown, MapPin, Plus, GripVertical, X, Pencil, Check } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
+
+const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
 export default function Settings() {
   const [uploading, setUploading] = useState(false);
   const [logoSectionOpen, setLogoSectionOpen] = useState(true);
+  const [districtsSectionOpen, setDistrictsSectionOpen] = useState(false);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [newDistrict, setNewDistrict] = useState('');
+  const [editingIndex, setEditingIndex] = useState(-1);
+  const [editingValue, setEditingValue] = useState('');
+  const [districtsSaving, setDistrictsSaving] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -37,6 +45,25 @@ export default function Settings() {
     city_location: currentSetting.city_location || 'محافظة قلوة',
     logo_url: currentSetting.logo_url || ''
   });
+
+  // Initialize districts from settings
+  useEffect(() => {
+    if (settings.length > 0) {
+      const saved = settings[0]?.districts;
+      if (saved && Array.isArray(saved) && saved.length > 0) {
+        setDistrictsList(saved);
+      } else {
+        setDistrictsList(DEFAULT_DISTRICTS);
+      }
+      // Also sync formData when settings load
+      setFormData({
+        logo_text: settings[0]?.logo_text || 'ق',
+        city_name: settings[0]?.city_name || 'المدينة الصحية',
+        city_location: settings[0]?.city_location || 'محافظة قلوة',
+        logo_url: settings[0]?.logo_url || ''
+      });
+    }
+  }, [settings]);
 
   const createMutation = useMutation({
     mutationFn: (data) => api.entities.Settings.create(data),
@@ -123,12 +150,71 @@ export default function Settings() {
     }
   };
 
+  // ===== Districts management =====
+  const handleAddDistrict = () => {
+    const name = newDistrict.trim();
+    if (!name) return;
+    if (districtsList.includes(name)) {
+      window.alert('هذا الحي موجود بالفعل');
+      return;
+    }
+    setDistrictsList([...districtsList, name]);
+    setNewDistrict('');
+  };
+
+  const handleRemoveDistrict = (index) => {
+    setDistrictsList(districtsList.filter((_, i) => i !== index));
+  };
+
+  const handleStartEdit = (index) => {
+    setEditingIndex(index);
+    setEditingValue(districtsList[index]);
+  };
+
+  const handleConfirmEdit = () => {
+    const name = editingValue.trim();
+    if (!name) return;
+    if (districtsList.some((d, i) => d === name && i !== editingIndex)) {
+      window.alert('هذا الاسم موجود بالفعل');
+      return;
+    }
+    const updated = [...districtsList];
+    updated[editingIndex] = name;
+    setDistrictsList(updated);
+    setEditingIndex(-1);
+    setEditingValue('');
+  };
+
+  const handleSaveDistricts = async () => {
+    if (!permissions.canManageSettings) return;
+    setDistrictsSaving(true);
+    try {
+      const payload = { districts: districtsList };
+      if (currentSetting.id) {
+        await updateMutation.mutateAsync({ id: currentSetting.id, data: payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      window.alert('تم حفظ الأحياء بنجاح');
+    } catch (err) {
+      console.error('Error saving districts:', err);
+      window.alert('فشل حفظ الأحياء');
+    } finally {
+      setDistrictsSaving(false);
+    }
+  };
+
+  const handleResetDistricts = () => {
+    setDistrictsList(DEFAULT_DISTRICTS);
+  };
+
   return (
     <div className="min-h-screen bg-muted/50" dir="rtl">
       <div className="gradient-primary text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إعدادات المدينة الصحية</h1>
-          <p className="text-white/70">إدارة شعار ومعلومات المدينة</p>
+          <p className="text-white/70">إدارة شعار ومعلومات المدينة والأحياء</p>
         </div>
       </div>
 
@@ -270,6 +356,110 @@ export default function Settings() {
         </CollapsibleContent>
         </Card>
       </Collapsible>
+
+        {/* ===== إدارة الأحياء ===== */}
+        <Collapsible open={districtsSectionOpen} onOpenChange={setDistrictsSectionOpen}>
+          <Card className="mt-6">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-6 h-6" />
+                    إدارة الأحياء
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {!districtsSectionOpen && (
+                      <span className="text-sm text-muted-foreground font-normal">{districtsList.length} حي</span>
+                    )}
+                    <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${districtsSectionOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">إضافة أو تعديل أو حذف أحياء المحافظة التي تظهر في نموذج المسح الميداني</p>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                {/* Current districts list */}
+                <div className="space-y-2">
+                  <Label className="font-semibold">الأحياء الحالية ({districtsList.length})</Label>
+                  <div className="space-y-1.5 max-h-80 overflow-y-auto">
+                    {districtsList.map((district, index) => (
+                      <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 group">
+                        <GripVertical className="w-4 h-4 text-muted-foreground/40" />
+                        <span className="text-sm font-medium text-[#1e3a5f] bg-[#1e3a5f]/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">{index + 1}</span>
+                        {editingIndex === index ? (
+                          <>
+                            <Input
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              className="flex-1 h-8 text-sm"
+                              autoFocus
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmEdit(); if (e.key === 'Escape') { setEditingIndex(-1); setEditingValue(''); } }}
+                            />
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700" onClick={handleConfirmEdit}>
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground" onClick={() => { setEditingIndex(-1); setEditingValue(''); }}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1 text-sm">{district}</span>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleStartEdit(index)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveDistrict(index)}>
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {districtsList.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">لا توجد أحياء. أضف حياً جديداً من الأسفل.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Add new district */}
+                <div className="flex gap-2 pt-2 border-t">
+                  <Input
+                    value={newDistrict}
+                    onChange={(e) => setNewDistrict(e.target.value)}
+                    placeholder="اكتب اسم الحي الجديد..."
+                    className="flex-1"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddDistrict(); }}
+                  />
+                  <Button onClick={handleAddDistrict} disabled={!newDistrict.trim()} className="bg-[#1e3a5f] hover:bg-[#1e3a5f]/90">
+                    <Plus className="w-4 h-4 ml-1" />
+                    إضافة
+                  </Button>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={handleSaveDistricts}
+                    disabled={!permissions.canManageSettings || districtsSaving}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    <Save className="w-4 h-4 ml-2" />
+                    {districtsSaving ? 'جاري الحفظ...' : 'حفظ الأحياء'}
+                  </Button>
+                  <Button variant="outline" onClick={handleResetDistricts} className="text-amber-600 border-amber-300 hover:bg-amber-50">
+                    <RotateCcw className="w-4 h-4 ml-1" />
+                    استعادة الافتراضي
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  ملاحظة: تغيير الأحياء هنا يؤثر على نموذج المسح الميداني فقط. الاستبيانات المحفوظة مسبقاً تحتفظ بأسماء أحيائها الأصلية.
+                </p>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
         {canShowBackupRestore && (
