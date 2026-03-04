@@ -674,7 +674,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* ===== Tab 2: Districts ===== */}
-          <TabsContent value="districts" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+          <TabsContent value="districts" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir="rtl">
             <Card className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-l from-emerald-50/80 to-teal-50/50 border-b border-border/30">
                 <div className="flex items-center justify-between">
