@@ -532,6 +532,7 @@ export const NAV_ITEMS = [
   { name: 'TeamManagement', label: 'الفريق', icon: 'Users', permission: 'canSeeTeam' },
   { name: 'Files', label: 'الملفات', icon: 'FolderOpen', permission: 'canSeeFiles' },
   { name: 'PermissionsManager', label: 'الصلاحيات', icon: 'Shield', permission: 'canSeePermissions' },
+  { name: 'Settings', label: 'الإعدادات', icon: 'SettingsIcon', permission: 'canSeeSettings' },
 ];
 
 /**

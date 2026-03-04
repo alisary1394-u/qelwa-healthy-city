@@ -16,6 +16,7 @@ import {
   Shield,
   HandHelping,
   MapPinned,
+  Settings,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -31,6 +32,7 @@ const ICON_MAP = {
   Shield,
   HandHelping,
   MapPinned,
+  SettingsIcon: Settings,
 };
 
 /**
