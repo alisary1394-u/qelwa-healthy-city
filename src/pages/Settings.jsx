@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check } from "lucide-react";
+import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check, Image, Upload, Trash2 } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
@@ -18,6 +18,13 @@ export default function Settings() {
   const [editingValue, setEditingValue] = useState('');
   const [districtsSaving, setDistrictsSaving] = useState(false);
   const [renamingDistricts, setRenamingDistricts] = useState(false);
+  const [logoForm, setLogoForm] = useState({
+    logo_url: '',
+    logo_text: 'ق',
+    city_name: 'المدينة الصحية',
+    city_location: 'محافظة قلوة'
+  });
+  const [logoUploading, setLogoUploading] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -37,6 +44,18 @@ export default function Settings() {
 
   // Find the app config settings record (not key-value data_mode records)
   const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
+
+  // Sync logo form from settings
+  useEffect(() => {
+    if (currentSetting.id) {
+      setLogoForm({
+        logo_url: currentSetting.logo_url || '',
+        logo_text: currentSetting.logo_text || 'ق',
+        city_name: currentSetting.city_name || 'المدينة الصحية',
+        city_location: currentSetting.city_location || 'محافظة قلوة'
+      });
+    }
+  }, [currentSetting]);
 
   // Initialize districts from settings
   useEffect(() => {
@@ -107,6 +126,34 @@ export default function Settings() {
       </div>
     );
   }
+
+  // ===== Logo management =====
+  const handleLogoUpload = async (e) => {
+    if (!permissions.canManageSettings) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const result = await api.integrations?.Core?.UploadFile?.({ file });
+      if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
+    } catch (err) { console.error(err); }
+    setLogoUploading(false);
+  };
+
+  const handleRemoveLogo = () => {
+    if (!permissions.canManageSettings) return;
+    setLogoForm(f => ({ ...f, logo_url: '' }));
+  };
+
+  const handleSaveLogo = async () => {
+    if (!permissions.canManageSettings) return;
+    const data = { ...logoForm };
+    if (currentSetting.id) {
+      await updateMutation.mutateAsync({ id: currentSetting.id, data });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
+  };
 
   // ===== Districts management =====
   const handleAddDistrict = () => {
@@ -203,6 +250,100 @@ export default function Settings() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 md:p-6">
+        {/* ===== إعدادات الشعار ===== */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="w-6 h-6" />
+              إعدادات الشعار
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">تغيير أو تعديل أو حذف شعار المدينة</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-shrink-0">
+                <Label className="block mb-2 text-sm font-medium">معاينة الشعار</Label>
+                <div className="w-32 h-32 rounded-xl border-2 border-border bg-card flex items-center justify-center overflow-hidden">
+                  {logoForm.logo_url ? (
+                    <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-4xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
+                      {logoForm.logo_text || 'ق'}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={logoUploading || !permissions.canManageSettings}
+                    onClick={() => document.getElementById('settings-logo-upload').click()}
+                  >
+                    <Upload className="w-4 h-4 ml-2" />
+                    {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
+                  </Button>
+                  {logoForm.logo_url && permissions.canManageSettings && (
+                    <Button variant="outline" size="sm" className="text-destructive border-destructive/30" onClick={handleRemoveLogo}>
+                      <Trash2 className="w-4 h-4 ml-2" />
+                      حذف الشعار
+                    </Button>
+                  )}
+                  <input
+                    id="settings-logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm">نص الشعار البديل</Label>
+                    <Input
+                      value={logoForm.logo_text}
+                      disabled={!permissions.canManageSettings}
+                      onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
+                      placeholder="ق"
+                      maxLength={3}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm">اسم المدينة</Label>
+                    <Input
+                      value={logoForm.city_name}
+                      disabled={!permissions.canManageSettings}
+                      onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
+                      placeholder="المدينة الصحية"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-sm">موقع المدينة</Label>
+                    <Input
+                      value={logoForm.city_location}
+                      disabled={!permissions.canManageSettings}
+                      onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
+                      placeholder="محافظة قلوة"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSaveLogo}
+                  disabled={!permissions.canManageSettings || updateMutation.isPending || createMutation.isPending}
+                >
+                  <Save className="w-4 h-4 ml-2" />
+                  حفظ التعديلات
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* ===== إدارة الأحياء ===== */}
         <Card>
           <CardHeader>

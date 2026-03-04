@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/api/apiClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,8 @@ import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standard
 import { 
   BarChart3, Target, Users, FileCheck, MapPinned, LayoutDashboard,
   AlertTriangle, CheckCircle2, Clock, Building2,
-  ArrowLeft, Activity, TrendingUp, Shield, Zap,
-  Image, Upload, Trash2, Save, Settings, ChevronDown
+  ArrowLeft, Activity, TrendingUp, Shield, Zap
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -118,36 +114,9 @@ export default function Dashboard() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const queryClient = useQueryClient();
-  const currentSetting = settingsList[0] || {};
+  const currentSetting = settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) || {};
 
-  const [logoForm, setLogoForm] = useState({
-    logo_url: '',
-    logo_text: 'ق',
-    city_name: 'المدينة الصحية',
-    city_location: 'محافظة قلوة'
-  });
-  const [logoUploading, setLogoUploading] = useState(false);
 
-  useEffect(() => {
-    if (currentSetting.id) {
-      setLogoForm({
-        logo_url: currentSetting.logo_url || '',
-        logo_text: currentSetting.logo_text || 'ق',
-        city_name: currentSetting.city_name || 'المدينة الصحية',
-        city_location: currentSetting.city_location || 'محافظة قلوة'
-      });
-    }
-  }, [currentSetting]);
-
-  const createSettingsMutation = useMutation({
-    mutationFn: (data) => api.entities.Settings.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
-  });
-  const updateSettingsMutation = useMutation({
-    mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
-  });
 
   const dedupedStandards = React.useMemo(() => sortAndDeduplicateStandardsByCode(standards), [standards]);
 
@@ -169,32 +138,7 @@ export default function Dashboard() {
     return <DashboardSkeleton />;
   }
 
-  const handleLogoUpload = async (e) => {
-    if (!permissions.canManageSettings) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setLogoUploading(true);
-    try {
-      const result = await api.integrations?.Core?.UploadFile?.({ file });
-      if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
-    } catch (err) { console.error(err); }
-    setLogoUploading(false);
-  };
 
-  const handleRemoveLogo = () => {
-    if (!permissions.canManageSettings) return;
-    setLogoForm(f => ({ ...f, logo_url: '' }));
-  };
-
-  const handleSaveLogo = async () => {
-    if (!permissions.canManageSettings) return;
-    const data = { ...logoForm };
-    if (currentSetting.id) {
-      await updateSettingsMutation.mutateAsync({ id: currentSetting.id, data });
-    } else {
-      await createSettingsMutation.mutateAsync(data);
-    }
-  };
 
   const totalStandards = REFERENCE_STANDARDS_COUNT;
   const completedStandards = dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length;
@@ -315,118 +259,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* إعدادات الشعار */}
-        {permissions.canSeeSettings && (
-        <Collapsible defaultOpen={false}>
-          <Card className="mb-6 border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/5">
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-primary/10 dark:hover:bg-primary/10 transition-colors">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Image className="w-5 h-5 text-primary" />
-                    إعدادات الشعار
-                  </div>
-                  <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-shrink-0">
-                  <Label className="block mb-2 text-sm font-medium">معاينة الشعار</Label>
-                  <div className="w-32 h-32 rounded-xl border-2 border-border bg-card flex items-center justify-center overflow-hidden">
-                    {logoForm.logo_url ? (
-                      <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain" />
-                    ) : (
-                      <span className="text-4xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
-                        {logoForm.logo_text || 'ق'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex-1 space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={logoUploading || !permissions.canManageSettings}
-                      onClick={() => document.getElementById('dashboard-logo-upload').click()}
-                    >
-                      <Upload className="w-4 h-4 ml-2" />
-                      {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
-                    </Button>
-                    {logoForm.logo_url && permissions.canManageSettings && (
-                      <Button variant="outline" size="sm" className="text-destructive border-destructive/30" onClick={handleRemoveLogo}>
-                        <Trash2 className="w-4 h-4 ml-2" />
-                        حذف الشعار
-                      </Button>
-                    )}
-                    <input
-                      id="dashboard-logo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-sm">نص الشعار البديل</Label>
-                      <Input
-                        value={logoForm.logo_text}
-                        disabled={!permissions.canManageSettings}
-                        onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
-                        placeholder="ق"
-                        maxLength={3}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm">اسم المدينة</Label>
-                      <Input
-                        value={logoForm.city_name}
-                        disabled={!permissions.canManageSettings}
-                        onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
-                        placeholder="المدينة الصحية"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label className="text-sm">موقع المدينة</Label>
-                      <Input
-                        value={logoForm.city_location}
-                        disabled={!permissions.canManageSettings}
-                        onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
-                        placeholder="محافظة قلوة"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveLogo}
-                      disabled={!permissions.canManageSettings || createSettingsMutation.isPending || updateSettingsMutation.isPending}
-                    >
-                      <Save className="w-4 h-4 ml-2" />
-                      حفظ التعديلات
-                    </Button>
-                    <Link to={createPageUrl('Settings')}>
-                      <Button variant="outline" size="sm">
-                        <Settings className="w-4 h-4 ml-2" />
-                        إعدادات المدينة الكاملة
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-        )}
+
 
         {/* Alerts */}
         {(overdueTasks > 0 || pendingEvidence > 0) && (
