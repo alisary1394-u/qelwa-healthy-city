@@ -616,12 +616,13 @@ export default function Initiatives() {
       const raw = localStorage.getItem(INITIATIVE_PREFILL_STORAGE_KEY);
       if (!raw) return;
 
+      // لا نحذف البيانات حتى نتأكد من تحميل الصلاحيات
+      if (!canManageInitiatives) return;
+
       localStorage.removeItem(INITIATIVE_PREFILL_STORAGE_KEY);
       const parsed = JSON.parse(raw);
       const defaults = getDefaultInitiativeFormData();
       const prefillRelated = parseRelatedStandardIds(parsed?.related_standards);
-
-      if (!canManageInitiatives) return;
 
       setFormData({
         ...defaults,

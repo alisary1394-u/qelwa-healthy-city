@@ -142,7 +142,9 @@ export default function TeamManagement() {
     const matchesSearch = !searchQuery || 
       m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.phone?.includes(searchQuery) ||
-      m.department?.toLowerCase().includes(searchQuery.toLowerCase());
+      m.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.national_id?.includes(searchQuery) ||
+      m.email?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesCommittee && matchesSearch;
   });
 
@@ -324,7 +326,7 @@ export default function TeamManagement() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="بحث بالاسم أو الهاتف أو القسم..."
+              placeholder="بحث بالاسم أو الهاتف أو القسم أو رقم الهوية أو البريد..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"

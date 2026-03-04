@@ -32,6 +32,8 @@ export default function Budget() {
   const [budgetFormOpen, setBudgetFormOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
   const [allocationFormOpen, setAllocationFormOpen] = useState(false);
+  const [editingAllocation, setEditingAllocation] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -192,6 +194,17 @@ export default function Budget() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allocations'] });
       setAllocationFormOpen(false);
+      setEditingAllocation(null);
+      resetAllocationForm();
+    }
+  });
+
+  const updateAllocationMutation = useMutation({
+    mutationFn: ({ id, data }) => api.entities.BudgetAllocation.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allocations'] });
+      setAllocationFormOpen(false);
+      setEditingAllocation(null);
       resetAllocationForm();
     }
   });
@@ -216,49 +229,34 @@ export default function Budget() {
 
   const balance = totalIncome - totalExpenses;
 
-  // Calculate total allocated budgets
-  const totalAllocatedBudgets = allocations
-    .filter(a => !activeBudget || a.budget_id === activeBudget.id)
-    .reduce((sum, a) => sum + (Number(a.allocated_amount) || 0), 0);
+  // Calculate total allocated budgets (excluding initiative-level allocations that are covered by committee/axis allocations)
+  const { totalAllocatedBudgets, totalInitiativesBudgets, totalCommitted } = useMemo(() => {
+    const budgetAllocations = allocations.filter(a => !activeBudget || String(a.budget_id || '') === String(activeBudget?.id));
 
-  // Calculate total initiatives budgets linked to active budget
-  const totalInitiativesBudgets = useMemo(() => {
-    if (!activeBudget) {
-      return initiatives.reduce((sum, i) => sum + (Number(i.budget) || 0), 0);
-    }
+    const allocTotal = budgetAllocations.reduce((sum, a) => sum + (Number(a.allocated_amount) || 0), 0);
 
-    const linkedInitiativeIds = new Set();
+    // ميزانيات المبادرات المرتبطة بهذه الميزانية
+    const linkedInitBudgets = initiatives
+      .filter(i => {
+        if (!activeBudget) return true;
+        // مبادرة مربوطة مباشرة بالميزانية
+        if (String(i.budget_id || '') === String(activeBudget.id)) return true;
+        // مبادرة لها تخصيص ضمن هذه الميزانية
+        if (i.budget_allocation_id && budgetAllocations.some(a => String(a.id) === String(i.budget_allocation_id))) return true;
+        return false;
+      })
+      .reduce((sum, i) => sum + (Number(i.budget) || 0), 0);
 
-    initiatives.forEach((initiative) => {
-      if (String(initiative.budget_id || '') === String(activeBudget.id)) {
-        linkedInitiativeIds.add(String(initiative.id));
-      }
-    });
+    // الملتزم به = التخصيصات فقط (المبادرات تعمل ضمن التخصيصات)
+    // إذا لا توجد تخصيصات نستخدم ميزانيات المبادرات
+    const committed = allocTotal > 0 ? allocTotal : linkedInitBudgets;
 
-    allocations
-      .filter((allocation) => String(allocation.budget_id || '') === String(activeBudget.id))
-      .forEach((allocation) => {
-        if (allocation.initiative_id) {
-          linkedInitiativeIds.add(String(allocation.initiative_id));
-          return;
-        }
-
-        initiatives.forEach((initiative) => {
-          const committeeMatch = allocation.committee_id && String(initiative.committee_id || '') === String(allocation.committee_id);
-          const axisMatch = allocation.axis_id && String(initiative.axis_id || '') === String(allocation.axis_id);
-          if (committeeMatch || axisMatch) {
-            linkedInitiativeIds.add(String(initiative.id));
-          }
-        });
-      });
-
-    return initiatives
-      .filter((initiative) => linkedInitiativeIds.has(String(initiative.id)))
-      .reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
+    return {
+      totalAllocatedBudgets: allocTotal,
+      totalInitiativesBudgets: linkedInitBudgets,
+      totalCommitted: committed
+    };
   }, [activeBudget, allocations, initiatives]);
-
-  // Calculate total committed (allocated + initiatives)
-  const totalCommitted = totalAllocatedBudgets + totalInitiativesBudgets;
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = !searchQuery || 
@@ -375,13 +373,23 @@ export default function Budget() {
     if (!canCreateTransactions) return;
     setSaving(true);
     
-    const transactionNumber = `T${Date.now().toString().slice(-6)}`;
-    await createTransactionMutation.mutateAsync({
-      ...transactionForm,
-      transaction_number: transactionNumber,
-      status: 'pending'
-    });
+    if (editingTransaction) {
+      await updateTransactionMutation.mutateAsync({
+        id: editingTransaction.id,
+        data: {
+          ...transactionForm
+        }
+      });
+    } else {
+      const transactionNumber = `T${Date.now().toString().slice(-6)}`;
+      await createTransactionMutation.mutateAsync({
+        ...transactionForm,
+        transaction_number: transactionNumber,
+        status: 'pending'
+      });
+    }
     
+    setEditingTransaction(null);
     setSaving(false);
   };
 
@@ -446,15 +454,25 @@ export default function Budget() {
     if (!showBudgetManagement) return;
     setSaving(true);
     
-    const budget = budgets.find(b => b.id === allocationForm.budget_id);
-    await createAllocationMutation.mutateAsync({
-      ...allocationForm,
-      budget_name: budget?.name,
-      spent_amount: 0,
-      remaining_amount: allocationForm.allocated_amount,
-      percentage_spent: 0,
-      status: 'active'
-    });
+    if (editingAllocation) {
+      await updateAllocationMutation.mutateAsync({
+        id: editingAllocation.id,
+        data: {
+          ...allocationForm,
+          budget_name: budgets.find(b => b.id === allocationForm.budget_id)?.name
+        }
+      });
+    } else {
+      const budget = budgets.find(b => b.id === allocationForm.budget_id);
+      await createAllocationMutation.mutateAsync({
+        ...allocationForm,
+        budget_name: budget?.name,
+        spent_amount: 0,
+        remaining_amount: allocationForm.allocated_amount,
+        percentage_spent: 0,
+        status: 'active'
+      });
+    }
     
     setSaving(false);
   };
@@ -593,7 +611,9 @@ export default function Budget() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">المتبقي</p>
-                  <p className="text-2xl font-bold text-green-600">{(activeBudget.total_budget - totalCommitted - totalExpenses).toLocaleString()} ريال</p>
+                  <p className={`text-2xl font-bold ${(activeBudget.total_budget - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(activeBudget.total_budget - totalExpenses).toLocaleString()} ريال
+                  </p>
                 </div>
               </div>
               
@@ -602,34 +622,50 @@ export default function Budget() {
                   <span className="text-muted-foreground">إجمالي الملتزم به (تخصيصات + مبادرات):</span>
                   <span className="font-bold text-orange-600">{totalCommitted.toLocaleString()} ريال</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div className="relative h-3 rounded-full overflow-hidden">
-                    <div
-                      className="absolute h-3 bg-destructive"
-                      style={{ width: `${activeBudget.total_budget > 0 ? Math.min((totalExpenses / activeBudget.total_budget) * 100, 100) : 0}%` }}
-                      title={`منفق: ${totalExpenses.toLocaleString()} ريال`}
-                    />
-                    <div
-                      className="absolute h-3 bg-orange-400 opacity-60"
-                      style={{ width: `${activeBudget.total_budget > 0 ? Math.min(((totalCommitted + totalExpenses) / activeBudget.total_budget) * 100, 100) : 0}%` }}
-                      title={`ملتزم به: ${totalCommitted.toLocaleString()} ريال`}
-                    />
+                {activeBudget.total_budget > 0 && totalCommitted > activeBudget.total_budget && (
+                  <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                    ⚠️ التخصيصات تتجاوز إجمالي الميزانية بمبلغ {(totalCommitted - activeBudget.total_budget).toLocaleString()} ريال
                   </div>
-                </div>
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-destructive rounded"></div>
-                    <span>منفق فعلياً ({activeBudget.total_budget > 0 ? ((totalExpenses / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-orange-400 rounded"></div>
-                    <span>ملتزم به ({activeBudget.total_budget > 0 ? ((totalCommitted / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-green-600 rounded"></div>
-                    <span>متاح ({activeBudget.total_budget > 0 ? (((activeBudget.total_budget - totalCommitted - totalExpenses) / activeBudget.total_budget) * 100).toFixed(1) : '0.0'}%)</span>
-                  </div>
-                </div>
+                )}
+                {(() => {
+                  const tb = activeBudget.total_budget || 1;
+                  const spentPct = Math.min((totalExpenses / tb) * 100, 100);
+                  const committedPct = Math.min((totalCommitted / tb) * 100, 100);
+                  const remaining = tb - totalExpenses;
+                  const remainPct = Math.max((remaining / tb) * 100, 0);
+                  return (
+                    <>
+                      <div className="w-full bg-muted rounded-full h-3">
+                        <div className="relative h-3 rounded-full overflow-hidden">
+                          <div
+                            className="absolute h-3 bg-destructive"
+                            style={{ width: `${spentPct}%` }}
+                            title={`منفق: ${totalExpenses.toLocaleString()} ريال`}
+                          />
+                          <div
+                            className="absolute h-3 bg-orange-400 opacity-60"
+                            style={{ width: `${committedPct}%` }}
+                            title={`ملتزم به: ${totalCommitted.toLocaleString()} ريال`}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-destructive rounded"></div>
+                          <span>منفق فعلياً ({spentPct.toFixed(1)}%)</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-orange-400 rounded"></div>
+                          <span>ملتزم به ({committedPct.toFixed(1)}%)</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-green-600 rounded"></div>
+                          <span>متاح ({remainPct.toFixed(1)}%)</span>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -666,7 +702,7 @@ export default function Budget() {
                     </div>
                     <div className="p-4 bg-indigo-50 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">المبادرات المرتبطة</p>
-                      <p className="text-2xl font-bold text-indigo-600">{initiatives.filter(i => i.budget_id === activeBudget?.id).length}</p>
+                      <p className="text-2xl font-bold text-indigo-600">{initiatives.filter(i => String(i.budget_id || '') === String(activeBudget?.id || '')).length}</p>
                       <p className="text-xs text-muted-foreground mt-1">{totalInitiativesBudgets.toLocaleString()} ريال</p>
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg">
@@ -708,7 +744,7 @@ export default function Budget() {
                       <h3 className="font-semibold mb-3">أعلى 5 مبادرات من حيث الميزانية</h3>
                       <div className="space-y-2">
                         {initiatives
-                          .filter(i => i.budget_id === activeBudget?.id && i.budget > 0)
+                          .filter(i => String(i.budget_id || '') === String(activeBudget?.id || '') && i.budget > 0)
                           .sort((a, b) => (b.budget || 0) - (a.budget || 0))
                           .slice(0, 5)
                           .map(initiative => (
@@ -717,7 +753,7 @@ export default function Budget() {
                               <span className="text-indigo-600 font-bold text-sm ml-2">{initiative.budget.toLocaleString()} ريال</span>
                             </div>
                           ))}
-                        {initiatives.filter(i => i.budget_id === activeBudget?.id && i.budget > 0).length === 0 && (
+                        {initiatives.filter(i => String(i.budget_id || '') === String(activeBudget?.id || '') && i.budget > 0).length === 0 && (
                           <p className="text-muted-foreground text-sm text-center py-4">لا توجد مبادرات مرتبطة بعد</p>
                         )}
                       </div>
@@ -764,7 +800,7 @@ export default function Budget() {
                 </SelectContent>
               </Select>
               {canCreateTransactions && (
-                <Button onClick={() => setTransactionFormOpen(true)} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={() => { setEditingTransaction(null); resetTransactionForm(); setTransactionFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-5 h-5 ml-2" />
                   معاملة جديدة
                 </Button>
@@ -833,6 +869,7 @@ export default function Budget() {
                           size="icon"
                           className="ml-2"
                           onClick={() => {
+                            setEditingTransaction(transaction);
                             setTransactionForm({
                               type: transaction.type,
                               category: transaction.category,
@@ -1056,7 +1093,7 @@ export default function Budget() {
           <div>
             {showBudgetManagement && (
               <div className="flex justify-end mb-6">
-                <Button onClick={() => setAllocationFormOpen(true)} className="bg-purple-600 hover:bg-purple-700">
+                <Button onClick={() => { setEditingAllocation(null); resetAllocationForm(); setAllocationFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
                   <Plus className="w-5 h-5 ml-2" />
                   تخصيص جديد
                 </Button>
@@ -1079,10 +1116,11 @@ export default function Budget() {
                 (() => {
                   const linkedInitiatives = allocationInitiativesMap[allocation.id] || [];
                   const initiativesBudgetTotal = linkedInitiatives.reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
-                  const effectiveSpent = (Number(allocation.spent_amount) || 0) + initiativesBudgetTotal;
-                  const remaining = (Number(allocation.allocated_amount) || 0) - effectiveSpent;
-                  const spentPercentage = Number(allocation.allocated_amount) > 0
-                    ? Math.min((effectiveSpent / Number(allocation.allocated_amount)) * 100, 100)
+                  const actualSpent = Number(allocation.spent_amount) || 0;
+                  const totalUtilized = actualSpent + initiativesBudgetTotal;
+                  const remaining = (Number(allocation.allocated_amount) || 0) - totalUtilized;
+                  const utilizationPct = Number(allocation.allocated_amount) > 0
+                    ? Math.min((totalUtilized / Number(allocation.allocated_amount)) * 100, 100)
                     : 0;
 
                   return (
@@ -1111,6 +1149,7 @@ export default function Budget() {
                             variant="outline"
                             size="icon"
                             onClick={() => {
+                              setEditingAllocation(allocation);
                               setAllocationForm({
                                 budget_id: allocation.budget_id || '',
                                 budget_name: allocation.budget_name || '',
@@ -1143,9 +1182,15 @@ export default function Budget() {
                         <span className="text-muted-foreground">المبلغ المخصص:</span>
                         <strong>{allocation.allocated_amount?.toLocaleString()} ريال</strong>
                       </div>
+                      {actualSpent > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المنفق:</span>
-                        <strong className="text-red-600">{effectiveSpent.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">المنفق فعلياً:</span>
+                        <strong className="text-red-600">{actualSpent.toLocaleString()} ريال</strong>
+                      </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">المستخدم (إنفاق + التزامات):</span>
+                        <strong className="text-orange-600">{totalUtilized.toLocaleString()} ريال</strong>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">المتبقي:</span>
@@ -1168,10 +1213,10 @@ export default function Budget() {
                       <div className="w-full bg-muted rounded-full h-2 mt-2">
                         <div
                           className="bg-primary h-2 rounded-full"
-                          style={{ width: `${spentPercentage}%` }}
+                          style={{ width: `${utilizationPct}%` }}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground text-center">{spentPercentage.toFixed(1)}% منفق</p>
+                      <p className="text-xs text-muted-foreground text-center">{utilizationPct.toFixed(1)}% مستخدم</p>
                     </div>
                     
                     {showBudgetManagement && (
@@ -1232,10 +1277,10 @@ export default function Budget() {
       </div>
 
       {/* Transaction Form Dialog */}
-      <Dialog open={transactionFormOpen} onOpenChange={setTransactionFormOpen}>
+      <Dialog open={transactionFormOpen} onOpenChange={(open) => { setTransactionFormOpen(open); if (!open) { setEditingTransaction(null); resetTransactionForm(); } }}>
         <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>معاملة مالية جديدة</DialogTitle>
+            <DialogTitle>{editingTransaction ? 'تعديل المعاملة' : 'معاملة مالية جديدة'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveTransaction} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1388,7 +1433,7 @@ export default function Budget() {
               <Button type="button" variant="outline" onClick={() => setTransactionFormOpen(false)}>إلغاء</Button>
               <Button type="submit" disabled={saving} className="bg-green-600 hover:bg-green-700">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                حفظ المعاملة
+                {editingTransaction ? 'حفظ التعديلات' : 'حفظ المعاملة'}
               </Button>
             </div>
           </form>
@@ -1458,10 +1503,10 @@ export default function Budget() {
       )}
 
       {/* Allocation Form Dialog */}
-      <Dialog open={allocationFormOpen} onOpenChange={setAllocationFormOpen}>
+      <Dialog open={allocationFormOpen} onOpenChange={(open) => { setAllocationFormOpen(open); if (!open) { setEditingAllocation(null); resetAllocationForm(); } }}>
         <DialogContent dir="rtl" className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>تخصيص ميزانية جديد</DialogTitle>
+            <DialogTitle>{editingAllocation ? 'تعديل التخصيص' : 'تخصيص ميزانية جديد'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveAllocation} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1595,7 +1640,7 @@ export default function Budget() {
               <Button type="button" variant="outline" onClick={() => setAllocationFormOpen(false)}>إلغاء</Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                حفظ التخصيص
+                {editingAllocation ? 'حفظ التعديلات' : 'حفظ التخصيص'}
               </Button>
             </div>
           </form>

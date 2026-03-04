@@ -37,6 +37,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     supervisor_id: '',
     status: 'active',
     join_date: new Date().toISOString().split('T')[0],
+    qualification: '',
+    bio: '',
     notes: ''
   });
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         supervisor_id: member.supervisor_id || '',
         status: member.status || 'active',
         join_date: member.join_date || new Date().toISOString().split('T')[0],
+        qualification: member.qualification || '',
+        bio: member.bio || '',
         notes: member.notes || ''
       });
     } else {
@@ -76,6 +80,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         supervisor_id: '',
         status: 'active',
         join_date: new Date().toISOString().split('T')[0],
+        qualification: '',
+        bio: '',
         notes: ''
       });
     }
@@ -184,15 +190,6 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>التخصص</Label>
-              <Input
-                value={formData.specialization}
-                onChange={(e) => setFormData({...formData, specialization: e.target.value})}
-                placeholder="مثال: طب عام، تمريض، إدارة صحية"
-              />
-            </div>
-            
-            <div className="space-y-2">
               <Label>رقم الجوال *</Label>
               <Input
                 value={formData.phone}
@@ -297,6 +294,46 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
           </div>
           
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>المؤهل</Label>
+              <Select value={formData.qualification} onValueChange={(v) => setFormData({...formData, qualification: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المؤهل" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">ابتدائي</SelectItem>
+                  <SelectItem value="intermediate">متوسط</SelectItem>
+                  <SelectItem value="secondary">ثانوي</SelectItem>
+                  <SelectItem value="diploma">دبلوم</SelectItem>
+                  <SelectItem value="bachelor">بكالوريوس</SelectItem>
+                  <SelectItem value="master">ماجستير</SelectItem>
+                  <SelectItem value="doctorate">دكتوراه</SelectItem>
+                  <SelectItem value="other">أخرى</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>التخصص</Label>
+              <Input
+                value={formData.specialization}
+                onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                placeholder="مثال: طب عام، تمريض، إدارة صحية"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>نبذة عن العضو</Label>
+            <Textarea
+              value={formData.bio}
+              onChange={(e) => setFormData({...formData, bio: e.target.value})}
+              placeholder="نبذة مختصرة عن العضو وخبراته..."
+              rows={3}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>ملاحظات</Label>
             <Textarea
