@@ -397,6 +397,7 @@ export default function Standards() {
   const [uploading, setUploading] = useState(false);
   const [showKpis, setShowKpis] = useState({});
   const [showVerification, setShowVerification] = useState({});
+  const [expandedCards, setExpandedCards] = useState({});
   
   const [axisForm, setAxisForm] = useState({ name: '', description: '', order: 0 });
   const [standardForm, setStandardForm] = useState({ code: '', title: '', description: '', axis_id: '', required_evidence: '' });
@@ -1063,19 +1064,32 @@ const handleUploadEvidence = async (e) => {
 					);
 					const canEditThisStandardKpis = isGlobalInitiativeManager || (isCommitteeLeader && standardSameCommittee);
             
+            const isExpanded = expandedCards[standard.id] || false;
             return (
               <Card key={standard.id}>
-                <CardContent className="p-6">
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg"
+                  onClick={() => setExpandedCards(prev => ({ ...prev, [standard.id]: !prev[standard.id] }))}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Badge variant="outline" className="font-mono shrink-0">{standard.code}</Badge>
+                    <Badge className={`${statusConfig[standard.status]?.color} shrink-0`}>
+                      {statusConfig[standard.status]?.label}
+                    </Badge>
+                    <h3 className="font-semibold text-base truncate">{standard.title}</h3>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 mr-3">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>مؤشرات: {standardKpis.length}</span>
+                      <span>أدلة: {approvedEvidence}/{standardEvidence.length}</span>
+                    </div>
+                    {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+                  </div>
+                </div>
+                {isExpanded && (
+                <CardContent className="p-6 pt-2">
                   <div className="flex flex-col lg:flex-row lg:items-start gap-6">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Badge variant="outline" className="font-mono">{standard.code}</Badge>
-                        <Badge className={statusConfig[standard.status]?.color}>
-                          {statusConfig[standard.status]?.label}
-                        </Badge>
-                      </div>
-                      
-                      <h3 className="font-semibold text-xl mb-2">{standard.title}</h3>
                       {standard.description && (
                         <p className="text-muted-foreground mb-4">{standard.description}</p>
                       )}
@@ -1387,6 +1401,7 @@ const handleUploadEvidence = async (e) => {
                     </div>
                   )}
                 </CardContent>
+                )}
               </Card>
             );
           })}

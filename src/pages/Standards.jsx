@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle, Edit, Pencil } from "lucide-react";
+import { Plus, Search, Target, FileText, Image, Eye, Loader2, Trash2, ChevronDown, ChevronUp, Clock, BookOpen, Lightbulb, DollarSign, Users, CheckCircle, Edit, Pencil } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
@@ -132,6 +132,7 @@ function StandardsLegacy() {
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingFilter, setPendingFilter] = useState(searchParams.get('filter') === 'pending');
   const [expandedLinkedSections, setExpandedLinkedSections] = useState({});
+  const [expandedCards, setExpandedCards] = useState({});
   const [axisFormOpen, setAxisFormOpen] = useState(false);
   const [standardFormOpen, setStandardFormOpen] = useState(false);
   const [evidenceFormOpen, setEvidenceFormOpen] = useState(false);
@@ -861,8 +862,11 @@ function StandardsLegacy() {
 
               return (
                 <Card key={standard.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
-                  {/* Header gradient bar */}
-                  <div className={`bg-gradient-to-l ${gradientClass} p-4`}>
+                  {/* Header gradient bar - clickable to expand/collapse */}
+                  <div
+                    className={`bg-gradient-to-l ${gradientClass} p-4 cursor-pointer`}
+                    onClick={() => setExpandedCards(prev => ({ ...prev, [standard.id]: !prev[standard.id] }))}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
@@ -879,8 +883,9 @@ function StandardsLegacy() {
                           </div>
                         )}
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
                       {canManage && (
-                        <div className="flex gap-1 shrink-0">
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="تعديل بيانات المعيار" onClick={() => {
                             setEditStandardInfo({
                               id: standard.id,
@@ -909,9 +914,12 @@ function StandardsLegacy() {
                           </Button>
                         </div>
                       )}
+                      {expandedCards[standard.id] ? <ChevronUp className="w-5 h-5 text-white/70" /> : <ChevronDown className="w-5 h-5 text-white/70" />}
+                      </div>
                     </div>
                   </div>
 
+                  {expandedCards[standard.id] && (
                   <CardContent className="p-4">
                     <div className="flex-1">
                         {standard.description && (
@@ -1160,6 +1168,7 @@ function StandardsLegacy() {
                       </Collapsible>
                     </div>
                   </CardContent>
+                  )}
                 </Card>
               );
             })}
