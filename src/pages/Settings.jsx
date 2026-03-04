@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check, Image, Upload, Trash2 } from "lucide-react";
+import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check, Image, Upload, Trash2, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
@@ -251,14 +252,21 @@ export default function Settings() {
 
       <div className="max-w-4xl mx-auto p-4 md:p-6">
         {/* ===== إعدادات الشعار ===== */}
+        <Collapsible defaultOpen={false}>
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="w-6 h-6" />
-              إعدادات الشعار
+          <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Image className="w-6 h-6" />
+                إعدادات الشعار
+              </div>
+              <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">تغيير أو تعديل أو حذف شعار المدينة</p>
           </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-shrink-0">
@@ -342,18 +350,29 @@ export default function Settings() {
               </div>
             </div>
           </CardContent>
+          </CollapsibleContent>
         </Card>
+        </Collapsible>
 
         {/* ===== إدارة الأحياء ===== */}
+        <Collapsible defaultOpen={false}>
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-6 h-6" />
-              إدارة الأحياء
-              <span className="text-sm text-muted-foreground font-normal mr-auto">{districtsList.length} حي</span>
+          <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-6 h-6" />
+                إدارة الأحياء
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground font-normal">{districtsList.length} حي</span>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+              </div>
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">إضافة أو تعديل أو حذف أحياء المحافظة التي تظهر في نموذج المسح الميداني</p>
           </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
           <CardContent className="space-y-4">
                 {/* Current districts list */}
                 <div className="space-y-2">
@@ -450,15 +469,22 @@ export default function Settings() {
                   </Button>
                 </div>
           </CardContent>
+          </CollapsibleContent>
         </Card>
+        </Collapsible>
 
         {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
         {canShowBackupRestore && (
+          <Collapsible defaultOpen={false}>
           <Card className="mt-6 border-green-200 bg-green-50/50">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Database className="w-5 h-5" />
-                استعادة البيانات من نسخة احتياطية
+            <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors rounded-t-lg">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5" />
+                  استعادة البيانات من نسخة احتياطية
+                </div>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 إذا انحذفت البيانات (الفريق، المهام، اللجان…) وكان السيرفر يحفظ نسخاً احتياطية تلقائياً، يمكنك استعادة آخر نسخة. بعد الاستعادة سيتم إعادة تحميل الصفحة.
@@ -471,6 +497,8 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground">آخر نسخة: {backupsList[0]?.name || ''}</p>
               )}
             </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
             <CardContent>
               <Button
                 variant="outline"
@@ -482,15 +510,22 @@ export default function Settings() {
                 {restoreMutation.isPending ? 'جاري الاستعادة...' : 'استعادة من آخر نسخة احتياطية'}
               </Button>
             </CardContent>
+            </CollapsibleContent>
           </Card>
+          </Collapsible>
         )}
 
         {/* إعادة تحميل بيانات التجربة (محلي أو Supabase) */}
         {canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function' && (
+          <Collapsible defaultOpen={false}>
           <Card className="mt-6 border-amber-200 bg-amber-50/50">
-            <CardHeader>
-              <CardTitle className="text-lg">
+            <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors rounded-t-lg">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>
                 {reseedSourceLabel}
+                </span>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 إذا لم تظهر اللجان أو الفريق أو المبادرات أو المهام أو الميزانيات، اضغط الزر أدناه لمسح البيانات وإعادة تحميل بيانات التجربة. بعد إعادة التحميل سجّل الدخول برقم الهوية <strong>1</strong> وكلمة المرور <strong>123456</strong>.
@@ -501,6 +536,8 @@ export default function Settings() {
                 </p>
               )}
             </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
             <CardContent>
               <Button
                 variant="outline"
@@ -511,7 +548,9 @@ export default function Settings() {
                 مسح البيانات وإعادة تحميل بيانات التجربة
               </Button>
             </CardContent>
+            </CollapsibleContent>
           </Card>
+          </Collapsible>
         )}
       </div>
     </div>
