@@ -402,7 +402,7 @@ export default function Settings() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-primary opacity-95" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0zMCAwdjYwTTAgMzBoNjAiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2cpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-40" />
-        <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-10 pb-14 md:pb-16">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-10">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg">
               <SettingsIcon className="w-7 h-7 text-white" />
@@ -443,7 +443,7 @@ export default function Settings() {
       </div>
 
       {/* ===== Tabs Content ===== */}
-      <div className="max-w-5xl mx-auto px-4 md:px-6 -mt-8">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 mt-4">
         <Tabs defaultValue="branding" className="w-full">
           <TabsList className="w-full bg-white shadow-lg border border-border/50 rounded-2xl h-auto p-1.5 flex flex-wrap gap-1">
             <TabsTrigger value="branding" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
