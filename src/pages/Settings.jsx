@@ -157,6 +157,14 @@ export default function Settings() {
 
   const { permissions } = usePermissions();
 
+  // Permissions helpers (must be before early return to keep hooks order stable)
+  const allRoles = Object.keys(PERMISSIONS_BY_ROLE);
+  const filteredPermissionKeys = useMemo(() => {
+    if (!permSearchQuery) return PERMISSION_REVIEW_KEYS;
+    const query = permSearchQuery.toLowerCase();
+    return PERMISSION_REVIEW_KEYS.filter(({ label }) => label.toLowerCase().includes(query));
+  }, [permSearchQuery]);
+
   const canShowReseedTools =
     appParams.useLocalBackend ||
     appParams.useSupabaseBackend ||
@@ -326,14 +334,7 @@ export default function Settings() {
 
   const showDataTab = canShowBackupRestore || (canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function');
 
-  // Permissions helpers
-  const allRoles = Object.keys(PERMISSIONS_BY_ROLE);
-  const filteredPermissionKeys = useMemo(() => {
-    if (!permSearchQuery) return PERMISSION_REVIEW_KEYS;
-    const query = permSearchQuery.toLowerCase();
-    return PERMISSION_REVIEW_KEYS.filter(({ label }) => label.toLowerCase().includes(query));
-  }, [permSearchQuery]);
-
+  // Permissions helpers (continued)
   const activeRolePermissions = editedPermissions[activeRole] || {};
   const activeRoleLabel = ROLE_LABELS[activeRole] || activeRole;
   const canManagePermissions = permissions.canManageSettings;
