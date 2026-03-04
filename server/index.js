@@ -483,13 +483,50 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+// تبديل ترتيب محورين في قاعدة البيانات وتحديث رموز المعايير
+app.post('/api/swap-axes', async (req, res) => {
+  try {
+    const { orderA, orderB } = req.body || {};
+    if (!orderA || !orderB || orderA === orderB) return res.status(400).json({ error: 'يجب تحديد orderA و orderB مختلفين' });
+    const db = await getDb();
+    const axes = db.list('axis');
+    const axisA = axes.find(a => Number(a.order) === Number(orderA));
+    const axisB = axes.find(a => Number(a.order) === Number(orderB));
+    if (!axisA || !axisB) return res.status(404).json({ error: 'لم يتم العثور على أحد المحورين' });
+    // تبديل الترتيب
+    db.update('axis', axisA.id, { order: Number(orderB) });
+    db.update('axis', axisB.id, { order: Number(orderA) });
+    // تحديث رموز المعايير: م{orderA}-x ↔ م{orderB}-x
+    const standards = db.list('standard');
+    let codesSwapped = 0;
+    for (const s of standards) {
+      const code = (s.code || '').trim();
+      const match = code.match(/^م(\d+)-(\d+)$/);
+      if (!match) continue;
+      const axisNum = parseInt(match[1], 10);
+      const stdNum = match[2];
+      if (axisNum === Number(orderA)) {
+        db.update('standard', s.id, { code: `م${orderB}-${stdNum}`, axis_id: axisA.id });
+        codesSwapped++;
+      } else if (axisNum === Number(orderB)) {
+        db.update('standard', s.id, { code: `م${orderA}-${stdNum}`, axis_id: axisB.id });
+        codesSwapped++;
+      }
+    }
+    const result = db.list('axis').sort((a, b) => Number(a.order) - Number(b.order)).map(a => ({ id: a.id, order: a.order, name: a.name }));
+    res.json({ ok: true, codesSwapped, axes: result, message: `تم تبديل المحور ${orderA} والمحور ${orderB}. تم تحديث ${codesSwapped} رمز معيار.` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // استعادة المحاور المفقودة — يضمن وجود جميع المحاور الـ 9
 app.post('/api/restore-axes', async (req, res) => {
   try {
     const db = await getDb();
     const AXES_REF = [
-      'تنظيم المجتمع والتعبئة',
       'الشراكات والتعاون',
+      'تنظيم المجتمع والتعبئة',
       'المعلومات المجتمعية',
       'المياه والبيئة والغذاء',
       'التنمية الصحية',
