@@ -445,7 +445,7 @@ export default function Settings() {
       {/* ===== Tabs Content ===== */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 mt-4">
         <Tabs defaultValue="branding" className="w-full">
-          <TabsList className="w-full bg-white shadow-lg border border-border/50 rounded-2xl h-auto p-1.5 flex flex-wrap gap-1">
+          <TabsList className="w-full bg-white shadow-lg border border-border/50 rounded-2xl h-auto p-1.5 flex flex-wrap flex-row-reverse gap-1">
             <TabsTrigger value="branding" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
               <Image className="w-4 h-4" />
               الشعار والهوية
