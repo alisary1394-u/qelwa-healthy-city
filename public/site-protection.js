@@ -7,14 +7,23 @@
 (function() {
   'use strict';
 
+  // علامة عامة: المشرف أو إعداد الإيقاف يضعها true من React
+  window.__ALLOW_SCREENSHOTS = false;
+
+  function isScreenshotAllowed() {
+    return window.__ALLOW_SCREENSHOTS === true;
+  }
+
   // ========== 1. منع النقر بالزر الأيمن ==========
   document.addEventListener('contextmenu', function(e) {
+    if (isScreenshotAllowed()) return true;
     e.preventDefault();
     return false;
   });
 
   // ========== 2. منع تحديد النص ==========
   document.addEventListener('selectstart', function(e) {
+    if (isScreenshotAllowed()) return true;
     // السماح بالتحديد داخل حقول الإدخال فقط
     const tag = e.target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') {
@@ -26,6 +35,7 @@
 
   // ========== 3. منع النسخ واللصق والقص ==========
   document.addEventListener('copy', function(e) {
+    if (isScreenshotAllowed()) return true;
     const tag = e.target.tagName?.toLowerCase();
     if (tag === 'input' || tag === 'textarea') return true;
     e.preventDefault();
@@ -33,6 +43,7 @@
   });
 
   document.addEventListener('cut', function(e) {
+    if (isScreenshotAllowed()) return true;
     const tag = e.target.tagName?.toLowerCase();
     if (tag === 'input' || tag === 'textarea') return true;
     e.preventDefault();
@@ -41,17 +52,20 @@
 
   // ========== 4. منع السحب والإفلات ==========
   document.addEventListener('dragstart', function(e) {
+    if (isScreenshotAllowed()) return true;
     e.preventDefault();
     return false;
   });
 
   document.addEventListener('drop', function(e) {
+    if (isScreenshotAllowed()) return true;
     e.preventDefault();
     return false;
   });
 
   // ========== 5. منع اختصارات لوحة المفاتيح الخطيرة ==========
   document.addEventListener('keydown', function(e) {
+    if (isScreenshotAllowed()) return true;
     // Ctrl+S (حفظ الصفحة)
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
@@ -98,51 +112,32 @@
   });
 
   // ========== 6. منع الطباعة ==========
-  // إخفاء المحتوى عند محاولة الطباعة
-  const printStyle = document.createElement('style');
-  printStyle.textContent = `
-    @media print {
-      body * {
-        display: none !important;
-      }
-      body::after {
-        content: "⛔ طباعة هذا المحتوى غير مسموح بها - نظام المدينة الصحية محافظة قلوة";
-        display: block !important;
-        font-size: 24px;
-        text-align: center;
-        padding: 50px;
-        direction: rtl;
-      }
-    }
-  `;
+  var printStyle = document.createElement('style');
+  printStyle.id = 'site-protection-print';
+  printStyle.textContent = '@media print { body * { display: none !important; } body::after { content: "⛔ طباعة هذا المحتوى غير مسموح بها - نظام المدينة الصحية محافظة قلوة"; display: block !important; font-size: 24px; text-align: center; padding: 50px; direction: rtl; } }';
   document.head.appendChild(printStyle);
 
-  // ========== 7. CSS إضافي لمنع التحديد ==========
-  const protectStyle = document.createElement('style');
-  protectStyle.textContent = `
-    body {
-      -webkit-user-select: none !important;
-      -moz-user-select: none !important;
-      -ms-user-select: none !important;
-      user-select: none !important;
-      -webkit-touch-callout: none !important;
-    }
-    input, textarea, select, [contenteditable="true"] {
-      -webkit-user-select: text !important;
-      -moz-user-select: text !important;
-      -ms-user-select: text !important;
-      user-select: text !important;
-    }
-    img {
-      pointer-events: none !important;
-      -webkit-user-drag: none !important;
-      -khtml-user-drag: none !important;
-      -moz-user-drag: none !important;
-      -o-user-drag: none !important;
-      user-drag: none !important;
-    }
-  `;
+  // ========== 7. CSS إضافي لمنع التحديد (ديناميكي) ==========
+  var protectStyle = document.createElement('style');
+  protectStyle.id = 'site-protection-css';
+  protectStyle.textContent =
+    'body { -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }' +
+    'input, textarea, select, [contenteditable="true"] { -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; user-select: text !important; }' +
+    'img { pointer-events: none !important; -webkit-user-drag: none !important; -khtml-user-drag: none !important; -moz-user-drag: none !important; -o-user-drag: none !important; user-drag: none !important; }';
   document.head.appendChild(protectStyle);
+
+  // مراقبة تغيير علامة الحماية لإضافة/إزالة CSS ديناميكياً
+  setInterval(function() {
+    var el = document.getElementById('site-protection-css');
+    var printEl = document.getElementById('site-protection-print');
+    if (isScreenshotAllowed()) {
+      if (el) el.disabled = true;
+      if (printEl) printEl.disabled = true;
+    } else {
+      if (el) el.disabled = false;
+      if (printEl) printEl.disabled = false;
+    }
+  }, 500);
 
   // ========== 8. كشف أدوات المطور (DevTools) ==========
   let devtoolsOpen = false;
@@ -267,16 +262,23 @@
   // ========== 12. حماية الصور ==========
   function protectImages() {
     const observer = new MutationObserver(function(mutations) {
+      if (isScreenshotAllowed()) return;
       mutations.forEach(function(mutation) {
         mutation.addedNodes.forEach(function(node) {
           if (node.tagName === 'IMG') {
             node.setAttribute('draggable', 'false');
-            node.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+            node.addEventListener('contextmenu', function(e) {
+              if (isScreenshotAllowed()) return true;
+              e.preventDefault();
+            });
           }
           if (node.querySelectorAll) {
             node.querySelectorAll('img').forEach(function(img) {
               img.setAttribute('draggable', 'false');
-              img.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+              img.addEventListener('contextmenu', function(e) {
+                if (isScreenshotAllowed()) return true;
+                e.preventDefault();
+              });
             });
           }
         });
@@ -290,12 +292,6 @@
   }
 
   // ========== 13. حماية شاملة من لقطات الشاشة ==========
-  // علامة عامة: المشرف العام يضعها true من React
-  window.__ALLOW_SCREENSHOTS = false;
-
-  function isScreenshotAllowed() {
-    return window.__ALLOW_SCREENSHOTS === true;
-  }
 
   // --- الغطاء الواقي الدائم ---
   var protectionOverlay = null;
