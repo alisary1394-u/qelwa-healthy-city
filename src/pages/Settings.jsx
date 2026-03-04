@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check,
   Image, Upload, Trash2, Settings as SettingsIcon, Shield, Building2,
-  HardDrive, AlertTriangle, CheckCircle2, Loader2, Search, Lock
+  HardDrive, AlertTriangle, CheckCircle2, Loader2, Search, Lock, Camera, CameraOff
 } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS_BY_ROLE, ROLE_LABELS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
@@ -55,6 +55,8 @@ export default function Settings() {
   });
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoSaved, setLogoSaved] = useState(false);
+  const [screenProtectionDisabled, setScreenProtectionDisabled] = useState(false);
+  const [screenProtSaving, setScreenProtSaving] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // Permissions state
@@ -92,6 +94,7 @@ export default function Settings() {
         city_name: currentSetting.city_name || 'المدينة الصحية',
         city_location: currentSetting.city_location || 'محافظة قلوة'
       });
+      setScreenProtectionDisabled(currentSetting.screen_protection_disabled === true);
     }
   }, [currentSetting]);
 
@@ -600,6 +603,73 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Screen Protection Toggle */}
+            {permissions.canManageSettings && (
+              <Card className="shadow-lg border-0 overflow-hidden mt-6">
+                <CardHeader className="bg-gradient-to-l from-rose-50/80 to-orange-50/50 border-b border-border/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+                      {screenProtectionDisabled ? <Camera className="w-5 h-5 text-rose-700" /> : <CameraOff className="w-5 h-5 text-rose-700" />}
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">حماية تصوير الشاشة</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-0.5">التحكم بحماية التطبيق من لقطات الشاشة</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between p-4 rounded-xl border bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                      <div>
+                        <Label htmlFor="screen-protection-toggle" className="text-sm font-medium cursor-pointer">
+                          {screenProtectionDisabled ? 'حماية الشاشة معطّلة' : 'حماية الشاشة مفعّلة'}
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {screenProtectionDisabled
+                            ? 'يسمح لجميع المستخدمين بتصوير الشاشة'
+                            : 'يمنع تصوير الشاشة لجميع المستخدمين عدا المشرف العام'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      id="screen-protection-toggle"
+                      checked={screenProtectionDisabled}
+                      disabled={screenProtSaving}
+                      onCheckedChange={async (checked) => {
+                        setScreenProtSaving(true);
+                        try {
+                          const payload = { screen_protection_disabled: checked };
+                          if (currentSetting.id) {
+                            await updateMutation.mutateAsync({ id: currentSetting.id, data: payload });
+                          } else {
+                            await createMutation.mutateAsync(payload);
+                          }
+                          setScreenProtectionDisabled(checked);
+                          window.__ALLOW_SCREENSHOTS = checked;
+                          showToast(checked ? 'تم إيقاف حماية تصوير الشاشة' : 'تم تفعيل حماية تصوير الشاشة');
+                        } catch {
+                          showToast('فشل حفظ الإعداد', 'error');
+                        } finally {
+                          setScreenProtSaving(false);
+                        }
+                      }}
+                      className="data-[state=checked]:bg-rose-600"
+                    />
+                  </div>
+                  {screenProtectionDisabled && (
+                    <div className="flex items-start gap-3 mt-4 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        تنبيه: عند إيقاف الحماية، سيتمكن جميع المستخدمين من تصوير الشاشة ونسخ المحتوى. فعّلها مجدداً عند الانتهاء.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* ===== Tab 2: Districts ===== */}

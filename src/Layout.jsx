@@ -37,21 +37,29 @@ export default function Layout({ children }) {
   const { navItems, permissions, isGovernor } = usePermissions();
   const { logout } = useAuth();
 
-  // السماح بلقطات الشاشة للمشرف العام فقط
+  // السماح بلقطات الشاشة للمشرف العام فقط — أو إذا عطّلها المشرف من الإعدادات
+  const { data: settingsList = [] } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.entities.Settings.list()
+  });
+  const appSetting = settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) || {};
+  const screenProtectionOff = appSetting.screen_protection_disabled === true;
+
   useEffect(() => {
-    window.__ALLOW_SCREENSHOTS = isGovernor === true;
+    const allowed = isGovernor === true || screenProtectionOff;
+    window.__ALLOW_SCREENSHOTS = allowed;
     
     // حماية Capacitor الأصلية للموبايل
     if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
       import('@/mobile/screen-protection-plugin').then(({ enableScreenProtection, disableScreenProtection }) => {
-        if (isGovernor) {
+        if (allowed) {
           disableScreenProtection();
         } else {
           enableScreenProtection();
         }
       }).catch(() => {});
     }
-  }, [isGovernor]);
+  }, [isGovernor, screenProtectionOff]);
   const { theme, setTheme, systemTheme } = useTheme();
 
   // جلسة الخمول: تسجيل خروج تلقائي بعد 20 دقيقة من عدم النشاط
