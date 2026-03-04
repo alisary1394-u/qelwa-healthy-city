@@ -1046,7 +1046,7 @@ export default function Settings() {
                   <div>
                     <Label className="font-semibold text-sm mb-3 block">اختر المنصب لتعديل صلاحياته</Label>
                     <Tabs value={activeRole} onValueChange={setActiveRole}>
-                      <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 flex-row-reverse justify-end">
+                      <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 justify-end">
                         {allRoles.map((roleKey) => (
                           <TabsTrigger key={roleKey} value={roleKey} className="text-xs">
                             {ROLE_LABELS[roleKey]}
