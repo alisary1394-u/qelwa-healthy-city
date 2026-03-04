@@ -956,8 +956,8 @@ export default function Settings() {
               {/* Summary Stats */}
               <Card className="shadow-lg border-0 overflow-hidden">
                 <CardHeader className="bg-gradient-to-l from-purple-50/80 to-indigo-50/50 border-b border-border/30">
-                  <div className="flex items-center justify-between flex-row-reverse">
-                    <div className="flex items-center gap-3 flex-row-reverse">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                         <Shield className="w-5 h-5 text-purple-700" />
                       </div>
@@ -966,7 +966,7 @@ export default function Settings() {
                         <p className="text-sm text-muted-foreground mt-0.5">التحكم بمصفوفة صلاحيات المناصب</p>
                       </div>
                     </div>
-                    <div className="flex gap-4 text-sm flex-row-reverse">
+                    <div className="flex gap-4 text-sm">
                       <div className="text-center">
                         <p className="text-xl font-bold text-purple-700">
                           {Object.values(activeRolePermissions).filter(Boolean).length}
