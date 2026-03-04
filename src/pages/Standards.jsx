@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS } from '@/api/seedAxesAndStandards';
-import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode, getShortTitleByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -875,7 +875,7 @@ function StandardsLegacy() {
                             {statusConfig[standard.status]?.label}
                           </span>
                         </div>
-                        <h3 className="text-white font-bold text-base leading-tight">{standard.title}</h3>
+                        <h3 className="text-white font-bold text-base leading-tight">{getShortTitleByCode(standard.code) || standard.title}</h3>
                         {standard.axis_name && (
                           <div className="flex items-center gap-1.5 mt-1.5">
                             <Target className="w-3.5 h-3.5 text-white/80 shrink-0" />
@@ -922,9 +922,8 @@ function StandardsLegacy() {
                   {expandedCards[standard.id] && (
                   <CardContent className="p-4">
                     <div className="flex-1">
-                        {standard.description && (
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{standard.description}</p>
-                        )}
+                        {/* نص المعيار الكامل */}
+                        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{standard.title}</p>
                         {standard.required_evidence && (
                           <p className="text-xs text-primary mb-3 flex items-center gap-1">
                             <FileText className="w-3.5 h-3.5 shrink-0" />
