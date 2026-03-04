@@ -952,21 +952,21 @@ export default function Settings() {
 
           {/* ===== Tab 4: Permissions ===== */}
           {canManagePermissions && (
-            <TabsContent value="permissions" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6">
+            <TabsContent value="permissions" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir="rtl">
               {/* Summary Stats */}
               <Card className="shadow-lg border-0 overflow-hidden">
                 <CardHeader className="bg-gradient-to-l from-purple-50/80 to-indigo-50/50 border-b border-border/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between flex-row-reverse">
+                    <div className="flex items-center gap-3 flex-row-reverse">
                       <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                         <Shield className="w-5 h-5 text-purple-700" />
                       </div>
-                      <div>
+                      <div className="text-right">
                         <CardTitle className="text-lg">إدارة الصلاحيات</CardTitle>
                         <p className="text-sm text-muted-foreground mt-0.5">التحكم بمصفوفة صلاحيات المناصب</p>
                       </div>
                     </div>
-                    <div className="flex gap-4 text-sm">
+                    <div className="flex gap-4 text-sm flex-row-reverse">
                       <div className="text-center">
                         <p className="text-xl font-bold text-purple-700">
                           {Object.values(activeRolePermissions).filter(Boolean).length}
@@ -1018,7 +1018,7 @@ export default function Settings() {
                   )}
 
                   {/* Search + actions */}
-                  <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex flex-col md:flex-row-reverse gap-3">
                     <div className="relative flex-1">
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -1028,14 +1028,14 @@ export default function Settings() {
                         className="pr-10 h-10 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={!permHasChanges || permIsSaving} className="h-10 text-xs">
-                        <RotateCcw className="w-4 h-4 ml-1.5" />
-                        إعادة تعيين
-                      </Button>
+                    <div className="flex gap-2 flex-row-reverse">
                       <Button size="sm" onClick={handleSavePermissions} disabled={!permHasChanges || permIsSaving} className="h-10 bg-purple-600 hover:bg-purple-700 text-white text-xs">
                         {permIsSaving ? <Loader2 className="w-4 h-4 ml-1.5 animate-spin" /> : <Save className="w-4 h-4 ml-1.5" />}
                         {permIsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={!permHasChanges || permIsSaving} className="h-10 text-xs">
+                        <RotateCcw className="w-4 h-4 ml-1.5" />
+                        إعادة تعيين
                       </Button>
                     </div>
                   </div>
@@ -1046,7 +1046,7 @@ export default function Settings() {
                   <div>
                     <Label className="font-semibold text-sm mb-3 block">اختر المنصب لتعديل صلاحياته</Label>
                     <Tabs value={activeRole} onValueChange={setActiveRole}>
-                      <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 justify-end">
+                      <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 justify-start flex-row-reverse">
                         {allRoles.map((roleKey) => (
                           <TabsTrigger key={roleKey} value={roleKey} className="text-xs">
                             {ROLE_LABELS[roleKey]}
@@ -1060,7 +1060,7 @@ export default function Settings() {
 
                   {/* Permissions list */}
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-3 flex-row-reverse">
                       <Shield className="w-4 h-4 text-purple-600" />
                       <Label className="font-semibold text-sm">صلاحيات: {activeRoleLabel}</Label>
                     </div>
@@ -1074,8 +1074,8 @@ export default function Settings() {
                         {filteredPermissionKeys.map(({ key, label }) => {
                           const isEnabled = activeRolePermissions[key] === true;
                           return (
-                            <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex-row-reverse">
-                              <div className="flex items-center gap-3">
+                            <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                              <div className="flex items-center gap-3 flex-row-reverse">
                                 {isEnabled ? (
                                   <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                                 ) : (
