@@ -20,13 +20,7 @@ export default function Home() {
   const [verificationCode, setVerificationCode] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
-  const [showRegisterGovernor, setShowRegisterGovernor] = useState(false);
-  const [regFullName, setRegFullName] = useState('');
-  const [regNationalId, setRegNationalId] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [registerSuccess, setRegisterSuccess] = useState('');
-  const [registerLoading, setRegisterLoading] = useState(false);
+
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
   const navigate = useNavigate();
   const isEmailVerificationTemporarilyDisabled = appParams.disableEmailVerification === true;
@@ -177,67 +171,6 @@ export default function Home() {
     setResendTimer(60);
   };
 
-  const handleRegisterGovernor = async (e) => {
-    e.preventDefault();
-    setError('');
-    setRegisterSuccess('');
-    setRegisterLoading(true);
-    const payload = {
-      full_name: regFullName.trim(),
-      national_id: regNationalId.trim(),
-      email: regEmail.trim().toLowerCase(),
-      password: regPassword,
-    };
-
-    if (regNationalId.trim().length !== 10) {
-      setError('رقم الهوية يجب أن يتكون من 10 أرقام');
-      setRegisterLoading(false);
-      return;
-    }
-
-    const onSuccess = () => {
-      setRegisterSuccess('تم تسجيلك كمشرف عام. يمكنك الآن تسجيل الدخول.');
-      setShowRegisterGovernor(false);
-      setNationalId(regNationalId);
-      setPassword(regPassword);
-      setRegFullName('');
-      setRegNationalId('');
-      setRegEmail('');
-      setRegPassword('');
-    };
-
-    try {
-      const res = await api.functions.invoke('createFirstGovernor', payload);
-      const result = res?.data ?? res;
-      if (result?.success) {
-        onSuccess();
-        setRegisterLoading(false);
-        return;
-      }
-      setError(result?.message || 'فشل التسجيل');
-    } catch (err) {
-      if (typeof console !== 'undefined' && console.error) console.error('createFirstGovernor error:', err);
-      try {
-        const members = await api.entities.TeamMember.list();
-        if (members.length === 0) {
-          await api.entities.TeamMember.create({ ...payload, role: 'governor', status: 'active' });
-          onSuccess();
-          setRegisterLoading(false);
-          return;
-        }
-      } catch (_) {}
-      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
-      const status = err?.response?.status;
-      const detail = status === 404
-        ? 'الدالة غير منشورة. انشر الدوال ثم أعد المحاولة.'
-        : status === 403
-          ? 'الطلب مرفوض. جرّب الطريقة اليدوية أدناه.'
-          : msg || 'فشل التسجيل. جرّب الطريقة اليدوية أدناه.';
-      setError(detail);
-    }
-    setRegisterLoading(false);
-  };
-
   if (isAuth === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -386,12 +319,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {registerSuccess && (
-                        <div className="bg-success/10 border border-success/30 text-success p-3 rounded-xl text-sm">
-                          {registerSuccess}
-                        </div>
-                      )}
-
                       <Button
                         type="submit"
                         disabled={loading}
@@ -404,44 +331,7 @@ export default function Home() {
 
                       <div className="text-center text-sm text-muted-foreground pt-3 border-t">
                         <p>للحصول على حساب، تواصل مع <span className="font-semibold text-primary">مدير النظام</span></p>
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="sm"
-                          className="mt-1 text-warning"
-                          onClick={() => setShowRegisterGovernor(!showRegisterGovernor)}
-                        >
-                          {showRegisterGovernor ? 'إخفاء نموذج التسجيل' : 'أول مرة؟ سجّل كمشرف'}
-                        </Button>
                       </div>
-
-                      {showRegisterGovernor && (
-                        <div className="mt-3 pt-3 border-t bg-muted/50 rounded-xl p-4">
-                          <p className="text-sm font-semibold mb-3">تسجيل المشرف الأول</p>
-                          <form onSubmit={handleRegisterGovernor} className="space-y-3">
-                            <div>
-                              <Label className="text-xs">الاسم الكامل</Label>
-                              <Input value={regFullName} onChange={(e) => setRegFullName(e.target.value)} placeholder="الاسم الكامل" required className="mt-1 h-9" />
-                            </div>
-                            <div>
-                              <Label className="text-xs">رقم الهوية الوطنية</Label>
-                              <Input value={regNationalId} onChange={(e) => setRegNationalId(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10 أرقام" required maxLength={10} inputMode="numeric" className="mt-1 h-9" />
-                            </div>
-                            <div>
-                              <Label className="text-xs">البريد الإلكتروني</Label>
-                              <Input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="example@email.com" required className="mt-1 h-9" />
-                            </div>
-                            <div>
-                              <Label className="text-xs">كلمة المرور</Label>
-                              <Input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="كلمة المرور" required className="mt-1 h-9" />
-                            </div>
-                            <Button type="submit" disabled={registerLoading} variant="secondary" size="sm" className="w-full">
-                              {registerLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                              تسجيلني كمشرف
-                            </Button>
-                          </form>
-                        </div>
-                      )}
                     </form>
                   ) : (
                     <form onSubmit={handleVerifyCode} className="space-y-4">
