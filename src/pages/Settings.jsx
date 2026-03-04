@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check,
   Image, Upload, Trash2, Settings as SettingsIcon, Shield, Building2,
-  HardDrive, AlertTriangle, CheckCircle2, Loader2
+  HardDrive, AlertTriangle, CheckCircle2, Loader2, Search, Lock
 } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS_BY_ROLE, ROLE_LABELS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
@@ -54,6 +56,13 @@ export default function Settings() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoSaved, setLogoSaved] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Permissions state
+  const [permSearchQuery, setPermSearchQuery] = useState('');
+  const [activeRole, setActiveRole] = useState('governor');
+  const [editedPermissions, setEditedPermissions] = useState({ ...PERMISSIONS_BY_ROLE });
+  const [permHasChanges, setPermHasChanges] = useState(false);
+  const [permIsSaving, setPermIsSaving] = useState(false);
   const queryClient = useQueryClient();
 
   const showToast = (message, type = 'success') => setToast({ show: true, message, type });
@@ -107,6 +116,41 @@ export default function Settings() {
     mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
+
+  // Permission overrides queries
+  const { data: permissionOverrides = [], isLoading: isLoadingOverrides } = useQuery({
+    queryKey: ['permissionOverrides'],
+    queryFn: () => api.entities.PermissionOverride.list()
+  });
+
+  const createOverrideMutation = useMutation({
+    mutationFn: (data) => api.entities.PermissionOverride.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['permissionOverrides'] })
+  });
+
+  const updateOverrideMutation = useMutation({
+    mutationFn: ({ id, data }) => api.entities.PermissionOverride.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['permissionOverrides'] })
+  });
+
+  const deleteOverrideMutation = useMutation({
+    mutationFn: (id) => api.entities.PermissionOverride.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['permissionOverrides'] })
+  });
+
+  // Merge permission overrides
+  useEffect(() => {
+    if (permissionOverrides.length === 0) return;
+    const merged = { ...PERMISSIONS_BY_ROLE };
+    permissionOverrides.forEach((override) => {
+      const roleKey = override.role;
+      const permKey = override.permission_key;
+      if (merged[roleKey] && permKey in merged[roleKey]) {
+        merged[roleKey] = { ...merged[roleKey], [permKey]: override.is_enabled };
+      }
+    });
+    setEditedPermissions(merged);
+  }, [permissionOverrides]);
 
   const { permissions } = usePermissions();
 
@@ -279,6 +323,77 @@ export default function Settings() {
 
   const showDataTab = canShowBackupRestore || (canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function');
 
+  // Permissions helpers
+  const allRoles = Object.keys(PERMISSIONS_BY_ROLE);
+  const filteredPermissionKeys = useMemo(() => {
+    if (!permSearchQuery) return PERMISSION_REVIEW_KEYS;
+    const query = permSearchQuery.toLowerCase();
+    return PERMISSION_REVIEW_KEYS.filter(({ label }) => label.toLowerCase().includes(query));
+  }, [permSearchQuery]);
+
+  const activeRolePermissions = editedPermissions[activeRole] || {};
+  const activeRoleLabel = ROLE_LABELS[activeRole] || activeRole;
+  const canManagePermissions = permissions.canManageSettings;
+
+  const handlePermissionToggle = (roleKey, permissionKey) => {
+    setEditedPermissions(prev => ({
+      ...prev,
+      [roleKey]: { ...prev[roleKey], [permissionKey]: !prev[roleKey][permissionKey] }
+    }));
+    setPermHasChanges(true);
+  };
+
+  const handleSavePermissions = async () => {
+    setPermIsSaving(true);
+    try {
+      const modifiedBy = currentUser?.email || 'unknown';
+      const modifiedAt = new Date().toISOString();
+      for (const roleKey of Object.keys(editedPermissions)) {
+        const rolePerms = editedPermissions[roleKey];
+        const defaultPerms = PERMISSIONS_BY_ROLE[roleKey];
+        for (const permKey of Object.keys(rolePerms)) {
+          if (permKey === 'label') continue;
+          const currentValue = rolePerms[permKey];
+          const defaultValue = defaultPerms?.[permKey];
+          if (currentValue !== defaultValue) {
+            const existingOverride = permissionOverrides.find(o => o.role === roleKey && o.permission_key === permKey);
+            if (existingOverride) {
+              await updateOverrideMutation.mutateAsync({ id: existingOverride.id, data: { is_enabled: currentValue, modified_by: modifiedBy, modified_at: modifiedAt } });
+            } else {
+              await createOverrideMutation.mutateAsync({ role: roleKey, permission_key: permKey, is_enabled: currentValue, modified_by: modifiedBy, modified_at: modifiedAt });
+            }
+          } else {
+            const existingOverride = permissionOverrides.find(o => o.role === roleKey && o.permission_key === permKey);
+            if (existingOverride) {
+              await deleteOverrideMutation.mutateAsync(existingOverride.id);
+            }
+          }
+        }
+      }
+      showToast('تم حفظ تغييرات الصلاحيات بنجاح');
+      setPermHasChanges(false);
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      showToast(error?.message || 'حدث خطأ أثناء حفظ الصلاحيات', 'error');
+    } finally {
+      setPermIsSaving(false);
+    }
+  };
+
+  const handleResetPermissions = async () => {
+    try {
+      for (const override of permissionOverrides) {
+        await deleteOverrideMutation.mutateAsync(override.id);
+      }
+      setEditedPermissions({ ...PERMISSIONS_BY_ROLE });
+      setPermHasChanges(false);
+      showToast('تم إعادة تعيين جميع الصلاحيات إلى القيم الافتراضية');
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      showToast('حدث خطأ أثناء إعادة التعيين', 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir="rtl">
       <Toast {...toast} onClose={() => setToast(t => ({ ...t, show: false }))} />
@@ -344,6 +459,12 @@ export default function Settings() {
               <TabsTrigger value="data" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
                 <Database className="w-4 h-4" />
                 البيانات
+              </TabsTrigger>
+            )}
+            {canManagePermissions && (
+              <TabsTrigger value="permissions" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
+                <Shield className="w-4 h-4" />
+                الصلاحيات
               </TabsTrigger>
             )}
           </TabsList>
@@ -755,6 +876,159 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+          )}
+
+          {/* ===== Tab 4: Permissions ===== */}
+          {canManagePermissions && (
+            <TabsContent value="permissions" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6">
+              {/* Summary Stats */}
+              <Card className="shadow-lg border-0 overflow-hidden">
+                <CardHeader className="bg-gradient-to-l from-purple-50/80 to-indigo-50/50 border-b border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-purple-700" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">إدارة الصلاحيات</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">التحكم بمصفوفة صلاحيات المناصب</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-purple-700">
+                          {Object.values(activeRolePermissions).filter(Boolean).length}
+                        </p>
+                        <p className="text-purple-600 text-xs">مُفعّلة</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-muted-foreground">
+                          {Object.values(activeRolePermissions).filter(v => !v).length}
+                        </p>
+                        <p className="text-muted-foreground text-xs">معطّلة</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-purple-700">
+                          {Object.keys(activeRolePermissions).length}
+                        </p>
+                        <p className="text-purple-600 text-xs">إجمالي</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 space-y-5">
+                  {isLoadingOverrides && (
+                    <div className="flex items-center gap-3 text-blue-600 bg-blue-50 rounded-xl p-4 border border-blue-200/60">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <p className="text-sm">جاري تحميل الصلاحيات المخصصة...</p>
+                    </div>
+                  )}
+
+                  {/* Unsaved changes alert */}
+                  {permHasChanges && (
+                    <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-amber-800">لديك تغييرات غير محفوظة</p>
+                        <p className="text-xs text-amber-700/70 mt-0.5">احفظ التغييرات لتطبيقها على النظام</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={permIsSaving} className="border-amber-400 text-amber-700 hover:bg-amber-100 text-xs">
+                          <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                          إلغاء
+                        </Button>
+                        <Button size="sm" onClick={handleSavePermissions} disabled={permIsSaving} className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
+                          {permIsSaving ? <Loader2 className="w-3.5 h-3.5 ml-1 animate-spin" /> : <Save className="w-3.5 h-3.5 ml-1" />}
+                          {permIsSaving ? 'جاري الحفظ...' : 'حفظ'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Search + actions */}
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="بحث في الصلاحيات..."
+                        value={permSearchQuery}
+                        onChange={(e) => setPermSearchQuery(e.target.value)}
+                        className="pr-10 h-10 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={!permHasChanges || permIsSaving} className="h-10 text-xs">
+                        <RotateCcw className="w-4 h-4 ml-1.5" />
+                        إعادة تعيين
+                      </Button>
+                      <Button size="sm" onClick={handleSavePermissions} disabled={!permHasChanges || permIsSaving} className="h-10 bg-purple-600 hover:bg-purple-700 text-white text-xs">
+                        {permIsSaving ? <Loader2 className="w-4 h-4 ml-1.5 animate-spin" /> : <Save className="w-4 h-4 ml-1.5" />}
+                        {permIsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Role selector */}
+                  <div>
+                    <Label className="font-semibold text-sm mb-3 block">اختر المنصب لتعديل صلاحياته</Label>
+                    <Tabs value={activeRole} onValueChange={setActiveRole}>
+                      <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 flex-row-reverse justify-end">
+                        {allRoles.map((roleKey) => (
+                          <TabsTrigger key={roleKey} value={roleKey} className="text-xs">
+                            {ROLE_LABELS[roleKey]}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
+                  <Separator />
+
+                  {/* Permissions list */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Shield className="w-4 h-4 text-purple-600" />
+                      <Label className="font-semibold text-sm">صلاحيات: {activeRoleLabel}</Label>
+                    </div>
+                    {filteredPermissionKeys.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">لا توجد صلاحيات تطابق البحث</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+                        {filteredPermissionKeys.map(({ key, label }) => {
+                          const isEnabled = activeRolePermissions[key] === true;
+                          return (
+                            <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                              <div className="flex items-center gap-3">
+                                {isEnabled ? (
+                                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                ) : (
+                                  <div className="w-4 h-4 rounded-full border-2 border-border flex-shrink-0" />
+                                )}
+                                <div>
+                                  <Label htmlFor={`${activeRole}-${key}`} className="text-sm font-medium cursor-pointer">{label}</Label>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">{key}</p>
+                                </div>
+                              </div>
+                              <Switch
+                                id={`${activeRole}-${key}`}
+                                checked={isEnabled}
+                                onCheckedChange={() => handlePermissionToggle(activeRole, key)}
+                                className="data-[state=checked]:bg-purple-600"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           )}
         </Tabs>

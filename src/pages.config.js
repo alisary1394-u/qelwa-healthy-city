@@ -58,7 +58,6 @@ export const PAGES = {
     "Files": lazy(() => import('./pages/Files')),
     "Home": lazy(() => import('./pages/Home')),
     "Initiatives": lazy(() => import('./pages/Initiatives')),
-    "PermissionsManager": lazy(() => import('./pages/PermissionsManager')),
     "Reports": lazy(() => import('./pages/Reports')),
     "Settings": lazy(() => import('./pages/Settings')),
     "Standards": lazy(() => import('./pages/Standards')),
