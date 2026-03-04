@@ -483,6 +483,47 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
+// استعادة المحاور المفقودة — يضمن وجود جميع المحاور الـ 9
+app.post('/api/restore-axes', async (req, res) => {
+  try {
+    const db = await getDb();
+    const AXES_REF = [
+      'تنظيم المجتمع والتعبئة',
+      'الشراكات والتعاون',
+      'المعلومات المجتمعية',
+      'المياه والبيئة والغذاء',
+      'التنمية الصحية',
+      'الطوارئ والاستجابة',
+      'التعليم ومحو الأمية',
+      'المهارات والتدريب',
+      'القروض الصغيرة',
+    ];
+    const axes = db.list('axis');
+    const existingOrders = new Set(axes.map(a => Number(a.order)));
+    let restored = 0;
+    for (let i = 0; i < AXES_REF.length; i++) {
+      const order = i + 1;
+      if (!existingOrders.has(order)) {
+        db.create('axis', null, { name: AXES_REF[i], description: AXES_REF[i], order });
+        restored++;
+      }
+    }
+    // تصحيح المحاور التي تغير ترتيبها إلى قيمة غير صحيحة (1-9)
+    const allAxes = db.list('axis');
+    let fixed = 0;
+    for (const axis of allAxes) {
+      const order = Number(axis.order);
+      if (order < 1 || order > 9) {
+        try { db.remove('axis', axis.id); fixed++; } catch {}
+      }
+    }
+    const remaining = db.list('axis').length;
+    res.json({ ok: true, restored, fixed, remaining, message: `تم استعادة ${restored} محور، وحذف ${fixed} محور غير صالح. المتبقي: ${remaining}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // إزالة المعايير المكررة والزائدة من قاعدة البيانات — يُستدعى تلقائياً أو يدوياً
 app.post('/api/deduplicate-standards', async (req, res) => {
   try {

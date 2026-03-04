@@ -475,9 +475,10 @@ function StandardsLegacy() {
   const handleUpdateAxis = async (e) => {
     e.preventDefault();
     if (!canManage || !editAxisData?.id) return;
+    // حماية: لا يُسمح بتغيير رقم ترتيب المحور (ثابت حسب المرجع)
     await updateAxisMutation.mutateAsync({
       id: editAxisData.id,
-      data: { name: editAxisData.name, description: editAxisData.description, order: editAxisData.order }
+      data: { name: editAxisData.name, description: editAxisData.description }
     });
     // update axis_name in related standards
     const relatedStds = standards.filter(s => s.axis_id === editAxisData.id && s.axis_name !== editAxisData.name);
@@ -1331,8 +1332,8 @@ function StandardsLegacy() {
                 <Textarea value={editAxisData.description} onChange={(e) => setEditAxisData({ ...editAxisData, description: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>الترتيب</Label>
-                <Input type="number" value={editAxisData.order} onChange={(e) => setEditAxisData({ ...editAxisData, order: parseInt(e.target.value) || 0 })} />
+                <Label>الترتيب (ثابت حسب المرجع)</Label>
+                <Input type="number" value={editAxisData.order} disabled className="bg-muted cursor-not-allowed opacity-70" />
               </div>
               <div className="flex gap-3 justify-end pt-4">
                 <Button type="button" variant="outline" onClick={() => setEditAxisOpen(false)}>إلغاء</Button>
