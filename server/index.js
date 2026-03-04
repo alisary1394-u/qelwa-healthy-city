@@ -498,7 +498,7 @@ app.post('/api/restore-axes', async (req, res) => {
       'المهارات والتدريب',
       'القروض الصغيرة',
     ];
-    const axes = db.list('axis');
+    let axes = db.list('axis');
     const existingOrders = new Set(axes.map(a => Number(a.order)));
     let restored = 0;
     for (let i = 0; i < AXES_REF.length; i++) {
@@ -509,16 +509,59 @@ app.post('/api/restore-axes', async (req, res) => {
       }
     }
     // تصحيح المحاور التي تغير ترتيبها إلى قيمة غير صحيحة (1-9)
-    const allAxes = db.list('axis');
+    axes = db.list('axis');
     let fixed = 0;
-    for (const axis of allAxes) {
+    for (const axis of axes) {
       const order = Number(axis.order);
       if (order < 1 || order > 9) {
         try { db.remove('axis', axis.id); fixed++; } catch {}
       }
     }
+    // إزالة المحاور المكررة (نفس الترتيب) — الاحتفاظ بالأحدث أو الذي يطابق الاسم المرجعي
+    axes = db.list('axis');
+    const orderMap = {};
+    let duplicatesRemoved = 0;
+    for (const axis of axes) {
+      const order = Number(axis.order);
+      if (!orderMap[order]) orderMap[order] = [];
+      orderMap[order].push(axis);
+    }
+    for (let orderNum = 1; orderNum <= 9; orderNum++) {
+      const group = orderMap[orderNum];
+      if (!group || group.length <= 1) continue;
+      // ابحث عن المحور الذي يطابق الاسم المرجعي
+      const refName = AXES_REF[orderNum - 1];
+      const matchRef = group.find(a => a.name === refName);
+      const standards = db.list('standard');
+      // اختر المحور الذي يحتوي أكبر عدد من المعايير المرتبطة
+      const keep = matchRef || group.reduce((best, a) => {
+        const count = standards.filter(s => s.axis_id === a.id).length;
+        const bestCount = standards.filter(s => s.axis_id === best.id).length;
+        return count > bestCount ? a : best;
+      }, group[0]);
+      // نقل معايير الزوائد إلى المحور المُبقَى، ثم حذف الزوائد
+      for (const axis of group) {
+        if (axis.id === keep.id) continue;
+        // نقل المعايير من المحور المحذوف إلى المحور المُبقَى
+        const orphans = standards.filter(s => s.axis_id === axis.id);
+        for (const s of orphans) {
+          try { db.update('standard', s.id, { axis_id: keep.id }); } catch {}
+        }
+        try { db.remove('axis', axis.id); duplicatesRemoved++; } catch {}
+      }
+    }
+    // تصحيح أسماء المحاور لتطابق المرجع
+    axes = db.list('axis');
+    let namesFixed = 0;
+    for (const axis of axes) {
+      const order = Number(axis.order);
+      if (order >= 1 && order <= 9 && axis.name !== AXES_REF[order - 1]) {
+        try { db.update('axis', axis.id, { name: AXES_REF[order - 1], description: AXES_REF[order - 1] }); namesFixed++; } catch {}
+      }
+    }
     const remaining = db.list('axis').length;
-    res.json({ ok: true, restored, fixed, remaining, message: `تم استعادة ${restored} محور، وحذف ${fixed} محور غير صالح. المتبقي: ${remaining}` });
+    const axesList = db.list('axis').sort((a, b) => Number(a.order) - Number(b.order)).map(a => ({ id: a.id, order: a.order, name: a.name }));
+    res.json({ ok: true, restored, fixed, duplicatesRemoved, namesFixed, remaining, axes: axesList, message: `تم استعادة ${restored}، حذف ${fixed} غير صالح، حذف ${duplicatesRemoved} مكرر، تصحيح أسماء ${namesFixed}. المتبقي: ${remaining}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -574,7 +617,23 @@ app.post('/api/deduplicate-standards', async (req, res) => {
       }
     }
     const remaining = db.list('standard').length;
-    res.json({ ok: true, removed, remaining, message: `تم إزالة ${removed} معيار مكرر/زائد. المتبقي: ${remaining}` });
+    // الخطوة 4: ربط المعايير بالمحاور الصحيحة حسب الرمز
+    const axes = db.list('axis');
+    const axisOrderMap = {};
+    for (const a of axes) axisOrderMap[Number(a.order)] = a.id;
+    const allStandards = db.list('standard');
+    let relinked = 0;
+    for (const s of allStandards) {
+      const normalized = normalizeCode(s.code);
+      const match = normalized.match(/^م(\d+)-(\d+)$/);
+      if (!match) continue;
+      const axisOrder = parseInt(match[1], 10);
+      const correctAxisId = axisOrderMap[axisOrder];
+      if (correctAxisId && s.axis_id !== correctAxisId) {
+        try { db.update('standard', s.id, { axis_id: correctAxisId }); relinked++; } catch {}
+      }
+    }
+    res.json({ ok: true, removed, remaining, relinked, message: `تم إزالة ${removed} معيار مكرر/زائد. المتبقي: ${remaining}. تم ربط ${relinked} معيار بالمحور الصحيح.` });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
