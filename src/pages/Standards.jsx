@@ -883,9 +883,20 @@ function StandardsLegacy() {
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-3 shrink-0">
                       {canManage && (
-                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-1 bg-white/10 rounded-lg p-0.5" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="حذف المعيار" onClick={() => handleDeleteStandard(standard)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="المستندات والمؤشرات" onClick={() => {
+                            setEditStandard(standard);
+                            setEditDocuments(parseJsonArray(standard.required_documents));
+                            setEditKpis(parseJsonArray(standard.kpis));
+                            setEditStandardOpen(true);
+                          }}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="تعديل بيانات المعيار" onClick={() => {
                             setEditStandardInfo({
                               id: standard.id,
@@ -900,17 +911,6 @@ function StandardsLegacy() {
                             setEditStandardInfoOpen(true);
                           }}>
                             <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="المستندات والمؤشرات" onClick={() => {
-                            setEditStandard(standard);
-                            setEditDocuments(parseJsonArray(standard.required_documents));
-                            setEditKpis(parseJsonArray(standard.kpis));
-                            setEditStandardOpen(true);
-                          }}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="حذف المعيار" onClick={() => handleDeleteStandard(standard)}>
-                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       )}
