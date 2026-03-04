@@ -5,12 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check, Image, Upload, Trash2, ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check,
+  Image, Upload, Trash2, Settings as SettingsIcon, Shield, Building2,
+  HardDrive, AlertTriangle, CheckCircle2, Loader2
+} from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
+
+// Toast-like notification component
+function Toast({ message, type = 'success', show, onClose }) {
+  useEffect(() => {
+    if (show) {
+      const t = setTimeout(onClose, 3000);
+      return () => clearTimeout(t);
+    }
+  }, [show, onClose]);
+  if (!show) return null;
+  const colors = type === 'success'
+    ? 'bg-emerald-500 text-white'
+    : type === 'error' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white';
+  return (
+    <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-2 text-sm font-medium animate-in slide-in-from-top-4 ${colors}`}>
+      {type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+      {message}
+    </div>
+  );
+}
 
 export default function Settings() {
   const [districtsList, setDistrictsList] = useState([]);
@@ -26,7 +52,11 @@ export default function Settings() {
     city_location: 'محافظة قلوة'
   });
   const [logoUploading, setLogoUploading] = useState(false);
+  const [logoSaved, setLogoSaved] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const queryClient = useQueryClient();
+
+  const showToast = (message, type = 'success') => setToast({ show: true, message, type });
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -43,10 +73,8 @@ export default function Settings() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  // Find the app config settings record (not key-value data_mode records)
   const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
 
-  // Sync logo form from settings
   useEffect(() => {
     if (currentSetting.id) {
       setLogoForm({
@@ -58,7 +86,6 @@ export default function Settings() {
     }
   }, [currentSetting]);
 
-  // Initialize districts from settings
   useEffect(() => {
     if (settings.length > 0) {
       const appSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key);
@@ -73,16 +100,12 @@ export default function Settings() {
 
   const createMutation = useMutation({
     mutationFn: (data) => api.entities.Settings.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => api.entities.Settings.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] })
   });
 
   const { permissions } = usePermissions();
@@ -92,10 +115,10 @@ export default function Settings() {
     appParams.useSupabaseBackend ||
     (appParams.apiUrl && appParams.allowServerReseed);
   const reseedSourceLabel = appParams.apiUrl
-    ? 'بيانات التجربة (سيرفر التطبيق)'
+    ? 'سيرفر التطبيق'
     : appParams.useSupabaseBackend
-      ? 'بيانات التجربة (قاعدة Supabase)'
-      : 'بيانات التجربة (الخلفية المحلية)';
+      ? 'قاعدة Supabase'
+      : 'الخلفية المحلية';
 
   const canShowBackupRestore = !!appParams.apiUrl && typeof api.backups?.list === 'function';
   const { data: backupsList = [], isLoading: backupsLoading } = useQuery({
@@ -107,20 +130,21 @@ export default function Settings() {
     mutationFn: () => api.backups.restoreLatest(),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['teamMembers', 'tasks', 'settings', 'committees'] });
-      if (typeof window !== 'undefined') window.alert(data?.message || 'تمت الاستعادة. حدّث الصفحة.');
-      if (typeof window !== 'undefined') window.location.reload();
+      showToast(data?.message || 'تمت الاستعادة بنجاح');
+      setTimeout(() => window.location.reload(), 1500);
     },
-    onError: (err) => {
-      if (typeof window !== 'undefined') window.alert(err?.message || 'فشلت الاستعادة');
-    },
+    onError: (err) => showToast(err?.message || 'فشلت الاستعادة', 'error'),
   });
 
   if (!permissions.canSeeSettings) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى هذه الصفحة</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center" dir="rtl">
+        <Card className="max-w-md shadow-xl border-0">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-red-500" />
+            </div>
+            <p className="text-red-600 font-bold text-lg">غير مصرح لك بالوصول</p>
             <p className="text-muted-foreground text-sm mt-2">صلاحيات الصفحة مرتبطة بمنصبك في الفريق</p>
           </CardContent>
         </Card>
@@ -137,7 +161,11 @@ export default function Settings() {
     try {
       const result = await api.integrations?.Core?.UploadFile?.({ file });
       if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
-    } catch (err) { console.error(err); }
+      showToast('تم رفع الشعار بنجاح');
+    } catch (err) {
+      console.error(err);
+      showToast('فشل رفع الشعار', 'error');
+    }
     setLogoUploading(false);
   };
 
@@ -148,11 +176,19 @@ export default function Settings() {
 
   const handleSaveLogo = async () => {
     if (!permissions.canManageSettings) return;
+    setLogoSaved(false);
     const data = { ...logoForm };
-    if (currentSetting.id) {
-      await updateMutation.mutateAsync({ id: currentSetting.id, data });
-    } else {
-      await createMutation.mutateAsync(data);
+    try {
+      if (currentSetting.id) {
+        await updateMutation.mutateAsync({ id: currentSetting.id, data });
+      } else {
+        await createMutation.mutateAsync(data);
+      }
+      setLogoSaved(true);
+      showToast('تم حفظ إعدادات الشعار');
+      setTimeout(() => setLogoSaved(false), 2000);
+    } catch {
+      showToast('فشل حفظ الإعدادات', 'error');
     }
   };
 
@@ -161,7 +197,7 @@ export default function Settings() {
     const name = newDistrict.trim();
     if (!name) return;
     if (districtsList.includes(name)) {
-      window.alert('هذا الحي موجود بالفعل');
+      showToast('هذا الحي موجود بالفعل', 'warning');
       return;
     }
     setDistrictsList([...districtsList, name]);
@@ -181,7 +217,7 @@ export default function Settings() {
     const name = editingValue.trim();
     if (!name) return;
     if (districtsList.some((d, i) => d === name && i !== editingIndex)) {
-      window.alert('هذا الاسم موجود بالفعل');
+      showToast('هذا الاسم موجود بالفعل', 'warning');
       return;
     }
     const updated = [...districtsList];
@@ -202,10 +238,10 @@ export default function Settings() {
         await createMutation.mutateAsync(payload);
       }
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      window.alert('تم حفظ الأحياء بنجاح');
+      showToast('تم حفظ الأحياء بنجاح');
     } catch (err) {
       console.error('Error saving districts:', err);
-      window.alert('فشل حفظ الأحياء');
+      showToast('فشل حفظ الأحياء', 'error');
     } finally {
       setDistrictsSaving(false);
     }
@@ -213,9 +249,9 @@ export default function Settings() {
 
   const handleResetDistricts = () => {
     setDistrictsList(DEFAULT_DISTRICTS);
+    showToast('تم استعادة الأحياء الافتراضية');
   };
 
-  // تحديث أسماء الأحياء في الاستبيانات الموجودة
   const handleRenameExistingSurveyDistricts = async () => {
     if (!permissions.canManageSettings) return;
     setRenamingDistricts(true);
@@ -229,330 +265,503 @@ export default function Settings() {
       const data = await resp.json();
       if (data.ok) {
         queryClient.invalidateQueries({ queryKey: ['surveys'] });
-        window.alert(`تم تحديث ${data.updated} استبيان من أصل ${data.total}`);
+        showToast(`تم تحديث ${data.updated} استبيان من أصل ${data.total}`);
       } else {
-        window.alert(data.error || 'فشل التحديث');
+        showToast(data.error || 'فشل التحديث', 'error');
       }
     } catch (err) {
       console.error('Error renaming districts:', err);
-      window.alert('فشل الاتصال بالسيرفر');
+      showToast('فشل الاتصال بالسيرفر', 'error');
     } finally {
       setRenamingDistricts(false);
     }
   };
 
+  const showDataTab = canShowBackupRestore || (canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function');
+
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
-      <div className="gradient-primary text-white p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">إعدادات المدينة الصحية</h1>
-          <p className="text-white/70">إدارة أحياء المحافظة والإعدادات العامة</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir="rtl">
+      <Toast {...toast} onClose={() => setToast(t => ({ ...t, show: false }))} />
+
+      {/* ===== Professional Header ===== */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 gradient-primary opacity-95" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0zMCAwdjYwTTAgMzBoNjAiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2cpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-40" />
+        <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-10">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg">
+              <SettingsIcon className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">لوحة الإعدادات</h1>
+              <p className="text-white/60 text-sm mt-1">إدارة شعار المدينة، الأحياء، وأدوات البيانات</p>
+            </div>
+            {currentUser && (
+              <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/15">
+                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold border-2 border-white/30">
+                  {(currentUser.full_name || currentUser.name || '؟')[0]}
+                </div>
+                <div className="text-white text-sm">
+                  <p className="font-medium leading-tight">{currentUser.full_name || currentUser.name || 'مستخدم'}</p>
+                  <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? 'مدير النظام' : 'عرض فقط'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Stats Bar */}
+          <div className="flex items-center gap-3 mt-6 flex-wrap">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
+              <Building2 className="w-3.5 h-3.5 text-white/70" />
+              <span className="text-white text-xs font-medium">{logoForm.city_name || 'المدينة الصحية'}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
+              <MapPin className="w-3.5 h-3.5 text-white/70" />
+              <span className="text-white text-xs font-medium">{districtsList.length} حي</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
+              <Shield className="w-3.5 h-3.5 text-white/70" />
+              <span className="text-white text-xs font-medium">{permissions.canManageSettings ? 'صلاحيات كاملة' : 'عرض فقط'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
-        {/* ===== إعدادات الشعار ===== */}
-        <Collapsible defaultOpen={false}>
-        <Card className="mb-6">
-          <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Image className="w-6 h-6" />
-                إعدادات الشعار
-              </div>
-              <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">تغيير أو تعديل أو حذف شعار المدينة</p>
-          </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-shrink-0">
-                <Label className="block mb-2 text-sm font-medium">معاينة الشعار</Label>
-                <div className="w-32 h-32 rounded-xl border-2 border-border bg-card flex items-center justify-center overflow-hidden">
-                  {logoForm.logo_url ? (
-                    <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-4xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
-                      {logoForm.logo_text || 'ق'}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={logoUploading || !permissions.canManageSettings}
-                    onClick={() => document.getElementById('settings-logo-upload').click()}
-                  >
-                    <Upload className="w-4 h-4 ml-2" />
-                    {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
-                  </Button>
-                  {logoForm.logo_url && permissions.canManageSettings && (
-                    <Button variant="outline" size="sm" className="text-destructive border-destructive/30" onClick={handleRemoveLogo}>
-                      <Trash2 className="w-4 h-4 ml-2" />
-                      حذف الشعار
-                    </Button>
-                  )}
-                  <input
-                    id="settings-logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-sm">نص الشعار البديل</Label>
-                    <Input
-                      value={logoForm.logo_text}
-                      disabled={!permissions.canManageSettings}
-                      onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
-                      placeholder="ق"
-                      maxLength={3}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">اسم المدينة</Label>
-                    <Input
-                      value={logoForm.city_name}
-                      disabled={!permissions.canManageSettings}
-                      onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
-                      placeholder="المدينة الصحية"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label className="text-sm">موقع المدينة</Label>
-                    <Input
-                      value={logoForm.city_location}
-                      disabled={!permissions.canManageSettings}
-                      onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
-                      placeholder="محافظة قلوة"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleSaveLogo}
-                  disabled={!permissions.canManageSettings || updateMutation.isPending || createMutation.isPending}
-                >
-                  <Save className="w-4 h-4 ml-2" />
-                  حفظ التعديلات
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-          </CollapsibleContent>
-        </Card>
-        </Collapsible>
+      {/* ===== Tabs Content ===== */}
+      <div className="max-w-5xl mx-auto px-4 md:px-6 -mt-4">
+        <Tabs defaultValue="branding" className="w-full">
+          <TabsList className="w-full bg-white shadow-lg border border-border/50 rounded-2xl h-auto p-1.5 flex flex-wrap gap-1">
+            <TabsTrigger value="branding" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
+              <Image className="w-4 h-4" />
+              الشعار والهوية
+            </TabsTrigger>
+            <TabsTrigger value="districts" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
+              <MapPin className="w-4 h-4" />
+              الأحياء
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 mr-1 bg-[#1e3a5f]/10 text-[#1e3a5f] data-[state=active]:bg-white/20 data-[state=active]:text-white">{districtsList.length}</Badge>
+            </TabsTrigger>
+            {showDataTab && (
+              <TabsTrigger value="data" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
+                <Database className="w-4 h-4" />
+                البيانات
+              </TabsTrigger>
+            )}
+          </TabsList>
 
-        {/* ===== إدارة الأحياء ===== */}
-        <Collapsible defaultOpen={false}>
-        <Card>
-          <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-6 h-6" />
-                إدارة الأحياء
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground font-normal">{districtsList.length} حي</span>
-                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-              </div>
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">إضافة أو تعديل أو حذف أحياء المحافظة التي تظهر في نموذج المسح الميداني</p>
-          </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-          <CardContent className="space-y-4">
-                {/* Current districts list */}
+          {/* ===== Tab 1: Branding ===== */}
+          <TabsContent value="branding" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+            <Card className="shadow-lg border-0 overflow-hidden">
+              <CardHeader className="bg-gradient-to-l from-blue-50/80 to-indigo-50/50 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center">
+                    <Image className="w-5 h-5 text-[#1e3a5f]" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">الشعار والهوية البصرية</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-0.5">تخصيص شعار واسم المدينة الصحية</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row gap-8">
+                  {/* Logo Preview — modern card */}
+                  <div className="flex flex-col items-center lg:items-start gap-4">
+                    <div className="relative group">
+                      <div className="w-40 h-40 rounded-2xl border-2 border-dashed border-border bg-gradient-to-br from-slate-50 to-white flex items-center justify-center overflow-hidden shadow-inner transition-all group-hover:border-[#1e3a5f]/30">
+                        {logoForm.logo_url ? (
+                          <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain p-2" />
+                        ) : (
+                          <span className="text-5xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
+                            {logoForm.logo_text || 'ق'}
+                          </span>
+                        )}
+                      </div>
+                      {/* Upload overlay */}
+                      <button
+                        className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer disabled:cursor-not-allowed"
+                        disabled={logoUploading || !permissions.canManageSettings}
+                        onClick={() => document.getElementById('settings-logo-upload').click()}
+                      >
+                        <div className="bg-white/90 rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg">
+                          <Upload className="w-4 h-4 text-[#1e3a5f]" />
+                          <span className="text-xs font-medium text-[#1e3a5f]">
+                            {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                    <input
+                      id="settings-logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled={logoUploading || !permissions.canManageSettings}
+                        onClick={() => document.getElementById('settings-logo-upload').click()}
+                      >
+                        <Upload className="w-3.5 h-3.5 ml-1.5" />
+                        {logoUploading ? 'جاري الرفع...' : 'رفع صورة'}
+                      </Button>
+                      {logoForm.logo_url && permissions.canManageSettings && (
+                        <Button variant="outline" size="sm" className="text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleRemoveLogo}>
+                          <Trash2 className="w-3.5 h-3.5 ml-1.5" />
+                          حذف
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground text-center max-w-[180px]">
+                      صورة مربعة بحجم 200×200 بكسل أو أكبر (PNG, JPG)
+                    </p>
+                  </div>
+
+                  {/* Form fields */}
+                  <div className="flex-1 space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-1.5">
+                          نص الشعار البديل
+                          <span className="text-[10px] text-muted-foreground font-normal">(يظهر عند عدم وجود صورة)</span>
+                        </Label>
+                        <Input
+                          value={logoForm.logo_text}
+                          disabled={!permissions.canManageSettings}
+                          onChange={(e) => setLogoForm(f => ({ ...f, logo_text: e.target.value }))}
+                          placeholder="ق"
+                          maxLength={3}
+                          className="h-11 text-center text-lg font-bold border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">اسم المدينة</Label>
+                        <Input
+                          value={logoForm.city_name}
+                          disabled={!permissions.canManageSettings}
+                          onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
+                          placeholder="المدينة الصحية"
+                          className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">موقع المدينة</Label>
+                      <Input
+                        value={logoForm.city_location}
+                        disabled={!permissions.canManageSettings}
+                        onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
+                        placeholder="محافظة قلوة"
+                        className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <Button
+                      onClick={handleSaveLogo}
+                      disabled={!permissions.canManageSettings || updateMutation.isPending || createMutation.isPending}
+                      className="w-full h-11 bg-[#1e3a5f] hover:bg-[#1e3a5f]/90 text-white shadow-md hover:shadow-lg transition-all"
+                    >
+                      {updateMutation.isPending || createMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                      ) : logoSaved ? (
+                        <CheckCircle2 className="w-4 h-4 ml-2" />
+                      ) : (
+                        <Save className="w-4 h-4 ml-2" />
+                      )}
+                      {logoSaved ? 'تم الحفظ' : 'حفظ إعدادات الشعار'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ===== Tab 2: Districts ===== */}
+          <TabsContent value="districts" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+            <Card className="shadow-lg border-0 overflow-hidden">
+              <CardHeader className="bg-gradient-to-l from-emerald-50/80 to-teal-50/50 border-b border-border/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-emerald-700" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">إدارة الأحياء</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-0.5">الأحياء التي تظهر في نموذج المسح الميداني</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">
+                    {districtsList.length} حي
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-5">
+                {/* Districts grid */}
                 <div className="space-y-2">
-                  <Label className="font-semibold">الأحياء الحالية ({districtsList.length})</Label>
-                  <div className="space-y-1.5 max-h-80 overflow-y-auto">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-semibold text-sm">قائمة الأحياء</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetDistricts}
+                      className="text-xs text-muted-foreground hover:text-amber-600 h-7"
+                    >
+                      <RotateCcw className="w-3 h-3 ml-1" />
+                      استعادة الافتراضي
+                    </Button>
+                  </div>
+                  <div className="grid gap-2 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
                     {districtsList.map((district, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 group">
-                        <GripVertical className="w-4 h-4 text-muted-foreground/40" />
-                        <span className="text-sm font-medium text-[#1e3a5f] bg-[#1e3a5f]/10 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">{index + 1}</span>
-                        {editingIndex === index ? (
-                          <>
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)] group hover:border-[#1e3a5f]/20 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white bg-[#1e3a5f] rounded-lg w-7 h-7 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            {index + 1}
+                          </span>
+                          {editingIndex === index ? (
                             <Input
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
-                              className="flex-1 h-8 text-sm"
+                              className="flex-1 h-8 text-sm border-[#1e3a5f]/30 focus:border-[#1e3a5f]"
                               autoFocus
-                              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmEdit(); if (e.key === 'Escape') { setEditingIndex(-1); setEditingValue(''); } }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleConfirmEdit();
+                                if (e.key === 'Escape') { setEditingIndex(-1); setEditingValue(''); }
+                              }}
                             />
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700" onClick={handleConfirmEdit}>
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground" onClick={() => { setEditingIndex(-1); setEditingValue(''); }}>
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="flex-1 text-sm">{district}</span>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleStartEdit(index)}>
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveDistrict(index)}>
-                              <X className="w-3.5 h-3.5" />
-                            </Button>
-                          </>
-                        )}
+                          ) : (
+                            <span className="text-sm font-medium truncate">{district}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {editingIndex === index ? (
+                            <>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" onClick={handleConfirmEdit}>
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:bg-muted" onClick={() => { setEditingIndex(-1); setEditingValue(''); }}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all" onClick={() => handleStartEdit(index)}>
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all" onClick={() => handleRemoveDistrict(index)}>
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
                     {districtsList.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">لا توجد أحياء. أضف حياً جديداً من الأسفل.</p>
+                      <div className="text-center py-12 text-muted-foreground">
+                        <MapPin className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">لا توجد أحياء. أضف حياً جديداً من الأسفل.</p>
+                      </div>
                     )}
                   </div>
                 </div>
 
+                <Separator />
+
                 {/* Add new district */}
-                <div className="flex gap-2 pt-2 border-t">
-                  <Input
-                    value={newDistrict}
-                    onChange={(e) => setNewDistrict(e.target.value)}
-                    placeholder="اكتب اسم الحي الجديد..."
-                    className="flex-1"
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddDistrict(); }}
-                  />
-                  <Button onClick={handleAddDistrict} disabled={!newDistrict.trim()} className="bg-[#1e3a5f] hover:bg-[#1e3a5f]/90">
-                    <Plus className="w-4 h-4 ml-1" />
-                    إضافة
-                  </Button>
+                <div className="space-y-3">
+                  <Label className="font-semibold text-sm">إضافة حي جديد</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newDistrict}
+                      onChange={(e) => setNewDistrict(e.target.value)}
+                      placeholder="اكتب اسم الحي الجديد..."
+                      className="flex-1 h-11 border-border/50 focus:border-emerald-500 focus:ring-emerald-500/20"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddDistrict(); }}
+                    />
+                    <Button
+                      onClick={handleAddDistrict}
+                      disabled={!newDistrict.trim()}
+                      className="h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                    >
+                      <Plus className="w-4 h-4 ml-1.5" />
+                      إضافة
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
+                <Separator />
+
+                {/* Save actions */}
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={handleSaveDistricts}
                     disabled={!permissions.canManageSettings || districtsSaving}
-                    className="flex-1 bg-primary hover:bg-primary/90"
+                    className="flex-1 h-11 bg-[#1e3a5f] hover:bg-[#1e3a5f]/90 text-white shadow-md"
                   >
-                    <Save className="w-4 h-4 ml-2" />
+                    {districtsSaving ? (
+                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 ml-2" />
+                    )}
                     {districtsSaving ? 'جاري الحفظ...' : 'حفظ الأحياء'}
                   </Button>
-                  <Button variant="outline" onClick={handleResetDistricts} className="text-amber-600 border-amber-300 hover:bg-amber-50">
-                    <RotateCcw className="w-4 h-4 ml-1" />
-                    استعادة الافتراضي
-                  </Button>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  ملاحظة: تغيير الأحياء هنا يؤثر على نموذج المسح الميداني. لتحديث أسماء الأحياء في الاستبيانات المحفوظة مسبقاً، استخدم الزر أدناه.
-                </p>
+                {/* Rename existing surveys */}
+                <Card className="bg-amber-50/50 border-amber-200/60">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <AlertTriangle className="w-4.5 h-4.5 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-amber-800">تحديث الاستبيانات الموجودة</p>
+                        <p className="text-xs text-amber-700/70 mt-1 leading-relaxed">
+                          يغيّر أسماء الأحياء القديمة في جميع الاستبيانات المحفوظة إلى الأسماء الجديدة بالترتيب
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3 border-amber-400 text-amber-700 hover:bg-amber-100 text-xs"
+                          disabled={!permissions.canManageSettings || renamingDistricts}
+                          onClick={handleRenameExistingSurveyDistricts}
+                        >
+                          {renamingDistricts ? (
+                            <Loader2 className="w-3.5 h-3.5 ml-1.5 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3.5 h-3.5 ml-1.5" />
+                          )}
+                          {renamingDistricts ? 'جاري التحديث...' : 'تحديث أسماء الأحياء في الاستبيانات'}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {/* Update existing surveys */}
-                <div className="pt-2 border-t">
-                  <Label className="font-semibold text-amber-700 block mb-2">تحديث الاستبيانات الموجودة</Label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    هذا الزر يغيّر أسماء الأحياء القديمة في جميع الاستبيانات المحفوظة إلى الأسماء الجديدة أعلاه (بالترتيب: الأول يصبح الأول، الثاني يصبح الثاني، إلخ)
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full border-amber-500 text-amber-700 hover:bg-amber-50"
-                    disabled={!permissions.canManageSettings || renamingDistricts}
-                    onClick={handleRenameExistingSurveyDistricts}
-                  >
-                    <RotateCcw className="w-4 h-4 ml-2" />
-                    {renamingDistricts ? 'جاري التحديث...' : 'تحديث أسماء الأحياء في الاستبيانات الحالية'}
-                  </Button>
-                </div>
-          </CardContent>
-          </CollapsibleContent>
-        </Card>
-        </Collapsible>
-
-        {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
-        {canShowBackupRestore && (
-          <Collapsible defaultOpen={false}>
-          <Card className="mt-6 border-green-200 bg-green-50/50">
-            <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors rounded-t-lg">
-              <CardTitle className="text-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  استعادة البيانات من نسخة احتياطية
-                </div>
-                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                إذا انحذفت البيانات (الفريق، المهام، اللجان…) وكان السيرفر يحفظ نسخاً احتياطية تلقائياً، يمكنك استعادة آخر نسخة. بعد الاستعادة سيتم إعادة تحميل الصفحة.
-              </p>
-              {backupsLoading ? (
-                <p className="text-sm text-muted-foreground">جاري التحقق من النسخ الاحتياطية...</p>
-              ) : backupsList.length === 0 ? (
-                <p className="text-sm text-amber-700">لا توجد نسخ احتياطية حالياً. استخدم الخيار أدناه لإعادة تحميل بيانات التجربة.</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">آخر نسخة: {backupsList[0]?.name || ''}</p>
+          {/* ===== Tab 3: Data Management ===== */}
+          {showDataTab && (
+            <TabsContent value="data" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6">
+              {/* Backup Restore */}
+              {canShowBackupRestore && (
+                <Card className="shadow-lg border-0 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-l from-green-50/80 to-emerald-50/50 border-b border-border/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                        <HardDrive className="w-5 h-5 text-green-700" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">النسخ الاحتياطي والاستعادة</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          استعادة البيانات من آخر نسخة احتياطية تلقائية
+                        </p>
+                      </div>
+                      {!backupsLoading && (
+                        <Badge variant="outline" className={backupsList.length > 0 ? 'border-green-300 text-green-700 bg-green-50' : 'border-amber-300 text-amber-700 bg-amber-50'}>
+                          {backupsList.length > 0 ? `${backupsList.length} نسخة متوفرة` : 'لا توجد نسخ'}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {backupsLoading ? (
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-sm">جاري التحقق من النسخ الاحتياطية...</span>
+                      </div>
+                    ) : backupsList.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Database className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">لا توجد نسخ احتياطية حالياً</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="bg-green-50/50 rounded-xl p-4 border border-green-200/60">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-green-800">آخر نسخة احتياطية</p>
+                              <p className="text-xs text-green-600/80 mt-0.5">{backupsList[0]?.name || 'غير محدد'}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full h-11 bg-green-600 hover:bg-green-700 text-white shadow-md"
+                          disabled={restoreMutation.isPending}
+                          onClick={() => restoreMutation.mutate()}
+                        >
+                          {restoreMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          ) : (
+                            <Database className="w-4 h-4 ml-2" />
+                          )}
+                          {restoreMutation.isPending ? 'جاري الاستعادة...' : 'استعادة من آخر نسخة احتياطية'}
+                        </Button>
+                        <p className="text-[11px] text-muted-foreground text-center">
+                          بعد الاستعادة سيتم إعادة تحميل الصفحة تلقائياً
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-            <CardContent>
-              <Button
-                variant="outline"
-                className="border-green-600 text-green-700 hover:bg-green-100"
-                disabled={backupsList.length === 0 || restoreMutation.isPending}
-                onClick={() => restoreMutation.mutate()}
-              >
-                <Database className="w-4 h-4 ml-2" />
-                {restoreMutation.isPending ? 'جاري الاستعادة...' : 'استعادة من آخر نسخة احتياطية'}
-              </Button>
-            </CardContent>
-            </CollapsibleContent>
-          </Card>
-          </Collapsible>
-        )}
 
-        {/* إعادة تحميل بيانات التجربة (محلي أو Supabase) */}
-        {canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function' && (
-          <Collapsible defaultOpen={false}>
-          <Card className="mt-6 border-amber-200 bg-amber-50/50">
-            <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-amber-100/50 transition-colors rounded-t-lg">
-              <CardTitle className="text-lg flex items-center justify-between">
-                <span>
-                {reseedSourceLabel}
-                </span>
-                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                إذا لم تظهر اللجان أو الفريق أو المبادرات أو المهام أو الميزانيات، اضغط الزر أدناه لمسح البيانات وإعادة تحميل بيانات التجربة. بعد إعادة التحميل سجّل الدخول برقم الهوية <strong>1</strong> وكلمة المرور <strong>123456</strong>.
-              </p>
-              {appParams.apiUrl && (
-                <p className="text-xs text-amber-700 mt-2">
-                  تنبيه: هذا الخيار ظاهر لأن <code>VITE_ALLOW_SERVER_RESEED=true</code> مفعّل. استخدمه فقط عند الضرورة القصوى.
-                </p>
+              {/* Reseed Tools */}
+              {canShowReseedTools && typeof api.clearLocalDataAndReseed === 'function' && (
+                <Card className="shadow-lg border-0 overflow-hidden border-t-4 border-t-amber-400">
+                  <CardHeader className="bg-gradient-to-l from-amber-50/80 to-orange-50/30 border-b border-border/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg text-amber-900">إعادة تحميل بيانات التجربة</CardTitle>
+                        <p className="text-sm text-amber-700/70 mt-0.5">المصدر: {reseedSourceLabel}</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-200/60 space-y-2">
+                      <p className="text-sm text-amber-800 leading-relaxed">
+                        يمسح جميع البيانات الحالية ويعيد تحميل بيانات التجربة الافتراضية.
+                      </p>
+                      <p className="text-xs text-amber-600 leading-relaxed">
+                        بعد إعادة التحميل سجّل الدخول برقم الهوية <strong className="text-amber-900">1</strong> وكلمة المرور <strong className="text-amber-900">123456</strong>
+                      </p>
+                    </div>
+                    {appParams.apiUrl && (
+                      <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50/50 rounded-lg px-3 py-2 border border-amber-200/40">
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>هذا الخيار ظاهر لأن VITE_ALLOW_SERVER_RESEED مفعّل. استخدمه عند الضرورة فقط.</span>
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 border-amber-400 text-amber-700 hover:bg-amber-100 font-medium"
+                      onClick={() => api.clearLocalDataAndReseed()}
+                    >
+                      <RotateCcw className="w-4 h-4 ml-2" />
+                      مسح البيانات وإعادة تحميل بيانات التجربة
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
-            </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-            <CardContent>
-              <Button
-                variant="outline"
-                className="border-amber-500 text-amber-700 hover:bg-amber-100"
-                onClick={() => api.clearLocalDataAndReseed()}
-              >
-                <RotateCcw className="w-4 h-4 ml-2" />
-                مسح البيانات وإعادة تحميل بيانات التجربة
-              </Button>
-            </CardContent>
-            </CollapsibleContent>
-          </Card>
-          </Collapsible>
-        )}
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
+
+      {/* Footer spacing */}
+      <div className="h-12" />
     </div>
   );
 }
