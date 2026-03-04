@@ -39,7 +39,8 @@ export default function Settings() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const currentSetting = settings[0] || {};
+  // Find the app config settings record (not key-value data_mode records)
+  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
   const [formData, setFormData] = useState({
     logo_text: currentSetting.logo_text || 'ق',
     city_name: currentSetting.city_name || 'المدينة الصحية',
@@ -50,19 +51,22 @@ export default function Settings() {
   // Initialize districts from settings
   useEffect(() => {
     if (settings.length > 0) {
-      const saved = settings[0]?.districts;
+      const appSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key);
+      const saved = appSetting?.districts;
       if (saved && Array.isArray(saved) && saved.length > 0) {
         setDistrictsList(saved);
       } else {
         setDistrictsList(DEFAULT_DISTRICTS);
       }
       // Also sync formData when settings load
-      setFormData({
-        logo_text: settings[0]?.logo_text || 'ق',
-        city_name: settings[0]?.city_name || 'المدينة الصحية',
-        city_location: settings[0]?.city_location || 'محافظة قلوة',
-        logo_url: settings[0]?.logo_url || ''
-      });
+      if (appSetting) {
+        setFormData({
+          logo_text: appSetting.logo_text || 'ق',
+          city_name: appSetting.city_name || 'المدينة الصحية',
+          city_location: appSetting.city_location || 'محافظة قلوة',
+          logo_url: appSetting.logo_url || ''
+        });
+      }
     }
   }, [settings]);
 

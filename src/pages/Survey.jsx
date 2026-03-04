@@ -154,7 +154,9 @@ export default function Survey() {
 
   // Load districts from settings or use defaults
   const districts = useMemo(() => {
-    const saved = settingsList[0]?.districts;
+    // Find the app config settings record (not key-value data_mode records)
+    const appSetting = settingsList.find(s => s.districts || s.city_name || s.logo_text) || settingsList.find(s => !s.key);
+    const saved = appSetting?.districts;
     const base = (saved && Array.isArray(saved) && saved.length > 0) ? saved : DEFAULT_DISTRICTS;
     return [...base, 'أخرى'];
   }, [settingsList]);
