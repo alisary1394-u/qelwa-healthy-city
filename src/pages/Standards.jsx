@@ -883,6 +883,21 @@ function StandardsLegacy() {
                             <span className="text-white/90 text-xs truncate">{standard.axis_name}</span>
                           </div>
                         )}
+                        {/* Stats badges */}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                            <FileText className="w-3 h-3" />{approvedEvidence}/{standardEvidence.length} أدلة
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                            <Lightbulb className="w-3 h-3" />{relatedInitiatives.length} مبادرات
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                            <Users className="w-3 h-3" />{relatedCommittees.length} لجان
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                            <DollarSign className="w-3 h-3" />{relatedBudgets.length} ميزانيات
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                       {canManage && (
@@ -932,29 +947,7 @@ function StandardsLegacy() {
                           </p>
                         )}
 
-                        {/* Stats grid */}
-                        <div className="grid grid-cols-4 gap-1.5 mb-3">
-                          <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
-                            <FileText className="w-4 h-4 text-primary mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-primary">{approvedEvidence}/{standardEvidence.length}</p>
-                            <p className="text-[10px] text-primary/70">أدلة</p>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
-                            <Lightbulb className="w-4 h-4 text-secondary mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-secondary">{relatedInitiatives.length}</p>
-                            <p className="text-[10px] text-secondary/70">مبادرات</p>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
-                            <Users className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{relatedCommittees.length}</p>
-                            <p className="text-[10px] text-slate-500">لجان</p>
-                          </div>
-                          <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
-                            <DollarSign className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
-                            <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{relatedBudgets.length}</p>
-                            <p className="text-[10px] text-amber-600/70">ميزانيات</p>
-                          </div>
-                        </div>
+
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                           <div className="rounded-lg border bg-muted/50 p-3">
