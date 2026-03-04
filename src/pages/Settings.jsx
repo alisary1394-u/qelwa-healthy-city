@@ -474,7 +474,7 @@ export default function Settings() {
           </TabsList>
 
           {/* ===== Tab 1: Branding ===== */}
-          <TabsContent value="branding" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+          <TabsContent value="branding" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir="rtl">
             <Card className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-l from-blue-50/80 to-indigo-50/50 border-b border-border/30">
                 <div className="flex items-center gap-3">
