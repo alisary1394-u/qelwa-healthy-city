@@ -5,17 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Settings as SettingsIcon, Upload, Trash2, Save, RotateCcw, Database, ChevronDown, MapPin, Plus, GripVertical, X, Pencil, Check } from "lucide-react";
+import { Save, RotateCcw, Database, MapPin, Plus, GripVertical, X, Pencil, Check } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
 import { appParams } from '@/lib/app-params';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
 export default function Settings() {
-  const [uploading, setUploading] = useState(false);
-  const [logoSectionOpen, setLogoSectionOpen] = useState(true);
-  const [districtsSectionOpen, setDistrictsSectionOpen] = useState(true);
   const [districtsList, setDistrictsList] = useState([]);
   const [newDistrict, setNewDistrict] = useState('');
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -41,12 +37,6 @@ export default function Settings() {
 
   // Find the app config settings record (not key-value data_mode records)
   const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
-  const [formData, setFormData] = useState({
-    logo_text: currentSetting.logo_text || 'ق',
-    city_name: currentSetting.city_name || 'المدينة الصحية',
-    city_location: currentSetting.city_location || 'محافظة قلوة',
-    logo_url: currentSetting.logo_url || ''
-  });
 
   // Initialize districts from settings
   useEffect(() => {
@@ -57,15 +47,6 @@ export default function Settings() {
         setDistrictsList(saved);
       } else {
         setDistrictsList(DEFAULT_DISTRICTS);
-      }
-      // Also sync formData when settings load
-      if (appSetting) {
-        setFormData({
-          logo_text: appSetting.logo_text || 'ق',
-          city_name: appSetting.city_name || 'المدينة الصحية',
-          city_location: appSetting.city_location || 'محافظة قلوة',
-          logo_url: appSetting.logo_url || ''
-        });
       }
     }
   }, [settings]);
@@ -126,34 +107,6 @@ export default function Settings() {
       </div>
     );
   }
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const result = await api.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, logo_url: result.file_url });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveLogo = () => {
-    setFormData({ ...formData, logo_url: '' });
-  };
-
-  const handleSave = async () => {
-    if (!permissions.canManageSettings) return;
-    if (currentSetting.id) {
-      await updateMutation.mutateAsync({ id: currentSetting.id, data: formData });
-    } else {
-      await createMutation.mutateAsync(formData);
-    }
-  };
 
   // ===== Districts management =====
   const handleAddDistrict = () => {
@@ -245,171 +198,22 @@ export default function Settings() {
       <div className="gradient-primary text-white p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2">إعدادات المدينة الصحية</h1>
-          <p className="text-white/70">إدارة شعار ومعلومات المدينة والأحياء</p>
+          <p className="text-white/70">إدارة أحياء المحافظة والإعدادات العامة</p>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto p-4 md:p-6">
-        <Collapsible open={logoSectionOpen} onOpenChange={setLogoSectionOpen}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <SettingsIcon className="w-6 h-6" />
-                    إعدادات الشعار
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {!logoSectionOpen && (
-                      <div className="flex items-center gap-2">
-                        {formData.logo_url ? (
-                          <img src={formData.logo_url} alt="" className="w-8 h-8 rounded-full object-contain" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">{formData.logo_text}</span>
-                          </div>
-                        )}
-                        <span className="text-sm text-muted-foreground font-normal">{formData.city_name}</span>
-                      </div>
-                    )}
-                    <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${logoSectionOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">تغيير أو تعديل أو حذف شعار المدينة من لوحة التحكم</p>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="space-y-6">
-            {/* Logo Preview */}
-            <div className="bg-muted/50 p-6 rounded-lg border-2 border-dashed border-border">
-              <Label className="block mb-3 font-semibold">معاينة الشعار الحالي</Label>
-              <div className="flex items-center justify-center">
-                {formData.logo_url ? (
-                  <img 
-                    src={formData.logo_url} 
-                    alt="شعار المدينة" 
-                    className="max-w-[200px] max-h-[200px] object-contain"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-full gradient-primary flex items-center justify-center">
-                    <span className="text-white font-bold text-4xl">{formData.logo_text}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Logo Upload */}
-            <div className="space-y-2">
-              <Label>تحميل شعار جديد (صورة)</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  disabled={uploading}
-                  onClick={() => document.getElementById('logo-upload').click()}
-                >
-                  {uploading ? (
-                    <>جاري التحميل...</>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 ml-2" />
-                      اختر صورة
-                    </>
-                  )}
-                </Button>
-                {formData.logo_url && (
-                  <Button
-                    variant="destructive"
-                    onClick={handleRemoveLogo}
-                  >
-                    <Trash2 className="w-4 h-4 ml-2" />
-                    حذف الشعار
-                  </Button>
-                )}
-              </div>
-              <input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <p className="text-xs text-muted-foreground">
-                يُفضل استخدام صورة مربعة بحجم 200x200 بكسل أو أكبر
-              </p>
-            </div>
-
-            {/* Logo Text */}
-            <div className="space-y-2">
-              <Label>نص الشعار البديل</Label>
-              <Input
-                value={formData.logo_text}
-                onChange={(e) => setFormData({ ...formData, logo_text: e.target.value })}
-                placeholder="الحرف الذي يظهر في حال عدم وجود صورة"
-                maxLength={3}
-              />
-              <p className="text-xs text-muted-foreground">
-                هذا النص يظهر إذا لم يتم تحميل صورة للشعار
-              </p>
-            </div>
-
-            {/* City Name */}
-            <div className="space-y-2">
-              <Label>اسم المدينة</Label>
-              <Input
-                value={formData.city_name}
-                onChange={(e) => setFormData({ ...formData, city_name: e.target.value })}
-                placeholder="المدينة الصحية"
-              />
-            </div>
-
-            {/* City Location */}
-            <div className="space-y-2">
-              <Label>موقع المدينة</Label>
-              <Input
-                value={formData.city_location}
-                onChange={(e) => setFormData({ ...formData, city_location: e.target.value })}
-                placeholder="محافظة قلوة"
-              />
-            </div>
-
-            {/* Save Button */}
-            <Button
-              onClick={handleSave}
-              disabled={!permissions.canManageSettings}
-              className="w-full bg-primary hover:bg-primary/90"
-              size="lg"
-            >
-              <Save className="w-5 h-5 ml-2" />
-              حفظ التغييرات
-            </Button>
-          </CardContent>
-        </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
         {/* ===== إدارة الأحياء ===== */}
-        <Collapsible open={districtsSectionOpen} onOpenChange={setDistrictsSectionOpen}>
-          <Card className="mt-6">
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-6 h-6" />
-                    إدارة الأحياء
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {!districtsSectionOpen && (
-                      <span className="text-sm text-muted-foreground font-normal">{districtsList.length} حي</span>
-                    )}
-                    <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${districtsSectionOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">إضافة أو تعديل أو حذف أحياء المحافظة التي تظهر في نموذج المسح الميداني</p>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-6 h-6" />
+              إدارة الأحياء
+              <span className="text-sm text-muted-foreground font-normal mr-auto">{districtsList.length} حي</span>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">إضافة أو تعديل أو حذف أحياء المحافظة التي تظهر في نموذج المسح الميداني</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
                 {/* Current districts list */}
                 <div className="space-y-2">
                   <Label className="font-semibold">الأحياء الحالية ({districtsList.length})</Label>
@@ -504,10 +308,8 @@ export default function Settings() {
                     {renamingDistricts ? 'جاري التحديث...' : 'تحديث أسماء الأحياء في الاستبيانات الحالية'}
                   </Button>
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </CardContent>
+        </Card>
 
         {/* استعادة من آخر نسخة احتياطية (سيرفر التطبيق فقط) */}
         {canShowBackupRestore && (
