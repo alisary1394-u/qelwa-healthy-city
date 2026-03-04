@@ -483,19 +483,42 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
-// إزالة المعايير المكررة من قاعدة البيانات — يُستدعى تلقائياً أو يدوياً
+// إزالة المعايير المكررة والزائدة من قاعدة البيانات — يُستدعى تلقائياً أو يدوياً
 app.post('/api/deduplicate-standards', async (req, res) => {
   try {
     const db = await getDb();
     const standards = db.list('standard');
+    // الخطوة 1: بناء خريطة الرموز الصحيحة (م1-1 … م9-7) = 80 معياراً فقط
+    const AXIS_COUNTS = [7, 7, 5, 11, 26, 6, 5, 6, 7]; // 9 محاور = 80 معياراً
+    const validCodes = new Set();
+    for (let a = 0; a < AXIS_COUNTS.length; a++) {
+      for (let i = 1; i <= AXIS_COUNTS[a]; i++) {
+        validCodes.add(`م${a + 1}-${i}`);
+      }
+    }
+    // تطبيع الرمز للمقارنة
+    function normalizeCode(code) {
+      const s = String(code || '').trim().replace(/\s+/g, '').replace(/\u0640/g, '')
+        .replace(/[\u2010-\u2015\u2212\u058A\u2010\u2011\u2012\u2013\u2014\u2015\u2053\u207B\u208B\u2212\u2796\uFE58\uFE63\uFF0D]/g, '-');
+      const match = s.match(/[\u0645م](\d+)-(\d+)/);
+      return match ? `م${match[1]}-${match[2]}` : s;
+    }
     const codeMap = {};
+    const invalidStandards = [];
     for (const s of standards) {
-      const code = (s.code || '').trim().replace(/\s+/g, '');
-      if (!code) continue;
-      if (!codeMap[code]) codeMap[code] = [];
-      codeMap[code].push(s);
+      const rawCode = (s.code || '').trim().replace(/\s+/g, '');
+      if (!rawCode) { invalidStandards.push(s); continue; }
+      const normalized = normalizeCode(rawCode);
+      if (!validCodes.has(normalized)) { invalidStandards.push(s); continue; }
+      if (!codeMap[normalized]) codeMap[normalized] = [];
+      codeMap[normalized].push(s);
     }
     let removed = 0;
+    // الخطوة 2: إزالة المعايير بدون رمز أو برمز خارج المرجع
+    for (const s of invalidStandards) {
+      try { db.remove('standard', s.id); removed++; } catch {}
+    }
+    // الخطوة 3: إزالة المكررات — الاحتفاظ بالأحدث والأكثر اكتمالاً لكل رمز
     for (const code of Object.keys(codeMap)) {
       const items = codeMap[code];
       if (items.length <= 1) continue;
@@ -510,7 +533,7 @@ app.post('/api/deduplicate-standards', async (req, res) => {
       }
     }
     const remaining = db.list('standard').length;
-    res.json({ ok: true, removed, remaining, message: `تم إزالة ${removed} معيار مكرر. المتبقي: ${remaining}` });
+    res.json({ ok: true, removed, remaining, message: `تم إزالة ${removed} معيار مكرر/زائد. المتبقي: ${remaining}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

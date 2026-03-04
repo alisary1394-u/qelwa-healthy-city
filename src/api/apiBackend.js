@@ -7,7 +7,7 @@ import { AXES_SEED, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequir
 import { STANDARDS_CSV, getStandardIndexFromCode } from '@/api/standardsFromCsv';
 
 const AUTH_USER_KEY = 'api_auth_user';
-const CSV_SYNC_VERSION = '3';
+const CSV_SYNC_VERSION = '4';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const LEGACY_FILES_MIGRATION_KEY = 'legacy_local_to_api_files_migrated_v1';
 

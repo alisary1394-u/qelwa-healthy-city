@@ -244,8 +244,9 @@ export function getStandardIndexFromCode(code) {
 
 /**
  * ترتيب المعايير حسب الترقيم المرجعي (م1-1 … م9-7) وإزالة التكرار (معيار واحد لكل رمز).
+ * يحتفظ فقط بالمعايير التي تنتمي إلى المرجع (80 معياراً) ويستبعد أي معيار برمز غير معروف.
  * @param {Array} standardsList مصفوفة معايير من API
- * @returns {Array} نفس المصدر مرتبة ومُزالة التكرار
+ * @returns {Array} نفس المصدر مرتبة ومُزالة التكرار (حد أقصى 80)
  */
 export function sortAndDeduplicateStandardsByCode(standardsList) {
   if (!Array.isArray(standardsList)) return [];
@@ -260,7 +261,9 @@ export function sortAndDeduplicateStandardsByCode(standardsList) {
   const seen = new Set();
   return sorted.filter((s) => {
     const code = normalizeStandardCode(s.code);
-    if (!code || seen.has(code)) return false;
+    // استبعاد المعايير بدون رمز أو برمز خارج المرجع
+    const idx = getStandardIndexFromCode(code);
+    if (!code || idx < 0 || seen.has(code)) return false;
     seen.add(code);
     return true;
   });
