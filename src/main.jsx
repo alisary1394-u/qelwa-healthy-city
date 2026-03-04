@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import '@/index.css'
+import '@/i18n' // i18n initialization
 // import * as Sentry from "@sentry/react"; // TODO: Uncomment after installing Sentry
-// import './lib/i18n'; // TODO: Uncomment after installing i18next
 
 /*
 // Sentry.init({

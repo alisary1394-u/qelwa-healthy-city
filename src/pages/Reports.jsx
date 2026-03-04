@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +111,8 @@ function AxisProgressCard({ name, order, completed, total, color }) {
 }
 
 export default function Reports() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const { permissions } = usePermissions();
   const { toast } = useToast();
   const [selectedCommittee, setSelectedCommittee] = useState('all');
@@ -399,7 +402,7 @@ export default function Reports() {
 
   if (!permissions?.canSeeReports) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-background flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md"><CardContent className="p-6 text-center">
           <Shield className="w-12 h-12 mx-auto text-red-400 mb-3" />
           <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة التقارير.</p>
@@ -409,7 +412,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100 dark:from-slate-900 dark:to-slate-800" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,8 @@ const emptyForm = {
 };
 
 export default function Volunteering() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [activeTab, setActiveTab] = useState('opportunities');
   const [formOpen, setFormOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -389,7 +392,7 @@ export default function Volunteering() {
 
   if (!permissions.canSeeVolunteering) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md"><CardContent className="p-6 text-center">
           <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة التطوع.</p>
         </CardContent></Card>
@@ -398,7 +401,7 @@ export default function Volunteering() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
@@ -908,7 +911,7 @@ export default function Volunteering() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
               <HandHelping className="w-5 h-5" />
@@ -1056,7 +1059,7 @@ export default function Volunteering() {
 
       {/* View Opportunity Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl text-[#1e3a5f] flex items-center gap-2">
               <Eye className="w-5 h-5" />
@@ -1188,7 +1191,7 @@ export default function Volunteering() {
 
       {/* Assign Volunteer Dialog */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-[#1e3a5f] flex items-center gap-2">
               <UserPlus className="w-5 h-5" />

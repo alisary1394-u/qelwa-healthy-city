@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -349,6 +350,8 @@ const getInitiativeSuggestedKpis = (initiative, docs, tasks) => {
 };
 
 export default function Initiatives() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const { permissions } = usePermissions();
   const canManageInitiatives = permissions.canManageInitiatives === true;
   const repairingStandardsRef = useRef(false);
@@ -646,7 +649,7 @@ export default function Initiatives() {
 
   if (!permissions.canSeeInitiatives) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المبادرات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -1019,7 +1022,7 @@ export default function Initiatives() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4">
@@ -1327,7 +1330,7 @@ export default function Initiatives() {
 
       {/* Initiative Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl" className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">مبادرة جديدة</DialogTitle>
           </DialogHeader>
@@ -1671,7 +1674,7 @@ export default function Initiatives() {
 
       {/* View Initiative Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تفاصيل المبادرة - {selectedInitiative?.code}</DialogTitle>
           </DialogHeader>
@@ -1928,7 +1931,7 @@ export default function Initiatives() {
 
       {/* Assign Team Members Dialog */}
       <Dialog open={assignTeamOpen} onOpenChange={setAssignTeamOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-green-600" />

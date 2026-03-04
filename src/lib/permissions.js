@@ -4,7 +4,7 @@
  * الأدوار: governor, coordinator, committee_head, committee_coordinator, committee_supervisor, committee_member, budget_manager, accountant, financial_officer, member, volunteer
  */
 
-/** أسماء المناصب بالعربية */
+/** أسماء المناصب — مفاتيح ترجمة + أسماء عربية كاحتياط */
 export const ROLE_LABELS = {
   governor: 'المشرف العام (المحافظ)',
   coordinator: 'منسق المدينة الصحية',
@@ -18,6 +18,22 @@ export const ROLE_LABELS = {
   accountant: 'المحاسب',
   financial_officer: 'الموظف المالي',
   admin: 'مدير النظام',
+};
+
+/** مفاتيح ترجمة المناصب */
+export const ROLE_LABEL_KEYS = {
+  governor: 'roles.governor',
+  coordinator: 'roles.coordinator',
+  committee_head: 'roles.committee_head',
+  committee_coordinator: 'roles.committee_coordinator',
+  committee_supervisor: 'roles.committee_supervisor',
+  committee_member: 'roles.committee_member',
+  member: 'roles.member',
+  volunteer: 'roles.volunteer',
+  budget_manager: 'roles.budget_manager',
+  accountant: 'roles.accountant',
+  financial_officer: 'roles.financial_officer',
+  admin: 'roles.admin',
 };
 
 /**
@@ -464,42 +480,42 @@ PERMISSIONS_BY_ROLE.admin = PERMISSIONS_BY_ROLE.governor;
  * أعمدة جدول "مراجعة الصلاحيات حسب المنصب" — مصدر واحد للحقيقة مع PERMISSIONS_BY_ROLE.
  */
 export const PERMISSION_REVIEW_KEYS = [
-  { key: 'canManageSettings', label: 'إعدادات المدينة' },
-  { key: 'canManageTeam', label: 'إدارة الفريق' },
-  { key: 'canAddTeamMember', label: 'إضافة عضو' },
-  { key: 'canEditTeamMember', label: 'تعديل عضو' },
-  { key: 'canDeleteTeamMember', label: 'حذف عضو' },
-  { key: 'canAddOrEditGovernor', label: 'إضافة/تعديل محافظ' },
-  { key: 'canAddOrEditCoordinator', label: 'إضافة/تعديل منسق' },
-  { key: 'canManageCommittees', label: 'إدارة اللجان' },
-  { key: 'canManageStandards', label: 'إدارة المعايير' },
-  { key: 'canApproveEvidence', label: 'اعتماد أدلة' },
-  { key: 'canManageBudget', label: 'إدارة الميزانية' },
-  { key: 'canApproveTransactions', label: 'اعتماد معاملات' },
-  { key: 'canCreateTransactions', label: 'إنشاء معاملات' },
-  { key: 'canViewFinancials', label: 'عرض المالية' },
-  { key: 'canManageInitiatives', label: 'إدارة المبادرات' },
-  { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات' },
-  { key: 'canCreateSurvey', label: 'إنشاء استبيان' },
-  { key: 'canViewReports', label: 'عرض التقارير' },
-  { key: 'canManageTasks', label: 'إدارة المهام' },
-  { key: 'canViewFiles', label: 'عرض الملفات' },
-  { key: 'canUploadFiles', label: 'رفع ملفات' },
-  { key: 'canManagePermissions', label: 'إدارة الصلاحيات' },
-  { key: 'canSeeDashboard', label: 'رابط لوحة التحكم' },
-  { key: 'canSeeSettings', label: 'دخول لوحة الإعدادات' },
-  { key: 'canSeeReports', label: 'رابط التقارير' },
-  { key: 'canSeeStandards', label: 'رابط المعايير' },
-  { key: 'canSeeInitiatives', label: 'رابط المبادرات' },
-  { key: 'canSeeTasks', label: 'رابط المهام' },
-  { key: 'canSeeBudget', label: 'رابط الميزانية' },
-  { key: 'canSeeCommittees', label: 'رابط اللجان' },
-  { key: 'canSeeSurvey', label: 'رابط المسح الميداني' },
-  { key: 'canManageVolunteering', label: 'إدارة التطوع' },
-  { key: 'canSeeVolunteering', label: 'رابط التطوع' },
-  { key: 'canSeeTeam', label: 'رابط الفريق' },
-  { key: 'canSeeFiles', label: 'رابط الملفات' },
-  { key: 'canSeePermissions', label: 'رابط لوحة الصلاحيات' },
+  { key: 'canManageSettings', label: 'إعدادات المدينة', labelKey: 'permissionLabels.canManageSettings' },
+  { key: 'canManageTeam', label: 'إدارة الفريق', labelKey: 'permissionLabels.canManageTeam' },
+  { key: 'canAddTeamMember', label: 'إضافة عضو', labelKey: 'permissionLabels.canAddTeamMember' },
+  { key: 'canEditTeamMember', label: 'تعديل عضو', labelKey: 'permissionLabels.canEditTeamMember' },
+  { key: 'canDeleteTeamMember', label: 'حذف عضو', labelKey: 'permissionLabels.canDeleteTeamMember' },
+  { key: 'canAddOrEditGovernor', label: 'إضافة/تعديل محافظ', labelKey: 'permissionLabels.canAddOrEditGovernor' },
+  { key: 'canAddOrEditCoordinator', label: 'إضافة/تعديل منسق', labelKey: 'permissionLabels.canAddOrEditCoordinator' },
+  { key: 'canManageCommittees', label: 'إدارة اللجان', labelKey: 'permissionLabels.canManageCommittees' },
+  { key: 'canManageStandards', label: 'إدارة المعايير', labelKey: 'permissionLabels.canManageStandards' },
+  { key: 'canApproveEvidence', label: 'اعتماد أدلة', labelKey: 'permissionLabels.canApproveEvidence' },
+  { key: 'canManageBudget', label: 'إدارة الميزانية', labelKey: 'permissionLabels.canManageBudget' },
+  { key: 'canApproveTransactions', label: 'اعتماد معاملات', labelKey: 'permissionLabels.canApproveTransactions' },
+  { key: 'canCreateTransactions', label: 'إنشاء معاملات', labelKey: 'permissionLabels.canCreateTransactions' },
+  { key: 'canViewFinancials', label: 'عرض المالية', labelKey: 'permissionLabels.canViewFinancials' },
+  { key: 'canManageInitiatives', label: 'إدارة المبادرات', labelKey: 'permissionLabels.canManageInitiatives' },
+  { key: 'canVerifySurvey', label: 'التحقق من الاستبيانات', labelKey: 'permissionLabels.canVerifySurvey' },
+  { key: 'canCreateSurvey', label: 'إنشاء استبيان', labelKey: 'permissionLabels.canCreateSurvey' },
+  { key: 'canViewReports', label: 'عرض التقارير', labelKey: 'permissionLabels.canViewReports' },
+  { key: 'canManageTasks', label: 'إدارة المهام', labelKey: 'permissionLabels.canManageTasks' },
+  { key: 'canViewFiles', label: 'عرض الملفات', labelKey: 'permissionLabels.canViewFiles' },
+  { key: 'canUploadFiles', label: 'رفع ملفات', labelKey: 'permissionLabels.canUploadFiles' },
+  { key: 'canManagePermissions', label: 'إدارة الصلاحيات', labelKey: 'permissionLabels.canManagePermissions' },
+  { key: 'canSeeDashboard', label: 'رابط لوحة التحكم', labelKey: 'permissionLabels.canSeeDashboard' },
+  { key: 'canSeeSettings', label: 'دخول لوحة الإعدادات', labelKey: 'permissionLabels.canSeeSettings' },
+  { key: 'canSeeReports', label: 'رابط التقارير', labelKey: 'permissionLabels.canSeeReports' },
+  { key: 'canSeeStandards', label: 'رابط المعايير', labelKey: 'permissionLabels.canSeeStandards' },
+  { key: 'canSeeInitiatives', label: 'رابط المبادرات', labelKey: 'permissionLabels.canSeeInitiatives' },
+  { key: 'canSeeTasks', label: 'رابط المهام', labelKey: 'permissionLabels.canSeeTasks' },
+  { key: 'canSeeBudget', label: 'رابط الميزانية', labelKey: 'permissionLabels.canSeeBudget' },
+  { key: 'canSeeCommittees', label: 'رابط اللجان', labelKey: 'permissionLabels.canSeeCommittees' },
+  { key: 'canSeeSurvey', label: 'رابط المسح الميداني', labelKey: 'permissionLabels.canSeeSurvey' },
+  { key: 'canManageVolunteering', label: 'إدارة التطوع', labelKey: 'permissionLabels.canManageVolunteering' },
+  { key: 'canSeeVolunteering', label: 'رابط التطوع', labelKey: 'permissionLabels.canSeeVolunteering' },
+  { key: 'canSeeTeam', label: 'رابط الفريق', labelKey: 'permissionLabels.canSeeTeam' },
+  { key: 'canSeeFiles', label: 'رابط الملفات', labelKey: 'permissionLabels.canSeeFiles' },
+  { key: 'canSeePermissions', label: 'رابط لوحة الصلاحيات', labelKey: 'permissionLabels.canSeePermissions' },
 ];
 
 /** ترتيب المناصب في جدول مراجعة الصلاحيات */
@@ -518,20 +534,20 @@ export function getPermissions(role) {
   return PERMISSIONS_BY_ROLE[r] ?? PERMISSIONS_BY_ROLE.volunteer;
 }
 
-/** عناصر القائمة الافتراضية مع مفتاح الصلاحية لكل عنصر */
+/** عناصر القائمة الافتراضية مع مفتاح الصلاحية ومفتاح الترجمة لكل عنصر */
 export const NAV_ITEMS = [
-  { name: 'Dashboard', label: 'لوحة التحكم', icon: 'LayoutDashboard', permission: 'canSeeDashboard' },
-  { name: 'Reports', label: 'التقارير', icon: 'BarChart3', permission: 'canSeeReports' },
-  { name: 'Standards', label: 'المعايير', icon: 'Target', permission: 'canSeeStandards' },
-  { name: 'Initiatives', label: 'المبادرات', icon: 'Lightbulb', permission: 'canSeeInitiatives' },
-  { name: 'Tasks', label: 'المهام', icon: 'ClipboardList', permission: 'canSeeTasks' },
-  { name: 'Budget', label: 'الميزانية', icon: 'DollarSign', permission: 'canSeeBudget' },
-  { name: 'Committees', label: 'اللجان', icon: 'Building', permission: 'canSeeCommittees' },
-  { name: 'Survey', label: 'المسح الميداني', icon: 'MapPinned', permission: 'canSeeSurvey' },
-  { name: 'Volunteering', label: 'التطوع', icon: 'HandHelping', permission: 'canSeeVolunteering' },
-  { name: 'TeamManagement', label: 'الفريق', icon: 'Users', permission: 'canSeeTeam' },
-  { name: 'Files', label: 'الملفات', icon: 'FolderOpen', permission: 'canSeeFiles' },
-  { name: 'Settings', label: 'الإعدادات', icon: 'SettingsIcon', permission: 'canSeeSettings' },
+  { name: 'Dashboard', label: 'لوحة التحكم', labelKey: 'nav.dashboard', icon: 'LayoutDashboard', permission: 'canSeeDashboard' },
+  { name: 'Reports', label: 'التقارير', labelKey: 'nav.reports', icon: 'BarChart3', permission: 'canSeeReports' },
+  { name: 'Standards', label: 'المعايير', labelKey: 'nav.standards', icon: 'Target', permission: 'canSeeStandards' },
+  { name: 'Initiatives', label: 'المبادرات', labelKey: 'nav.initiatives', icon: 'Lightbulb', permission: 'canSeeInitiatives' },
+  { name: 'Tasks', label: 'المهام', labelKey: 'nav.tasks', icon: 'ClipboardList', permission: 'canSeeTasks' },
+  { name: 'Budget', label: 'الميزانية', labelKey: 'nav.budget', icon: 'DollarSign', permission: 'canSeeBudget' },
+  { name: 'Committees', label: 'اللجان', labelKey: 'nav.committees', icon: 'Building', permission: 'canSeeCommittees' },
+  { name: 'Survey', label: 'المسح الميداني', labelKey: 'nav.survey', icon: 'MapPinned', permission: 'canSeeSurvey' },
+  { name: 'Volunteering', label: 'التطوع', labelKey: 'nav.volunteering', icon: 'HandHelping', permission: 'canSeeVolunteering' },
+  { name: 'TeamManagement', label: 'الفريق', labelKey: 'nav.teamManagement', icon: 'Users', permission: 'canSeeTeam' },
+  { name: 'Files', label: 'الملفات', labelKey: 'nav.files', icon: 'FolderOpen', permission: 'canSeeFiles' },
+  { name: 'Settings', label: 'الإعدادات', labelKey: 'nav.settings', icon: 'SettingsIcon', permission: 'canSeeSettings' },
 ];
 
 /**

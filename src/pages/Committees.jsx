@@ -1,4 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
@@ -19,6 +20,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function Committees() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [formOpen, setFormOpen] = useState(false);
   const [editingCommittee, setEditingCommittee] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, committee: null });
@@ -160,7 +163,7 @@ export default function Committees() {
 
   if (!permissions.canSeeCommittees) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة اللجان. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -301,7 +304,7 @@ export default function Committees() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
@@ -435,7 +438,7 @@ export default function Committees() {
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" dir="rtl">
+                            <DropdownMenuContent align="start" dir={rtl ? 'rtl' : 'ltr'}>
                               <DropdownMenuItem onClick={() => handleOpenForm(committee)} className="gap-2">
                                 <Edit className="w-4 h-4 text-primary" />
                                 <span>تعديل اللجنة</span>
@@ -599,7 +602,7 @@ export default function Committees() {
 
       {/* Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
             <DialogTitle>{editingCommittee ? 'تعديل اللجنة' : 'إضافة لجنة جديدة'}</DialogTitle>
           </DialogHeader>
@@ -746,7 +749,7 @@ export default function Committees() {
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
             <AlertDialogDescription>
@@ -762,7 +765,7 @@ export default function Committees() {
 
       {/* Assign Existing Members Dialog */}
       <Dialog open={assignMemberOpen} onOpenChange={setAssignMemberOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-secondary" />

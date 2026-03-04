@@ -15,8 +15,9 @@ import {
   HardDrive, AlertTriangle, CheckCircle2, Loader2, Search, Lock, Camera, CameraOff
 } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
-import { PERMISSIONS_BY_ROLE, ROLE_LABELS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
+import { PERMISSIONS_BY_ROLE, ROLE_LABELS, ROLE_LABEL_KEYS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
+import { useTranslation } from 'react-i18next';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
@@ -41,6 +42,8 @@ function Toast({ message, type = 'success', show, onClose }) {
 }
 
 export default function Settings() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [districtsList, setDistrictsList] = useState([]);
   const [newDistrict, setNewDistrict] = useState('');
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -170,10 +173,10 @@ export default function Settings() {
     appParams.useSupabaseBackend ||
     (appParams.apiUrl && appParams.allowServerReseed);
   const reseedSourceLabel = appParams.apiUrl
-    ? 'سيرفر التطبيق'
+    ? (rtl ? 'سيرفر التطبيق' : 'App Server')
     : appParams.useSupabaseBackend
-      ? 'قاعدة Supabase'
-      : 'الخلفية المحلية';
+      ? (rtl ? 'قاعدة Supabase' : 'Supabase DB')
+      : (rtl ? 'الخلفية المحلية' : 'Local Backend');
 
   const canShowBackupRestore = !!appParams.apiUrl && typeof api.backups?.list === 'function';
   const { data: backupsList = [], isLoading: backupsLoading } = useQuery({
@@ -185,22 +188,22 @@ export default function Settings() {
     mutationFn: () => api.backups.restoreLatest(),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['teamMembers', 'tasks', 'settings', 'committees'] });
-      showToast(data?.message || 'تمت الاستعادة بنجاح');
+      showToast(data?.message || t('settings.data.backup.restored'));
       setTimeout(() => window.location.reload(), 1500);
     },
-    onError: (err) => showToast(err?.message || 'فشلت الاستعادة', 'error'),
+    onError: (err) => showToast(err?.message || t('settings.data.backup.restoreFailed'), 'error'),
   });
 
   if (!permissions.canSeeSettings) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md shadow-xl border-0">
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Shield className="w-8 h-8 text-red-500" />
             </div>
-            <p className="text-red-600 font-bold text-lg">غير مصرح لك بالوصول</p>
-            <p className="text-muted-foreground text-sm mt-2">صلاحيات الصفحة مرتبطة بمنصبك في الفريق</p>
+            <p className="text-red-600 font-bold text-lg">{t('settings.noAccess')}</p>
+            <p className="text-muted-foreground text-sm mt-2">{t('settings.noAccessDesc')}</p>
           </CardContent>
         </Card>
       </div>
@@ -216,10 +219,10 @@ export default function Settings() {
     try {
       const result = await api.integrations?.Core?.UploadFile?.({ file });
       if (result?.file_url) setLogoForm(f => ({ ...f, logo_url: result.file_url }));
-      showToast('تم رفع الشعار بنجاح');
+      showToast(t('settings.branding.logoUploaded'));
     } catch (err) {
       console.error(err);
-      showToast('فشل رفع الشعار', 'error');
+      showToast(t('settings.branding.logoUploadFailed'), 'error');
     }
     setLogoUploading(false);
   };
@@ -240,10 +243,10 @@ export default function Settings() {
         await createMutation.mutateAsync(data);
       }
       setLogoSaved(true);
-      showToast('تم حفظ إعدادات الشعار');
+      showToast(t('settings.branding.logoSaved'));
       setTimeout(() => setLogoSaved(false), 2000);
     } catch {
-      showToast('فشل حفظ الإعدادات', 'error');
+      showToast(t('settings.branding.logoSaveFailed'), 'error');
     }
   };
 
@@ -252,7 +255,7 @@ export default function Settings() {
     const name = newDistrict.trim();
     if (!name) return;
     if (districtsList.includes(name)) {
-      showToast('هذا الحي موجود بالفعل', 'warning');
+      showToast(t('settings.districts.districtExists'), 'warning');
       return;
     }
     setDistrictsList([...districtsList, name]);
@@ -272,7 +275,7 @@ export default function Settings() {
     const name = editingValue.trim();
     if (!name) return;
     if (districtsList.some((d, i) => d === name && i !== editingIndex)) {
-      showToast('هذا الاسم موجود بالفعل', 'warning');
+      showToast(t('settings.districts.districtExists'), 'warning');
       return;
     }
     const updated = [...districtsList];
@@ -293,10 +296,10 @@ export default function Settings() {
         await createMutation.mutateAsync(payload);
       }
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      showToast('تم حفظ الأحياء بنجاح');
+      showToast(t('settings.districts.districtSaved'));
     } catch (err) {
       console.error('Error saving districts:', err);
-      showToast('فشل حفظ الأحياء', 'error');
+      showToast(t('settings.districts.districtSaveFailed'), 'error');
     } finally {
       setDistrictsSaving(false);
     }
@@ -304,7 +307,7 @@ export default function Settings() {
 
   const handleResetDistricts = () => {
     setDistrictsList(DEFAULT_DISTRICTS);
-    showToast('تم استعادة الأحياء الافتراضية');
+    showToast(rtl ? 'تم استعادة الأحياء الافتراضية' : 'Default districts restored');
   };
 
   const handleRenameExistingSurveyDistricts = async () => {
@@ -374,11 +377,11 @@ export default function Settings() {
           }
         }
       }
-      showToast('تم حفظ تغييرات الصلاحيات بنجاح');
+      showToast(t('settings.permissions.saved'));
       setPermHasChanges(false);
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
-      showToast(error?.message || 'حدث خطأ أثناء حفظ الصلاحيات', 'error');
+      showToast(error?.message || t('settings.permissions.saveFailed'), 'error');
     } finally {
       setPermIsSaving(false);
     }
@@ -391,16 +394,16 @@ export default function Settings() {
       }
       setEditedPermissions({ ...PERMISSIONS_BY_ROLE });
       setPermHasChanges(false);
-      showToast('تم إعادة تعيين جميع الصلاحيات إلى القيم الافتراضية');
+      showToast(t('settings.permissions.resetSuccess'));
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      showToast('حدث خطأ أثناء إعادة التعيين', 'error');
+      showToast(t('settings.permissions.resetFailed'), 'error');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir="rtl">
-      <Toast {...toast} onClose={() => setToast(t => ({ ...t, show: false }))} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50" dir={rtl ? 'rtl' : 'ltr'}>
+      <Toast {...toast} onClose={() => setToast(prev => ({ ...prev, show: false }))} />
 
       {/* ===== Professional Header ===== */}
       <div className="relative overflow-hidden">
@@ -412,8 +415,8 @@ export default function Settings() {
               <SettingsIcon className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">لوحة الإعدادات</h1>
-              <p className="text-white/60 text-sm mt-1">إدارة شعار المدينة، الأحياء، وأدوات البيانات</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{t('settings.title')}</h1>
+              <p className="text-white/60 text-sm mt-1">{rtl ? 'إدارة شعار المدينة، الأحياء، وأدوات البيانات' : 'Manage city branding, districts, and data tools'}</p>
             </div>
             {currentUser && (
               <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/15">
@@ -422,7 +425,7 @@ export default function Settings() {
                 </div>
                 <div className="text-white text-sm">
                   <p className="font-medium leading-tight">{currentUser.full_name || currentUser.name || 'مستخدم'}</p>
-                  <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? 'مدير النظام' : 'عرض فقط'}</p>
+                  <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? (rtl ? 'مدير النظام' : 'System Admin') : (rtl ? 'عرض فقط' : 'View Only')}</p>
                 </div>
               </div>
             )}
@@ -432,15 +435,15 @@ export default function Settings() {
           <div className="flex items-center gap-3 mt-6 flex-wrap">
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <Building2 className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{logoForm.city_name || 'المدينة الصحية'}</span>
+              <span className="text-white text-xs font-medium">{logoForm.city_name || t('home.healthyCity')}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <MapPin className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{districtsList.length} حي</span>
+              <span className="text-white text-xs font-medium">{districtsList.length} {rtl ? 'حي' : 'districts'}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <Shield className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{permissions.canManageSettings ? 'صلاحيات كاملة' : 'عرض فقط'}</span>
+              <span className="text-white text-xs font-medium">{permissions.canManageSettings ? (rtl ? 'صلاحيات كاملة' : 'Full Access') : (rtl ? 'عرض فقط' : 'View Only')}</span>
             </div>
           </div>
         </div>
@@ -452,29 +455,29 @@ export default function Settings() {
           <TabsList className="w-full bg-white shadow-lg border border-border/50 rounded-2xl h-auto p-1.5 flex flex-wrap gap-1">
             <TabsTrigger value="branding" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
               <Image className="w-4 h-4" />
-              الشعار والهوية
+              {t('settings.tabs.branding')}
             </TabsTrigger>
             <TabsTrigger value="districts" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
               <MapPin className="w-4 h-4" />
-              الأحياء
+              {t('settings.tabs.districts')}
               <Badge variant="secondary" className="text-[10px] h-5 px-1.5 mr-1 bg-[#1e3a5f]/10 text-[#1e3a5f] data-[state=active]:bg-white/20 data-[state=active]:text-white">{districtsList.length}</Badge>
             </TabsTrigger>
             {showDataTab && (
               <TabsTrigger value="data" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
                 <Database className="w-4 h-4" />
-                البيانات
+                {t('settings.tabs.data')}
               </TabsTrigger>
             )}
             {canManagePermissions && (
               <TabsTrigger value="permissions" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
                 <Shield className="w-4 h-4" />
-                الصلاحيات
+                {t('settings.tabs.permissions')}
               </TabsTrigger>
             )}
           </TabsList>
 
           {/* ===== Tab 1: Branding ===== */}
-          <TabsContent value="branding" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir="rtl">
+          <TabsContent value="branding" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir={rtl ? 'rtl' : 'ltr'}>
             <Card className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-l from-blue-50/80 to-indigo-50/50 border-b border-border/30">
                 <div className="flex items-center gap-3">
@@ -482,8 +485,8 @@ export default function Settings() {
                     <Image className="w-5 h-5 text-[#1e3a5f]" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">الشعار والهوية البصرية</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-0.5">تخصيص شعار واسم المدينة الصحية</p>
+                    <CardTitle className="text-lg">{t('settings.branding.title')}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-0.5">{t('settings.branding.subtitle')}</p>
                   </div>
                 </div>
               </CardHeader>
@@ -510,7 +513,7 @@ export default function Settings() {
                         <div className="bg-white/90 rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg">
                           <Upload className="w-4 h-4 text-[#1e3a5f]" />
                           <span className="text-xs font-medium text-[#1e3a5f]">
-                            {logoUploading ? 'جاري الرفع...' : 'تغيير الشعار'}
+                            {logoUploading ? t('common.loading') : t('settings.branding.uploadImage')}
                           </span>
                         </div>
                       </button>
@@ -531,17 +534,17 @@ export default function Settings() {
                         onClick={() => document.getElementById('settings-logo-upload').click()}
                       >
                         <Upload className="w-3.5 h-3.5 ml-1.5" />
-                        {logoUploading ? 'جاري الرفع...' : 'رفع صورة'}
+                        {logoUploading ? t('common.loading') : t('settings.branding.uploadImage')}
                       </Button>
                       {logoForm.logo_url && permissions.canManageSettings && (
                         <Button variant="outline" size="sm" className="text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleRemoveLogo}>
                           <Trash2 className="w-3.5 h-3.5 ml-1.5" />
-                          حذف
+                          {t('common.delete')}
                         </Button>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground text-center max-w-[180px]">
-                      صورة مربعة بحجم 200×200 بكسل أو أكبر (PNG, JPG)
+                      {t('settings.branding.imageHint')}
                     </p>
                   </div>
 
@@ -550,8 +553,8 @@ export default function Settings() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-sm font-medium flex items-center gap-1.5">
-                          نص الشعار البديل
-                          <span className="text-[10px] text-muted-foreground font-normal">(يظهر عند عدم وجود صورة)</span>
+                          {t('settings.branding.logoText')}
+                          <span className="text-[10px] text-muted-foreground font-normal">{t('settings.branding.logoTextHint')}</span>
                         </Label>
                         <Input
                           value={logoForm.logo_text}
@@ -563,7 +566,7 @@ export default function Settings() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">اسم المدينة</Label>
+                        <Label className="text-sm font-medium">{t('settings.branding.cityName')}</Label>
                         <Input
                           value={logoForm.city_name}
                           disabled={!permissions.canManageSettings}
@@ -574,7 +577,7 @@ export default function Settings() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">موقع المدينة</Label>
+                      <Label className="text-sm font-medium">{t('settings.branding.cityLocation')}</Label>
                       <Input
                         value={logoForm.city_location}
                         disabled={!permissions.canManageSettings}
@@ -598,7 +601,7 @@ export default function Settings() {
                       ) : (
                         <Save className="w-4 h-4 ml-2" />
                       )}
-                      {logoSaved ? 'تم الحفظ' : 'حفظ إعدادات الشعار'}
+                      {logoSaved ? t('common.success') : t('settings.branding.saveLogo')}
                     </Button>
                   </div>
                 </div>
@@ -614,8 +617,8 @@ export default function Settings() {
                       {screenProtectionDisabled ? <Camera className="w-5 h-5 text-rose-700" /> : <CameraOff className="w-5 h-5 text-rose-700" />}
                     </div>
                     <div>
-                      <CardTitle className="text-lg">حماية تصوير الشاشة</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-0.5">التحكم بحماية التطبيق من لقطات الشاشة</p>
+                      <CardTitle className="text-lg">{t('settings.screenProtection.title')}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-0.5">{t('settings.screenProtection.subtitle')}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -625,12 +628,12 @@ export default function Settings() {
                       <Shield className="w-5 h-5 text-rose-600 flex-shrink-0" />
                       <div>
                         <Label htmlFor="screen-protection-toggle" className="text-sm font-medium cursor-pointer">
-                          {screenProtectionDisabled ? 'حماية الشاشة معطّلة' : 'حماية الشاشة مفعّلة'}
+                          {screenProtectionDisabled ? t('settings.screenProtection.disabled') : t('settings.screenProtection.enabled')}
                         </Label>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
                           {screenProtectionDisabled
-                            ? 'يسمح لجميع المستخدمين بتصوير الشاشة'
-                            : 'يمنع تصوير الشاشة لجميع المستخدمين عدا المشرف العام'
+                            ? t('settings.screenProtection.disabledDesc')
+                            : t('settings.screenProtection.enabledDesc')
                           }
                         </p>
                       </div>
@@ -650,9 +653,9 @@ export default function Settings() {
                           }
                           setScreenProtectionDisabled(checked);
                           window.__ALLOW_SCREENSHOTS = checked;
-                          showToast(checked ? 'تم إيقاف حماية تصوير الشاشة' : 'تم تفعيل حماية تصوير الشاشة');
+                          showToast(checked ? (rtl ? 'تم إيقاف حماية تصوير الشاشة' : 'Screen protection disabled') : (rtl ? 'تم تفعيل حماية تصوير الشاشة' : 'Screen protection enabled'));
                         } catch {
-                          showToast('فشل حفظ الإعداد', 'error');
+                          showToast(rtl ? 'فشل حفظ الإعداد' : 'Failed to save setting', 'error');
                         } finally {
                           setScreenProtSaving(false);
                         }
@@ -664,7 +667,7 @@ export default function Settings() {
                     <div className="flex items-start gap-3 mt-4 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
                       <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-amber-700 leading-relaxed">
-                        تنبيه: عند إيقاف الحماية، سيتمكن جميع المستخدمين من تصوير الشاشة ونسخ المحتوى. فعّلها مجدداً عند الانتهاء.
+                        {t('settings.screenProtection.warning')}
                       </p>
                     </div>
                   )}
@@ -674,7 +677,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* ===== Tab 2: Districts ===== */}
-          <TabsContent value="districts" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir="rtl">
+          <TabsContent value="districts" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300" dir={rtl ? 'rtl' : 'ltr'}>
             <Card className="shadow-lg border-0 overflow-hidden">
               <CardHeader className="bg-gradient-to-l from-emerald-50/80 to-teal-50/50 border-b border-border/30">
                 <div className="flex items-center justify-between">
@@ -683,12 +686,12 @@ export default function Settings() {
                       <MapPin className="w-5 h-5 text-emerald-700" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">إدارة الأحياء</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-0.5">الأحياء التي تظهر في نموذج المسح الميداني</p>
+                      <CardTitle className="text-lg">{t('settings.districts.title')}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-0.5">{t('settings.districts.subtitle')}</p>
                     </div>
                   </div>
                   <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">
-                    {districtsList.length} حي
+                    {districtsList.length} {rtl ? 'حي' : 'districts'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -696,7 +699,7 @@ export default function Settings() {
                 {/* Districts grid */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="font-semibold text-sm">قائمة الأحياء</Label>
+                    <Label className="font-semibold text-sm">{t('settings.districts.listTitle')}</Label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -704,7 +707,7 @@ export default function Settings() {
                       className="text-xs text-muted-foreground hover:text-amber-600 h-7"
                     >
                       <RotateCcw className="w-3 h-3 ml-1" />
-                      استعادة الافتراضي
+                      {t('settings.districts.restoreDefault')}
                     </Button>
                   </div>
                   <div className="grid gap-2 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
@@ -768,12 +771,12 @@ export default function Settings() {
 
                 {/* Add new district */}
                 <div className="space-y-3">
-                  <Label className="font-semibold text-sm">إضافة حي جديد</Label>
+                  <Label className="font-semibold text-sm">{t('settings.districts.addNew')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={newDistrict}
                       onChange={(e) => setNewDistrict(e.target.value)}
-                      placeholder="اكتب اسم الحي الجديد..."
+                      placeholder={t('settings.districts.addNewPlaceholder')}
                       className="flex-1 h-11 border-border/50 focus:border-emerald-500 focus:ring-emerald-500/20"
                       onKeyDown={(e) => { if (e.key === 'Enter') handleAddDistrict(); }}
                     />
@@ -783,7 +786,7 @@ export default function Settings() {
                       className="h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
                     >
                       <Plus className="w-4 h-4 ml-1.5" />
-                      إضافة
+                      {t('common.add')}
                     </Button>
                   </div>
                 </div>
@@ -802,7 +805,7 @@ export default function Settings() {
                     ) : (
                       <Save className="w-4 h-4 ml-2" />
                     )}
-                    {districtsSaving ? 'جاري الحفظ...' : 'حفظ الأحياء'}
+                    {districtsSaving ? t('common.saving') : t('settings.districts.saveDistricts')}
                   </Button>
                 </div>
 
@@ -814,9 +817,9 @@ export default function Settings() {
                         <AlertTriangle className="w-4.5 h-4.5 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-amber-800">تحديث الاستبيانات الموجودة</p>
+                        <p className="text-sm font-semibold text-amber-800">{t('settings.districts.updateSurveys')}</p>
                         <p className="text-xs text-amber-700/70 mt-1 leading-relaxed">
-                          يغيّر أسماء الأحياء القديمة في جميع الاستبيانات المحفوظة إلى الأسماء الجديدة بالترتيب
+                          {t('settings.districts.updateSurveysDesc')}
                         </p>
                         <Button
                           variant="outline"
@@ -830,7 +833,7 @@ export default function Settings() {
                           ) : (
                             <RotateCcw className="w-3.5 h-3.5 ml-1.5" />
                           )}
-                          {renamingDistricts ? 'جاري التحديث...' : 'تحديث أسماء الأحياء في الاستبيانات'}
+                          {renamingDistricts ? t('common.loading') : t('settings.districts.updateSurveysButton')}
                         </Button>
                       </div>
                     </div>
@@ -842,7 +845,7 @@ export default function Settings() {
 
           {/* ===== Tab 3: Data Management ===== */}
           {showDataTab && (
-            <TabsContent value="data" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir="rtl">
+            <TabsContent value="data" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir={rtl ? 'rtl' : 'ltr'}>
               {/* Backup Restore */}
               {canShowBackupRestore && (
                 <Card className="shadow-lg border-0 overflow-hidden">
@@ -852,14 +855,14 @@ export default function Settings() {
                         <HardDrive className="w-5 h-5 text-green-700" />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-lg">النسخ الاحتياطي والاستعادة</CardTitle>
+                        <CardTitle className="text-lg">{t('settings.data.backup.title')}</CardTitle>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                          استعادة البيانات من آخر نسخة احتياطية تلقائية
+                          {t('settings.data.backup.subtitle')}
                         </p>
                       </div>
                       {!backupsLoading && (
                         <Badge variant="outline" className={backupsList.length > 0 ? 'border-green-300 text-green-700 bg-green-50' : 'border-amber-300 text-amber-700 bg-amber-50'}>
-                          {backupsList.length > 0 ? `${backupsList.length} نسخة متوفرة` : 'لا توجد نسخ'}
+                          {backupsList.length > 0 ? t('settings.data.backup.available', { count: backupsList.length }) : t('settings.data.backup.noBackups')}
                         </Badge>
                       )}
                     </div>
@@ -868,12 +871,12 @@ export default function Settings() {
                     {backupsLoading ? (
                       <div className="flex items-center gap-3 text-muted-foreground">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span className="text-sm">جاري التحقق من النسخ الاحتياطية...</span>
+                        <span className="text-sm">{t('settings.data.backup.checking')}</span>
                       </div>
                     ) : backupsList.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <Database className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">لا توجد نسخ احتياطية حالياً</p>
+                        <p className="text-sm">{t('settings.data.backup.noBackupsFound')}</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -881,8 +884,8 @@ export default function Settings() {
                           <div className="flex items-center gap-3">
                             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                             <div>
-                              <p className="text-sm font-medium text-green-800">آخر نسخة احتياطية</p>
-                              <p className="text-xs text-green-600/80 mt-0.5">{backupsList[0]?.name || 'غير محدد'}</p>
+                              <p className="text-sm font-medium text-green-800">{t('settings.data.backup.lastBackup')}</p>
+                              <p className="text-xs text-green-600/80 mt-0.5">{backupsList[0]?.name || t('settings.data.backup.unknown')}</p>
                             </div>
                           </div>
                         </div>
@@ -896,10 +899,10 @@ export default function Settings() {
                           ) : (
                             <Database className="w-4 h-4 ml-2" />
                           )}
-                          {restoreMutation.isPending ? 'جاري الاستعادة...' : 'استعادة من آخر نسخة احتياطية'}
+                          {restoreMutation.isPending ? t('settings.data.backup.restoring') : t('settings.data.backup.restoreButton')}
                         </Button>
                         <p className="text-[11px] text-muted-foreground text-center">
-                          بعد الاستعادة سيتم إعادة تحميل الصفحة تلقائياً
+                          {t('settings.data.backup.autoReload')}
                         </p>
                       </div>
                     )}
@@ -916,24 +919,24 @@ export default function Settings() {
                         <AlertTriangle className="w-5 h-5 text-amber-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg text-amber-900">إعادة تحميل بيانات التجربة</CardTitle>
-                        <p className="text-sm text-amber-700/70 mt-0.5">المصدر: {reseedSourceLabel}</p>
+                        <CardTitle className="text-lg text-amber-900">{t('settings.data.reseed.title')}</CardTitle>
+                        <p className="text-sm text-amber-700/70 mt-0.5">{t('settings.data.reseed.source', { source: reseedSourceLabel })}</p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
                     <div className="bg-amber-50 rounded-xl p-4 border border-amber-200/60 space-y-2">
                       <p className="text-sm text-amber-800 leading-relaxed">
-                        يمسح جميع البيانات الحالية ويعيد تحميل بيانات التجربة الافتراضية.
+                        {t('settings.data.reseed.description')}
                       </p>
                       <p className="text-xs text-amber-600 leading-relaxed">
-                        بعد إعادة التحميل سجّل الدخول برقم الهوية <strong className="text-amber-900">1</strong> وكلمة المرور <strong className="text-amber-900">123456</strong>
+                        {t('settings.data.reseed.credentials', { id: '1', password: '123456' })}
                       </p>
                     </div>
                     {appParams.apiUrl && (
                       <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50/50 rounded-lg px-3 py-2 border border-amber-200/40">
                         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>هذا الخيار ظاهر لأن VITE_ALLOW_SERVER_RESEED مفعّل. استخدمه عند الضرورة فقط.</span>
+                        <span>{t('settings.data.reseed.warning')}</span>
                       </div>
                     )}
                     <Button
@@ -942,7 +945,7 @@ export default function Settings() {
                       onClick={() => api.clearLocalDataAndReseed()}
                     >
                       <RotateCcw className="w-4 h-4 ml-2" />
-                      مسح البيانات وإعادة تحميل بيانات التجربة
+                      {t('settings.data.reseed.button')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -952,7 +955,7 @@ export default function Settings() {
 
           {/* ===== Tab 4: Permissions ===== */}
           {canManagePermissions && (
-            <TabsContent value="permissions" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir="rtl">
+            <TabsContent value="permissions" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir={rtl ? 'rtl' : 'ltr'}>
               {/* Summary Stats */}
               <Card className="shadow-lg border-0 overflow-hidden">
                 <CardHeader className="bg-gradient-to-l from-purple-50/80 to-indigo-50/50 border-b border-border/30">
@@ -962,8 +965,8 @@ export default function Settings() {
                         <Shield className="w-5 h-5 text-purple-700" />
                       </div>
                       <div className="text-right">
-                        <CardTitle className="text-lg">إدارة الصلاحيات</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-0.5">التحكم بمصفوفة صلاحيات المناصب</p>
+                        <CardTitle className="text-lg">{t('settings.permissions.title')}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">{t('settings.permissions.subtitle')}</p>
                       </div>
                     </div>
                     <div className="flex gap-4 text-sm">
@@ -971,19 +974,19 @@ export default function Settings() {
                         <p className="text-xl font-bold text-purple-700">
                           {Object.values(activeRolePermissions).filter(Boolean).length}
                         </p>
-                        <p className="text-purple-600 text-xs">مُفعّلة</p>
+                        <p className="text-purple-600 text-xs">{t('common.enabled')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-xl font-bold text-muted-foreground">
                           {Object.values(activeRolePermissions).filter(v => !v).length}
                         </p>
-                        <p className="text-muted-foreground text-xs">معطّلة</p>
+                        <p className="text-muted-foreground text-xs">{t('common.disabled')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-xl font-bold text-purple-700">
                           {Object.keys(activeRolePermissions).length}
                         </p>
-                        <p className="text-purple-600 text-xs">إجمالي</p>
+                        <p className="text-purple-600 text-xs">{t('common.total')}</p>
                       </div>
                     </div>
                   </div>
@@ -992,7 +995,7 @@ export default function Settings() {
                   {isLoadingOverrides && (
                     <div className="flex items-center gap-3 text-blue-600 bg-blue-50 rounded-xl p-4 border border-blue-200/60">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <p className="text-sm">جاري تحميل الصلاحيات المخصصة...</p>
+                      <p className="text-sm">{t('settings.permissions.loadingOverrides')}</p>
                     </div>
                   )}
 
@@ -1001,17 +1004,17 @@ export default function Settings() {
                     <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
                       <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-amber-800">لديك تغييرات غير محفوظة</p>
-                        <p className="text-xs text-amber-700/70 mt-0.5">احفظ التغييرات لتطبيقها على النظام</p>
+                        <p className="text-sm font-semibold text-amber-800">{t('settings.permissions.unsavedAlert')}</p>
+                        <p className="text-xs text-amber-700/70 mt-0.5">{t('settings.permissions.unsavedAlertDesc')}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={permIsSaving} className="border-amber-400 text-amber-700 hover:bg-amber-100 text-xs">
                           <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                          إلغاء
+                          {t('common.cancel')}
                         </Button>
                         <Button size="sm" onClick={handleSavePermissions} disabled={permIsSaving} className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
                           {permIsSaving ? <Loader2 className="w-3.5 h-3.5 ml-1 animate-spin" /> : <Save className="w-3.5 h-3.5 ml-1" />}
-                          {permIsSaving ? 'جاري الحفظ...' : 'حفظ'}
+                          {permIsSaving ? t('common.saving') : t('common.save')}
                         </Button>
                       </div>
                     </div>
@@ -1022,7 +1025,7 @@ export default function Settings() {
                     <div className="relative flex-1">
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        placeholder="بحث في الصلاحيات..."
+                        placeholder={t('settings.permissions.searchPlaceholder')}
                         value={permSearchQuery}
                         onChange={(e) => setPermSearchQuery(e.target.value)}
                         className="pr-10 h-10 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
@@ -1031,11 +1034,11 @@ export default function Settings() {
                     <div className="flex gap-2 flex-row-reverse">
                       <Button size="sm" onClick={handleSavePermissions} disabled={!permHasChanges || permIsSaving} className="h-10 bg-purple-600 hover:bg-purple-700 text-white text-xs">
                         {permIsSaving ? <Loader2 className="w-4 h-4 ml-1.5 animate-spin" /> : <Save className="w-4 h-4 ml-1.5" />}
-                        {permIsSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                        {permIsSaving ? t('common.saving') : t('settings.permissions.savePermissions')}
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={!permHasChanges || permIsSaving} className="h-10 text-xs">
                         <RotateCcw className="w-4 h-4 ml-1.5" />
-                        إعادة تعيين
+                        {t('common.reset')}
                       </Button>
                     </div>
                   </div>
@@ -1044,12 +1047,12 @@ export default function Settings() {
 
                   {/* Role selector */}
                   <div>
-                    <Label className="font-semibold text-sm mb-3 block">اختر المنصب لتعديل صلاحياته</Label>
+                    <Label className="font-semibold text-sm mb-3 block">{t('settings.permissions.selectRole')}</Label>
                     <Tabs value={activeRole} onValueChange={setActiveRole}>
                       <TabsList className="flex-wrap h-auto gap-1 bg-muted p-1 justify-start flex-row-reverse">
                         {allRoles.map((roleKey) => (
                           <TabsTrigger key={roleKey} value={roleKey} className="text-xs">
-                            {ROLE_LABELS[roleKey]}
+                            {ROLE_LABEL_KEYS[roleKey] ? t(ROLE_LABEL_KEYS[roleKey]) : ROLE_LABELS[roleKey]}
                           </TabsTrigger>
                         ))}
                       </TabsList>
@@ -1062,17 +1065,18 @@ export default function Settings() {
                   <div>
                     <div className="flex items-center gap-2 mb-3 flex-row-reverse">
                       <Shield className="w-4 h-4 text-purple-600" />
-                      <Label className="font-semibold text-sm">صلاحيات: {activeRoleLabel}</Label>
+                      <Label className="font-semibold text-sm">{t('settings.permissions.permissionsFor', { role: ROLE_LABEL_KEYS[activeRole] ? t(ROLE_LABEL_KEYS[activeRole]) : activeRoleLabel })}</Label>
                     </div>
                     {filteredPermissionKeys.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">لا توجد صلاحيات تطابق البحث</p>
+                        <p className="text-sm">{t('settings.permissions.noMatchSearch')}</p>
                       </div>
                     ) : (
                       <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
-                        {filteredPermissionKeys.map(({ key, label }) => {
+                        {filteredPermissionKeys.map(({ key, label, labelKey }) => {
                           const isEnabled = activeRolePermissions[key] === true;
+                          const displayLabel = labelKey ? t(labelKey) : label;
                           return (
                             <div key={key} className="flex items-center justify-between p-3 rounded-xl border bg-white hover:bg-muted/50 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                               <div className="flex items-center gap-3 flex-row-reverse">
@@ -1082,7 +1086,7 @@ export default function Settings() {
                                   <div className="w-4 h-4 rounded-full border-2 border-border flex-shrink-0" />
                                 )}
                                 <div>
-                                  <Label htmlFor={`${activeRole}-${key}`} className="text-sm font-medium cursor-pointer">{label}</Label>
+                                  <Label htmlFor={`${activeRole}-${key}`} className="text-sm font-medium cursor-pointer">{displayLabel}</Label>
                                   <p className="text-[10px] text-muted-foreground mt-0.5">{key}</p>
                                 </div>
                               </div>

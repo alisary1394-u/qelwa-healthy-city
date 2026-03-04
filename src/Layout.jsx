@@ -20,7 +20,7 @@ import {
 import { 
   LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle, 
   Moon, Sun, Monitor, Check, ChevronRight, PanelLeftClose, PanelLeft, X,
-  Clock, ShieldAlert
+  Clock, ShieldAlert, Globe
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBackendConfigured, appParams } from '@/lib/app-params';
@@ -28,6 +28,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '@/i18n';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 
@@ -36,6 +38,11 @@ export default function Layout({ children }) {
   const currentPath = location.pathname;
   const { navItems, permissions, isGovernor } = usePermissions();
   const { logout } = useAuth();
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
+
+  // Helper لاستخراج التسمية المترجمة من navItem
+  const getLabel = (item) => item.labelKey ? t(item.labelKey) : item.label;
 
   // السماح بلقطات الشاشة للمشرف العام فقط — أو إذا عطّلها المشرف من الإعدادات
   const { data: settingsList = [] } = useQuery({
@@ -124,7 +131,7 @@ export default function Layout({ children }) {
   const sidebarWidth = sidebarCollapsed ? 'w-[68px]' : 'w-64';
 
   return (
-    <div className="bg-background flex flex-col h-[100dvh] md:block md:h-auto md:min-h-screen" dir="rtl">
+    <div className="bg-background flex flex-col h-[100dvh] md:block md:h-auto md:min-h-screen" dir={rtl ? 'rtl' : 'ltr'}>
       {!backendReady && (
         <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center z-[60] relative shrink-0">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -140,19 +147,19 @@ export default function Layout({ children }) {
           <button 
             onClick={() => setMobileMenuOpen(true)}
             className="p-2 rounded-lg hover:bg-muted"
-            aria-label="فتح القائمة"
+            aria-label={t('nav.expand')}
           >
             <Menu className="w-5 h-5" />
           </button>
           <Link to={createPageUrl('Home')} className="flex items-center gap-2">
             {currentSetting.logo_url ? (
-              <img src={currentSetting.logo_url} alt="شعار" className="w-8 h-8 rounded-lg object-cover" />
+              <img src={currentSetting.logo_url} alt={t('common.name')} className="w-8 h-8 rounded-lg object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">{currentSetting.logo_text || 'ق'}</span>
+                <span className="text-white font-bold text-sm">{currentSetting.logo_text || (rtl ? 'ق' : 'Q')}</span>
               </div>
             )}
-            <span className="font-bold text-sm text-foreground">{currentSetting.city_name || 'المدينة الصحية'}</span>
+            <span className="font-bold text-sm text-foreground">{currentSetting.city_name || t('home.healthyCity')}</span>
           </Link>
           <div className="flex items-center gap-1">
             {currentUser && <NotificationBell userEmail={currentUser.email} />}
@@ -168,15 +175,15 @@ export default function Layout({ children }) {
             <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
               <div className="flex items-center gap-3">
                 {currentSetting.logo_url ? (
-                  <img src={currentSetting.logo_url} alt="شعار" className="w-10 h-10 rounded-xl object-cover" />
+                  <img src={currentSetting.logo_url} alt={t('common.name')} className="w-10 h-10 rounded-xl object-cover" />
                 ) : (
                   <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                    <span className="text-white font-bold">{currentSetting.logo_text || 'ق'}</span>
+                    <span className="text-white font-bold">{currentSetting.logo_text || (rtl ? 'ق' : 'Q')}</span>
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-sidebar-foreground text-sm">{currentSetting.city_name || 'المدينة الصحية'}</p>
-                  <p className="text-xs text-sidebar-foreground/60">{currentSetting.city_location || 'محافظة قلوة'}</p>
+                  <p className="font-bold text-sidebar-foreground text-sm">{currentSetting.city_name || t('home.healthyCity')}</p>
+                  <p className="text-xs text-sidebar-foreground/60">{currentSetting.city_location || (rtl ? 'محافظة قلوة' : 'Qelwa')}</p>
                 </div>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground">
@@ -194,8 +201,8 @@ export default function Layout({ children }) {
                         : 'text-sidebar-foreground hover:bg-sidebar-accent'
                     }`}>
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      <span>{item.label}</span>
-                      {active && <ChevronRight className="w-4 h-4 mr-auto" />}
+                      <span>{getLabel(item)}</span>
+                      {active && <ChevronRight className={`w-4 h-4 ${rtl ? 'mr-auto' : 'ml-auto'} ${!rtl ? 'rotate-180' : ''}`} />}
                     </div>
                   </Link>
                 );
@@ -212,7 +219,7 @@ export default function Layout({ children }) {
                     <p className="text-sm font-medium text-sidebar-foreground truncate">{currentUser.full_name}</p>
                     <p className="text-xs text-sidebar-foreground/50 truncate">{currentUser.email}</p>
                   </div>
-                  <button onClick={() => logout(true)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400" title="تسجيل الخروج">
+                  <button onClick={() => logout(true)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400" title={t('nav.logout')}>
                     <LogOut className="w-4 h-4" />
                   </button>
                 </div>
@@ -225,26 +232,26 @@ export default function Layout({ children }) {
       {/* ===== Main scrollable area (mobile: overflow-y-auto, desktop: normal) ===== */}
       <div className="flex-1 overflow-y-auto md:overflow-visible md:flex">
         {/* ===== Desktop Sidebar ===== */}
-        <aside className={`hidden md:flex flex-col fixed top-0 right-0 bottom-0 ${sidebarWidth} bg-sidebar border-l border-sidebar-border z-40 transition-all duration-300`}>
+        <aside className={`hidden md:flex flex-col fixed top-0 ${rtl ? 'right-0' : 'left-0'} bottom-0 ${sidebarWidth} bg-sidebar ${rtl ? 'border-l' : 'border-r'} border-sidebar-border z-40 transition-all duration-300`}>
           {/* Logo */}
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} h-16 px-4 border-b border-sidebar-border`}>
             <Link to={createPageUrl('Home')} className={`flex items-center ${sidebarCollapsed ? '' : 'gap-3'}`}>
               {currentSetting.logo_url ? (
-                <img src={currentSetting.logo_url} alt="شعار" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                <img src={currentSetting.logo_url} alt={t('common.name')} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
               ) : (
                 <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-sm">{currentSetting.logo_text || 'ق'}</span>
+                  <span className="text-white font-bold text-sm">{currentSetting.logo_text || (rtl ? 'ق' : 'Q')}</span>
                 </div>
               )}
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <p className="font-bold text-sidebar-foreground text-sm truncate">{currentSetting.city_name || 'المدينة الصحية'}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentSetting.city_location || 'محافظة قلوة'}</p>
+                  <p className="font-bold text-sidebar-foreground text-sm truncate">{currentSetting.city_name || t('home.healthyCity')}</p>
+                  <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentSetting.city_location || (rtl ? 'محافظة قلوة' : 'Qelwa')}</p>
                 </div>
               )}
             </Link>
             {!sidebarCollapsed && (
-              <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground" title="طي القائمة (Ctrl+B)">
+              <button onClick={toggleSidebar} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground" title={`${t('nav.collapse')} (Ctrl+B)`}>
                 <PanelLeftClose className="w-4 h-4" />
               </button>
             )}
@@ -261,7 +268,7 @@ export default function Layout({ children }) {
                         <PanelLeft className="w-4 h-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="left"><p>فتح القائمة (Ctrl+B)</p></TooltipContent>
+                    <TooltipContent side={rtl ? 'left' : 'right'}><p>{t('nav.expand')} (Ctrl+B)</p></TooltipContent>
                   </Tooltip>
                 </div>
                 {navItems.map(item => {
@@ -279,7 +286,7 @@ export default function Layout({ children }) {
                           </div>
                         </Link>
                       </TooltipTrigger>
-                      <TooltipContent side="left"><p>{item.label}</p></TooltipContent>
+                      <TooltipContent side={rtl ? 'left' : 'right'}><p>{getLabel(item)}</p></TooltipContent>
                     </Tooltip>
                   );
                 })}
@@ -295,8 +302,8 @@ export default function Layout({ children }) {
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                   }`}>
                     <item.icon className="w-5 h-5 flex-shrink-0" />
-                    <span>{item.label}</span>
-                    {active && <ChevronRight className="w-4 h-4 mr-auto opacity-60" />}
+                    <span>{getLabel(item)}</span>
+                    {active && <ChevronRight className={`w-4 h-4 ${rtl ? 'mr-auto' : 'ml-auto'} opacity-60 ${!rtl ? 'rotate-180' : ''}`} />}
                   </div>
                 </Link>
               );
@@ -318,7 +325,7 @@ export default function Layout({ children }) {
                         {effectiveTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="left"><p>تغيير الثيم</p></TooltipContent>
+                    <TooltipContent side={rtl ? 'left' : 'right'}><p>{t('nav.theme')}</p></TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               ) : (
@@ -330,7 +337,7 @@ export default function Layout({ children }) {
                     }`}
                   >
                     <Sun className="w-3.5 h-3.5" />
-                    <span>فاتح</span>
+                    <span>{t('nav.lightTheme')}</span>
                   </button>
                   <button
                     onClick={() => setTheme('dark')}
@@ -339,7 +346,7 @@ export default function Layout({ children }) {
                     }`}
                   >
                     <Moon className="w-3.5 h-3.5" />
-                    <span>داكن</span>
+                    <span>{t('nav.darkTheme')}</span>
                   </button>
                   <button
                     onClick={() => setTheme('system')}
@@ -348,7 +355,7 @@ export default function Layout({ children }) {
                     }`}
                   >
                     <Monitor className="w-3.5 h-3.5" />
-                    <span>تلقائي</span>
+                    <span>{t('nav.systemTheme')}</span>
                   </button>
                 </div>
               )}
@@ -370,11 +377,11 @@ export default function Layout({ children }) {
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="top" className="w-52" dir="rtl">
+                <DropdownMenuContent align="start" side="top" className="w-52" dir={rtl ? 'rtl' : 'ltr'}>
                   <DropdownMenuItem asChild>
                     <Link to={createPageUrl('UserSettings')} className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      <span>الإعدادات الشخصية</span>
+                      <span>{t('userSettings.title')}</span>
                     </Link>
                   </DropdownMenuItem>
                   {permissions.canSeeSettings && (
@@ -383,18 +390,27 @@ export default function Layout({ children }) {
                       <DropdownMenuItem asChild>
                         <Link to={createPageUrl('Settings')} className="flex items-center gap-2">
                           <SettingsIcon className="w-4 h-4" />
-                          <span>إعدادات المدينة</span>
+                          <span>{t('permissionLabels.canManageSettings')}</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
                   )}
+                  <DropdownMenuSeparator />
+                  {/* Language switcher */}
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => changeLanguage(i18n.language === 'ar' ? 'en' : 'ar')}
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>{i18n.language === 'ar' ? 'English' : 'العربية'}</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="flex items-center gap-2 text-destructive focus:text-destructive"
                     onClick={() => logout(true)}
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>تسجيل الخروج</span>
+                    <span>{t('nav.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -403,16 +419,16 @@ export default function Layout({ children }) {
         </aside>
 
         {/* ===== Main Content ===== */}
-        <main className={`flex-1 md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:mr-[68px]' : 'md:mr-64'}`}>
+        <main className={`flex-1 md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? (rtl ? 'md:mr-[68px]' : 'md:ml-[68px]') : (rtl ? 'md:mr-64' : 'md:ml-64')}`}>
           {/* Top bar for desktop — breadcrumb + notifications */}
           <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link to={createPageUrl('Dashboard')} className="hover:text-foreground transition-colors">الرئيسية</Link>
+              <Link to={createPageUrl('Dashboard')} className="hover:text-foreground transition-colors">{t('nav.dashboard')}</Link>
               {currentPath !== '/' && currentPath !== '/Dashboard' && (
                 <>
-                  <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                  <ChevronRight className={`w-3.5 h-3.5 ${rtl ? 'rotate-180' : ''}`} />
                   <span className="text-foreground font-medium">
-                    {navItems.find(n => isActive(n.name))?.label || ''}
+                    {(() => { const item = navItems.find(n => isActive(n.name)); return item ? getLabel(item) : ''; })()}
                   </span>
                 </>
               )}
@@ -428,14 +444,14 @@ export default function Layout({ children }) {
 
       {/* ===== تحذير انتهاء الجلسة ===== */}
       {showIdleWarning && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" dir="rtl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" dir={rtl ? 'rtl' : 'ltr'}>
           <div className="bg-card border shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4 text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
               <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400" />
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">تحذير: انتهاء الجلسة قريباً</h3>
+            <h3 className="text-xl font-bold text-foreground mb-2">{t('nav.idleWarning', { minutes: Math.floor(remainingSeconds / 60) })}</h3>
             <p className="text-muted-foreground mb-4">
-              سيتم تسجيل خروجك تلقائياً بعد
+              {rtl ? 'سيتم تسجيل خروجك تلقائياً بعد' : 'You will be logged out automatically in'}
             </p>
             <div className="flex items-center justify-center gap-2 mb-6">
               <Clock className="w-5 h-5 text-destructive" />
@@ -444,22 +460,22 @@ export default function Layout({ children }) {
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              بسبب عدم النشاط لفترة طويلة، اضغط آلمتابعة» للبقاء في النظام.
+              {rtl ? 'بسبب عدم النشاط لفترة طويلة، اضغط «المتابعة» للبقاء في النظام.' : 'Due to inactivity, press "Continue" to stay logged in.'}
             </p>
             <div className="flex gap-3 justify-center">
               <Button
                 onClick={dismissWarning}
                 className="flex-1 h-11 text-base font-semibold"
               >
-                متابعة العمل
+                {rtl ? 'متابعة العمل' : 'Continue'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => logout(true)}
                 className="h-11 text-destructive border-destructive/30 hover:bg-destructive/5"
               >
-                <LogOut className="w-4 h-4 ml-1" />
-                خروج
+                <LogOut className={`w-4 h-4 ${rtl ? 'ml-1' : 'mr-1'}`} />
+                {t('nav.logout')}
               </Button>
             </div>
           </div>

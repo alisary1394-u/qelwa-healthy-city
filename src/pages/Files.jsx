@@ -1,4 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,6 +33,8 @@ const statusConfig = {
 };
 
 export default function Files() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const { permissions } = usePermissions();
   const [activeStatus, setActiveStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,7 +150,7 @@ export default function Files() {
 
   if (!permissions.canSeeFiles) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الملفات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -291,7 +294,7 @@ export default function Files() {
   const canModifyOrDelete = isGovernor;
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
@@ -447,7 +450,7 @@ export default function Files() {
 
       {/* Upload Dialog */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-lg">
           <DialogHeader><DialogTitle>رفع ملف جديد</DialogTitle></DialogHeader>
           <form onSubmit={handleUpload} className="space-y-4 mt-4">
             <div className="space-y-2">
@@ -495,7 +498,7 @@ export default function Files() {
 
       {/* Action Dialog */}
       <AlertDialog open={actionDialog.open} onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}>
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {actionDialog.action === 'approve_supervisor' && 'اعتماد أولي'}
@@ -523,7 +526,7 @@ export default function Files() {
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
             <AlertDialogDescription>هل أنت متأكد من حذف هذا الملف؟</AlertDialogDescription>

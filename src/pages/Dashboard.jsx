@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standard
 import { 
   BarChart3, Target, Users, FileCheck, MapPinned, LayoutDashboard,
   AlertTriangle, CheckCircle2, Clock, Building2,
-  ArrowLeft, Activity, TrendingUp, Shield, Zap
+  ArrowLeft, ArrowRight, Activity, TrendingUp, Shield, Zap
 } from "lucide-react";
 
 const REFERENCE_STANDARDS_COUNT = STANDARDS_CSV.length;
@@ -67,6 +68,9 @@ function DashboardSkeleton() {
 }
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
+  const ArrowIcon = rtl ? ArrowLeft : ArrowRight;
   const { permissions } = usePermissions();
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -122,12 +126,12 @@ export default function Dashboard() {
 
   if (!permissions.canSeeDashboard) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center" dir="rtl">
+      <div className="min-h-[60vh] flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Shield className="w-12 h-12 mx-auto mb-4 text-destructive/60" />
-            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى لوحة التحكم.</p>
-            <p className="text-sm text-muted-foreground mt-2">الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">{t('dashboard.noAccess')}</p>
+            <p className="text-sm text-muted-foreground mt-2">{t('dashboard.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -162,20 +166,20 @@ export default function Dashboard() {
   });
 
   const statusData = [
-    { name: 'مكتمل', value: dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#0f766e' },
-    { name: 'قيد التنفيذ', value: dedupedStandards.filter(s => s.status === 'in_progress').length, color: '#1e3a5f' },
-    { name: 'لم يبدأ', value: dedupedStandards.filter(s => s.status === 'not_started' || !s.status).length, color: '#94A3B8' }
+    { name: t('dashboard.completed'), value: dedupedStandards.filter(s => s.status === 'completed' || s.status === 'approved').length, color: '#0f766e' },
+    { name: t('dashboard.inProgress'), value: dedupedStandards.filter(s => s.status === 'in_progress').length, color: '#1e3a5f' },
+    { name: t('dashboard.notStarted'), value: dedupedStandards.filter(s => s.status === 'not_started' || !s.status).length, color: '#94A3B8' }
   ].filter(d => d.value > 0);
 
   const statsCards = [
-    { icon: Target, label: 'المعايير الدولية', value: REFERENCE_STANDARDS_COUNT, color: 'text-primary', bgColor: 'bg-primary/10', delay: '0' },
-    { icon: Users, label: 'أعضاء الفريق', value: activeMembers, color: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-600/10', delay: '75' },
-    { icon: FileCheck, label: 'الأدلة المرفوعة', value: evidence.length, color: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-600/10', delay: '150' },
-    { icon: MapPinned, label: 'استبيانات المسح', value: surveys.length, color: 'text-amber-700 dark:text-amber-400', bgColor: 'bg-amber-600/10', delay: '225' },
+    { icon: Target, label: t('dashboard.internationalStandards'), value: REFERENCE_STANDARDS_COUNT, color: 'text-primary', bgColor: 'bg-primary/10', delay: '0' },
+    { icon: Users, label: t('dashboard.teamMembers'), value: activeMembers, color: 'text-teal-700 dark:text-teal-400', bgColor: 'bg-teal-600/10', delay: '75' },
+    { icon: FileCheck, label: t('dashboard.uploadedEvidence'), value: evidence.length, color: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-600/10', delay: '150' },
+    { icon: MapPinned, label: t('dashboard.fieldSurveys'), value: surveys.length, color: 'text-amber-700 dark:text-amber-400', bgColor: 'bg-amber-600/10', delay: '225' },
   ];
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <div className="min-h-screen bg-background" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Hero Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-primary opacity-95" />
@@ -188,14 +192,14 @@ export default function Dashboard() {
                   <LayoutDashboard className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white">لوحة التحكم</h1>
-                  <p className="text-white/70 text-sm">{currentSetting.city_name || 'مدينة قلوة الصحية'} — متابعة الإنجاز</p>
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">{t('dashboard.title')}</h1>
+                  <p className="text-white/70 text-sm">{currentSetting.city_name || t('dashboard.defaultCityName')} — {t('dashboard.trackProgress')}</p>
                 </div>
               </div>
             </div>
             {currentUser && (
               <div className="hidden md:block text-left">
-                <p className="text-white/70 text-sm">مرحباً</p>
+                <p className="text-white/70 text-sm">{t('dashboard.welcome')}</p>
                 <p className="text-white font-semibold">{currentUser.full_name}</p>
               </div>
             )}
@@ -206,7 +210,7 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">نسبة الإنجاز الكلية</p>
+                  <p className="text-white/70 text-sm mb-1">{t('dashboard.totalProgress')}</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold text-white">
                       <AnimatedNumber value={overallProgress} />
@@ -217,17 +221,17 @@ export default function Dashboard() {
                 <div className="flex items-center gap-6">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-white"><AnimatedNumber value={completedStandards} /></p>
-                    <p className="text-xs text-white/60">مكتمل</p>
+                    <p className="text-xs text-white/60">{t('dashboard.completed')}</p>
                   </div>
                   <div className="w-px h-10 bg-white/20" />
                   <div className="text-center">
                     <p className="text-3xl font-bold text-white"><AnimatedNumber value={totalStandards} /></p>
-                    <p className="text-xs text-white/60">إجمالي</p>
+                    <p className="text-xs text-white/60">{t('dashboard.total')}</p>
                   </div>
                   <div className="w-px h-10 bg-white/20" />
                   <div className="text-center">
                     <p className="text-3xl font-bold text-white"><AnimatedNumber value={pendingTasks} /></p>
-                    <p className="text-xs text-white/60">مهمة قائمة</p>
+                    <p className="text-xs text-white/60">{t('dashboard.pendingTasks')}</p>
                   </div>
                 </div>
               </div>
@@ -271,12 +275,12 @@ export default function Dashboard() {
                     <AlertTriangle className="w-6 h-6 text-destructive" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-destructive">{overdueTasks} مهام متأخرة</p>
-                    <p className="text-sm text-muted-foreground">تحتاج إلى متابعة عاجلة</p>
+                    <p className="font-semibold text-destructive">{t('dashboard.overdueTasks', { count: overdueTasks })}</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.needsUrgentFollowup')}</p>
                   </div>
                   <Link to={createPageUrl('Tasks') + '?filter=overdue'}>
                     <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">
-                      عرض <ArrowLeft className="w-4 h-4 mr-1" />
+                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 mr-1" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -289,12 +293,12 @@ export default function Dashboard() {
                     <Clock className="w-6 h-6 text-warning" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-warning">{pendingEvidence} دليل بانتظار المراجعة</p>
-                    <p className="text-sm text-muted-foreground">تحتاج إلى اعتماد</p>
+                    <p className="font-semibold text-warning">{t('dashboard.pendingEvidence', { count: pendingEvidence })}</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.needsApproval')}</p>
                   </div>
                   <Link to={createPageUrl('Standards') + '?filter=pending'}>
                     <Button size="sm" variant="outline" className="border-warning/30 text-warning hover:bg-warning/10">
-                      عرض <ArrowLeft className="w-4 h-4 mr-1" />
+                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 mr-1" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -310,16 +314,16 @@ export default function Dashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  نسبة الإنجاز حسب المحاور
+                  {t('dashboard.progressByAxis')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {axes.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Target className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
-                    <p className="font-medium">لم يتم إضافة المحاور بعد</p>
+                    <p className="font-medium">{t('dashboard.noAxesYet')}</p>
                     <Link to={createPageUrl('Standards')}>
-                      <Button variant="outline" className="mt-4" size="sm">إضافة المحاور والمعايير</Button>
+                      <Button variant="outline" className="mt-4" size="sm">{t('dashboard.addAxesAndStandards')}</Button>
                     </Link>
                   </div>
                 ) : (
@@ -356,13 +360,13 @@ export default function Dashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Activity className="w-5 h-5 text-primary" />
-                حالة المعايير
+                {t('dashboard.standardsStatus')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {dedupedStandards.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  <p>لا توجد بيانات</p>
+                  <p>{t('common.noData')}</p>
                 </div>
               ) : (
                 <>
@@ -391,7 +395,7 @@ export default function Dashboard() {
                           direction: 'rtl',
                           fontFamily: 'Tajawal'
                         }}
-                        formatter={(value, name) => [`${value} معيار`, name]}
+                        formatter={(value, name) => [`${value} ${t('dashboard.criterion')}`, name]}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -415,16 +419,16 @@ export default function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Zap className="w-5 h-5 text-primary" />
-              الوصول السريع
+              {t('dashboard.quickAccess')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { href: 'Standards', icon: Target, label: 'المعايير والأدلة', color: 'text-primary', bg: 'group-hover:bg-primary/10' },
-                { href: 'Survey', icon: MapPinned, label: 'المسح الميداني', color: 'text-teal-700 dark:text-teal-400', bg: 'group-hover:bg-teal-600/10' },
-                { href: 'Tasks', icon: CheckCircle2, label: 'المهام', color: 'text-amber-700 dark:text-amber-400', bg: 'group-hover:bg-amber-600/10' },
-                { href: 'TeamManagement', icon: Users, label: 'الفريق', color: 'text-slate-700 dark:text-slate-400', bg: 'group-hover:bg-slate-600/10' },
+                { href: 'Standards', icon: Target, label: t('dashboard.standardsAndEvidence'), color: 'text-primary', bg: 'group-hover:bg-primary/10' },
+                { href: 'Survey', icon: MapPinned, label: t('dashboard.fieldSurvey'), color: 'text-teal-700 dark:text-teal-400', bg: 'group-hover:bg-teal-600/10' },
+                { href: 'Tasks', icon: CheckCircle2, label: t('dashboard.tasks'), color: 'text-amber-700 dark:text-amber-400', bg: 'group-hover:bg-amber-600/10' },
+                { href: 'TeamManagement', icon: Users, label: t('dashboard.team'), color: 'text-slate-700 dark:text-slate-400', bg: 'group-hover:bg-slate-600/10' },
               ].map((action) => (
                 <Link key={action.href} to={createPageUrl(action.href)} className="group">
                   <div className="border border-border rounded-xl p-4 text-center hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">

@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Settings, Bell, Mail, Loader2, CheckCircle } from "lucide-react";
 
 export default function UserSettings() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const queryClient = useQueryClient();
@@ -77,11 +80,11 @@ export default function UserSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white p-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">الإعدادات الشخصية</h1>
-          <p className="text-white/70">إدارة تفضيلات الإشعارات والحساب</p>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('userSettings.title')}</h1>
+          <p className="text-white/70">{t('userSettings.subtitle')}</p>
         </div>
       </div>
 
@@ -90,10 +93,10 @@ export default function UserSettings() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-blue-600" />
-              <CardTitle>إعدادات الإشعارات</CardTitle>
+              <CardTitle>{t('userSettings.notifications')}</CardTitle>
             </div>
             <CardDescription>
-              تحكم في كيفية ووقت استلام الإشعارات
+              {t('userSettings.notificationsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -101,15 +104,15 @@ export default function UserSettings() {
             <div className="space-y-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <Settings className="w-4 h-4" />
-                الإعدادات العامة
+                                {t('userSettings.generalSettings')}
               </h3>
               
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-blue-600" />
                   <div>
-                    <Label className="text-base">الإشعارات داخل التطبيق</Label>
-                    <p className="text-sm text-muted-foreground">إظهار الإشعارات في التطبيق</p>
+                    <Label className="text-base">{t('userSettings.inAppNotifications')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('userSettings.inAppNotificationsDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -122,8 +125,8 @@ export default function UserSettings() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-green-600" />
                   <div>
-                    <Label className="text-base">إشعارات البريد الإلكتروني</Label>
-                    <p className="text-sm text-muted-foreground">إرسال إشعارات عبر البريد</p>
+                    <Label className="text-base">{t('userSettings.emailNotifications')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('userSettings.emailNotificationsDesc')}</p>
                   </div>
                 </div>
                 <Switch
@@ -137,13 +140,13 @@ export default function UserSettings() {
 
             {/* Task Notifications */}
             <div className="space-y-4">
-              <h3 className="font-semibold">إشعارات المهام</h3>
+              <h3 className="font-semibold">{t('userSettings.taskNotifications')}</h3>
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <Label>عند تعيين مهمة جديدة</Label>
-                    <p className="text-xs text-muted-foreground">داخل التطبيق</p>
+                    <Label>{t('userSettings.newTaskAssigned')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('userSettings.inApp')}</p>
                   </div>
                   <Switch
                     checked={formData.task_assigned_app}
@@ -154,8 +157,8 @@ export default function UserSettings() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <Label>عند تعيين مهمة جديدة</Label>
-                    <p className="text-xs text-muted-foreground">عبر البريد الإلكتروني</p>
+                    <Label>{t('userSettings.newTaskAssigned')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('userSettings.viaEmail')}</p>
                   </div>
                   <Switch
                     checked={formData.task_assigned_email}
@@ -166,8 +169,8 @@ export default function UserSettings() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <Label>تذكير بموعد المهمة</Label>
-                    <p className="text-xs text-muted-foreground">داخل التطبيق</p>
+                    <Label>{t('userSettings.taskDueReminder')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('userSettings.inApp')}</p>
                   </div>
                   <Switch
                     checked={formData.task_due_app}
@@ -178,8 +181,8 @@ export default function UserSettings() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <Label>تذكير بموعد المهمة</Label>
-                    <p className="text-xs text-muted-foreground">عبر البريد الإلكتروني</p>
+                    <Label>{t('userSettings.taskDueReminder')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('userSettings.viaEmail')}</p>
                   </div>
                   <Switch
                     checked={formData.task_due_email}
@@ -194,9 +197,9 @@ export default function UserSettings() {
               <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 {saved && <CheckCircle className="w-4 h-4 ml-2" />}
-                حفظ الإعدادات
+                {t('userSettings.saveSettings')}
               </Button>
-              {saved && <p className="text-sm text-green-600">تم حفظ الإعدادات بنجاح!</p>}
+              {saved && <p className="text-sm text-green-600">{t('userSettings.savedSuccess')}</p>}
             </div>
           </CardContent>
         </Card>

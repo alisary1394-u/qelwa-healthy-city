@@ -1,4 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ const transactionCategories = {
 const paymentMethods = ['نقدي', 'شيك', 'تحويل بنكي', 'بطاقة', 'أخرى'];
 
 export default function Budget() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [activeTab, setActiveTab] = useState('overview');
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
   const [budgetFormOpen, setBudgetFormOpen] = useState(false);
@@ -502,7 +505,7 @@ export default function Budget() {
 
   if (!canViewFinancials) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الميزانية. صلاحيات العرض والمالية مرتبطة بمنصبك في الفريق.</p>
@@ -513,7 +516,7 @@ export default function Budget() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
@@ -673,7 +676,7 @@ export default function Budget() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-card" dir="rtl">
+          <TabsList className="bg-card" dir={rtl ? 'rtl' : 'ltr'}>
             <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
             <TabsTrigger value="transactions">المعاملات المالية</TabsTrigger>
             <TabsTrigger value="budgets">الميزانيات</TabsTrigger>
@@ -1278,7 +1281,7 @@ export default function Budget() {
 
       {/* Transaction Form Dialog */}
       <Dialog open={transactionFormOpen} onOpenChange={(open) => { setTransactionFormOpen(open); if (!open) { setEditingTransaction(null); resetTransactionForm(); } }}>
-        <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTransaction ? 'تعديل المعاملة' : 'معاملة مالية جديدة'}</DialogTitle>
           </DialogHeader>
@@ -1443,7 +1446,7 @@ export default function Budget() {
       {/* Budget Form Dialog - فقط لمدير الميزانية (ليس للمحاسب أو الموظف المالي) */}
       {showBudgetManagement && (
       <Dialog open={budgetFormOpen} onOpenChange={(open) => { setBudgetFormOpen(open); if (!open) { setEditingBudget(null); resetBudgetForm(); } }}>
-        <DialogContent dir="rtl" className="max-w-2xl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingBudget ? 'تعديل الميزانية' : 'ميزانية جديدة'}</DialogTitle>
           </DialogHeader>
@@ -1504,7 +1507,7 @@ export default function Budget() {
 
       {/* Allocation Form Dialog */}
       <Dialog open={allocationFormOpen} onOpenChange={(open) => { setAllocationFormOpen(open); if (!open) { setEditingAllocation(null); resetAllocationForm(); } }}>
-        <DialogContent dir="rtl" className="max-w-2xl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingAllocation ? 'تعديل التخصيص' : 'تخصيص ميزانية جديد'}</DialogTitle>
           </DialogHeader>

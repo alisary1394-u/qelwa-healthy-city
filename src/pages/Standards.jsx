@@ -1,4 +1,5 @@
 ﻿import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -127,6 +128,8 @@ function buildRequiredEvidence(documents) {
 }
 
 function StandardsLegacy() {
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -649,7 +652,7 @@ function StandardsLegacy() {
 
   if (!permissions.canSeeStandards) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
@@ -660,7 +663,7 @@ function StandardsLegacy() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       <div className="gradient-primary text-white p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
@@ -692,7 +695,7 @@ function StandardsLegacy() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
-              dir="rtl"
+              dir={rtl ? 'rtl' : 'ltr'}
               autoComplete="off"
             />
           </div>
@@ -1171,7 +1174,7 @@ function StandardsLegacy() {
 
       {/* Axis Form */}
       <Dialog open={axisFormOpen} onOpenChange={setAxisFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader><DialogTitle>إضافة محور جديد</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveAxis} className="space-y-4 mt-4">
             <div className="space-y-2">
@@ -1196,7 +1199,7 @@ function StandardsLegacy() {
 
       {/* Standard Form */}
       <Dialog open={standardFormOpen} onOpenChange={setStandardFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader><DialogTitle>إضافة معيار جديد</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveStandard} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1239,7 +1242,7 @@ function StandardsLegacy() {
 
       {/* Edit Standard - المستندات المطلوبة ومؤشرات KPI */}
       <Dialog open={editStandardOpen} onOpenChange={setEditStandardOpen}>
-        <DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تعديل المستندات المطلوبة ومؤشرات الأداء — {editStandard?.code}</DialogTitle>
           </DialogHeader>
@@ -1312,7 +1315,7 @@ function StandardsLegacy() {
 
       {/* Edit Axis Dialog */}
       <Dialog open={editAxisOpen} onOpenChange={setEditAxisOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader><DialogTitle>تعديل المحور</DialogTitle></DialogHeader>
           {editAxisData && (
             <form onSubmit={handleUpdateAxis} className="space-y-4 mt-4">
@@ -1339,7 +1342,7 @@ function StandardsLegacy() {
 
       {/* Edit Standard Info Dialog */}
       <Dialog open={editStandardInfoOpen} onOpenChange={setEditStandardInfoOpen}>
-        <DialogContent dir="rtl" className="max-w-2xl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
           <DialogHeader><DialogTitle>تعديل بيانات المعيار — {editStandardInfo?.code}</DialogTitle></DialogHeader>
           {editStandardInfo && (
             <form onSubmit={handleUpdateStandardInfo} className="space-y-4 mt-4">
@@ -1398,7 +1401,7 @@ function StandardsLegacy() {
 
       {/* Evidence Upload Form */}
       <Dialog open={evidenceFormOpen} onOpenChange={setEvidenceFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
             <DialogTitle>رفع دليل للمعيار {selectedStandard?.code}</DialogTitle>
           </DialogHeader>
