@@ -842,7 +842,7 @@ export default function Settings() {
 
           {/* ===== Tab 3: Data Management ===== */}
           {showDataTab && (
-            <TabsContent value="data" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6">
+            <TabsContent value="data" className="mt-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300 space-y-6" dir="rtl">
               {/* Backup Restore */}
               {canShowBackupRestore && (
                 <Card className="shadow-lg border-0 overflow-hidden">
