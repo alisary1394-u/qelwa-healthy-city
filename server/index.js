@@ -449,6 +449,23 @@ app.delete('/api/entities/:name/:id', async (req, res) => {
   }
 });
 
+// بذر مسوحات ميدانية تجريبية (يُنفذ تلقائياً ضمن seed أيضاً)
+app.post('/api/seed-surveys', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { runSeed } = await import('./seed.js');
+    await runSeed({ forceSampleTeam: false });
+    const surveys = db.list('family_survey');
+    enqueueMutationBackup('seed-surveys');
+    res.json({ ok: true, count: surveys.length, message: `يوجد ${surveys.length} مسح ميداني` });
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط.
 // لا نمسح team_member أبداً — حماية نهائية لبيانات الأعضاء (بريد، هاتف، إلخ) حتى مع الاستخدام الفعلي.
 const TABLES_CLEAR_ON_RESEED = [

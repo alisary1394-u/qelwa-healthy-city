@@ -337,6 +337,105 @@ export async function runSeed(options = {}) {
     });
   }
 
+  // ────────── مسوحات ميدانية تجريبية (12 استبيان) ──────────
+  if (db.list('family_survey').length === 0) {
+    const volunteers = db.list('team_member').filter(m => m.role === 'volunteer');
+    const volunteerNames = volunteers.length > 0
+      ? volunteers.map(m => m.full_name)
+      : ['متطوع حي المركز', 'متطوع حي الشمال', 'متطوع حي الجنوب', 'متطوع حي الشرق', 'متطوعة حي الغرب', 'متطوعة حي النخيل'];
+    const districts = ['حي المركز', 'حي الشمال', 'حي الجنوب', 'حي الشرق', 'حي الغرب', 'حي النخيل', 'حي الروضة', 'حي السلام', 'حي الفيصلية', 'حي المركز', 'حي الشمال', 'حي الجنوب'];
+    const familyHeads = [
+      'محمد بن عبدالله الغامدي', 'أحمد بن سعيد الزهراني', 'خالد بن فهد القرني',
+      'عبدالرحمن بن علي الشهري', 'سعد بن حسن الدوسري', 'فاطمة بنت محمد العمري',
+      'نورة بنت سالم الحربي', 'عبدالله بن ناصر المالكي', 'ياسر بن عبدالعزيز الثقفي',
+      'منصور بن خالد البيشي', 'سلطان بن سعود الأحمري', 'هند بنت عبدالله السبيعي',
+    ];
+    const surveys = [
+      { total: 8, males: 4, females: 4, infants: [1,1,0], c14:[1,0,1], c514:[2,1,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[3,1,2], literate:[5,3,2], skilled:[2,1,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['وظيفة'], income:false, diet:true, markets:true, bf:1, births:false, vacc:true, pregnant:false, chronic:false, disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+      { total: 6, males: 3, females: 3, infants: [0,0,0], c14:[1,1,0], c514:[1,0,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[2,1,1], literate:[4,2,2], skilled:[1,1,0], water:true, toilet:true, bath:true, garbage:false, livelihood:['تجارة صغيرة'], income:false, diet:true, markets:false, bf:0, births:true, bboys:1, bgirls:0, vacc:true, pregnant:false, chronic:true, chronicD:'سكري', disability:false, health:true, sports:false, green:false, infra:false, transport:true, social:false, status:'submitted' },
+      { total: 10, males: 5, females: 5, infants: [1,0,1], c14:[2,1,1], c514:[2,1,1], a1544:[3,2,1], a4565:[1,1,0], s65:[1,0,1], married:2, school:[4,2,2], literate:[6,3,3], skilled:[3,2,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['زراعة','وظيفة'], income:false, diet:true, markets:true, bf:1, births:true, bboys:0, bgirls:1, vacc:true, pregnant:true, pregCount:1, chronic:false, disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+      { total: 5, males: 2, females: 3, infants: [0,0,0], c14:[0,0,0], c514:[1,0,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[1,0,1], literate:[3,1,2], skilled:[1,0,1], water:true, toilet:true, bath:false, garbage:true, livelihood:['عمل فني'], income:false, diet:false, markets:false, bf:0, births:false, vacc:true, pregnant:false, chronic:true, chronicD:'ضغط الدم', disability:true, disD:'إعاقة حركية', health:true, sports:false, green:false, infra:false, transport:false, social:false, status:'submitted' },
+      { total: 7, males: 4, females: 3, infants: [1,1,0], c14:[1,0,1], c514:[1,1,0], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[2,1,1], literate:[4,3,1], skilled:[2,1,1], water:false, toilet:true, bath:true, garbage:false, livelihood:['عمل'], income:true, diet:false, markets:false, bf:1, births:false, vacc:false, pregnant:false, chronic:false, disability:false, health:false, sports:false, green:false, infra:false, transport:false, social:false, status:'draft' },
+      { total: 9, males: 5, females: 4, infants: [1,0,1], c14:[2,1,1], c514:[2,1,1], a1544:[2,2,0], a4565:[1,1,0], s65:[1,0,1], married:2, school:[4,2,2], literate:[6,4,2], skilled:[3,2,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['وظيفة','تجارة صغيرة'], income:false, diet:true, markets:true, bf:1, births:true, bboys:1, bgirls:0, vacc:true, pregnant:false, chronic:false, disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+      { total: 4, males: 2, females: 2, infants: [0,0,0], c14:[0,0,0], c514:[0,0,0], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[0,0,0], literate:[2,1,1], skilled:[0,0,0], water:true, toilet:true, bath:true, garbage:true, livelihood:['وظيفة'], income:false, diet:true, markets:true, bf:0, births:false, vacc:true, pregnant:false, chronic:true, chronicD:'سكري وضغط', disability:false, health:true, sports:false, green:true, infra:true, transport:true, social:false, status:'submitted' },
+      { total: 11, males: 6, females: 5, infants: [2,1,1], c14:[2,1,1], c514:[3,2,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:2, school:[5,3,2], literate:[7,4,3], skilled:[4,3,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['زراعة','عمل'], income:false, diet:true, markets:true, bf:2, births:true, bboys:1, bgirls:1, vacc:true, pregnant:true, pregCount:1, chronic:false, disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+      { total: 3, males: 1, females: 2, infants: [0,0,0], c14:[0,0,0], c514:[0,0,0], a1544:[1,0,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[0,0,0], literate:[2,1,1], skilled:[1,0,1], water:true, toilet:true, bath:true, garbage:false, livelihood:['أخرى'], income:true, diet:false, markets:false, bf:0, births:false, vacc:true, pregnant:false, chronic:true, chronicD:'ربو', disability:true, disD:'إعاقة بصرية', health:true, sports:false, green:false, infra:false, transport:false, social:false, status:'draft' },
+      { total: 7, males: 3, females: 4, infants: [1,0,1], c14:[1,1,0], c514:[1,0,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[2,1,1], literate:[5,2,3], skilled:[2,1,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['وظيفة'], income:false, diet:true, markets:true, bf:1, births:false, vacc:true, pregnant:false, chronic:false, disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+      { total: 6, males: 4, females: 2, infants: [0,0,0], c14:[1,1,0], c514:[1,1,0], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:1, school:[2,2,0], literate:[4,3,1], skilled:[2,2,0], water:true, toilet:true, bath:true, garbage:true, livelihood:['عمل فني','عمل'], income:false, diet:true, markets:false, bf:0, births:false, vacc:true, pregnant:false, chronic:false, disability:false, health:true, sports:true, green:false, infra:true, transport:true, social:true, status:'submitted' },
+      { total: 8, males: 4, females: 4, infants: [1,1,0], c14:[1,0,1], c514:[2,1,1], a1544:[2,1,1], a4565:[1,1,0], s65:[1,0,1], married:2, school:[3,1,2], literate:[5,3,2], skilled:[3,2,1], water:true, toilet:true, bath:true, garbage:true, livelihood:['تجارة صغيرة','زراعة'], income:false, diet:true, markets:true, bf:1, births:true, bboys:1, bgirls:0, vacc:true, pregnant:false, chronic:true, chronicD:'سكري', disability:false, health:true, sports:true, green:true, infra:true, transport:true, social:true, status:'verified' },
+    ];
+
+    surveys.forEach((s, i) => {
+      const vol = volunteerNames[i % volunteerNames.length];
+      const groupNum = String(Math.floor(i / 3) + 1);
+      db.create('family_survey', null, {
+        survey_number: `MS-${String(i + 1).padStart(3, '0')}`,
+        family_head_name: familyHeads[i],
+        group_number: groupNum,
+        volunteer_name: vol,
+        district: districts[i],
+        address: `${districts[i]} - شارع ${i + 1}`,
+        demographics_total: s.total,
+        demographics_males: s.males,
+        demographics_females: s.females,
+        infants_total: s.infants[0], infants_males: s.infants[1], infants_females: s.infants[2],
+        children_1_4_total: s.c14[0], children_1_4_males: s.c14[1], children_1_4_females: s.c14[2],
+        children_5_14_total: s.c514[0], children_5_14_males: s.c514[1], children_5_14_females: s.c514[2],
+        adults_15_44_total: s.a1544[0], adults_15_44_males: s.a1544[1], adults_15_44_females: s.a1544[2],
+        adults_45_65_total: s.a4565[0], adults_45_65_males: s.a4565[1], adults_45_65_females: s.a4565[2],
+        seniors_65_plus_total: s.s65[0], seniors_65_plus_males: s.s65[1], seniors_65_plus_females: s.s65[2],
+        married_couples: s.married,
+        children_enrolled_school_total: s.school[0], children_enrolled_school_males: s.school[1], children_enrolled_school_females: s.school[2],
+        literate_total: s.literate[0], literate_males: s.literate[1], literate_females: s.literate[2],
+        skilled_members_total: s.skilled[0], skilled_members_males: s.skilled[1], skilled_members_females: s.skilled[2],
+        skills_details: s.skilled[0] > 0 ? 'كهرباء، سباكة، نجارة' : '',
+        safe_water_access: s.water,
+        has_toilet: s.toilet,
+        has_bathroom: s.bath,
+        has_garbage_system: s.garbage,
+        livelihood_patterns: JSON.stringify(s.livelihood),
+        income_less_than_dollar: s.income,
+        income_sources: s.livelihood.join('، '),
+        balanced_diet: s.diet,
+        access_to_healthy_markets: s.markets,
+        breastfeeding_over_6months: s.bf,
+        births_last_12months: !!s.births,
+        births_boys: s.bboys || 0,
+        births_girls: s.bgirls || 0,
+        birth_assisted_by: s.births ? 'طبيب' : '',
+        children_fully_vaccinated: s.vacc,
+        infant_deaths_last_year: false,
+        infant_deaths_boys: 0, infant_deaths_girls: 0,
+        child_deaths_1_5_years: false,
+        child_deaths_1_5_boys: 0, child_deaths_1_5_girls: 0,
+        has_pregnant_woman: !!s.pregnant,
+        pregnant_count: s.pregCount || 0,
+        pregnant_tetanus_vaccination: !!s.pregnant,
+        pregnant_visited_by_trained: !!s.pregnant,
+        maternal_death_last_year: false, maternal_death_count: 0,
+        married_women_15_49_count: s.married,
+        smokers_count: i % 3 === 0 ? 1 : 0,
+        has_chronic_diseases: !!s.chronic,
+        chronic_diseases_details: s.chronicD || '',
+        has_disability: !!s.disability,
+        disability_details: s.disD || '',
+        deaths_from_diseases: false,
+        access_to_health_facility: s.health,
+        health_facility_distance_details: s.health ? 'أقل من 5 كم' : 'أكثر من 10 كم',
+        satisfied_with_health_services: s.health,
+        access_to_sports_facilities: s.sports,
+        participate_in_sports: s.sports,
+        access_to_green_areas: s.green,
+        satisfied_with_infrastructure: s.infra,
+        access_to_transport: s.transport,
+        contributed_to_social_services: s.social,
+        notes: `مسح ميداني تجريبي رقم ${i + 1} — ${districts[i]}`,
+        status: s.status,
+      });
+    });
+    console.log('✅ تم إنشاء 12 مسح ميداني تجريبي');
+  }
+
   // مهام نموذجية (نفس قائمة المهام في seedCommitteesTeamInitiativesTasks)
   const tasksNow = db.list('task');
   const membersForTasks = db.list('team_member').filter((m) =>
