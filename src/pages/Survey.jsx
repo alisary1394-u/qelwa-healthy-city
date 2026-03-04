@@ -16,8 +16,8 @@ import YesNoQuestion from "../components/survey/YesNoQuestion";
 import { usePermissions } from '@/hooks/usePermissions';
 
 const districts = [
-  'حي المركز', 'حي الشمال', 'حي الجنوب', 'حي الشرق', 'حي الغرب',
-  'حي النخيل', 'حي الروضة', 'حي السلام', 'حي الفيصلية', 'أخرى'
+  'حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية',
+  'حي الشروق', 'أخرى'
 ];
 
 const livelihoodOptions = ['زراعة', 'تجارة صغيرة', 'عمل فني', 'عمل', 'وظيفة', 'أخرى'];
