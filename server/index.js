@@ -466,6 +466,47 @@ app.post('/api/seed-surveys', async (req, res) => {
   }
 });
 
+// تحديث أسماء الأحياء في الاستبيانات الموجودة
+app.post('/api/rename-survey-districts', async (req, res) => {
+  try {
+    const db = await getDb();
+    const newDistricts = req.body?.districts;
+    if (!newDistricts || !Array.isArray(newDistricts) || newDistricts.length === 0) {
+      return res.status(400).json({ error: 'يجب إرسال قائمة الأحياء الجديدة' });
+    }
+    const surveys = db.list('family_survey');
+    const total = surveys.length;
+    let updated = 0;
+    // Collect all unique old district names
+    const oldDistrictNames = [...new Set(surveys.map(s => s.district).filter(Boolean))];
+    // Filter out districts that are already in the new list
+    const unknownOld = oldDistrictNames.filter(d => !newDistricts.includes(d) && d !== 'أخرى');
+    // Build mapping: assign old unknown districts to new districts by index
+    const renameMap = {};
+    unknownOld.forEach((oldName, i) => {
+      if (i < newDistricts.length) {
+        renameMap[oldName] = newDistricts[i];
+      }
+    });
+    // Apply renames
+    surveys.forEach(survey => {
+      const oldDistrict = survey.district;
+      if (oldDistrict && renameMap[oldDistrict]) {
+        const newName = renameMap[oldDistrict];
+        db.update('family_survey', survey.id, { district: newName });
+        updated++;
+      }
+    });
+    enqueueMutationBackup('rename-survey-districts');
+    res.json({ ok: true, total, updated, renameMap, message: `تم تحديث ${updated} استبيان` });
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+    }
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // بذر البيانات (للتجربة). ?clear=1 يمسح جداول البذرة فقط.
 // لا نمسح team_member أبداً — حماية نهائية لبيانات الأعضاء (بريد، هاتف، إلخ) حتى مع الاستخدام الفعلي.
 const TABLES_CLEAR_ON_RESEED = [
