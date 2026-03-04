@@ -289,6 +289,127 @@
     });
   }
 
+  // ========== 13. حماية من لقطات الشاشة ==========
+  // علامة عامة: المشرف العام يضعها true من React
+  window.__ALLOW_SCREENSHOTS = false;
+
+  function isScreenshotAllowed() {
+    return window.__ALLOW_SCREENSHOTS === true;
+  }
+
+  // --- أ) اعتراض مفتاح PrintScreen وتنظيف الحافظة ---
+  document.addEventListener('keyup', function(e) {
+    if (isScreenshotAllowed()) return;
+    // PrintScreen key
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+      // تنظيف الحافظة فوراً
+      try {
+        navigator.clipboard.writeText('').catch(function(){});
+      } catch(ex) {}
+      // كتابة صورة فارغة للحافظة
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = 1; canvas.height = 1;
+        canvas.toBlob(function(blob) {
+          try {
+            var item = new ClipboardItem({ 'image/png': blob });
+            navigator.clipboard.write([item]).catch(function(){});
+          } catch(ex2) {}
+        });
+      } catch(ex3) {}
+      e.preventDefault();
+    }
+  });
+
+  // --- ب) اعتراض Win+Shift+S و Ctrl+Shift+S ---
+  document.addEventListener('keydown', function(e) {
+    if (isScreenshotAllowed()) return;
+    // Shift+S مع Meta (Windows key) أو Ctrl
+    if (e.shiftKey && (e.key === 'S' || e.key === 's') && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+    // PrintScreen مباشر
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+
+  // --- ج) إخفاء المحتوى عند فقدان التركيز (Snipping Tool / Alt+Tab) ---
+  var protectionOverlay = null;
+
+  function createProtectionOverlay() {
+    if (protectionOverlay) return;
+    protectionOverlay = document.createElement('div');
+    protectionOverlay.id = 'screenshot-protection-overlay';
+    protectionOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;' +
+      'background:linear-gradient(135deg,#1e3a5f 0%,#0f1b2d 100%);z-index:999999;' +
+      'display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Tajawal,sans-serif;';
+    protectionOverlay.innerHTML = '<div style="text-align:center;color:white;">' +
+      '<div style="font-size:4rem;margin-bottom:20px;">🛡️</div>' +
+      '<h2 style="font-size:1.5rem;margin-bottom:10px;">المحتوى محمي</h2>' +
+      '<p style="color:#94a3b8;font-size:1rem;">لقطات الشاشة غير مسموح بها</p>' +
+      '<p style="color:#64748b;font-size:0.85rem;margin-top:8px;">نظام المدينة الصحية - محافظة قلوة</p>' +
+      '</div>';
+  }
+
+  function showProtectionOverlay() {
+    if (isScreenshotAllowed()) return;
+    createProtectionOverlay();
+    if (!document.body.contains(protectionOverlay)) {
+      document.body.appendChild(protectionOverlay);
+    }
+  }
+
+  function hideProtectionOverlay() {
+    if (protectionOverlay && document.body.contains(protectionOverlay)) {
+      document.body.removeChild(protectionOverlay);
+    }
+  }
+
+  // عند فقدان التركيز: إظهار الغطاء الواقي
+  document.addEventListener('visibilitychange', function() {
+    if (isScreenshotAllowed()) return;
+    if (document.hidden) {
+      showProtectionOverlay();
+    } else {
+      // تأخير قصير لضمان أن الـ Snipping Tool أخذ صورة الغطاء
+      setTimeout(hideProtectionOverlay, 300);
+    }
+  });
+
+  window.addEventListener('blur', function() {
+    if (isScreenshotAllowed()) return;
+    showProtectionOverlay();
+  });
+
+  window.addEventListener('focus', function() {
+    setTimeout(hideProtectionOverlay, 200);
+  });
+
+  // --- د) تنظيف الحافظة دورياً من الصور ---
+  setInterval(function() {
+    if (isScreenshotAllowed()) return;
+    if (document.hasFocus()) return; // لا نمسح أثناء الاستخدام العادي
+    try {
+      navigator.clipboard.writeText('').catch(function(){});
+    } catch(ex) {}
+  }, 2000);
+
+  // --- هـ) CSS إضافي: حماية المحتوى من التصوير ---
+  var screenshotStyle = document.createElement('style');
+  screenshotStyle.textContent = 
+    '@media screen {' +
+    '  .screenshot-protect { position: relative; }' +
+    '}' +
+    '/* منع التقاط عبر Screen Capture API */' +
+    '@media (display-mode: picture-in-picture) {' +
+    '  body { visibility: hidden !important; }' +
+    '}';
+  document.head.appendChild(screenshotStyle);
+
   // ========== التشغيل ==========
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {

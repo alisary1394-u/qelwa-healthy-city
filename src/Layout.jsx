@@ -34,8 +34,13 @@ const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { navItems, permissions } = usePermissions();
+  const { navItems, permissions, isGovernor } = usePermissions();
   const { logout } = useAuth();
+
+  // السماح بلقطات الشاشة للمشرف العام فقط
+  useEffect(() => {
+    window.__ALLOW_SCREENSHOTS = isGovernor === true;
+  }, [isGovernor]);
   const { theme, setTheme, systemTheme } = useTheme();
 
   // جلسة الخمول: تسجيل خروج تلقائي بعد 20 دقيقة من عدم النشاط
