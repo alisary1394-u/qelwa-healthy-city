@@ -1130,7 +1130,7 @@ export default function Budget() {
                       <div className="flex-1">
                         <h3 className="font-semibold"><T>{allocation.committee_name || allocation.axis_name || t('budget.allocationTab.generalAllocation')}</T></h3>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {allocation.category && <p className="text-sm text-muted-foreground">{allocation.category}</p>}
+                          {allocation.category && <p className="text-sm text-muted-foreground"><T>{allocation.category}</T></p>}
                           {allocation.standard_code && (
                             <Badge variant="outline" className="text-xs">
                               {t('budget.transactionTab.standardLabel')} {allocation.standard_code}
@@ -1206,7 +1206,7 @@ export default function Budget() {
                       </div>
                       {linkedInitiatives.length > 0 && (
                         <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
-                          {linkedInitiatives.slice(0, 3).map((initiative) => initiative.title).join('، ')}
+                          <T>{linkedInitiatives.slice(0, 3).map((initiative) => initiative.title).join('، ')}</T>
                           {linkedInitiatives.length > 3 ? ` +${linkedInitiatives.length - 3}` : ''}
                         </p>
                       )}
