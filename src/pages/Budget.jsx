@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, Clock, Loader2, Pencil } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from '@/hooks/usePermissions';
+import T from '@/components/T';
 import { AXES_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const transactionCategories = {
@@ -584,7 +585,7 @@ export default function Budget() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{t('budget.currentBudget')} - {activeBudget.name}</CardTitle>
+                <CardTitle>{t('budget.currentBudget')} - <T>{activeBudget.name}</T></CardTitle>
                 <Badge className={activeBudget.status === 'active' ? 'bg-green-600' : 'bg-gray-600'}>
                   {activeBudget.status === 'active' ? t('budget.budgetTab.active') : t('budget.budgetTab.closed')}
                 </Badge>
@@ -748,8 +749,8 @@ export default function Budget() {
                           .slice(0, 5)
                           .map(initiative => (
                             <div key={initiative.id} className="flex items-center justify-between p-3 bg-indigo-50 rounded">
-                              <span className="font-medium text-sm truncate flex-1">{initiative.title}</span>
-                              <span className="text-indigo-600 font-bold text-sm ml-2">{initiative.budget.toLocaleString()} {t('currency.riyal')}</span>
+                              <span className="font-medium text-sm truncate flex-1"><T>{initiative.title}</T></span>
+                              <span className="text-indigo-600 font-bold text-sm ms-2">{initiative.budget.toLocaleString()} {t('currency.riyal')}</span>
                             </div>
                           ))}
                         {initiatives.filter(i => String(i.budget_id || '') === String(activeBudget?.id || '') && i.budget > 0).length === 0 && (
@@ -769,12 +770,12 @@ export default function Budget() {
           <div>
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                 <Input
                   placeholder={t('budget.transactionTab.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10"
+                  className={rtl ? 'pr-10' : 'pl-10'}
                 />
               </div>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -800,7 +801,7 @@ export default function Budget() {
               </Select>
               {canCreateTransactions && (
                 <Button onClick={() => { setEditingTransaction(null); resetTransactionForm(); setTransactionFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-5 h-5 ml-2" />
+                  <Plus className="w-5 h-5 ms-2" />
                   {t('budget.transactionTab.newTransaction')}
                 </Button>
               )}
@@ -826,7 +827,7 @@ export default function Budget() {
                           <Badge className={transaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
                             {transaction.type === 'income' ? t('budget.transactionTab.incomeLabel') : t('budget.transactionTab.expenseLabel')}
                           </Badge>
-                          <Badge variant="outline">{transaction.category}</Badge>
+                          <Badge variant="outline">{t(`budget.transactionCategories.${transaction.category}`, transaction.category)}</Badge>
                           <Badge className={
                             transaction.status === 'paid' ? 'bg-green-600' :
                             transaction.status === 'approved' ? 'bg-primary' :
@@ -838,7 +839,7 @@ export default function Budget() {
                              transaction.status === 'pending' ? t('budget.transactionTab.statusPending') : t('budget.transactionTab.statusRejected')}
                           </Badge>
                         </div>
-                        <h3 className="font-semibold text-lg mb-1">{transaction.description}</h3>
+                        <h3 className="font-semibold text-lg mb-1"><T>{transaction.description}</T></h3>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {transaction.standard_code && (
                             <Badge variant="outline" className="text-xs">
@@ -847,7 +848,7 @@ export default function Budget() {
                           )}
                           {transaction.initiative_title && (
                             <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
-                              {t('budget.transactionTab.initiativeLabel')} {transaction.initiative_title}
+                              {t('budget.transactionTab.initiativeLabel')} <T>{transaction.initiative_title}</T>
                             </Badge>
                           )}
                         </div>
@@ -855,18 +856,18 @@ export default function Budget() {
                           <div>{t('budget.transactionTab.amount')} <strong className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
                             {transaction.amount?.toLocaleString()} {t('currency.riyal')}
                           </strong></div>
-                          {transaction.beneficiary && <div>{t('budget.transactionTab.payee')} <strong>{transaction.beneficiary}</strong></div>}
+                          {transaction.beneficiary && <div>{t('budget.transactionTab.payee')} <strong><T>{transaction.beneficiary}</T></strong></div>}
                           <div>{t('budget.transactionTab.transDate')} <strong>{transaction.date}</strong></div>
                           {transaction.payment_method && <div>{t('budget.transactionTab.paymentMethod')} <strong>{t(`budget.paymentMethods.${transaction.payment_method}`, transaction.payment_method)}</strong></div>}
-                          {transaction.committee_name && <div>{t('budget.transactionTab.committeeLabel')} <strong>{transaction.committee_name}</strong></div>}
-                          {transaction.axis_name && <div>{t('budget.transactionTab.axisLabel')} <strong>{transaction.axis_name}</strong></div>}
+                          {transaction.committee_name && <div>{t('budget.transactionTab.committeeLabel')} <strong><T>{transaction.committee_name}</T></strong></div>}
+                          {transaction.axis_name && <div>{t('budget.transactionTab.axisLabel')} <strong><T>{transaction.axis_name}</T></strong></div>}
                         </div>
                       </div>
                       {canCreateTransactions && (
                         <Button
                           variant="outline"
                           size="icon"
-                          className="ml-2"
+                          className="ms-2"
                           onClick={() => {
                             setEditingTransaction(transaction);
                             setTransactionForm({
@@ -979,7 +980,7 @@ export default function Budget() {
             {showBudgetManagement && (
               <div className="flex justify-end mb-6">
                 <Button onClick={() => openBudgetForm()} className="bg-primary hover:bg-primary/90">
-                  <Plus className="w-5 h-5 ml-2" />
+                  <Plus className="w-5 h-5 ms-2" />
                   {t('budget.budgetTab.newBudget')}
                 </Button>
               </div>
@@ -1002,7 +1003,7 @@ export default function Budget() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="font-bold text-lg">{budget.name}</h3>
+                        <h3 className="font-bold text-lg"><T>{budget.name}</T></h3>
                         <p className="text-sm text-muted-foreground">{budget.fiscal_year}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1093,7 +1094,7 @@ export default function Budget() {
             {showBudgetManagement && (
               <div className="flex justify-end mb-6">
                 <Button onClick={() => { setEditingAllocation(null); resetAllocationForm(); setAllocationFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
-                  <Plus className="w-5 h-5 ml-2" />
+                  <Plus className="w-5 h-5 ms-2" />
                   {t('budget.allocationTab.newAllocation')}
                 </Button>
               </div>
@@ -1127,7 +1128,7 @@ export default function Budget() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name || t('budget.allocationTab.generalAllocation')}</h3>
+                        <h3 className="font-semibold"><T>{allocation.committee_name || allocation.axis_name || t('budget.allocationTab.generalAllocation')}</T></h3>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {allocation.category && <p className="text-sm text-muted-foreground">{allocation.category}</p>}
                           {allocation.standard_code && (
@@ -1137,7 +1138,7 @@ export default function Budget() {
                           )}
                           {allocation.initiative_title && (
                             <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
-                              {t('budget.transactionTab.initiativeLabel')} {allocation.initiative_title}
+                              {t('budget.transactionTab.initiativeLabel')} <T>{allocation.initiative_title}</T>
                             </Badge>
                           )}
                         </div>
@@ -1373,7 +1374,7 @@ export default function Budget() {
                       .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id))
                       .map(standard => (
                         <SelectItem key={standard.id} value={standard.id}>
-                          {standard.code} - {standard.name}
+                          {standard.code} - <T>{standard.name}</T>
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -1391,7 +1392,7 @@ export default function Budget() {
                     {committees
                       .filter(c => !transactionForm.axis_id || c.axis_id === transactionForm.axis_id)
                       .map(committee => (
-                        <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
+                        <SelectItem key={committee.id} value={committee.id}><T>{committee.name}</T></SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
@@ -1407,7 +1408,7 @@ export default function Budget() {
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {initiatives.map(initiative => (
                       <SelectItem key={initiative.id} value={initiative.id}>
-                        {initiative.code} - {initiative.title}
+                        {initiative.code} - <T>{initiative.title}</T>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1431,7 +1432,7 @@ export default function Budget() {
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setTransactionFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-green-600 hover:bg-green-700">
-                {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {saving && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {editingTransaction ? t('budget.form.saveChanges') : t('budget.form.saveTransaction')}
               </Button>
             </div>
@@ -1492,7 +1493,7 @@ export default function Budget() {
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={closeBudgetForm}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
-                {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {saving && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {editingBudget ? t('budget.form.saveChanges') : t('budget.form.saveBudget')}
               </Button>
             </div>
@@ -1515,7 +1516,7 @@ export default function Budget() {
                   <SelectTrigger><SelectValue placeholder={t('budget.form.selectBudget')} /></SelectTrigger>
                   <SelectContent>
                     {budgets.filter(b => b.status === 'active' || b.status === 'draft').map(budget => (
-                      <SelectItem key={budget.id} value={budget.id}>{budget.name} {budget.status === 'draft' ? t('budget.form.draftBudgetSuffix') : ''}</SelectItem>
+                      <SelectItem key={budget.id} value={budget.id}><T>{budget.name}</T> {budget.status === 'draft' ? t('budget.form.draftBudgetSuffix') : ''}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1540,7 +1541,7 @@ export default function Budget() {
                   <SelectContent>
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {normalizedAxes.map(axis => (
-                      <SelectItem key={axis.id} value={axis.id}>{axis.display_name}</SelectItem>
+                      <SelectItem key={axis.id} value={axis.id}><T>{axis.display_name}</T></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1562,7 +1563,7 @@ export default function Budget() {
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredStandardsForAllocation.map(standard => (
                       <SelectItem key={standard.id} value={standard.id}>
-                        {standard.code} - {standard.name || standard.title}
+                        {standard.code} - <T>{standard.name || standard.title}</T>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1584,7 +1585,7 @@ export default function Budget() {
                   <SelectContent>
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredCommitteesForAllocation.map(committee => (
-                      <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
+                      <SelectItem key={committee.id} value={committee.id}><T>{committee.name}</T></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1613,7 +1614,7 @@ export default function Budget() {
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredInitiativesForAllocation.map(initiative => (
                         <SelectItem key={initiative.id} value={initiative.id}>
-                          {initiative.title}
+                          <T>{initiative.title}</T>
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -1638,7 +1639,7 @@ export default function Budget() {
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setAllocationFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
-                {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {saving && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {editingAllocation ? t('budget.form.saveChanges') : t('budget.form.saveAllocation')}
               </Button>
             </div>
