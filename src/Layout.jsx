@@ -30,6 +30,7 @@ import { useTheme } from 'next-themes';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '@/i18n';
+import T from '@/components/T';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 
@@ -157,7 +158,7 @@ export default function Layout({ children }) {
                 <span className="text-white font-bold text-sm">{currentSetting.logo_text || (rtl ? 'ق' : 'Q')}</span>
               </div>
             )}
-            <span className="font-bold text-sm text-foreground">{currentSetting.city_name || t('home.healthyCity')}</span>
+            <span className="font-bold text-sm text-foreground"><T>{currentSetting.city_name || t('home.healthyCity')}</T></span>
           </Link>
           <div className="flex items-center gap-1">
             {currentUser && <NotificationBell userEmail={currentUser.email} />}
@@ -180,8 +181,8 @@ export default function Layout({ children }) {
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-sidebar-foreground text-sm">{currentSetting.city_name || t('home.healthyCity')}</p>
-                  <p className="text-xs text-sidebar-foreground/60">{currentSetting.city_location || t('layout.defaultCity')}</p>
+                  <p className="font-bold text-sidebar-foreground text-sm"><T>{currentSetting.city_name || t('home.healthyCity')}</T></p>
+                  <p className="text-xs text-sidebar-foreground/60"><T>{currentSetting.city_location || t('layout.defaultCity')}</T></p>
                 </div>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground">
@@ -243,8 +244,8 @@ export default function Layout({ children }) {
               )}
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <p className="font-bold text-sidebar-foreground text-sm truncate">{currentSetting.city_name || t('home.healthyCity')}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentSetting.city_location || t('layout.defaultCity')}</p>
+                  <p className="font-bold text-sidebar-foreground text-sm truncate"><T>{currentSetting.city_name || t('home.healthyCity')}</T></p>
+                  <p className="text-[10px] text-sidebar-foreground/50 truncate"><T>{currentSetting.city_location || t('layout.defaultCity')}</T></p>
                 </div>
               )}
             </Link>

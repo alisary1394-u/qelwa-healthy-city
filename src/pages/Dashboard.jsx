@@ -55,7 +55,7 @@ function AnimatedNumber({ value, duration = 800 }) {
 // Loading skeleton
 function DashboardSkeleton() {
   return (
-    <div className="page-container animate-in" dir="rtl">
+    <div className="page-container animate-in">
       <div className="h-40 skeleton rounded-2xl mb-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[...Array(4)].map((_, i) => <div key={i} className="h-28 skeleton rounded-xl" />)}
@@ -194,12 +194,12 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-white">{t('dashboard.title')}</h1>
-                  <p className="text-white/70 text-sm">{currentSetting.city_name || t('dashboard.defaultCityName')} — {t('dashboard.trackProgress')}</p>
+                  <p className="text-white/70 text-sm"><T>{currentSetting.city_name || t('dashboard.defaultCityName')}</T> — {t('dashboard.trackProgress')}</p>
                 </div>
               </div>
             </div>
             {currentUser && (
-              <div className="hidden md:block text-left">
+              <div className="hidden md:block text-end">
                 <p className="text-white/70 text-sm">{t('dashboard.welcome')}</p>
                 <p className="text-white font-semibold"><T>{currentUser.full_name}</T></p>
               </div>
@@ -281,7 +281,7 @@ export default function Dashboard() {
                   </div>
                   <Link to={createPageUrl('Tasks') + '?filter=overdue'}>
                     <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">
-                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 mr-1" />
+                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 ms-1" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -299,7 +299,7 @@ export default function Dashboard() {
                   </div>
                   <Link to={createPageUrl('Standards') + '?filter=pending'}>
                     <Button size="sm" variant="outline" className="border-warning/30 text-warning hover:bg-warning/10">
-                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 mr-1" />
+                      {t('dashboard.view')} <ArrowIcon className="w-4 h-4 ms-1" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -335,7 +335,7 @@ export default function Dashboard() {
                           <span className="text-sm font-medium text-foreground"><T>{axis.name}</T></span>
                           <span className="text-sm text-muted-foreground tabular-nums">
                             {axis.completed}/{axis.total} 
-                            <span className="mr-1 font-medium" style={{ color: axis.color }}>({axis.progress}%)</span>
+                            <span className="ms-1 font-medium" style={{ color: axis.color }}>({axis.progress}%)</span>
                           </span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
@@ -393,8 +393,8 @@ export default function Dashboard() {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '0.75rem',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          direction: 'rtl',
-                          fontFamily: 'Tajawal'
+                          direction: rtl ? 'rtl' : 'ltr',
+                          fontFamily: rtl ? 'Tajawal' : 'inherit'
                         }}
                         formatter={(value, name) => [`${value} ${t('dashboard.criterion')}`, name]}
                       />
