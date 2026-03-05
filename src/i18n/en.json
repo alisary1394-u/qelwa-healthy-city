@@ -52,7 +52,8 @@
     "language": "Language",
     "arabic": "العربية",
     "english": "English",
-    "defaultUser": "User"
+    "defaultUser": "User",
+    "sar": "SAR"
   },
 
   "login": {
@@ -672,12 +673,12 @@
     "completed": "Completed",
     "beneficiaries": "Beneficiaries",
     "totalBudget": "Budget",
-    "beneficiary": "beneficiary",
+    "beneficiary": "beneficiaries",
     "coordinator": "Coordinator",
     "members": "Members",
     "supervisors": "Supervisors",
     "volunteers": "Volunteers",
-    "member": "member",
+    "member": "members",
     "noTeamLinked": "No team linked yet",
     "view": "View",
     "delete": "Delete",

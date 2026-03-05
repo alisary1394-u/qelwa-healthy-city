@@ -52,7 +52,8 @@
     "language": "اللغة",
     "arabic": "العربية",
     "english": "English",
-    "defaultUser": "مستخدم"
+    "defaultUser": "مستخدم",
+    "sar": "ر.س"
   },
 
   "login": {

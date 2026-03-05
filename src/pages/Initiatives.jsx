@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { api } from '@/api/apiClient';
@@ -1092,17 +1092,17 @@ export default function Initiatives() {
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
               placeholder={t('initiatives.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
             />
           </div>
           {canManageInitiatives && (
             <Button onClick={() => { resetForm(); setFormOpen(true); }}>
-              <Plus className="w-5 h-5 ml-2" />
+              <Plus className="w-5 h-5 ms-2" />
               {t('initiatives.addNewInitiative')}
             </Button>
           )}
@@ -1267,7 +1267,7 @@ export default function Initiatives() {
                         className="flex-1"
                         onClick={() => { setSelectedInitiative(initiative); setViewOpen(true); }}
                       >
-                        <Eye className="w-4 h-4 ml-1" />
+                        <Eye className="w-4 h-4 ms-1" />
                         {t('initiatives.view')}
                       </Button>
                       {canManageInitiatives && (
@@ -1278,7 +1278,7 @@ export default function Initiatives() {
                         disabled={deletingInitiative}
                         onClick={() => handleDeleteInitiative(initiative)}
                       >
-                        <Trash2 className="w-4 h-4 ml-1" />
+                        <Trash2 className="w-4 h-4 ms-1" />
                         {t('common.delete')}
                       </Button>
                       )}
@@ -1288,7 +1288,7 @@ export default function Initiatives() {
                           className="flex-1 bg-primary hover:bg-primary/90"
                           onClick={() => handleStatusChange(initiative, 'approved')}
                         >
-                          <CheckCircle className="w-4 h-4 ml-1" />
+                          <CheckCircle className="w-4 h-4 ms-1" />
                           {t('initiatives.approveBtn')}
                         </Button>
                       )}
@@ -1300,7 +1300,7 @@ export default function Initiatives() {
                             className="flex-1"
                             onClick={() => handleStatusChange(initiative, 'planning')}
                           >
-                            <Clock className="w-4 h-4 ml-1" />
+                            <Clock className="w-4 h-4 ms-1" />
                             {t('initiatives.returnToPending')}
                           </Button>
                           <Button 
@@ -1308,7 +1308,7 @@ export default function Initiatives() {
                             className="flex-1 bg-amber-700 hover:bg-amber-800 text-white"
                             onClick={() => handleStatusChange(initiative, 'in_progress')}
                           >
-                            <Play className="w-4 h-4 ml-1" />
+                            <Play className="w-4 h-4 ms-1" />
                             {t('initiatives.start')}
                           </Button>
                         </>
@@ -1320,7 +1320,7 @@ export default function Initiatives() {
                           className="flex-1"
                           onClick={() => handleStatusChange(initiative, 'planning')}
                         >
-                          <Clock className="w-4 h-4 ml-1" />
+                          <Clock className="w-4 h-4 ms-1" />
                           {t('initiatives.returnToPending')}
                         </Button>
                       )}
@@ -1533,7 +1533,7 @@ export default function Initiatives() {
                         .filter(a => !formData.budget_id || a.budget_id === formData.budget_id)
                         .map(allocation => (
                           <SelectItem key={allocation.id} value={allocation.id}>
-                            {allocation.committee_name || allocation.axis_name} - {allocation.category || t('initiatives.generalAllocation')} ({allocation.allocated_amount?.toLocaleString()} {t('common.sar')})
+                            <T>{allocation.committee_name || allocation.axis_name}</T> - {allocation.category || t('initiatives.generalAllocation')} ({allocation.allocated_amount?.toLocaleString()} {t('common.sar')})
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -1573,7 +1573,7 @@ export default function Initiatives() {
                         }]);
                       }}
                     >
-                      <Plus className="w-4 h-4 ml-1" />
+                      <Plus className="w-4 h-4 ms-1" />
                       {t('initiatives.addKPI')}
                     </Button>
                   </div>
@@ -1669,7 +1669,7 @@ export default function Initiatives() {
             <div className="flex gap-3 justify-end pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
-                {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {saving && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {t('initiatives.saveInitiative')}
               </Button>
             </div>
@@ -1713,11 +1713,11 @@ export default function Initiatives() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">{t('initiatives.committeeView')}:</span>
-                      <p className="font-semibold">{selectedInitiative.committee_name}</p>
+                      <p className="font-semibold"><T>{selectedInitiative.committee_name}</T></p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t('initiatives.axis')}:</span>
-                      <p className="font-semibold">{selectedInitiative.axis_name}</p>
+                      <p className="font-semibold"><T>{selectedInitiative.axis_name}</T></p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t('initiatives.period')}:</span>
@@ -1725,7 +1725,7 @@ export default function Initiatives() {
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t('initiatives.leader')}:</span>
-                      <p className="font-semibold">{selectedInitiative.leader_name || t('initiatives.unassigned')}</p>
+                      <p className="font-semibold"><T>{selectedInitiative.leader_name || t('initiatives.unassigned')}</T></p>
                     </div>
                     {selectedInitiative.budget > 0 && (
                       <div>
@@ -1755,7 +1755,7 @@ export default function Initiatives() {
                           const standard = standardsById.get(String(sid));
                           return standard ? (
                             <Badge key={sid} variant="outline">
-                              {standard.code} - {standard.title?.slice(0, 50)}{(standard.title?.length || 0) > 50 ? '...' : ''}
+                              {standard.code} - <T>{standard.title?.slice(0, 50)}{(standard.title?.length || 0) > 50 ? '...' : ''}</T>
                             </Badge>
                           ) : null;
                         })}
@@ -1773,7 +1773,7 @@ export default function Initiatives() {
                       <div className="flex flex-wrap gap-2">
                         {selectedLinkedTeam.map((member) => (
                           <div key={member.id} className="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs bg-card">
-                            <span>{member.full_name} {member.role ? `(${t(getRoleLabel(member.role))})` : ''}</span>
+                            <span><T>{member.full_name}</T> {member.role ? `(${t(getRoleLabel(member.role))})` : ''}</span>
                             {canManageInitiatives && (
                               <button
                                 type="button"
@@ -1795,16 +1795,16 @@ export default function Initiatives() {
                         onClick={handleOpenAssignTeam}
                         className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                       >
-                        <UserPlus className="w-4 h-4 ml-2" />
+                        <UserPlus className="w-4 h-4 ms-2" />
                         {t('initiatives.addTeamMembers')}
                       </Button>
                           <div className="relative">
-                            <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
+                            <Search className={`w-4 h-4 text-muted-foreground absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
                             <Input
                               value={teamMemberSearch}
                               onChange={(e) => setTeamMemberSearch(e.target.value)}
                               placeholder={t('initiatives.quickSearchPlaceholder')}
-                              className="pr-9 sm:w-[320px]"
+                              className={`${rtl ? 'pr-9' : 'pl-9'} sm:w-[320px]`}
                             />
                           </div>
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -1826,7 +1826,7 @@ export default function Initiatives() {
                           onClick={handleAddTeamMember}
                           disabled={!teamMemberToAddId}
                         >
-                          <Plus className="w-4 h-4 ml-1" />
+                          <Plus className="w-4 h-4 ms-1" />
                           {t('common.add')}
                         </Button>
                       </div>
@@ -1842,7 +1842,7 @@ export default function Initiatives() {
                       <div className="flex flex-wrap gap-2 mb-1">
                         {selectedSuggestedTeam.map((member) => (
                           <Badge key={member.id} className="bg-card text-blue-700 border border-blue-200">
-                            {member.full_name} {member.role ? `(${t(getRoleLabel(member.role))})` : ''}
+                            <T>{member.full_name}</T> {member.role ? `(${t(getRoleLabel(member.role))})` : ''}
                           </Badge>
                         ))}
                       </div>
@@ -1851,7 +1851,7 @@ export default function Initiatives() {
 
                   <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 text-sm">
                     <h4 className="font-semibold text-indigo-800 mb-2">{t('initiatives.suggestedTasks')}</h4>
-                    <ul className="list-disc pr-5 space-y-1 text-indigo-700 text-xs">
+                    <ul className={`list-disc ${rtl ? 'pr-5' : 'pl-5'} space-y-1 text-indigo-700 text-xs`}>
                       {selectedSuggestedTasks.map((task, idx) => (
                         <li key={`task-${idx}`}>{task}</li>
                       ))}
@@ -1863,7 +1863,7 @@ export default function Initiatives() {
                       <Target className="w-4 h-4" />
                       {t('initiatives.suggestedDocs')}
                     </h4>
-                    <ul className="list-disc pr-5 space-y-1 text-amber-700 text-xs mb-2">
+                    <ul className={`list-disc ${rtl ? 'pr-5' : 'pl-5'} space-y-1 text-amber-700 text-xs mb-2`}>
                       {selectedSuggestedDocs.map((doc, idx) => (
                         <li key={`doc-${idx}`}>{doc}</li>
                       ))}
@@ -1880,7 +1880,7 @@ export default function Initiatives() {
                       disabled={deletingInitiative}
                       onClick={() => handleDeleteInitiative(selectedInitiative)}
                     >
-                      <Trash2 className="w-4 h-4 ml-1" />
+                      <Trash2 className="w-4 h-4 ms-1" />
                       {t('initiatives.confirmDeleteInitiative')}
                     </Button>
                     {selectedInitiativeStatus === 'planning' && (
@@ -1889,7 +1889,7 @@ export default function Initiatives() {
                         className="bg-primary hover:bg-primary/90"
                         onClick={() => handleStatusChange(selectedInitiative, 'approved')}
                       >
-                        <CheckCircle className="w-4 h-4 ml-1" />
+                        <CheckCircle className="w-4 h-4 ms-1" />
                         {t('initiatives.approveBtn')}
                       </Button>
                     )}
@@ -1900,7 +1900,7 @@ export default function Initiatives() {
                           variant="outline"
                           onClick={() => handleStatusChange(selectedInitiative, 'planning')}
                         >
-                          <Clock className="w-4 h-4 ml-1" />
+                          <Clock className="w-4 h-4 ms-1" />
                           {t('initiatives.returnToPending')}
                         </Button>
                         <Button
@@ -1908,7 +1908,7 @@ export default function Initiatives() {
                           className="bg-yellow-600 hover:bg-yellow-700"
                           onClick={() => handleStatusChange(selectedInitiative, 'in_progress')}
                         >
-                          <Play className="w-4 h-4 ml-1" />
+                          <Play className="w-4 h-4 ms-1" />
                           {t('initiatives.start')}
                         </Button>
                       </>
@@ -1919,7 +1919,7 @@ export default function Initiatives() {
                         variant="outline"
                         onClick={() => handleStatusChange(selectedInitiative, 'planning')}
                       >
-                        <Clock className="w-4 h-4 ml-1" />
+                        <Clock className="w-4 h-4 ms-1" />
                         {t('initiatives.returnToPending')}
                       </Button>
                     )}
@@ -1946,12 +1946,12 @@ export default function Initiatives() {
           <div className="space-y-3 mt-2">
             {/* Search */}
             <div className="relative">
-              <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
+              <Search className={`w-4 h-4 text-muted-foreground absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2`} />
               <Input
                 value={assignTeamSearch}
                 onChange={(e) => setAssignTeamSearch(e.target.value)}
                 placeholder={t('initiatives.searchMembers')}
-                className="pr-9"
+                className={rtl ? 'pr-9' : 'pl-9'}
               />
             </div>
 
@@ -1959,7 +1959,7 @@ export default function Initiatives() {
             {assignTeamSelected.length > 0 && (
               <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
                 <span className="text-sm text-green-700 font-medium">
-                  <UserCheck className="w-4 h-4 inline ml-1" />
+                  <UserCheck className="w-4 h-4 inline ms-1" />
                   {t('initiatives.selectedCount', { count: assignTeamSelected.length })}
                 </span>
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7" onClick={() => setAssignTeamSelected([])}>
@@ -2020,7 +2020,7 @@ export default function Initiatives() {
                 disabled={assignTeamSelected.length === 0 || assignTeamLoading}
                 className="bg-green-600 hover:bg-green-700"
               >
-                {assignTeamLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {assignTeamLoading && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {t('initiatives.addToTeam')} {assignTeamSelected.length > 0 ? `(${assignTeamSelected.length})` : ''}
               </Button>
             </div>
