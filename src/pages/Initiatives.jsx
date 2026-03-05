@@ -1260,11 +1260,11 @@ export default function Initiatives() {
                       );
                     })()}
 
-                    <div className="flex gap-2 pt-3 border-t">
+                    <div className="flex flex-wrap gap-2 pt-3 border-t">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className=""
                         onClick={() => { setSelectedInitiative(initiative); setViewOpen(true); }}
                       >
                         <Eye className="w-4 h-4 ms-1" />
@@ -1285,7 +1285,7 @@ export default function Initiatives() {
                       {canManageInitiatives && initiativeStatus === 'planning' && (
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-primary hover:bg-primary/90"
+                          className="bg-primary hover:bg-primary/90"
                           onClick={() => handleStatusChange(initiative, 'approved')}
                         >
                           <CheckCircle className="w-4 h-4 ms-1" />
@@ -1297,7 +1297,7 @@ export default function Initiatives() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            className="flex-1"
+                            className=""
                             onClick={() => handleStatusChange(initiative, 'planning')}
                           >
                             <Clock className="w-4 h-4 ms-1" />
@@ -1305,7 +1305,7 @@ export default function Initiatives() {
                           </Button>
                           <Button 
                             size="sm" 
-                            className="flex-1 bg-amber-700 hover:bg-amber-800 text-white"
+                            className="bg-amber-700 hover:bg-amber-800 text-white"
                             onClick={() => handleStatusChange(initiative, 'in_progress')}
                           >
                             <Play className="w-4 h-4 ms-1" />
@@ -1317,7 +1317,7 @@ export default function Initiatives() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className=""
                           onClick={() => handleStatusChange(initiative, 'planning')}
                         >
                           <Clock className="w-4 h-4 ms-1" />
