@@ -17,15 +17,11 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { AXES_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const transactionCategories = {
-  expense: [
-    'رواتب وأجور', 'مستلزمات طبية', 'معدات وأجهزة', 'صيانة', 'مواصلات',
-    'تدريب وتطوير', 'برامج توعية', 'مسح ميداني', 'فعاليات ومؤتمرات',
-    'إيجارات', 'مرافق وخدمات', 'أخرى'
-  ],
-  income: ['تبرعات', 'دعم حكومي', 'مساهمات', 'أخرى']
+  expense: ['salaries', 'supplies', 'operations', 'events', 'transportation', 'communication', 'printing', 'other_expense'],
+  income: ['sponsorship', 'donation', 'government', 'other_income']
 };
 
-const paymentMethods = ['نقدي', 'شيك', 'تحويل بنكي', 'بطاقة', 'أخرى'];
+const paymentMethods = ['cash', 'check', 'bankTransfer', 'card', 'other'];
 
 export default function Budget() {
   const { t, i18n } = useTranslation();
@@ -57,7 +53,7 @@ export default function Budget() {
     standard_code: '',
     initiative_id: '',
     initiative_title: '',
-    payment_method: 'نقدي',
+    payment_method: 'cash',
     receipt_number: '',
     beneficiary: '',
     notes: '',
@@ -332,7 +328,7 @@ export default function Budget() {
       standard_code: '',
       initiative_id: '',
       initiative_title: '',
-      payment_method: 'نقدي',
+      payment_method: 'cash',
       receipt_number: '',
       beneficiary: '',
       notes: '',
@@ -508,7 +504,7 @@ export default function Budget() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الميزانية. صلاحيات العرض والمالية مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-red-600 font-semibold">{t('budget.noAccess')} {t('budget.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -521,9 +517,9 @@ export default function Budget() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
             <DollarSign className="w-8 h-8" />
-            إدارة الميزانية والحسابات
+            {t('budget.title')}
           </h1>
-          <p className="text-white/70">نظام محاسبي متكامل لإدارة المصروفات والإيرادات</p>
+          <p className="text-white/70">{t('budget.subtitle')}</p>
         </div>
       </div>
 
@@ -534,9 +530,9 @@ export default function Budget() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">إجمالي الإيرادات</p>
+                  <p className="text-white/70 text-sm mb-1">{t('budget.totalRevenue')}</p>
                   <p className="text-3xl font-bold">{totalIncome.toLocaleString()}</p>
-                  <p className="text-sm text-white/70 mt-1">ريال سعودي</p>
+                  <p className="text-sm text-white/70 mt-1">{t('currency.sar')}</p>
                 </div>
                 <TrendingUp className="w-12 h-12 text-white/30" />
               </div>
@@ -547,9 +543,9 @@ export default function Budget() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">إجمالي المصروفات</p>
+                  <p className="text-white/70 text-sm mb-1">{t('budget.totalExpenses')}</p>
                   <p className="text-3xl font-bold">{totalExpenses.toLocaleString()}</p>
-                  <p className="text-sm text-white/70 mt-1">ريال سعودي</p>
+                  <p className="text-sm text-white/70 mt-1">{t('currency.sar')}</p>
                 </div>
                 <TrendingDown className="w-12 h-12 text-white/30" />
               </div>
@@ -560,9 +556,9 @@ export default function Budget() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white text-opacity-80 text-sm mb-1">الرصيد الحالي</p>
+                  <p className="text-white text-opacity-80 text-sm mb-1">{t('budget.currentBalance')}</p>
                   <p className="text-3xl font-bold">{balance.toLocaleString()}</p>
-                  <p className="text-sm text-white text-opacity-80 mt-1">ريال سعودي</p>
+                  <p className="text-sm text-white text-opacity-80 mt-1">{t('currency.sar')}</p>
                 </div>
                 <DollarSign className="w-12 h-12 text-white text-opacity-60" />
               </div>
@@ -573,9 +569,9 @@ export default function Budget() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">معاملات معلقة</p>
+                  <p className="text-white/70 text-sm mb-1">{t('budget.pendingTransactions')}</p>
                   <p className="text-3xl font-bold">{pendingTransactions}</p>
-                  <p className="text-sm text-white/70 mt-1">بانتظار الاعتماد</p>
+                  <p className="text-sm text-white/70 mt-1">{t('budget.awaitingApproval')}</p>
                 </div>
                 <Clock className="w-12 h-12 text-white/30" />
               </div>
@@ -588,46 +584,46 @@ export default function Budget() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>الميزانية الحالية - {activeBudget.name}</CardTitle>
+                <CardTitle>{t('budget.currentBudget')} - {activeBudget.name}</CardTitle>
                 <Badge className={activeBudget.status === 'active' ? 'bg-green-600' : 'bg-gray-600'}>
-                  {activeBudget.status === 'active' ? 'نشطة' : 'مغلقة'}
+                  {activeBudget.status === 'active' ? t('budget.budgetTab.active') : t('budget.budgetTab.closed')}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">إجمالي الميزانية</p>
-                  <p className="text-2xl font-bold text-blue-600">{activeBudget.total_budget?.toLocaleString()} ريال</p>
+                  <p className="text-sm text-muted-foreground">{t('budget.totalBudget')}</p>
+                  <p className="text-2xl font-bold text-blue-600">{activeBudget.total_budget?.toLocaleString()} {t('currency.riyal')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">التخصيصات المالية</p>
-                  <p className="text-2xl font-bold text-purple-600">{totalAllocatedBudgets.toLocaleString()} ريال</p>
+                  <p className="text-sm text-muted-foreground">{t('budget.budgetAllocations')}</p>
+                  <p className="text-2xl font-bold text-purple-600">{totalAllocatedBudgets.toLocaleString()} {t('currency.riyal')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">ميزانيات المبادرات</p>
-                  <p className="text-2xl font-bold text-indigo-600">{totalInitiativesBudgets.toLocaleString()} ريال</p>
+                  <p className="text-sm text-muted-foreground">{t('budget.initiativeBudgets')}</p>
+                  <p className="text-2xl font-bold text-indigo-600">{totalInitiativesBudgets.toLocaleString()} {t('currency.riyal')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">المبلغ المنفق فعلياً</p>
-                  <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ريال</p>
+                  <p className="text-sm text-muted-foreground">{t('budget.actualSpent')}</p>
+                  <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} {t('currency.riyal')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">المتبقي</p>
+                  <p className="text-sm text-muted-foreground">{t('budget.remaining')}</p>
                   <p className={`text-2xl font-bold ${(activeBudget.total_budget - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {(activeBudget.total_budget - totalExpenses).toLocaleString()} ريال
+                    {(activeBudget.total_budget - totalExpenses).toLocaleString()} {t('currency.riyal')}
                   </p>
                 </div>
               </div>
               
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">إجمالي الملتزم به (تخصيصات + مبادرات):</span>
-                  <span className="font-bold text-orange-600">{totalCommitted.toLocaleString()} ريال</span>
+                  <span className="text-muted-foreground">{t('budget.overview.committedTotal')}</span>
+                  <span className="font-bold text-orange-600">{totalCommitted.toLocaleString()} {t('currency.riyal')}</span>
                 </div>
                 {activeBudget.total_budget > 0 && totalCommitted > activeBudget.total_budget && (
                   <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
-                    ⚠️ التخصيصات تتجاوز إجمالي الميزانية بمبلغ {(totalCommitted - activeBudget.total_budget).toLocaleString()} ريال
+                    ⚠️ {t('budget.overview.overBudgetWarning')} {(totalCommitted - activeBudget.total_budget).toLocaleString()} {t('currency.riyal')}
                   </div>
                 )}
                 {(() => {
@@ -643,27 +639,27 @@ export default function Budget() {
                           <div
                             className="absolute h-3 bg-destructive"
                             style={{ width: `${spentPct}%` }}
-                            title={`منفق: ${totalExpenses.toLocaleString()} ريال`}
+                            title={`${t('budget.overview.spentActually')}: ${totalExpenses.toLocaleString()} ${t('currency.riyal')}`}
                           />
                           <div
                             className="absolute h-3 bg-orange-400 opacity-60"
                             style={{ width: `${committedPct}%` }}
-                            title={`ملتزم به: ${totalCommitted.toLocaleString()} ريال`}
+                            title={`${t('budget.committed')}: ${totalCommitted.toLocaleString()} ${t('currency.riyal')}`}
                           />
                         </div>
                       </div>
                       <div className="flex gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-destructive rounded"></div>
-                          <span>منفق فعلياً ({spentPct.toFixed(1)}%)</span>
+                          <span>{t('budget.overview.spentActually')} ({spentPct.toFixed(1)}%)</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-orange-400 rounded"></div>
-                          <span>ملتزم به ({committedPct.toFixed(1)}%)</span>
+                          <span>{t('budget.committed')} ({committedPct.toFixed(1)}%)</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-green-600 rounded"></div>
-                          <span>متاح ({remainPct.toFixed(1)}%)</span>
+                          <span>{t('budget.available')} ({remainPct.toFixed(1)}%)</span>
                         </div>
                       </div>
                     </>
@@ -677,10 +673,10 @@ export default function Budget() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
           <TabsList className="bg-card" dir={rtl ? 'rtl' : 'ltr'}>
-            <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
-            <TabsTrigger value="transactions">المعاملات المالية</TabsTrigger>
-            <TabsTrigger value="budgets">الميزانيات</TabsTrigger>
-            <TabsTrigger value="allocations">التخصيصات</TabsTrigger>
+            <TabsTrigger value="overview">{t('budget.tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="transactions">{t('budget.tabs.transactions')}</TabsTrigger>
+            <TabsTrigger value="budgets">{t('budget.tabs.budgets')}</TabsTrigger>
+            <TabsTrigger value="allocations">{t('budget.tabs.allocations')}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -689,29 +685,29 @@ export default function Budget() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>ملخص الميزانية</CardTitle>
+                <CardTitle>{t('budget.overview.summary')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">إجمالي الميزانيات النشطة</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('budget.overview.activeBudgets')}</p>
                       <p className="text-2xl font-bold text-blue-600">{budgets.filter(b => b.status === 'active').length}</p>
                     </div>
                     <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">التخصيصات المالية</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('budget.overview.financialAllocations')}</p>
                       <p className="text-2xl font-bold text-purple-600">{allocations.length}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{totalAllocatedBudgets.toLocaleString()} ريال</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalAllocatedBudgets.toLocaleString()} {t('currency.riyal')}</p>
                     </div>
                     <div className="p-4 bg-indigo-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">المبادرات المرتبطة</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('budget.overview.linkedInitiatives')}</p>
                       <p className="text-2xl font-bold text-indigo-600">{initiatives.filter(i => String(i.budget_id || '') === String(activeBudget?.id || '')).length}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{totalInitiativesBudgets.toLocaleString()} ريال</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalInitiativesBudgets.toLocaleString()} {t('currency.riyal')}</p>
                     </div>
                     <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">إجمالي المعاملات</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('budget.overview.totalTransactions')}</p>
                       <p className="text-2xl font-bold text-green-600">{transactions.length}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{totalExpenses.toLocaleString()} ريال منفق</p>
+                      <p className="text-xs text-muted-foreground mt-1">{totalExpenses.toLocaleString()} {t('budget.overview.spentAmount')}</p>
                     </div>
                   </div>
                   
@@ -719,7 +715,7 @@ export default function Budget() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h3 className="font-semibold mb-3">أعلى 5 فئات إنفاق</h3>
+                      <h3 className="font-semibold mb-3">{t('budget.overview.topCategories')}</h3>
                       <div className="space-y-2">
                         {Object.entries(
                           transactions
@@ -734,17 +730,17 @@ export default function Budget() {
                           .map(([category, amount]) => (
                             <div key={category} className="flex items-center justify-between p-3 bg-muted/50 rounded">
                               <span className="font-medium">{category}</span>
-                              <span className="text-red-600 font-bold">{amount.toLocaleString()} ريال</span>
+                              <span className="text-red-600 font-bold">{amount.toLocaleString()} {t('currency.riyal')}</span>
                             </div>
                           ))}
                         {Object.keys(transactions.filter(t => t.type === 'expense' && t.status === 'paid')).length === 0 && (
-                          <p className="text-muted-foreground text-sm text-center py-4">لا توجد مصروفات بعد</p>
+                          <p className="text-muted-foreground text-sm text-center py-4">{t('budget.overview.noExpenses')}</p>
                         )}
                       </div>
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold mb-3">أعلى 5 مبادرات من حيث الميزانية</h3>
+                      <h3 className="font-semibold mb-3">{t('budget.overview.topInitiatives')}</h3>
                       <div className="space-y-2">
                         {initiatives
                           .filter(i => String(i.budget_id || '') === String(activeBudget?.id || '') && i.budget > 0)
@@ -753,11 +749,11 @@ export default function Budget() {
                           .map(initiative => (
                             <div key={initiative.id} className="flex items-center justify-between p-3 bg-indigo-50 rounded">
                               <span className="font-medium text-sm truncate flex-1">{initiative.title}</span>
-                              <span className="text-indigo-600 font-bold text-sm ml-2">{initiative.budget.toLocaleString()} ريال</span>
+                              <span className="text-indigo-600 font-bold text-sm ml-2">{initiative.budget.toLocaleString()} {t('currency.riyal')}</span>
                             </div>
                           ))}
                         {initiatives.filter(i => String(i.budget_id || '') === String(activeBudget?.id || '') && i.budget > 0).length === 0 && (
-                          <p className="text-muted-foreground text-sm text-center py-4">لا توجد مبادرات مرتبطة بعد</p>
+                          <p className="text-muted-foreground text-sm text-center py-4">{t('budget.overview.noLinkedInitiatives')}</p>
                         )}
                       </div>
                     </div>
@@ -775,7 +771,7 @@ export default function Budget() {
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  placeholder="بحث بالوصف، المستفيد، أو رقم المعاملة..."
+                  placeholder={t('budget.transactionTab.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pr-10"
@@ -786,9 +782,9 @@ export default function Budget() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">كل الأنواع</SelectItem>
-                  <SelectItem value="income">إيرادات</SelectItem>
-                  <SelectItem value="expense">مصروفات</SelectItem>
+                  <SelectItem value="all">{t('budget.transactionTab.allTypes')}</SelectItem>
+                  <SelectItem value="income">{t('budget.transactionTab.income')}</SelectItem>
+                  <SelectItem value="expense">{t('budget.transactionTab.expense')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -796,16 +792,16 @@ export default function Budget() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">كل الحالات</SelectItem>
-                  <SelectItem value="pending">معلقة</SelectItem>
-                  <SelectItem value="approved">معتمدة</SelectItem>
-                  <SelectItem value="paid">مدفوعة</SelectItem>
+                  <SelectItem value="all">{t('budget.transactionTab.allStatuses')}</SelectItem>
+                  <SelectItem value="pending">{t('budget.transactionTab.statusPending')}</SelectItem>
+                  <SelectItem value="approved">{t('budget.transactionTab.statusApproved')}</SelectItem>
+                  <SelectItem value="paid">{t('budget.transactionTab.statusPaid')}</SelectItem>
                 </SelectContent>
               </Select>
               {canCreateTransactions && (
                 <Button onClick={() => { setEditingTransaction(null); resetTransactionForm(); setTransactionFormOpen(true); }} className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-5 h-5 ml-2" />
-                  معاملة جديدة
+                  {t('budget.transactionTab.newTransaction')}
                 </Button>
               )}
             </div>
@@ -815,8 +811,8 @@ export default function Budget() {
                 <Card>
                   <CardContent className="p-12 text-center">
                     <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground text-lg">لا توجد معاملات مالية</p>
-                    <p className="text-muted-foreground text-sm mt-2">ابدأ بإضافة معاملة جديدة</p>
+                    <p className="text-muted-foreground text-lg">{t('budget.transactionTab.noTransactions')}</p>
+                    <p className="text-muted-foreground text-sm mt-2">{t('budget.transactionTab.startAdding')}</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -828,7 +824,7 @@ export default function Budget() {
                         <div className="flex items-center gap-3 mb-2">
                           <Badge variant="outline">{transaction.transaction_number}</Badge>
                           <Badge className={transaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                            {transaction.type === 'income' ? 'إيراد' : 'مصروف'}
+                            {transaction.type === 'income' ? t('budget.transactionTab.incomeLabel') : t('budget.transactionTab.expenseLabel')}
                           </Badge>
                           <Badge variant="outline">{transaction.category}</Badge>
                           <Badge className={
@@ -837,33 +833,33 @@ export default function Budget() {
                             transaction.status === 'pending' ? 'bg-yellow-600' :
                             'bg-destructive'
                           }>
-                            {transaction.status === 'paid' ? 'مدفوعة' :
-                             transaction.status === 'approved' ? 'معتمدة' :
-                             transaction.status === 'pending' ? 'معلقة' : 'مرفوضة'}
+                            {transaction.status === 'paid' ? t('budget.transactionTab.statusPaid') :
+                             transaction.status === 'approved' ? t('budget.transactionTab.statusApproved') :
+                             transaction.status === 'pending' ? t('budget.transactionTab.statusPending') : t('budget.transactionTab.statusRejected')}
                           </Badge>
                         </div>
                         <h3 className="font-semibold text-lg mb-1">{transaction.description}</h3>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {transaction.standard_code && (
                             <Badge variant="outline" className="text-xs">
-                              معيار: {transaction.standard_code}
+                              {t('budget.transactionTab.standardLabel')} {transaction.standard_code}
                             </Badge>
                           )}
                           {transaction.initiative_title && (
                             <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
-                              مبادرة: {transaction.initiative_title}
+                              {t('budget.transactionTab.initiativeLabel')} {transaction.initiative_title}
                             </Badge>
                           )}
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                          <div>المبلغ: <strong className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
-                            {transaction.amount?.toLocaleString()} ريال
+                          <div>{t('budget.transactionTab.amount')} <strong className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                            {transaction.amount?.toLocaleString()} {t('currency.riyal')}
                           </strong></div>
-                          {transaction.beneficiary && <div>المستفيد: <strong>{transaction.beneficiary}</strong></div>}
-                          <div>التاريخ: <strong>{transaction.date}</strong></div>
-                          {transaction.payment_method && <div>طريقة الدفع: <strong>{transaction.payment_method}</strong></div>}
-                          {transaction.committee_name && <div>اللجنة: <strong>{transaction.committee_name}</strong></div>}
-                          {transaction.axis_name && <div>المحور: <strong>{transaction.axis_name}</strong></div>}
+                          {transaction.beneficiary && <div>{t('budget.transactionTab.payee')} <strong>{transaction.beneficiary}</strong></div>}
+                          <div>{t('budget.transactionTab.transDate')} <strong>{transaction.date}</strong></div>
+                          {transaction.payment_method && <div>{t('budget.transactionTab.paymentMethod')} <strong>{t(`budget.paymentMethods.${transaction.payment_method}`, transaction.payment_method)}</strong></div>}
+                          {transaction.committee_name && <div>{t('budget.transactionTab.committeeLabel')} <strong>{transaction.committee_name}</strong></div>}
+                          {transaction.axis_name && <div>{t('budget.transactionTab.axisLabel')} <strong>{transaction.axis_name}</strong></div>}
                         </div>
                       </div>
                       {canCreateTransactions && (
@@ -887,7 +883,7 @@ export default function Budget() {
                               standard_code: transaction.standard_code || '',
                               initiative_id: transaction.initiative_id || '',
                               initiative_title: transaction.initiative_title || '',
-                              payment_method: transaction.payment_method || 'نقدي',
+                              payment_method: transaction.payment_method || 'cash',
                               receipt_number: transaction.receipt_number || '',
                               beneficiary: transaction.beneficiary || '',
                               notes: transaction.notes || '',
@@ -895,7 +891,7 @@ export default function Budget() {
                             });
                             setTransactionFormOpen(true);
                           }}
-                          title="تعديل المعاملة"
+                          title={t('budget.form.editTransaction')}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -904,7 +900,7 @@ export default function Budget() {
                     
                     {canApproveTransactions && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">{t('budget.transactionTab.statusChange')}</p>
                         <div className="flex gap-2">
                           {transaction.status !== 'pending' && (
                             <Button
@@ -918,7 +914,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              معلقة
+                              {t('budget.transactionTab.statusPending')}
                             </Button>
                           )}
                           {transaction.status !== 'approved' && (
@@ -933,7 +929,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              معتمدة
+                              {t('budget.transactionTab.statusApproved')}
                             </Button>
                           )}
                           {transaction.status !== 'paid' && (
@@ -948,7 +944,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              مدفوعة
+                              {t('budget.transactionTab.statusPaid')}
                             </Button>
                           )}
                           {transaction.status !== 'rejected' && (
@@ -963,7 +959,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              مرفوضة
+                              {t('budget.transactionTab.statusRejected')}
                             </Button>
                           )}
                         </div>
@@ -984,7 +980,7 @@ export default function Budget() {
               <div className="flex justify-end mb-6">
                 <Button onClick={() => openBudgetForm()} className="bg-primary hover:bg-primary/90">
                   <Plus className="w-5 h-5 ml-2" />
-                  ميزانية جديدة
+                  {t('budget.budgetTab.newBudget')}
                 </Button>
               </div>
             )}
@@ -994,9 +990,9 @@ export default function Budget() {
                 <Card className="col-span-full">
                   <CardContent className="p-12 text-center">
                     <DollarSign className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground text-lg">لا توجد ميزانيات</p>
+                    <p className="text-muted-foreground text-lg">{t('budget.budgetTab.noBudgets')}</p>
                     {showBudgetManagement && (
-                      <p className="text-muted-foreground text-sm mt-2">ابدأ بإنشاء ميزانية جديدة</p>
+                      <p className="text-muted-foreground text-sm mt-2">{t('budget.budgetTab.startCreating')}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1011,29 +1007,29 @@ export default function Budget() {
                       </div>
                       <div className="flex items-center gap-2">
                         {showBudgetManagement && (
-                          <Button variant="outline" size="icon" onClick={() => openBudgetForm(budget)} title="تعديل الميزانية">
+                          <Button variant="outline" size="icon" onClick={() => openBudgetForm(budget)} title={t('budget.form.editBudget')}>
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
                         <Badge className={budget.status === 'active' ? 'bg-green-600' : budget.status === 'draft' ? 'bg-gray-600' : 'bg-destructive'}>
-                          {budget.status === 'active' ? 'نشطة' : budget.status === 'draft' ? 'مسودة' : 'مغلقة'}
+                          {budget.status === 'active' ? t('budget.budgetTab.active') : budget.status === 'draft' ? t('budget.budgetTab.draft') : t('budget.budgetTab.closed')}
                         </Badge>
                       </div>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">إجمالي الميزانية:</span>
-                        <strong className="text-blue-600">{budget.total_budget?.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.budgetTab.totalBudgetLabel')}</span>
+                        <strong className="text-blue-600">{budget.total_budget?.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">الفترة:</span>
+                        <span className="text-muted-foreground">{t('budget.budgetTab.period')}</span>
                         <strong>{budget.start_date} - {budget.end_date}</strong>
                       </div>
                     </div>
                     
                     {showBudgetManagement && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">{t('budget.budgetTab.statusChange')}</p>
                         <div className="flex gap-2">
                           {budget.status !== 'draft' && (
                             <Button
@@ -1047,7 +1043,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              مسودة
+                              {t('budget.budgetTab.draft')}
                             </Button>
                           )}
                           {budget.status !== 'active' && (
@@ -1062,7 +1058,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              تفعيل
+                              {t('budget.budgetTab.activate')}
                             </Button>
                           )}
                           {budget.status !== 'closed' && (
@@ -1077,7 +1073,7 @@ export default function Budget() {
                                 });
                               }}
                             >
-                              إغلاق
+                              {t('budget.budgetTab.closeBudget')}
                             </Button>
                           )}
                         </div>
@@ -1098,7 +1094,7 @@ export default function Budget() {
               <div className="flex justify-end mb-6">
                 <Button onClick={() => { setEditingAllocation(null); resetAllocationForm(); setAllocationFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700">
                   <Plus className="w-5 h-5 ml-2" />
-                  تخصيص جديد
+                  {t('budget.allocationTab.newAllocation')}
                 </Button>
               </div>
             )}
@@ -1108,9 +1104,9 @@ export default function Budget() {
                 <Card className="col-span-full">
                   <CardContent className="p-12 text-center">
                     <DollarSign className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground text-lg">لا توجد تخصيصات</p>
+                    <p className="text-muted-foreground text-lg">{t('budget.allocationTab.noAllocations')}</p>
                     {showBudgetManagement && (
-                      <p className="text-muted-foreground text-sm mt-2">ابدأ بإنشاء تخصيص جديد</p>
+                      <p className="text-muted-foreground text-sm mt-2">{t('budget.allocationTab.startCreating')}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1131,17 +1127,17 @@ export default function Budget() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name || 'تخصيص عام'}</h3>
+                        <h3 className="font-semibold">{allocation.committee_name || allocation.axis_name || t('budget.allocationTab.generalAllocation')}</h3>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {allocation.category && <p className="text-sm text-muted-foreground">{allocation.category}</p>}
                           {allocation.standard_code && (
                             <Badge variant="outline" className="text-xs">
-                              معيار: {allocation.standard_code}
+                              {t('budget.transactionTab.standardLabel')} {allocation.standard_code}
                             </Badge>
                           )}
                           {allocation.initiative_title && (
                             <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">
-                              مبادرة: {allocation.initiative_title}
+                              {t('budget.transactionTab.initiativeLabel')} {allocation.initiative_title}
                             </Badge>
                           )}
                         </div>
@@ -1170,41 +1166,41 @@ export default function Budget() {
                               });
                               setAllocationFormOpen(true);
                             }}
-                            title="تعديل التخصيص"
+                            title={t('budget.form.editAllocation')}
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
                         <Badge className={allocation.status === 'active' ? 'bg-green-600' : 'bg-gray-600'}>
-                          {allocation.status === 'active' ? 'نشط' : 'منتهي'}
+                          {allocation.status === 'active' ? t('budget.allocationTab.activeStatus') : t('budget.allocationTab.expired')}
                         </Badge>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المبلغ المخصص:</span>
-                        <strong>{allocation.allocated_amount?.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.allocatedAmount')}</span>
+                        <strong>{allocation.allocated_amount?.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       {actualSpent > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المنفق فعلياً:</span>
-                        <strong className="text-red-600">{actualSpent.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.actualSpent')}</span>
+                        <strong className="text-red-600">{actualSpent.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المستخدم (إنفاق + التزامات):</span>
-                        <strong className="text-orange-600">{totalUtilized.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.usedAmount')}</span>
+                        <strong className="text-orange-600">{totalUtilized.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المتبقي:</span>
-                        <strong className="text-green-600">{remaining.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.remainingAmount')}</span>
+                        <strong className="text-green-600">{remaining.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">ميزانيات المبادرات المرتبطة:</span>
-                        <strong className="text-blue-600">{initiativesBudgetTotal.toLocaleString()} ريال</strong>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.linkedInitBudgets')}</span>
+                        <strong className="text-blue-600">{initiativesBudgetTotal.toLocaleString()} {t('currency.riyal')}</strong>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">عدد المبادرات المرتبطة:</span>
+                        <span className="text-muted-foreground">{t('budget.allocationTab.linkedInitCount')}</span>
                         <strong>{linkedInitiatives.length}</strong>
                       </div>
                       {linkedInitiatives.length > 0 && (
@@ -1219,12 +1215,12 @@ export default function Budget() {
                           style={{ width: `${utilizationPct}%` }}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground text-center">{utilizationPct.toFixed(1)}% مستخدم</p>
+                      <p className="text-xs text-muted-foreground text-center">{utilizationPct.toFixed(1)}% {t('budget.allocationTab.used')}</p>
                     </div>
                     
                     {showBudgetManagement && (
                       <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-muted-foreground mb-2">تغيير الحالة:</p>
+                        <p className="text-xs text-muted-foreground mb-2">{t('budget.allocationTab.statusChange')}</p>
                         <div className="flex gap-2">
                           {allocation.status !== 'active' && (
                             <Button
@@ -1236,7 +1232,7 @@ export default function Budget() {
                                 queryClient.invalidateQueries({ queryKey: ['allocations'] });
                               }}
                             >
-                              نشط
+                              {t('budget.allocationTab.activeStatus')}
                             </Button>
                           )}
                           {allocation.status !== 'inactive' && (
@@ -1249,7 +1245,7 @@ export default function Budget() {
                                 queryClient.invalidateQueries({ queryKey: ['allocations'] });
                               }}
                             >
-                              غير نشط
+                              {t('budget.allocationTab.inactiveStatus')}
                             </Button>
                           )}
                           {allocation.status !== 'closed' && (
@@ -1262,7 +1258,7 @@ export default function Budget() {
                                 queryClient.invalidateQueries({ queryKey: ['allocations'] });
                               }}
                             >
-                              مغلق
+                              {t('budget.allocationTab.closedStatus')}
                             </Button>
                           )}
                         </div>
@@ -1283,64 +1279,64 @@ export default function Budget() {
       <Dialog open={transactionFormOpen} onOpenChange={(open) => { setTransactionFormOpen(open); if (!open) { setEditingTransaction(null); resetTransactionForm(); } }}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTransaction ? 'تعديل المعاملة' : 'معاملة مالية جديدة'}</DialogTitle>
+            <DialogTitle>{editingTransaction ? t('budget.form.editTransaction') : t('budget.form.newTransaction')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveTransaction} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>نوع المعاملة *</Label>
+                <Label>{t('budget.form.transactionType')}</Label>
                 <Select value={transactionForm.type} onValueChange={(v) => setTransactionForm({ ...transactionForm, type: v, category: '' })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="income">إيراد</SelectItem>
-                    <SelectItem value="expense">مصروف</SelectItem>
+                    <SelectItem value="income">{t('budget.transactionTab.incomeLabel')}</SelectItem>
+                    <SelectItem value="expense">{t('budget.transactionTab.expenseLabel')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>الفئة *</Label>
+                <Label>{t('budget.form.category')}</Label>
                 <Select value={transactionForm.category} onValueChange={(v) => setTransactionForm({ ...transactionForm, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر الفئة" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectCategory')} /></SelectTrigger>
                   <SelectContent>
                     {transactionCategories[transactionForm.type].map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat} value={cat}>{t(`budget.transactionCategories.${cat}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>المبلغ (ريال) *</Label>
+                <Label>{t('budget.form.amountRiyal')}</Label>
                 <Input type="number" value={transactionForm.amount} onChange={(e) => setTransactionForm({ ...transactionForm, amount: parseFloat(e.target.value) || 0 })} required />
               </div>
               <div className="space-y-2">
-                <Label>التاريخ *</Label>
+                <Label>{t('budget.form.dateRequired')}</Label>
                 <Input type="date" value={transactionForm.date} onChange={(e) => setTransactionForm({ ...transactionForm, date: e.target.value })} required />
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>الوصف *</Label>
+                <Label>{t('budget.form.description')}</Label>
                 <Textarea value={transactionForm.description} onChange={(e) => setTransactionForm({ ...transactionForm, description: e.target.value })} required rows={2} />
               </div>
               <div className="space-y-2">
-                <Label>المستفيد/المورد</Label>
+                <Label>{t('budget.form.payee')}</Label>
                 <Input value={transactionForm.beneficiary} onChange={(e) => setTransactionForm({ ...transactionForm, beneficiary: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>طريقة الدفع</Label>
+                <Label>{t('budget.form.paymentMethod')}</Label>
                 <Select value={transactionForm.payment_method} onValueChange={(v) => setTransactionForm({ ...transactionForm, payment_method: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {paymentMethods.map(method => (
-                      <SelectItem key={method} value={method}>{method}</SelectItem>
+                      <SelectItem key={method} value={method}>{t(`budget.paymentMethods.${method}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>رقم الإيصال/الفاتورة</Label>
+                <Label>{t('budget.form.receiptNumber')}</Label>
                 <Input value={transactionForm.receipt_number} onChange={(e) => setTransactionForm({ ...transactionForm, receipt_number: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>المحور</Label>
+                <Label>{t('budget.form.axis')}</Label>
                 <Select value={transactionForm.axis_id || 'none'} onValueChange={(v) => {
                   const axis = axes.find(a => a.id === v);
                   setTransactionForm({ 
@@ -1351,9 +1347,9 @@ export default function Budget() {
                     standard_code: ''
                   });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectAxisOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {axes.map(axis => (
                       <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
                     ))}
@@ -1361,7 +1357,7 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>المعيار</Label>
+                <Label>{t('budget.form.standard')}</Label>
                 <Select 
                   value={transactionForm.standard_id || 'none'} 
                   onValueChange={(v) => {
@@ -1370,9 +1366,9 @@ export default function Budget() {
                   }}
                   disabled={!transactionForm.axis_id}
                 >
-                  <SelectTrigger><SelectValue placeholder={transactionForm.axis_id ? "اختر المعيار (اختياري)" : "اختر المحور أولاً"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={transactionForm.axis_id ? t('budget.form.selectStandardOptional') : t('budget.form.selectAxisFirst')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {sortAndDeduplicateStandardsByCode(standards
                       .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id))
                       .map(standard => (
@@ -1384,14 +1380,14 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>اللجنة</Label>
+                <Label>{t('budget.form.committee')}</Label>
                 <Select value={transactionForm.committee_id || 'none'} onValueChange={(v) => {
                   const committee = committees.find(c => c.id === v);
                   setTransactionForm({ ...transactionForm, committee_id: v === 'none' ? '' : v, committee_name: v === 'none' ? '' : committee?.name });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectCommitteeOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {committees
                       .filter(c => !transactionForm.axis_id || c.axis_id === transactionForm.axis_id)
                       .map(committee => (
@@ -1401,14 +1397,14 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>المبادرة</Label>
+                <Label>{t('budget.form.initiative')}</Label>
                 <Select value={transactionForm.initiative_id || 'none'} onValueChange={(v) => {
                   const initiative = initiatives.find(i => i.id === v);
                   setTransactionForm({ ...transactionForm, initiative_id: v === 'none' ? '' : v, initiative_title: v === 'none' ? '' : initiative?.title || '' });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectInitiativeOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {initiatives.map(initiative => (
                       <SelectItem key={initiative.id} value={initiative.id}>
                         {initiative.code} - {initiative.title}
@@ -1418,25 +1414,25 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>المرفقات (فاتورة/إيصال)</Label>
+                <Label>{t('budget.form.attachments')}</Label>
                 <div className="flex gap-2">
                   <Input type="file" onChange={handleFileUpload} accept="image/*,.pdf" disabled={uploadingFile} />
                   {uploadingFile && <Loader2 className="w-5 h-5 animate-spin" />}
                 </div>
                 {transactionForm.attachment_url && (
-                  <p className="text-sm text-green-600">✓ تم رفع الملف</p>
+                  <p className="text-sm text-green-600">✓ {t('budget.form.fileUploaded')}</p>
                 )}
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>ملاحظات</Label>
+                <Label>{t('budget.form.budgetNotes')}</Label>
                 <Textarea value={transactionForm.notes} onChange={(e) => setTransactionForm({ ...transactionForm, notes: e.target.value })} rows={2} />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setTransactionFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setTransactionFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-green-600 hover:bg-green-700">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                {editingTransaction ? 'حفظ التعديلات' : 'حفظ المعاملة'}
+                {editingTransaction ? t('budget.form.saveChanges') : t('budget.form.saveTransaction')}
               </Button>
             </div>
           </form>
@@ -1448,56 +1444,56 @@ export default function Budget() {
       <Dialog open={budgetFormOpen} onOpenChange={(open) => { setBudgetFormOpen(open); if (!open) { setEditingBudget(null); resetBudgetForm(); } }}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingBudget ? 'تعديل الميزانية' : 'ميزانية جديدة'}</DialogTitle>
+            <DialogTitle>{editingBudget ? t('budget.form.editBudget') : t('budget.form.newBudget')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveBudget} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label>اسم الميزانية *</Label>
+                <Label>{t('budget.form.budgetName')}</Label>
                 <Input value={budgetForm.name} onChange={(e) => setBudgetForm({ ...budgetForm, name: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>السنة المالية *</Label>
+                <Label>{t('budget.form.fiscalYear')}</Label>
                 <Input value={budgetForm.fiscal_year} onChange={(e) => setBudgetForm({ ...budgetForm, fiscal_year: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>إجمالي الميزانية (ريال) *</Label>
+                <Label>{t('budget.form.totalBudgetAmount')}</Label>
                 <Input type="number" value={budgetForm.total_budget} onChange={(e) => setBudgetForm({ ...budgetForm, total_budget: parseFloat(e.target.value) || 0 })} required />
               </div>
               <div className="space-y-2">
-                <Label>تاريخ البداية *</Label>
+                <Label>{t('budget.form.startDate')}</Label>
                 <Input type="date" value={budgetForm.start_date} onChange={(e) => setBudgetForm({ ...budgetForm, start_date: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>تاريخ النهاية *</Label>
+                <Label>{t('budget.form.endDate')}</Label>
                 <Input type="date" value={budgetForm.end_date} onChange={(e) => setBudgetForm({ ...budgetForm, end_date: e.target.value })} required />
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>الوصف</Label>
+                <Label>{t('budget.form.description')}</Label>
                 <Textarea value={budgetForm.description} onChange={(e) => setBudgetForm({ ...budgetForm, description: e.target.value })} rows={2} />
               </div>
               {editingBudget && (
                 <div className="col-span-2 space-y-2">
-                  <Label>حالة الميزانية *</Label>
+                  <Label>{t('budget.form.budgetStatus')}</Label>
                   <Select value={budgetForm.status} onValueChange={(v) => setBudgetForm({ ...budgetForm, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">مسودة</SelectItem>
-                      <SelectItem value="active">نشطة</SelectItem>
-                      <SelectItem value="closed">مغلقة</SelectItem>
+                      <SelectItem value="draft">{t('budget.budgetTab.draft')}</SelectItem>
+                      <SelectItem value="active">{t('budget.budgetTab.active')}</SelectItem>
+                      <SelectItem value="closed">{t('budget.budgetTab.closed')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    💡 المسودة: قيد الإعداد | النشطة: قيد التنفيذ | المغلقة: منتهية
+                    💡 {t('budget.form.budgetStatusHint')}
                   </p>
                 </div>
               )}
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={closeBudgetForm}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={closeBudgetForm}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                {editingBudget ? 'حفظ التعديلات' : 'حفظ الميزانية'}
+                {editingBudget ? t('budget.form.saveChanges') : t('budget.form.saveBudget')}
               </Button>
             </div>
           </form>
@@ -1509,23 +1505,23 @@ export default function Budget() {
       <Dialog open={allocationFormOpen} onOpenChange={(open) => { setAllocationFormOpen(open); if (!open) { setEditingAllocation(null); resetAllocationForm(); } }}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingAllocation ? 'تعديل التخصيص' : 'تخصيص ميزانية جديد'}</DialogTitle>
+            <DialogTitle>{editingAllocation ? t('budget.form.editAllocation') : t('budget.form.newAllocation')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveAllocation} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label>الميزانية *</Label>
+                <Label>{t('budget.form.linkedBudget')}</Label>
                 <Select value={allocationForm.budget_id} onValueChange={(v) => setAllocationForm({ ...allocationForm, budget_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر الميزانية" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectBudget')} /></SelectTrigger>
                   <SelectContent>
                     {budgets.filter(b => b.status === 'active' || b.status === 'draft').map(budget => (
-                      <SelectItem key={budget.id} value={budget.id}>{budget.name} {budget.status === 'draft' ? '(مسودة)' : ''}</SelectItem>
+                      <SelectItem key={budget.id} value={budget.id}>{budget.name} {budget.status === 'draft' ? t('budget.form.draftBudgetSuffix') : ''}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>المحور</Label>
+                <Label>{t('budget.form.axis')}</Label>
                 <Select value={allocationForm.axis_id || 'none'} onValueChange={(v) => {
                   const axis = normalizedAxes.find(a => a.id === v);
                   setAllocationForm({
@@ -1540,9 +1536,9 @@ export default function Budget() {
                     initiative_title: ''
                   });
                 }}>
-                  <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('budget.form.selectAxisOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {normalizedAxes.map(axis => (
                       <SelectItem key={axis.id} value={axis.id}>{axis.display_name}</SelectItem>
                     ))}
@@ -1550,7 +1546,7 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>المعيار</Label>
+                <Label>{t('budget.form.standard')}</Label>
                 <Select value={allocationForm.standard_id || 'none'} onValueChange={(v) => {
                   const standard = standards.find(s => s.id === v);
                   setAllocationForm({
@@ -1561,9 +1557,9 @@ export default function Budget() {
                     initiative_title: ''
                   });
                 }}>
-                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر المعيار (اختياري)" /></SelectTrigger>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder={t('budget.form.selectStandardOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredStandardsForAllocation.map(standard => (
                       <SelectItem key={standard.id} value={standard.id}>
                         {standard.code} - {standard.name || standard.title}
@@ -1573,7 +1569,7 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>اللجنة</Label>
+                <Label>{t('budget.form.committee')}</Label>
                 <Select value={allocationForm.committee_id || 'none'} onValueChange={(v) => {
                   const committee = committees.find(c => c.id === v);
                   setAllocationForm({
@@ -1584,9 +1580,9 @@ export default function Budget() {
                     initiative_title: ''
                   });
                 }}>
-                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر اللجنة (اختياري)" /></SelectTrigger>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder={t('budget.form.selectCommitteeOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredCommitteesForAllocation.map(committee => (
                       <SelectItem key={committee.id} value={committee.id}>{committee.name}</SelectItem>
                     ))}
@@ -1594,7 +1590,7 @@ export default function Budget() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>المبادرة</Label>
+                <Label>{t('budget.form.initiative')}</Label>
                 <Select value={allocationForm.initiative_id || 'none'} onValueChange={(v) => {
                   const initiative = initiatives.find(i => i.id === v);
                   const committee = committees.find(c => c.id === initiative?.committee_id);
@@ -1612,9 +1608,9 @@ export default function Budget() {
                     standard_code: v === 'none' ? allocationForm.standard_code : (standard?.code || allocationForm.standard_code),
                   });
                 }}>
-                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder="اختر المبادرة (اختياري)" /></SelectTrigger>
+                  <SelectTrigger disabled={!allocationForm.axis_id}><SelectValue placeholder={t('budget.form.selectInitiativeOptional')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون ربط</SelectItem>
+                    <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredInitiativesForAllocation.map(initiative => (
                         <SelectItem key={initiative.id} value={initiative.id}>
                           {initiative.title}
@@ -1623,27 +1619,27 @@ export default function Budget() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  تم الترتيب: المحور ← المعيار ← اللجنة ← المبادرة، والقائمة تتفلتر تلقائياً حسب اختيارك.
+                  {t('budget.form.filterHint')}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>الفئة</Label>
-                <Input value={allocationForm.category} onChange={(e) => setAllocationForm({ ...allocationForm, category: e.target.value })} placeholder="مثال: تشغيلية، رأسمالية، إلخ" />
+                <Label>{t('budget.form.category')}</Label>
+                <Input value={allocationForm.category} onChange={(e) => setAllocationForm({ ...allocationForm, category: e.target.value })} placeholder={t('budget.form.categoryPlaceholder')} />
               </div>
               <div className="space-y-2">
-                <Label>المبلغ المخصص (ريال) *</Label>
+                <Label>{t('budget.form.allocatedAmountLabel')}</Label>
                 <Input type="number" value={allocationForm.allocated_amount} onChange={(e) => setAllocationForm({ ...allocationForm, allocated_amount: parseFloat(e.target.value) || 0 })} required />
               </div>
               <div className="col-span-2 space-y-2">
-                <Label>ملاحظات</Label>
+                <Label>{t('budget.form.budgetNotes')}</Label>
                 <Textarea value={allocationForm.notes} onChange={(e) => setAllocationForm({ ...allocationForm, notes: e.target.value })} rows={2} />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setAllocationFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setAllocationFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                {editingAllocation ? 'حفظ التعديلات' : 'حفظ التخصيص'}
+                {editingAllocation ? t('budget.form.saveChanges') : t('budget.form.saveAllocation')}
               </Button>
             </div>
           </form>

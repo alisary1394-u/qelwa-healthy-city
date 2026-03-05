@@ -6,50 +6,29 @@ import { Calendar, Clock, User, Edit, Trash2, CheckCircle, AlertCircle, Lightbul
 import { DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 import { format, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import T from "@/components/T";
 
-const ROLE_LABELS_AR = {
-  governor: 'المشرف العام',
-  coordinator: 'منسق',
-  committee_head: 'رئيس لجنة',
-  committee_coordinator: 'منسق لجنة',
-  committee_supervisor: 'مشرف',
-  committee_member: 'عضو',
-  member: 'عضو',
-  volunteer: 'متطوع',
-  budget_manager: 'مدير ميزانية',
-  accountant: 'محاسب',
-  financial_officer: 'مسؤول مالي',
+const priorityColors = {
+  low: { color: "bg-muted text-foreground", dot: "bg-gray-400" },
+  medium: { color: "bg-blue-100 text-blue-800", dot: "bg-blue-500" },
+  high: { color: "bg-orange-100 text-orange-800", dot: "bg-orange-500" },
+  urgent: { color: "bg-red-100 text-red-800", dot: "bg-red-500" }
 };
 
-const priorityConfig = {
-  low: { label: "منخفضة", color: "bg-muted text-foreground", dot: "bg-gray-400" },
-  medium: { label: "متوسطة", color: "bg-blue-100 text-blue-800", dot: "bg-blue-500" },
-  high: { label: "عالية", color: "bg-orange-100 text-orange-800", dot: "bg-orange-500" },
-  urgent: { label: "عاجلة", color: "bg-red-100 text-red-800", dot: "bg-red-500" }
-};
-
-const statusConfig = {
-  pending: { label: "قيد الانتظار", color: "bg-yellow-100 text-yellow-800", border: "border-yellow-300" },
-  in_progress: { label: "قيد التنفيذ", color: "bg-blue-100 text-blue-800", border: "border-blue-300" },
-  completed: { label: "مكتملة", color: "bg-green-100 text-green-800", border: "border-green-300" },
-  cancelled: { label: "ملغاة", color: "bg-muted text-foreground", border: "border-border" }
-};
-
-const categoryLabels = {
-  field_work: "عمل ميداني",
-  meeting: "اجتماع",
-  report: "تقرير",
-  survey: "مسح",
-  training: "تدريب",
-  other: "أخرى"
+const statusColors = {
+  pending: { color: "bg-yellow-100 text-yellow-800", border: "border-yellow-300" },
+  in_progress: { color: "bg-blue-100 text-blue-800", border: "border-blue-300" },
+  completed: { color: "bg-green-100 text-green-800", border: "border-green-300" },
+  cancelled: { color: "bg-muted text-foreground", border: "border-border" }
 };
 
 export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEdit, initiatives = [], members = [] }) {
+  const { t } = useTranslation();
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const initiativeTitle = task.initiative_title || (task.initiative_id && initiatives.find(i => i.id === task.initiative_id)?.title);
   const assignedMember = members.find(m => String(m.id) === String(task.assigned_to));
-  const assigneeName = task.assigned_to_name || assignedMember?.full_name || 'غير محدد';
+  const assigneeName = task.assigned_to_name || assignedMember?.full_name || t('taskCard.unassigned');
   const assigneeRole = assignedMember?.role;
   const assigneeInitial = (assigneeName || '').charAt(0);
 
@@ -64,25 +43,25 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
     : null;
 
   return (
-    <Card className={`hover:shadow-lg transition-all ${isOverdue ? 'border-red-300 bg-red-50/50' : ''} ${statusConfig[task.status]?.border || ''}`}>
+    <Card className={`hover:shadow-lg transition-all ${isOverdue ? 'border-red-300 bg-red-50/50' : ''} ${statusColors[task.status]?.border || ''}`}>
       <CardContent className="p-4">
         {/* Header: Title + priority dot + actions */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               {isOverdue && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
-              <div className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig[task.priority]?.dot || 'bg-gray-400'}`} title={priorityConfig[task.priority]?.label} />
+              <div className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[task.priority]?.dot || 'bg-gray-400'}`} title={t(`priorities.${task.priority}`)} />
               <h3 className="font-semibold text-base truncate"><T>{task.title}</T></h3>
             </div>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              <Badge className={`text-[10px] px-1.5 py-0.5 ${statusConfig[task.status]?.color}`}>
-                {statusConfig[task.status]?.label}
+              <Badge className={`text-[10px] px-1.5 py-0.5 ${statusColors[task.status]?.color}`}>
+                {t(`statuses.${task.status}`)}
               </Badge>
-              <Badge className={`text-[10px] px-1.5 py-0.5 ${priorityConfig[task.priority]?.color}`}>
-                {priorityConfig[task.priority]?.label}
+              <Badge className={`text-[10px] px-1.5 py-0.5 ${priorityColors[task.priority]?.color}`}>
+                {t(`priorities.${task.priority}`)}
               </Badge>
-              {categoryLabels[task.category] && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">{categoryLabels[task.category]}</Badge>
+              {task.category && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">{t(`categories.${task.category}`)}</Badge>
               )}
               {task.document_type && DOCUMENT_TYPE_LABELS[task.document_type] && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{DOCUMENT_TYPE_LABELS[task.document_type]}</Badge>
@@ -113,7 +92,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate"><T>{assigneeName}</T></p>
             {assigneeRole && (
-              <p className="text-[11px] text-muted-foreground">{ROLE_LABELS_AR[assigneeRole] || assigneeRole}</p>
+              <p className="text-[11px] text-muted-foreground">{t(`rolesShort.${assigneeRole}`)}</p>
             )}
           </div>
         </div>
@@ -146,7 +125,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
           {task.reminder_date && (
             <div className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 shrink-0" />
-              <span>تذكير: {format(new Date(task.reminder_date), 'dd/MM/yyyy HH:mm')}</span>
+              <span>{t('taskCard.reminder')}: {format(new Date(task.reminder_date), 'dd/MM/yyyy HH:mm')}</span>
             </div>
           )}
         </div>
@@ -162,7 +141,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 onClick={() => onStatusChange(task.id, 'in_progress')}
               >
                 <Play className="w-3.5 h-3.5 ml-1" />
-                بدء التنفيذ
+                {t('taskCard.startExecution')}
               </Button>
             )}
             {task.status === 'in_progress' && (
@@ -173,7 +152,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 onClick={() => onStatusChange(task.id, 'pending')}
               >
                 <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                إعادة للانتظار
+                {t('taskCard.returnToPending')}
               </Button>
             )}
             <Button 
@@ -182,14 +161,14 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
               onClick={() => onStatusChange(task.id, 'completed')}
             >
               <CheckCircle className="w-3.5 h-3.5 ml-1" />
-              إنجاز
+              {t('taskCard.complete')}
             </Button>
           </div>
         )}
         {task.status === 'completed' && (
           <div className="flex items-center gap-1.5 pt-2 border-t text-green-600 text-xs">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>تم الإنجاز {task.completion_date ? format(new Date(task.completion_date), 'dd MMMM yyyy', { locale: ar }) : ''}</span>
+            <span>{t('taskCard.completedOn')} {task.completion_date ? format(new Date(task.completion_date), 'dd MMMM yyyy', { locale: ar }) : ''}</span>
           </div>
         )}
       </CardContent>

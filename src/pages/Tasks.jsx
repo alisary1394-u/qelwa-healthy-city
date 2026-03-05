@@ -161,23 +161,23 @@ export default function Tasks() {
   // الأعضاء الذين لديهم مهام
   const assigneesWithTasks = useMemo(() => {
     const map = new Map();
-    accessibleTasks.forEach(t => {
-      if (t.assigned_to) {
-        const member = members.find(m => String(m.id) === String(t.assigned_to));
-        const name = t.assigned_to_name || member?.full_name || 'غير محدد';
-        if (!map.has(t.assigned_to)) map.set(t.assigned_to, { id: t.assigned_to, name, count: 0 });
-        map.get(t.assigned_to).count++;
+    accessibleTasks.forEach(task => {
+      if (task.assigned_to) {
+        const member = members.find(m => String(m.id) === String(task.assigned_to));
+        const name = task.assigned_to_name || member?.full_name || t('common.unspecified');
+        if (!map.has(task.assigned_to)) map.set(task.assigned_to, { id: task.assigned_to, name, count: 0 });
+        map.get(task.assigned_to).count++;
       }
     });
     return [...map.values()].sort((a, b) => b.count - a.count);
-  }, [accessibleTasks, members]);
+  }, [accessibleTasks, members, t]);
 
   if (!permissions.canSeeTasks) {
     return (
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة المهام. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">{t('tasks.noAccess')} {t('tasks.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -223,8 +223,8 @@ export default function Tasks() {
       if (assignedMember?.email) {
         await api.entities.Notification.create({
           user_email: assignedMember.email,
-          title: 'مهمة جديدة',
-          message: `تم تعيين مهمة جديدة لك: ${data.title}`,
+          title: t('tasks.addNewTask'),
+          message: `${t('tasks.newTaskAssigned')}: ${data.title}`,
           type: 'task_assigned',
           related_id: newTask.id,
           is_read: false
@@ -246,7 +246,7 @@ export default function Tasks() {
   const handleDelete = async () => {
     if (!canManageTasks) return;
     if (deleteDialog.task) {
-      const confirmed = await requireSecureDeleteConfirmation(`المهمة "${deleteDialog.task.title}"`);
+      const confirmed = await requireSecureDeleteConfirmation(`${t('tasks.deleteTask')} "${deleteDialog.task.title}"`);
       if (!confirmed) return;
       await deleteMutation.mutateAsync(deleteDialog.task.id);
       setDeleteDialog({ open: false, task: null });
@@ -263,8 +263,8 @@ export default function Tasks() {
               <ClipboardList className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">إدارة المهام والتذكيرات</h1>
-              <p className="text-white/70 text-sm mt-1">متابعة مهام الفريق — مرتبطة بالمبادرات والمعايير</p>
+              <h1 className="text-2xl md:text-3xl font-bold">{t('tasks.title')}</h1>
+              <p className="text-white/70 text-sm mt-1">{t('tasks.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -277,42 +277,42 @@ export default function Tasks() {
             <CardContent className="p-4 text-center">
               <ListTodo className="w-6 h-6 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">إجمالي المهام</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.totalTasks')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Clock className="w-6 h-6 mx-auto mb-2 text-amber-700 dark:text-amber-400" />
               <p className="text-2xl font-bold">{stats.pending}</p>
-              <p className="text-xs text-muted-foreground">قيد الانتظار</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.pendingStatus')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <ClipboardList className="w-6 h-6 mx-auto mb-2 text-sky-700 dark:text-sky-400" />
               <p className="text-2xl font-bold">{stats.in_progress}</p>
-              <p className="text-xs text-muted-foreground">قيد التنفيذ</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.inProgressStatus')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{stats.completed}</p>
-              <p className="text-xs text-muted-foreground">مكتملة</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.completedStatus')}</p>
             </CardContent>
           </Card>
           <Card className={stats.overdue > 0 ? 'border-destructive/30 bg-destructive/5' : ''}>
             <CardContent className="p-4 text-center">
               <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-destructive" />
               <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
-              <p className="text-xs text-muted-foreground">متأخرة</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.overdueLabel')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-6 h-6 mx-auto mb-2 text-slate-600 dark:text-slate-400" />
               <p className="text-2xl font-bold">{stats.uniqueAssignees}</p>
-              <p className="text-xs text-muted-foreground">مكلفين</p>
+              <p className="text-xs text-muted-foreground">{t('tasks.assignees')}</p>
             </CardContent>
           </Card>
         </div>
@@ -322,7 +322,7 @@ export default function Tasks() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="بحث في المهام..."
+              placeholder={t('tasks.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
@@ -332,10 +332,10 @@ export default function Tasks() {
             <Select value={filterInitiative} onValueChange={setFilterInitiative}>
               <SelectTrigger className="w-[200px]">
                 <Lightbulb className="w-4 h-4 ml-1 text-primary" />
-                <SelectValue placeholder="المبادرة" />
+                <SelectValue placeholder={t('tasks.selectInitiative')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل المبادرات</SelectItem>
+                <SelectItem value="all">{t('tasks.allInitiatives')}</SelectItem>
                 {accessibleInitiatives.map(i => (
                   <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</SelectItem>
                 ))}
@@ -345,24 +345,24 @@ export default function Tasks() {
           <Select value={filterPriority} onValueChange={setFilterPriority}>
             <SelectTrigger className="w-[140px]">
               <Filter className="w-4 h-4 ml-1 text-amber-700 dark:text-amber-400" />
-              <SelectValue placeholder="الأولوية" />
+              <SelectValue placeholder={t('tasks.selectPriority')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">كل الأولويات</SelectItem>
-              <SelectItem value="urgent">عاجلة</SelectItem>
-              <SelectItem value="high">عالية</SelectItem>
-              <SelectItem value="medium">متوسطة</SelectItem>
-              <SelectItem value="low">منخفضة</SelectItem>
+              <SelectItem value="all">{t('tasks.allPriorities')}</SelectItem>
+              <SelectItem value="urgent">{t('tasks.urgentPriority')}</SelectItem>
+              <SelectItem value="high">{t('tasks.highPriority')}</SelectItem>
+              <SelectItem value="medium">{t('tasks.mediumPriority')}</SelectItem>
+              <SelectItem value="low">{t('tasks.lowPriority')}</SelectItem>
             </SelectContent>
           </Select>
           {assigneesWithTasks.length > 1 && (
             <Select value={filterAssignee} onValueChange={setFilterAssignee}>
               <SelectTrigger className="w-[180px]">
                 <Users className="w-4 h-4 ml-1 text-slate-600 dark:text-slate-400" />
-                <SelectValue placeholder="المكلف" />
+                <SelectValue placeholder={t('tasks.assignedTo')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">كل المكلفين</SelectItem>
+                <SelectItem value="all">{t('tasks.allMembers')}</SelectItem>
                 {assigneesWithTasks.map(a => (
                   <SelectItem key={a.id} value={String(a.id)}>{a.name} ({a.count})</SelectItem>
                 ))}
@@ -376,7 +376,7 @@ export default function Tasks() {
           >
             <Button variant="outline" className="w-full md:w-auto bg-secondary/10 hover:bg-secondary/20 text-secondary border-secondary/30">
               <MessageCircle className="w-5 h-5 ml-2" />
-              تذكيرات واتساب
+              {t('tasks.whatsappReminders')}
             </Button>
           </a>
           {canManageTasks && (
@@ -385,7 +385,7 @@ export default function Tasks() {
               className="bg-primary hover:bg-primary/90"
             >
               <Plus className="w-5 h-5 ml-2" />
-              إضافة مهمة
+              {t('tasks.addTask')}
             </Button>
           )}
         </div>
@@ -393,12 +393,12 @@ export default function Tasks() {
         {/* Tabs */}
         <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
           <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
-            <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
-            <TabsTrigger value="pending">قيد الانتظار ({stats.pending})</TabsTrigger>
-            <TabsTrigger value="in_progress">قيد التنفيذ ({stats.in_progress})</TabsTrigger>
-            <TabsTrigger value="completed">مكتملة ({stats.completed})</TabsTrigger>
+            <TabsTrigger value="all">{t('tasks.allStatuses')} ({stats.total})</TabsTrigger>
+            <TabsTrigger value="pending">{t('tasks.pendingStatus')} ({stats.pending})</TabsTrigger>
+            <TabsTrigger value="in_progress">{t('tasks.inProgressStatus')} ({stats.in_progress})</TabsTrigger>
+            <TabsTrigger value="completed">{t('tasks.completedStatus')} ({stats.completed})</TabsTrigger>
             <TabsTrigger value="overdue" className={stats.overdue > 0 ? 'text-destructive' : ''}>
-              متأخرة ({stats.overdue})
+              {t('tasks.overdueLabel')} ({stats.overdue})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -412,7 +412,7 @@ export default function Tasks() {
           <Card className="text-center py-12">
             <CardContent>
               <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا توجد مهام</p>
+              <p className="text-muted-foreground">{t('tasks.noTasks')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -446,15 +446,15 @@ export default function Tasks() {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
         <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogTitle>{t('tasks.confirmDeleteTask')}</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف المهمة "{deleteDialog.task?.title}"؟
+              {t('tasks.confirmDeleteMessage', { title: deleteDialog.task?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              حذف
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

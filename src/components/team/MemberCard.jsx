@@ -3,21 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, Building2, Edit, Trash2, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import T from "@/components/T";
-
-const roleLabels = {
-  governor: "المشرف العام",
-  coordinator: "منسق المدينة الصحية",
-  committee_head: "رئيس لجنة",
-  committee_coordinator: "منسق لجنة",
-  committee_supervisor: "مشرف لجنة",
-  committee_member: "عضو لجنة",
-  member: "عضو",
-  volunteer: "متطوع",
-  budget_manager: "مدير الميزانية",
-  accountant: "محاسب",
-  financial_officer: "موظف مالي"
-};
 
 const roleColors = {
   governor: "bg-purple-100 text-purple-800 border-purple-200",
@@ -34,6 +21,7 @@ const roleColors = {
 };
 
 export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }) {
+  const { t } = useTranslation();
   const showActions = (canEdit || canDelete) && (onEdit || onDelete);
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -46,7 +34,7 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
             <div>
               <h3 className="font-semibold text-lg"><T>{member.full_name}</T></h3>
               <Badge className={`${roleColors[member.role]} border mt-1`}>
-                {roleLabels[member.role]}
+                {t(`roles.${member.role}`)}
               </Badge>
             </div>
           </div>
@@ -99,11 +87,11 @@ export default function MemberCard({ member, onEdit, onDelete, canEdit, canDelet
         
         <div className="mt-3 pt-3 border-t flex justify-between items-center">
           <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-            {member.status === 'active' ? 'نشط' : 'غير نشط'}
+            {member.status === 'active' ? t('memberCard.active') : t('memberCard.inactive')}
           </Badge>
           {member.join_date && (
             <span className="text-xs text-muted-foreground">
-              انضم: {new Date(member.join_date).toLocaleDateString('ar-SA')}
+              {t('memberCard.joinedDate')}: {new Date(member.join_date).toLocaleDateString('ar-SA')}
             </span>
           )}
         </div>

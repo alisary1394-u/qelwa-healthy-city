@@ -83,7 +83,7 @@ function parseRelatedStandardIds(value) {
 function getInitiativeSuggestionFromStandard(standard, axisName) {
   const title = String(standard?.title || '').trim();
   const code = String(standard?.code || '').trim();
-  const axisLabel = axisName || standard?.axis_name || 'المحور المرتبط';
+  const axisLabel = axisName || standard?.axis_name || '';
   const impactful = /سلامة|جودة|طوارئ|حوكمة|وقاية|مخاطر/i.test(title);
 
   return {
@@ -102,10 +102,10 @@ function getInitiativeSuggestionFromStandard(standard, axisName) {
 }
 
 const statusConfig = {
-  not_started: { label: 'لم يبدأ', color: 'bg-muted text-foreground', headerColor: 'bg-white/20 text-white' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300', headerColor: 'bg-white/25 text-white' },
-  completed: { label: 'مكتمل', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300', headerColor: 'bg-white/25 text-white' },
-  approved: { label: 'معتمد', color: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary', headerColor: 'bg-white/25 text-white' }
+  not_started: { label: 'standards.standardStatusNotStarted', color: 'bg-muted text-foreground', headerColor: 'bg-white/20 text-white' },
+  in_progress: { label: 'standards.standardStatusInProgress', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300', headerColor: 'bg-white/25 text-white' },
+  completed: { label: 'standards.standardStatusCompleted', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300', headerColor: 'bg-white/25 text-white' },
+  approved: { label: 'standards.standardStatusApproved', color: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary', headerColor: 'bg-white/25 text-white' }
 };
 
 const axisGradients = [
@@ -495,7 +495,7 @@ function StandardsLegacy() {
 
   const handleDeleteAxis = async (axis) => {
     if (!canManage) return;
-    const ok = await requireSecureDeleteConfirmation(`المحور "${axis.name}"`);
+    const ok = await requireSecureDeleteConfirmation(`${t('standards.axis')} "${axis.name}"`);
     if (!ok) return;
     await deleteAxisMutation.mutateAsync(axis.id);
     if (activeAxis === axis.id) setActiveAxis('all');
@@ -523,7 +523,7 @@ function StandardsLegacy() {
 
   const handleDeleteStandard = async (standard) => {
     if (!canManage) return;
-    const ok = await requireSecureDeleteConfirmation(`المعيار "${standard.code} - ${standard.title}"`);
+    const ok = await requireSecureDeleteConfirmation(`${t('standards.standard')} "${standard.code} - ${standard.title}"`);
     if (!ok) return;
     await deleteStandardMutation.mutateAsync(standard.id);
   };
@@ -599,7 +599,7 @@ function StandardsLegacy() {
   const handleDeleteEvidence = async (evidenceItem) => {
     if (!canDeleteAnyEvidence) return;
     if (!evidenceItem?.id) return;
-    const ok = await requireSecureDeleteConfirmation(`الدليل "${evidenceItem.title || 'غير معنون'}"`);
+    const ok = await requireSecureDeleteConfirmation(`${t('standards.evidence')} "${evidenceItem.title || ''}"`);
     if (!ok) return;
     await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
   };
@@ -649,14 +649,14 @@ function StandardsLegacy() {
     ? ((activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_SHORT_NAMES.length)
         ? AXIS_SHORT_NAMES[activeAxisEntity.order - 1]
         : activeAxisEntity.name)
-    : 'المعايير الدولية والأدلة';
+    : t('standards.title');
 
   if (!permissions.canSeeStandards) {
     return (
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة المعايير. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">{t('standards.noAccess')} {t('standards.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -671,7 +671,7 @@ function StandardsLegacy() {
             <Target className="w-8 h-8" />
             {pageTitle}
           </h1>
-          <p className="text-white/70">{activeAxisEntity ? `${(activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length} معيار` : '80 معياراً (معايير المدن الصحية)'}</p>
+          <p className="text-white/70">{activeAxisEntity ? t('standards.standardsCount', { count: (activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length }) : t('standards.healthyCityStandards')}</p>
         </div>
       </div>
 
@@ -681,18 +681,18 @@ function StandardsLegacy() {
             <>
               <Button onClick={() => setAxisFormOpen(true)} variant="outline">
                 <Plus className="w-4 h-4 ml-2" />
-                إضافة محور
+                {t('standards.addAxis')}
               </Button>
               <Button onClick={() => setStandardFormOpen(true)} className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 ml-2" />
-                إضافة معيار
+                {t('standards.addStandard')}
               </Button>
             </>
           )}
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="بحث في المعايير (العنوان، الرمز، الوصف)..."
+              placeholder={t('standards.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
@@ -714,7 +714,7 @@ function StandardsLegacy() {
             }}
           >
             <Clock className="w-4 h-4 ml-1" />
-            بانتظار المراجعة
+            {t('standards.pendingReview')}
           </Button>
         </div>
 
@@ -726,7 +726,7 @@ function StandardsLegacy() {
               onClick={() => setActiveAxis('all')}
               className="whitespace-nowrap"
             >
-              جميع المحاور ({REFERENCE_TOTAL_STANDARDS})
+              {t('standards.allAxes')} ({REFERENCE_TOTAL_STANDARDS})
             </Button>
             {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
               const order = axis.order ?? 0;
@@ -784,10 +784,10 @@ function StandardsLegacy() {
           <Card className="text-center py-12">
             <CardContent>
               <Target className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا توجد معايير</p>
+              <p className="text-muted-foreground">{t('standards.noStandards')}</p>
               {canManage && (
                 <Button variant="outline" className="mt-4" onClick={() => setStandardFormOpen(true)}>
-                  إضافة معيار جديد
+                  {t('standards.addNewStandard')}
                 </Button>
               )}
             </CardContent>
@@ -817,7 +817,7 @@ function StandardsLegacy() {
                 const key = committeeId || String(committeeName || '').trim();
                 if (!key || relatedCommitteeKeys.has(key)) return;
                 relatedCommitteeKeys.add(key);
-                relatedCommittees.push({ id: committeeId || key, name: committeeName || 'لجنة غير مسماة' });
+                relatedCommittees.push({ id: committeeId || key, name: committeeName || t('standards.unnamedCommittee') });
               });
 
               const relatedBudgets = [];
@@ -847,7 +847,7 @@ function StandardsLegacy() {
                 relatedBudgetKeys.add(budgetKey);
                 relatedBudgets.push({
                   key: budgetKey,
-                  name: budgetName || 'ميزانية مرتبطة',
+                  name: budgetName || t('standards.linkedBudget'),
                   amount: Number.isFinite(amount) ? amount : 0,
                   initiativesCount: 1,
                 });
@@ -877,7 +877,7 @@ function StandardsLegacy() {
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{standard.code}</span>
                           <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusConfig[standard.status]?.headerColor || 'bg-white/20 text-white'}`}>
-                            {statusConfig[standard.status]?.label}
+                            {t(statusConfig[standard.status]?.label)}
                           </span>
                         </div>
                         <h3 className="text-white font-bold text-base leading-tight"><T>{getShortTitleByCode(standard.code) || standard.title}</T></h3>
@@ -890,26 +890,26 @@ function StandardsLegacy() {
                         {/* Stats badges */}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                            <FileText className="w-3 h-3" />{approvedEvidence}/{standardEvidence.length} أدلة
+                            <FileText className="w-3 h-3" />{approvedEvidence}/{standardEvidence.length} {t('standards.evidenceCount')}
                           </span>
                           <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                            <Lightbulb className="w-3 h-3" />{relatedInitiatives.length} مبادرات
+                            <Lightbulb className="w-3 h-3" />{relatedInitiatives.length} {t('standards.initiativesCount')}
                           </span>
                           <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                            <Users className="w-3 h-3" />{relatedCommittees.length} لجان
+                            <Users className="w-3 h-3" />{relatedCommittees.length} {t('standards.committeesCount')}
                           </span>
                           <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                            <DollarSign className="w-3 h-3" />{relatedBudgets.length} ميزانيات
+                            <DollarSign className="w-3 h-3" />{relatedBudgets.length} {t('standards.budgetsCount')}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                       {canManage && (
                         <div className="flex gap-1 bg-white/10 rounded-lg p-0.5" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="حذف المعيار" onClick={() => handleDeleteStandard(standard)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title={t('common.delete')} onClick={() => handleDeleteStandard(standard)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="المستندات والمؤشرات" onClick={() => {
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title={t('standards.editRequiredDocs')} onClick={() => {
                             setEditStandard(standard);
                             setEditDocuments(parseJsonArray(standard.required_documents));
                             setEditKpis(parseJsonArray(standard.kpis));
@@ -917,7 +917,7 @@ function StandardsLegacy() {
                           }}>
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title="تعديل بيانات المعيار" onClick={() => {
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/20" title={t('standards.editStandardData')} onClick={() => {
                             setEditStandardInfo({
                               id: standard.id,
                               code: standard.code || '',
@@ -955,15 +955,15 @@ function StandardsLegacy() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                           <div className="rounded-lg border bg-muted/50 p-3">
-                            <p className="text-xs text-muted-foreground mb-1">اللجان المرتبطة</p>
-                            <p className="text-sm font-semibold mb-2">{relatedCommittees.length} لجنة</p>
+                            <p className="text-xs text-muted-foreground mb-1">{t('standards.relatedCommittees')}</p>
+                            <p className="text-sm font-semibold mb-2">{relatedCommittees.length} {t('standards.committee')}</p>
                             <div className="flex flex-wrap gap-1">
                               {visibleCommittees.length > 0 ? visibleCommittees.map((committee) => (
                                 <Badge key={committee.id} variant="outline" className="text-[11px]">
                                   <T>{committee.name}</T>
                                 </Badge>
                               )) : (
-                                <span className="text-xs text-muted-foreground">لا توجد لجان مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">{t('standards.noRelatedCommittees')}</span>
                               )}
                             </div>
                             {relatedCommittees.length > 3 && (
@@ -974,21 +974,21 @@ function StandardsLegacy() {
                                 className="mt-2 h-7 px-2 text-xs"
                                 onClick={() => toggleSectionExpanded(standard.id, 'committees')}
                               >
-                                {committeesExpanded ? 'إخفاء' : `عرض الكل (${relatedCommittees.length})`}
+                                {committeesExpanded ? t('standards.hide') : t('standards.showAll', { count: relatedCommittees.length })}
                               </Button>
                             )}
                           </div>
 
                           <div className="rounded-lg border bg-muted/50 p-3">
-                            <p className="text-xs text-muted-foreground mb-1">المبادرات المرتبطة</p>
-                            <p className="text-sm font-semibold mb-2">{relatedInitiatives.length} مبادرة</p>
+                            <p className="text-xs text-muted-foreground mb-1">{t('standards.relatedInitiatives')}</p>
+                            <p className="text-sm font-semibold mb-2">{relatedInitiatives.length} {t('standards.initiative')}</p>
                             <div className="space-y-1">
                               {visibleInitiatives.length > 0 ? visibleInitiatives.map((initiative) => (
                                 <p key={initiative.id} className="text-xs text-foreground truncate" title={initiative.title}>
                                   • <T>{initiative.title}</T>
                                 </p>
                               )) : (
-                                <span className="text-xs text-muted-foreground">لا توجد مبادرات مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">{t('standards.noRelatedInitiatives')}</span>
                               )}
                             </div>
                             {relatedInitiatives.length > 2 && (
@@ -999,16 +999,16 @@ function StandardsLegacy() {
                                 className="mt-2 h-7 px-2 text-xs"
                                 onClick={() => toggleSectionExpanded(standard.id, 'initiatives')}
                               >
-                                {initiativesExpanded ? 'إخفاء' : `عرض الكل (${relatedInitiatives.length})`}
+                                {initiativesExpanded ? t('standards.hide') : t('standards.showAll', { count: relatedInitiatives.length })}
                               </Button>
                             )}
                           </div>
 
                           <div className="rounded-lg border bg-muted/50 p-3">
-                            <p className="text-xs text-muted-foreground mb-1">الميزانيات المرتبطة</p>
-                            <p className="text-sm font-semibold mb-1">{relatedBudgets.length} ميزانية</p>
+                            <p className="text-xs text-muted-foreground mb-1">{t('standards.relatedBudgets')}</p>
+                            <p className="text-sm font-semibold mb-1">{relatedBudgets.length} {t('standards.budgetItem')}</p>
                             <p className="text-xs text-success font-medium mb-2">
-                              الإجمالي: {totalRelatedBudget.toLocaleString()} ريال
+                              {t('standards.totalBudget')} {totalRelatedBudget.toLocaleString()} ريال
                             </p>
                             <div className="flex flex-wrap gap-1">
                               {visibleBudgets.length > 0 ? visibleBudgets.map((budget) => (
@@ -1016,7 +1016,7 @@ function StandardsLegacy() {
                                   {budget.name}
                                 </Badge>
                               )) : (
-                                <span className="text-xs text-muted-foreground">لا توجد ميزانيات مرتبطة</span>
+                                <span className="text-xs text-muted-foreground">{t('standards.noRelatedBudgets')}</span>
                               )}
                             </div>
                             {relatedBudgets.length > 2 && (
@@ -1027,7 +1027,7 @@ function StandardsLegacy() {
                                 className="mt-2 h-7 px-2 text-xs"
                                 onClick={() => toggleSectionExpanded(standard.id, 'budgets')}
                               >
-                                {budgetsExpanded ? 'إخفاء' : `عرض الكل (${relatedBudgets.length})`}
+                                {budgetsExpanded ? t('standards.hide') : t('standards.showAll', { count: relatedBudgets.length })}
                               </Button>
                             )}
                           </div>
@@ -1036,7 +1036,7 @@ function StandardsLegacy() {
                         <div className="rounded-lg border bg-purple-50 p-3 mt-4">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div>
-                              <p className="text-xs text-purple-700">مبادرة مقترحة لهذا المعيار</p>
+                              <p className="text-xs text-purple-700">{t('standards.suggestedInitiative')}</p>
                               <p className="text-sm font-semibold text-purple-900">{suggestedInitiative.title}</p>
                             </div>
                             <Button
@@ -1045,12 +1045,12 @@ function StandardsLegacy() {
                               disabled={!canManageInitiatives || relatedInitiatives.length > 0}
                               onClick={() => handleCreateSuggestedInitiativeForStandard(standard)}
                             >
-                              {!canManageInitiatives ? 'غير مصرح' : (relatedInitiatives.length > 0 ? 'موجودة' : 'فتح النموذج')}
+                              {!canManageInitiatives ? t('standards.unauthorized') : (relatedInitiatives.length > 0 ? t('standards.alreadyExists') : t('standards.openForm'))}
                             </Button>
                           </div>
                           <p className="text-xs text-secondary mb-2">{suggestedInitiative.description}</p>
                           {relatedInitiatives.length > 0 && (
-                            <p className="text-[11px] text-success">تم إنشاء مبادرة مرتبطة بهذا المعيار مسبقًا.</p>
+                            <p className="text-[11px] text-success">{t('standards.initiativeAlreadyCreated')}</p>
                           )}
                         </div>
                         
@@ -1070,8 +1070,8 @@ function StandardsLegacy() {
                         />
                         
                         <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" /> مؤشرات: {parseJsonArray(standard.kpis).length}</span>
-                          <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> مستندات: {parseJsonArray(standard.required_documents).length}</span>
+                          <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3" /> {t('standards.kpiIndicators')} {parseJsonArray(standard.kpis).length}</span>
+                          <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> {t('standards.requiredDocs')} {parseJsonArray(standard.required_documents).length}</span>
                         </div>
                       </div>
 
@@ -1083,7 +1083,7 @@ function StandardsLegacy() {
                             <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/50 p-4 hover:bg-muted transition-colors">
                               <div className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-muted-foreground" />
-                                <p className="text-sm font-medium">الأدلة المرفوعة</p>
+                                <p className="text-sm font-medium">{t('standards.uploadedEvidence')}</p>
                                 <Badge variant="secondary" className="text-xs">{standardEvidence.length}</Badge>
                               </div>
                               <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -1093,7 +1093,7 @@ function StandardsLegacy() {
 
                         <CollapsibleContent>
                           {standardEvidence.length === 0 ? (
-                            <div className="mt-3 text-sm text-muted-foreground">لا توجد أدلة مرفوعة</div>
+                            <div className="mt-3 text-sm text-muted-foreground">{t('standards.noUploadedEvidence')}</div>
                           ) : (
                             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                               {standardEvidence.map(ev => (
@@ -1111,7 +1111,7 @@ function StandardsLegacy() {
                                         ev.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
                                         'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                       }>
-                                        {ev.status === 'approved' ? 'معتمد' : ev.status === 'rejected' ? 'مرفوض' : 'بانتظار'}
+                                        {ev.status === 'approved' ? t('standards.approved') : ev.status === 'rejected' ? t('standards.rejected') : t('standards.pending')}
                                       </Badge>
                                     </div>
                                   </div>
@@ -1120,7 +1120,7 @@ function StandardsLegacy() {
                                       size="icon"
                                       variant="ghost"
                                       className="text-primary"
-                                      title="معاينة"
+                                      title={t('standards.preview')}
                                       onClick={() => handlePreviewEvidence(ev.file_url)}
                                     >
                                       <Eye className="w-4 h-4" />
@@ -1133,15 +1133,15 @@ function StandardsLegacy() {
                                           className="text-success"
                                           onClick={() => handleApproveEvidence(ev)}
                                         >
-                                          يعتمد
+                                          {t('standards.approve')}
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="ghost"
                                           className="text-red-700"
-                                          onClick={() => handleRejectEvidence(ev, 'غير مطابق')}
+                                          onClick={() => handleRejectEvidence(ev, t('standards.nonCompliant'))}
                                         >
-                                          رفض
+                                          {t('standards.reject')}
                                         </Button>
                                       </>
                                     )}
@@ -1153,7 +1153,7 @@ function StandardsLegacy() {
                                         className="text-red-700"
                                         onClick={() => handleDeleteEvidence(ev)}
                                       >
-                                        حذف
+                                        {t('standards.deleteEvidence')}
                                       </Button>
                                     )}
                                   </div>
@@ -1176,23 +1176,23 @@ function StandardsLegacy() {
       {/* Axis Form */}
       <Dialog open={axisFormOpen} onOpenChange={setAxisFormOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
-          <DialogHeader><DialogTitle>إضافة محور جديد</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('standards.addNewAxis')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveAxis} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>اسم المحور *</Label>
+              <Label>{t('standards.axisName')}</Label>
               <Input value={axisForm.name} onChange={(e) => setAxisForm({ ...axisForm, name: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label>{t('standards.axisDescription')}</Label>
               <Textarea value={axisForm.description} onChange={(e) => setAxisForm({ ...axisForm, description: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الترتيب</Label>
+              <Label>{t('standards.axisOrder')}</Label>
               <Input type="number" value={axisForm.order} onChange={(e) => setAxisForm({ ...axisForm, order: parseInt(e.target.value) })} />
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setAxisFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="bg-primary">حفظ</Button>
+              <Button type="button" variant="outline" onClick={() => setAxisFormOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" className="bg-primary">{t('common.save')}</Button>
             </div>
           </form>
         </DialogContent>
@@ -1201,17 +1201,17 @@ function StandardsLegacy() {
       {/* Standard Form */}
       <Dialog open={standardFormOpen} onOpenChange={setStandardFormOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
-          <DialogHeader><DialogTitle>إضافة معيار جديد</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('standards.addNewStandardForm')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveStandard} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>رمز المعيار *</Label>
-                <Input value={standardForm.code} onChange={(e) => setStandardForm({ ...standardForm, code: e.target.value })} placeholder="مثال: S01" required />
+                <Label>{t('standards.standardCode')}</Label>
+                <Input value={standardForm.code} onChange={(e) => setStandardForm({ ...standardForm, code: e.target.value })} placeholder="S01" required />
               </div>
               <div className="space-y-2">
-                <Label>المحور *</Label>
+                <Label>{t('standards.selectAxis')}</Label>
                 <Select value={standardForm.axis_id} onValueChange={(v) => setStandardForm({ ...standardForm, axis_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('standards.chooseAxis')} /></SelectTrigger>
                   <SelectContent>
                     {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
                       const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
@@ -1222,20 +1222,20 @@ function StandardsLegacy() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>عنوان المعيار *</Label>
+              <Label>{t('standards.standardTitle')}</Label>
               <Input value={standardForm.title} onChange={(e) => setStandardForm({ ...standardForm, title: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label>{t('common.description')}</Label>
               <Textarea value={standardForm.description} onChange={(e) => setStandardForm({ ...standardForm, description: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الأدلة المطلوبة</Label>
-              <Textarea value={standardForm.required_evidence} onChange={(e) => setStandardForm({ ...standardForm, required_evidence: e.target.value })} placeholder="مثال: صور، تقارير، وثائق رسمية" />
+              <Label>{t('standards.requiredEvidence')}</Label>
+              <Textarea value={standardForm.required_evidence} onChange={(e) => setStandardForm({ ...standardForm, required_evidence: e.target.value })} />
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setStandardFormOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="bg-primary">حفظ</Button>
+              <Button type="button" variant="outline" onClick={() => setStandardFormOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" className="bg-primary">{t('common.save')}</Button>
             </div>
           </form>
         </DialogContent>
@@ -1245,11 +1245,11 @@ function StandardsLegacy() {
       <Dialog open={editStandardOpen} onOpenChange={setEditStandardOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تعديل المستندات المطلوبة ومؤشرات الأداء — {editStandard?.code}</DialogTitle>
+            <DialogTitle>{t('standards.editStandardCode', { code: editStandard?.code })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 mt-4">
             <div>
-              <Label className="font-medium">المستندات المطلوبة</Label>
+              <Label className="font-medium">{t('standards.requiredDocuments')}</Label>
               <ul className="mt-2 space-y-2">
                 {editDocuments.map((doc, i) => (
                   <li key={i} className="flex gap-2">
@@ -1260,7 +1260,7 @@ function StandardsLegacy() {
                         next[i] = e.target.value;
                         setEditDocuments(next);
                       }}
-                      placeholder="اسم المستند"
+                      placeholder={t('standards.docName')}
                     />
                     <Button type="button" variant="ghost" size="icon" className="text-red-600" onClick={() => setEditDocuments(editDocuments.filter((_, j) => j !== i))}>
                       <Trash2 className="w-4 h-4" />
@@ -1269,17 +1269,17 @@ function StandardsLegacy() {
                 ))}
               </ul>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditDocuments([...editDocuments, ''])}>
-                <Plus className="w-4 h-4 ml-2" /> إضافة مستند
+                <Plus className="w-4 h-4 ml-2" /> {t('standards.addDocument')}
               </Button>
             </div>
             <div>
-              <Label className="font-medium">مؤشرات الأداء (KPI)</Label>
+              <Label className="font-medium">{t('standards.kpiTitle')}</Label>
               <div className="mt-2 space-y-3">
                 {editKpis.map((kpi, i) => (
                   <div key={i} className="flex flex-wrap items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                    <Input value={kpi.name} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], name: e.target.value }; setEditKpis(n); }} placeholder="اسم المؤشر" className="flex-1 min-w-[120px]" />
-                    <Input value={kpi.target} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], target: e.target.value }; setEditKpis(n); }} placeholder="الهدف" className="w-24" />
-                    <Input value={kpi.unit} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], unit: e.target.value }; setEditKpis(n); }} placeholder="الوحدة" className="w-20" />
+                    <Input value={kpi.name} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], name: e.target.value }; setEditKpis(n); }} placeholder={t('standards.kpiName')} className="flex-1 min-w-[120px]" />
+                    <Input value={kpi.target} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], target: e.target.value }; setEditKpis(n); }} placeholder={t('standards.kpiTarget')} className="w-24" />
+                    <Input value={kpi.unit} onChange={(e) => { const n = [...editKpis]; n[i] = { ...n[i], unit: e.target.value }; setEditKpis(n); }} placeholder={t('standards.kpiUnit')} className="w-20" />
                     <Button type="button" variant="ghost" size="icon" className="text-red-600" onClick={() => setEditKpis(editKpis.filter((_, j) => j !== i))}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -1287,11 +1287,11 @@ function StandardsLegacy() {
                 ))}
               </div>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditKpis([...editKpis, { name: '', target: '', unit: '' }])}>
-                <Plus className="w-4 h-4 ml-2" /> إضافة مؤشر
+                <Plus className="w-4 h-4 ml-2" /> {t('standards.addKPI')}
               </Button>
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setEditStandardOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setEditStandardOpen(false)}>{t('common.cancel')}</Button>
               <Button
                 className="bg-primary"
                 onClick={async () => {
@@ -1307,7 +1307,7 @@ function StandardsLegacy() {
                   setEditStandard(null);
                 }}
               >
-                حفظ
+                {t('common.save')}
               </Button>
             </div>
           </div>
@@ -1317,24 +1317,24 @@ function StandardsLegacy() {
       {/* Edit Axis Dialog */}
       <Dialog open={editAxisOpen} onOpenChange={setEditAxisOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
-          <DialogHeader><DialogTitle>تعديل المحور</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('standards.editAxis')}</DialogTitle></DialogHeader>
           {editAxisData && (
             <form onSubmit={handleUpdateAxis} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label>اسم المحور *</Label>
+                <Label>{t('standards.axisName')}</Label>
                 <Input value={editAxisData.name} onChange={(e) => setEditAxisData({ ...editAxisData, name: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>الوصف</Label>
+                <Label>{t('standards.axisDescription')}</Label>
                 <Textarea value={editAxisData.description} onChange={(e) => setEditAxisData({ ...editAxisData, description: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>الترتيب (ثابت حسب المرجع)</Label>
+                <Label>{t('standards.axisOrderFixed')}</Label>
                 <Input type="number" value={editAxisData.order} disabled className="bg-muted cursor-not-allowed opacity-70" />
               </div>
               <div className="flex gap-3 justify-end pt-4">
-                <Button type="button" variant="outline" onClick={() => setEditAxisOpen(false)}>إلغاء</Button>
-                <Button type="submit" className="bg-primary">حفظ التعديلات</Button>
+                <Button type="button" variant="outline" onClick={() => setEditAxisOpen(false)}>{t('common.cancel')}</Button>
+                <Button type="submit" className="bg-primary">{t('common.saveChanges')}</Button>
               </div>
             </form>
           )}
@@ -1344,18 +1344,18 @@ function StandardsLegacy() {
       {/* Edit Standard Info Dialog */}
       <Dialog open={editStandardInfoOpen} onOpenChange={setEditStandardInfoOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-2xl">
-          <DialogHeader><DialogTitle>تعديل بيانات المعيار — {editStandardInfo?.code}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('standards.editStandardData')} — {editStandardInfo?.code}</DialogTitle></DialogHeader>
           {editStandardInfo && (
             <form onSubmit={handleUpdateStandardInfo} className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>رمز المعيار *</Label>
+                  <Label>{t('standards.standardCode')}</Label>
                   <Input value={editStandardInfo.code} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, code: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>المحور</Label>
+                  <Label>{t('standards.axis')}</Label>
                   <Select value={editStandardInfo.axis_id} onValueChange={(v) => setEditStandardInfo({ ...editStandardInfo, axis_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('standards.chooseAxis')} /></SelectTrigger>
                     <SelectContent>
                       {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
                         const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
@@ -1366,34 +1366,34 @@ function StandardsLegacy() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>عنوان المعيار *</Label>
+                <Label>{t('standards.standardTitle')}</Label>
                 <Input value={editStandardInfo.title} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, title: e.target.value })} required />
               </div>
               <div className="space-y-2">
-                <Label>الوصف</Label>
+                <Label>{t('common.description')}</Label>
                 <Textarea value={editStandardInfo.description} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, description: e.target.value })} rows={3} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>الحالة</Label>
+                  <Label>{t('common.status')}</Label>
                   <Select value={editStandardInfo.status} onValueChange={(v) => setEditStandardInfo({ ...editStandardInfo, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="not_started">لم يبدأ</SelectItem>
-                      <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                      <SelectItem value="completed">مكتمل</SelectItem>
-                      <SelectItem value="approved">معتمد</SelectItem>
+                      <SelectItem value="not_started">{t('standards.standardStatusNotStarted')}</SelectItem>
+                      <SelectItem value="in_progress">{t('standards.standardStatusInProgress')}</SelectItem>
+                      <SelectItem value="completed">{t('standards.standardStatusCompleted')}</SelectItem>
+                      <SelectItem value="approved">{t('standards.standardStatusApproved')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>الأدلة المطلوبة</Label>
-                  <Input value={editStandardInfo.required_evidence} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, required_evidence: e.target.value })} placeholder="مثال: صور، تقارير" />
+                  <Label>{t('standards.requiredEvidence')}</Label>
+                  <Input value={editStandardInfo.required_evidence} onChange={(e) => setEditStandardInfo({ ...editStandardInfo, required_evidence: e.target.value })} />
                 </div>
               </div>
               <div className="flex gap-3 justify-end pt-4">
-                <Button type="button" variant="outline" onClick={() => setEditStandardInfoOpen(false)}>إلغاء</Button>
-                <Button type="submit" className="bg-primary">حفظ التعديلات</Button>
+                <Button type="button" variant="outline" onClick={() => setEditStandardInfoOpen(false)}>{t('common.cancel')}</Button>
+                <Button type="submit" className="bg-primary">{t('common.saveChanges')}</Button>
               </div>
             </form>
           )}
@@ -1404,26 +1404,26 @@ function StandardsLegacy() {
       <Dialog open={evidenceFormOpen} onOpenChange={setEvidenceFormOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>رفع دليل للمعيار {selectedStandard?.code}</DialogTitle>
+            <DialogTitle>{t('standards.uploadEvidenceTitle')} {selectedStandard?.code}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadEvidence} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>عنوان الدليل *</Label>
+              <Label>{t('standards.evidenceTitle')}</Label>
               <Input value={evidenceForm.title} onChange={(e) => setEvidenceForm({ ...evidenceForm, title: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label>{t('common.description')}</Label>
               <Textarea value={evidenceForm.description} onChange={(e) => setEvidenceForm({ ...evidenceForm, description: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>الملف *</Label>
+              <Label>{t('standards.evidenceFile')}</Label>
               <Input type="file" onChange={(e) => setEvidenceForm({ ...evidenceForm, file: e.target.files[0] })} accept="image/*,.pdf,.doc,.docx" required />
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setEvidenceFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setEvidenceFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={uploading} className="bg-primary">
                 {uploading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                رفع الدليل
+                {t('standards.uploadEvidence')}
               </Button>
             </div>
           </form>

@@ -15,20 +15,11 @@ import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
-const roleLabels = {
-  all: "الجميع",
-  governor: "المشرف العام",
-  coordinator: "منسق المدينة الصحية",
-  committee_head: "رؤساء اللجان",
-  committee_coordinator: "منسقو اللجان",
-  committee_supervisor: "مشرفو اللجان",
-  committee_member: "أعضاء اللجان",
-  member: "الأعضاء",
-  volunteer: "المتطوعين",
-  budget_manager: "مديرو الميزانية",
-  accountant: "المحاسبون",
-  financial_officer: "الموظفون الماليون"
-};
+const roleKeys = [
+  'all', 'governor', 'coordinator', 'committee_head',
+  'committee_coordinator', 'committee_supervisor', 'committee_member',
+  'member', 'volunteer', 'budget_manager', 'accountant', 'financial_officer'
+];
 
 const roleIcons = {
   governor: Crown,
@@ -128,7 +119,7 @@ export default function TeamManagement() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الفريق. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-red-600 font-semibold">{t('team.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -220,19 +211,19 @@ export default function TeamManagement() {
     try {
       if (editingMember) {
         await updateMutation.mutateAsync({ id: editingMember.id, data: payload });
-        toast({ title: 'تم التحديث', description: 'تم تحديث بيانات العضو بنجاح.' });
+        toast({ title: t('team.memberUpdated'), description: t('team.memberUpdatedDesc') });
       } else {
         await createMutation.mutateAsync(payload);
-        toast({ title: 'تمت الإضافة', description: 'تم إضافة العضو الجديد بنجاح.' });
+        toast({ title: t('team.memberAdded'), description: t('team.memberAddedDesc') });
       }
       setEditingMember(null);
       setFormOpen(false);
     } catch (err) {
       const is404 = err?.response?.status === 404 || err?.status === 404 || (err?.message && err.message.includes('404'));
       const message = is404
-        ? 'خطأ 404: تأكد من ملف .env.local (معرف التطبيق ورابط الخلفية من لوحة الإدارة)، ثم نفّذ أمر رفع الكيانات'
-        : (err?.response?.data?.message || err?.message || err?.data?.message || 'فشل في الحفظ.');
-      toast({ title: 'خطأ', description: message, variant: 'destructive' });
+        ? t('team.error404')
+        : (err?.response?.data?.message || err?.message || err?.data?.message || t('team.saveFailed'));
+      toast({ title: t('common.error'), description: message, variant: 'destructive' });
       throw err;
     }
   };
@@ -253,7 +244,7 @@ export default function TeamManagement() {
   const handleDelete = async () => {
     if (!canDeleteMember(deleteDialog.member || {})) return;
     if (deleteDialog.member) {
-      const confirmed = await requireSecureDeleteConfirmation(`العضو "${deleteDialog.member.full_name}"`);
+      const confirmed = await requireSecureDeleteConfirmation(`${t('team.member')} "${deleteDialog.member.full_name}"`);
       if (!confirmed) return;
 
       await deleteMutation.mutateAsync(deleteDialog.member.id);
@@ -271,8 +262,8 @@ export default function TeamManagement() {
               <Users className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">إدارة فريق المدينة الصحية</h1>
-              <p className="text-blue-100 text-sm mt-1">محافظة قلوة — اللجان والأعضاء والمعايير</p>
+              <h1 className="text-2xl md:text-3xl font-bold">{t('team.title')}</h1>
+              <p className="text-blue-100 text-sm mt-1">{t('team.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -286,7 +277,7 @@ export default function TeamManagement() {
               <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] p-4 text-white text-center">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm opacity-90">إجمالي الأعضاء</p>
+                <p className="text-sm opacity-90">{t('team.totalMembers')}</p>
               </div>
             </CardContent>
           </Card>
@@ -295,7 +286,7 @@ export default function TeamManagement() {
               <CardContent className="p-4 text-center hover:shadow-md transition-shadow">
                 <Icon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-xl font-bold">{stats[role]}</p>
-                <p className="text-xs text-muted-foreground">{roleLabels[role]}</p>
+                <p className="text-xs text-muted-foreground">{t('roles.' + role)}</p>
               </CardContent>
             </Card>
           ))}
@@ -307,10 +298,10 @@ export default function TeamManagement() {
             <Building className="w-5 h-5 text-muted-foreground" />
             <Select value={activeCommittee} onValueChange={setActiveCommittee}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="جميع اللجان" />
+                <SelectValue placeholder={t('team.allCommittees')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>جميع اللجان</SelectItem>
+                <SelectItem value={null}>{t('team.allCommittees')}</SelectItem>
                 {scopedCommittees.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
@@ -329,7 +320,7 @@ export default function TeamManagement() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="بحث بالاسم أو الهاتف أو القسم أو رقم الهوية أو البريد..."
+              placeholder={t('team.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
@@ -341,7 +332,7 @@ export default function TeamManagement() {
               className="bg-primary hover:bg-primary/90"
             >
               <UserPlus className="w-5 h-5 ml-2" />
-              إضافة عضو جديد
+              {t('team.addMember')}
             </Button>
           )}
         </div>
@@ -349,18 +340,18 @@ export default function TeamManagement() {
         {/* Tabs */}
         <Tabs value={activeRole} onValueChange={setActiveRole} className="mb-6">
           <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
-            <TabsTrigger value="all">الجميع ({stats.total})</TabsTrigger>
-            <TabsTrigger value="governor">المشرف العام ({stats.governor})</TabsTrigger>
-            <TabsTrigger value="coordinator">المنسق ({stats.coordinator})</TabsTrigger>
-            <TabsTrigger value="committee_head">رؤساء اللجان ({stats.committee_head})</TabsTrigger>
-            <TabsTrigger value="committee_coordinator">منسقو اللجان ({stats.committee_coordinator})</TabsTrigger>
-            <TabsTrigger value="committee_supervisor">مشرفو اللجان ({stats.committee_supervisor})</TabsTrigger>
-            <TabsTrigger value="committee_member">أعضاء اللجان ({stats.committee_member})</TabsTrigger>
-            <TabsTrigger value="member">الأعضاء ({stats.member})</TabsTrigger>
-            <TabsTrigger value="volunteer">المتطوعين ({stats.volunteer})</TabsTrigger>
-            <TabsTrigger value="budget_manager">مدير الميزانية ({stats.budget_manager})</TabsTrigger>
-            <TabsTrigger value="accountant">المحاسبون ({stats.accountant})</TabsTrigger>
-            <TabsTrigger value="financial_officer">الموظفون الماليون ({stats.financial_officer})</TabsTrigger>
+            <TabsTrigger value="all">{t('team.allRoles')} ({stats.total})</TabsTrigger>
+            <TabsTrigger value="governor">{t('roles.governor')} ({stats.governor})</TabsTrigger>
+            <TabsTrigger value="coordinator">{t('roles.coordinator')} ({stats.coordinator})</TabsTrigger>
+            <TabsTrigger value="committee_head">{t('roles.committee_head')} ({stats.committee_head})</TabsTrigger>
+            <TabsTrigger value="committee_coordinator">{t('roles.committee_coordinator')} ({stats.committee_coordinator})</TabsTrigger>
+            <TabsTrigger value="committee_supervisor">{t('roles.committee_supervisor')} ({stats.committee_supervisor})</TabsTrigger>
+            <TabsTrigger value="committee_member">{t('roles.committee_member')} ({stats.committee_member})</TabsTrigger>
+            <TabsTrigger value="member">{t('roles.member')} ({stats.member})</TabsTrigger>
+            <TabsTrigger value="volunteer">{t('roles.volunteer')} ({stats.volunteer})</TabsTrigger>
+            <TabsTrigger value="budget_manager">{t('roles.budget_manager')} ({stats.budget_manager})</TabsTrigger>
+            <TabsTrigger value="accountant">{t('roles.accountant')} ({stats.accountant})</TabsTrigger>
+            <TabsTrigger value="financial_officer">{t('roles.financial_officer')} ({stats.financial_officer})</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -368,20 +359,20 @@ export default function TeamManagement() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">جاري التحميل...</p>
+            <p className="mt-4 text-muted-foreground">{t('common.loading')}</p>
           </div>
         ) : filteredMembers.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Users className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا يوجد أعضاء</p>
+              <p className="text-muted-foreground">{t('team.noMembers')}</p>
               {canAdd && (
                 <Button 
                   variant="outline" 
                   className="mt-4"
                   onClick={() => { setEditingMember(null); setFormOpen(true); }}
                 >
-                  إضافة عضو جديد
+                  {t('team.addMember')}
                 </Button>
               )}
             </CardContent>
@@ -419,16 +410,15 @@ export default function TeamManagement() {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
         <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogTitle>{t('team.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف العضو "{deleteDialog.member?.full_name}"؟
-              لا يمكن التراجع عن هذا الإجراء.
+              {t('team.confirmDeleteMsg', { name: deleteDialog.member?.full_name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              حذف
+              {t('team.deleteBtn')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

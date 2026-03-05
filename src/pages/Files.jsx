@@ -18,18 +18,18 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const fileTypes = [
-  { value: "image", label: "صورة", icon: Image },
-  { value: "document", label: "مستند", icon: FileText },
-  { value: "report", label: "تقرير", icon: File },
-  { value: "other", label: "أخرى", icon: File }
+  { value: "image", labelKey: "files.fileTypes.image", icon: Image },
+  { value: "document", labelKey: "files.fileTypes.document", icon: FileText },
+  { value: "report", labelKey: "files.fileTypes.report", icon: File },
+  { value: "other", labelKey: "files.fileTypes.other", icon: File }
 ];
 
 const statusConfig = {
-  pending_supervisor: { label: "بانتظار اعتماد المشرف", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  pending_chairman: { label: "بانتظار اعتماد رئيس اللجنة", color: "bg-blue-100 text-blue-800", icon: Clock },
-  approved: { label: "معتمد", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  rejected: { label: "مرفوض", color: "bg-red-100 text-red-800", icon: XCircle },
-  returned: { label: "مُعاد", color: "bg-orange-100 text-orange-800", icon: AlertTriangle }
+  pending_supervisor: { labelKey: "files.tabs.awaitingSupervisor", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  pending_chairman: { labelKey: "files.tabs.awaitingHead", color: "bg-blue-100 text-blue-800", icon: Clock },
+  approved: { labelKey: "files.tabs.approved", color: "bg-green-100 text-green-800", icon: CheckCircle },
+  rejected: { labelKey: "files.tabs.rejected", color: "bg-red-100 text-red-800", icon: XCircle },
+  returned: { labelKey: "files.tabs.returned", color: "bg-orange-100 text-orange-800", icon: AlertTriangle }
 };
 
 export default function Files() {
@@ -117,7 +117,7 @@ export default function Files() {
       ...e,
       _source: 'evidence',
       status: mapEvidenceStatusToFilesStatus(e.status),
-      committee_name: e.committee_name || e.axis_name || (e.standard_code ? `المعيار ${e.standard_code}` : ''),
+      committee_name: e.committee_name || e.axis_name || (e.standard_code ? `${t('files.standardLabel')} ${e.standard_code}` : ''),
     })),
   ];
 
@@ -153,7 +153,7 @@ export default function Files() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة الملفات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-red-600 font-semibold">{t('files.noAccess')} {t('files.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -238,7 +238,7 @@ export default function Files() {
   const handleDelete = async () => {
     if (!isGovernor) return;
     if (deleteDialog.file) {
-      const confirmed = await requireSecureDeleteConfirmation(`الملف "${deleteDialog.file.title || 'غير معنون'}"`);
+      const confirmed = await requireSecureDeleteConfirmation(deleteDialog.file.title || '');
       if (!confirmed) return;
 
       if (deleteDialog.file._source === 'evidence') {
@@ -299,9 +299,9 @@ export default function Files() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
             <FolderOpen className="w-8 h-8" />
-            إدارة الملفات والصور
+            {t('files.title')}
           </h1>
-          <p className="text-white/70">رفع واعتماد ملفات برنامج المدينة الصحية</p>
+          <p className="text-white/70">{t('files.subtitle')}</p>
         </div>
       </div>
 
@@ -310,27 +310,27 @@ export default function Files() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
           <Card><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">الإجمالي</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.total')}</p>
           </CardContent></Card>
           <Card className="border-yellow-200 bg-yellow-50"><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-yellow-700">{stats.pending_supervisor}</p>
-            <p className="text-xs text-muted-foreground">بانتظار المشرف</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.awaitingSupervisor')}</p>
           </CardContent></Card>
           <Card className="border-blue-200 bg-blue-50"><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-blue-700">{stats.pending_chairman}</p>
-            <p className="text-xs text-muted-foreground">بانتظار الرئيس</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.awaitingHead')}</p>
           </CardContent></Card>
           <Card className="border-green-200 bg-green-50"><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-green-700">{stats.approved}</p>
-            <p className="text-xs text-muted-foreground">معتمد</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.approved')}</p>
           </CardContent></Card>
           <Card className="border-red-200 bg-red-50"><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-red-700">{stats.rejected}</p>
-            <p className="text-xs text-muted-foreground">مرفوض</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.rejected')}</p>
           </CardContent></Card>
           <Card className="border-orange-200 bg-orange-50"><CardContent className="p-3 text-center">
             <p className="text-2xl font-bold text-orange-700">{stats.returned}</p>
-            <p className="text-xs text-muted-foreground">مُعاد</p>
+            <p className="text-xs text-muted-foreground">{t('files.stats.returned')}</p>
           </CardContent></Card>
         </div>
 
@@ -338,12 +338,12 @@ export default function Files() {
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input placeholder="بحث في الملفات..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10" />
+            <Input placeholder={t('files.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10" />
           </div>
           {canUploadFiles && (
             <Button onClick={() => setUploadOpen(true)} className="bg-primary hover:bg-primary/90">
               <Upload className="w-5 h-5 ml-2" />
-              رفع ملف جديد
+              {t('files.uploadFile')}
             </Button>
           )}
         </div>
@@ -351,12 +351,12 @@ export default function Files() {
         {/* Tabs */}
         <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
           <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
-            <TabsTrigger value="all">الكل</TabsTrigger>
-            <TabsTrigger value="pending_supervisor">بانتظار المشرف</TabsTrigger>
-            <TabsTrigger value="pending_chairman">بانتظار الرئيس</TabsTrigger>
-            <TabsTrigger value="approved">معتمد</TabsTrigger>
-            <TabsTrigger value="rejected">مرفوض</TabsTrigger>
-            <TabsTrigger value="returned">مُعاد</TabsTrigger>
+            <TabsTrigger value="all">{t('files.tabs.all')}</TabsTrigger>
+            <TabsTrigger value="pending_supervisor">{t('files.tabs.awaitingSupervisor')}</TabsTrigger>
+            <TabsTrigger value="pending_chairman">{t('files.tabs.awaitingHead')}</TabsTrigger>
+            <TabsTrigger value="approved">{t('files.tabs.approved')}</TabsTrigger>
+            <TabsTrigger value="rejected">{t('files.tabs.rejected')}</TabsTrigger>
+            <TabsTrigger value="returned">{t('files.tabs.returned')}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -366,13 +366,13 @@ export default function Files() {
         ) : filteredFiles.length === 0 ? (
           <Card className="text-center py-12"><CardContent>
             <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">لا توجد ملفات</p>
+            <p className="text-muted-foreground">{t('files.noFiles')}</p>
           </CardContent></Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredFiles.map(file => {
               const StatusIcon = statusConfig[file.status]?.icon || Clock;
-              const FileIcon = fileTypes.find(t => t.value === file.file_type)?.icon || File;
+              const FileIcon = fileTypes.find(ft => ft.value === file.file_type)?.icon || File;
               return (
                 <Card key={`${file._source || 'file'}-${file.id}`} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
@@ -391,28 +391,28 @@ export default function Files() {
                     <div className="flex flex-wrap gap-2 mb-3">
                       <Badge className={statusConfig[file.status]?.color}>
                         <StatusIcon className="w-3 h-3 ml-1" />
-                        {statusConfig[file.status]?.label}
+                        {t(statusConfig[file.status]?.labelKey)}
                       </Badge>
                       {file.committee_name && <Badge variant="outline">{file.committee_name}</Badge>}
-                      {file._source === 'evidence' && <Badge variant="outline">الأدلة المرفوعة</Badge>}
+                      {file._source === 'evidence' && <Badge variant="outline">{t('files.uploadedEvidence')}</Badge>}
                     </div>
 
                     {file.rejection_reason && (
-                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded mb-3">سبب: {file.rejection_reason}</p>
+                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded mb-3">{t('files.reason')}: {file.rejection_reason}</p>
                     )}
 
                     <div className="flex flex-wrap gap-2 pt-3 border-t">
                       <Button variant="outline" size="sm" onClick={() => handlePreviewFile(file.file_url)}>
-                        <Eye className="w-4 h-4 ml-1" />عرض
+                        <Eye className="w-4 h-4 ml-1" />{t('files.viewBtn')}
                       </Button>
 
                       {canApproveAsSupervisor(file) && (
                         <>
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setActionDialog({ open: true, file, action: 'approve_supervisor' })}>
-                            <Check className="w-4 h-4 ml-1" />اعتماد
+                            <Check className="w-4 h-4 ml-1" />{t('files.approveBtn')}
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setActionDialog({ open: true, file, action: 'reject' })}>
-                            <X className="w-4 h-4 ml-1" />رفض
+                            <X className="w-4 h-4 ml-1" />{t('files.rejectBtn')}
                           </Button>
                         </>
                       )}
@@ -420,17 +420,17 @@ export default function Files() {
                       {canApproveAsChairman(file) && (
                         <>
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setActionDialog({ open: true, file, action: 'approve_chairman' })}>
-                            <Check className="w-4 h-4 ml-1" />اعتماد نهائي
+                            <Check className="w-4 h-4 ml-1" />{t('files.finalApprove')}
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setActionDialog({ open: true, file, action: 'reject' })}>
-                            <X className="w-4 h-4 ml-1" />رفض
+                            <X className="w-4 h-4 ml-1" />{t('files.rejectBtn')}
                           </Button>
                         </>
                       )}
 
                       {canModifyOrDelete && file._source !== 'evidence' && (
                         <Button size="sm" variant="outline" onClick={() => setActionDialog({ open: true, file, action: 'return' })}>
-                          <RotateCcw className="w-4 h-4 ml-1" />إعادة
+                          <RotateCcw className="w-4 h-4 ml-1" />{t('files.returnBtn')}
                         </Button>
                       )}
 
@@ -451,30 +451,30 @@ export default function Files() {
       {/* Upload Dialog */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-lg">
-          <DialogHeader><DialogTitle>رفع ملف جديد</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('files.form.title')}</DialogTitle></DialogHeader>
           <form onSubmit={handleUpload} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>عنوان الملف *</Label>
+              <Label>{t('files.form.fileTitle')} *</Label>
               <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label>{t('files.form.description')}</Label>
               <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>نوع الملف</Label>
+                <Label>{t('files.form.fileType')}</Label>
                 <Select value={formData.file_type} onValueChange={(v) => setFormData({ ...formData, file_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {fileTypes.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                    {fileTypes.map(ft => <SelectItem key={ft.value} value={ft.value}>{t(ft.labelKey)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>اللجنة</Label>
+                <Label>{t('files.form.committee')}</Label>
                 <Select value={formData.committee_id} onValueChange={(v) => setFormData({ ...formData, committee_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر اللجنة" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('files.form.selectCommittee')} /></SelectTrigger>
                   <SelectContent>
                     {committees.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -482,14 +482,14 @@ export default function Files() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>الملف *</Label>
+              <Label>{t('files.form.file')} *</Label>
               <Input type="file" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" required />
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setUploadOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setUploadOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={uploading} className="bg-primary hover:bg-primary/90">
                 {uploading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                رفع الملف
+                {t('files.form.uploadBtn')}
               </Button>
             </div>
           </form>
@@ -501,24 +501,24 @@ export default function Files() {
         <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionDialog.action === 'approve_supervisor' && 'اعتماد أولي'}
-              {actionDialog.action === 'approve_chairman' && 'اعتماد نهائي'}
-              {actionDialog.action === 'reject' && 'رفض الملف'}
-              {actionDialog.action === 'return' && 'إعادة الملف'}
+              {actionDialog.action === 'approve_supervisor' && t('files.actions.initialApproval')}
+              {actionDialog.action === 'approve_chairman' && t('files.actions.finalApproval')}
+              {actionDialog.action === 'reject' && t('files.actions.rejectFile')}
+              {actionDialog.action === 'return' && t('files.actions.returnFile')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {(actionDialog.action === 'reject' || actionDialog.action === 'return') && (
                 <div className="mt-4">
-                  <Label>السبب</Label>
-                  <Textarea value={actionReason} onChange={(e) => setActionReason(e.target.value)} placeholder="أدخل السبب..." className="mt-2" />
+                  <Label>{t('files.actions.reasonLabel')}</Label>
+                  <Textarea value={actionReason} onChange={(e) => setActionReason(e.target.value)} placeholder={t('files.actions.reasonPlaceholder')} className="mt-2" />
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction} className={actionDialog.action?.includes('approve') ? 'bg-green-600' : 'bg-destructive'}>
-              تأكيد
+              {t('files.actions.confirmBtn')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -528,12 +528,12 @@ export default function Files() {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
         <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-            <AlertDialogDescription>هل أنت متأكد من حذف هذا الملف؟</AlertDialogDescription>
+            <AlertDialogTitle>{t('files.actions.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('files.actions.confirmDeleteMsg')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">{t('files.actions.deleteConfirmBtn')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

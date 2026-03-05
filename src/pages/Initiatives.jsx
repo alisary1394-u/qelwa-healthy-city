@@ -26,12 +26,12 @@ import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 import T from "@/components/T";
 
 const statusConfig = {
-  planning: { label: 'تخطيط', color: 'bg-slate-600', icon: Clock, gradient: 'from-slate-600 to-slate-700' },
-  approved: { label: 'معتمدة', color: 'bg-primary', icon: CheckCircle, gradient: 'from-[#1e3a5f] to-[#2d5a8e]' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-amber-700', icon: Play, gradient: 'from-amber-700 to-amber-800' },
-  completed: { label: 'مكتملة', color: 'bg-teal-700', icon: CheckCircle, gradient: 'from-[#0f766e] to-[#14918a]' },
-  on_hold: { label: 'متوقفة', color: 'bg-orange-700', icon: Pause, gradient: 'from-orange-700 to-orange-800' },
-  cancelled: { label: 'ملغاة', color: 'bg-destructive', icon: X, gradient: 'from-red-800 to-red-900' }
+  planning: { label: 'initiatives.planning', color: 'bg-slate-600', icon: Clock, gradient: 'from-slate-600 to-slate-700' },
+  approved: { label: 'initiatives.approvedStatus', color: 'bg-primary', icon: CheckCircle, gradient: 'from-[#1e3a5f] to-[#2d5a8e]' },
+  in_progress: { label: 'initiatives.inProgressStatus', color: 'bg-amber-700', icon: Play, gradient: 'from-amber-700 to-amber-800' },
+  completed: { label: 'initiatives.completedStatus', color: 'bg-teal-700', icon: CheckCircle, gradient: 'from-[#0f766e] to-[#14918a]' },
+  on_hold: { label: 'initiatives.paused', color: 'bg-orange-700', icon: Pause, gradient: 'from-orange-700 to-orange-800' },
+  cancelled: { label: 'initiatives.cancelledStatus', color: 'bg-destructive', icon: X, gradient: 'from-red-800 to-red-900' }
 };
 
 const normalizeInitiativeStatus = (status) => {
@@ -46,17 +46,17 @@ const normalizeInitiativeStatus = (status) => {
 };
 
 const priorityConfig = {
-  low: { label: 'منخفضة', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
-  medium: { label: 'متوسطة', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
-  high: { label: 'عالية', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-  urgent: { label: 'عاجلة', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
+  low: { label: 'priorities.low', color: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  medium: { label: 'priorities.medium', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  high: { label: 'priorities.high', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  urgent: { label: 'priorities.urgent', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
 };
 
 const impactConfig = {
-  low: 'تأثير محدود',
-  medium: 'تأثير متوسط',
-  high: 'تأثير كبير',
-  very_high: 'تأثير كبير جداً'
+  low: 'initiatives.impactLow',
+  medium: 'initiatives.impactMedium',
+  high: 'initiatives.impactHigh',
+  very_high: 'initiatives.impactVeryHigh'
 };
 
 const parseTeamMemberIds = (raw) => {
@@ -76,17 +76,17 @@ const parseTeamMemberIds = (raw) => {
 };
 
 const ROLE_LABELS_AR = {
-  governor: 'المشرف العام',
-  coordinator: 'منسق',
-  committee_head: 'رئيس لجنة',
-  committee_coordinator: 'منسق لجنة',
-  committee_supervisor: 'مشرف',
-  committee_member: 'عضو',
-  member: 'عضو',
-  volunteer: 'متطوع',
-  budget_manager: 'مدير ميزانية',
-  accountant: 'محاسب',
-  financial_officer: 'مسؤول مالي',
+  governor: 'rolesShort.governor',
+  coordinator: 'rolesShort.coordinator',
+  committee_head: 'rolesShort.committee_head',
+  committee_coordinator: 'rolesShort.committee_coordinator',
+  committee_supervisor: 'rolesShort.committee_supervisor',
+  committee_member: 'rolesShort.committee_member',
+  member: 'rolesShort.member',
+  volunteer: 'rolesShort.volunteer',
+  budget_manager: 'rolesShort.budget_manager',
+  accountant: 'rolesShort.accountant',
+  financial_officer: 'rolesShort.financial_officer',
 };
 
 const getRoleLabel = (role) => ROLE_LABELS_AR[role] || role || '';
@@ -496,7 +496,7 @@ export default function Initiatives() {
       (member.full_name || '').toLowerCase().includes(q) ||
       (member.phone || '').includes(q) ||
       (member.department || '').toLowerCase().includes(q) ||
-      (getRoleLabel(member.role) || '').toLowerCase().includes(q)
+      (t(getRoleLabel(member.role)) || '').toLowerCase().includes(q)
     );
   }, [availableTeamMembersForAdd, teamMemberSearch]);
 
@@ -653,7 +653,7 @@ export default function Initiatives() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة المبادرات. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-red-600 font-semibold">{t('initiatives.noAccess')} {t('initiatives.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -691,7 +691,7 @@ export default function Initiatives() {
       (m.full_name || '').toLowerCase().includes(q) ||
       (m.phone || '').includes(q) ||
       (m.email || '').toLowerCase().includes(q) ||
-      (getRoleLabel(m.role) || '').includes(q)
+      (t(getRoleLabel(m.role)) || '').includes(q)
     );
   })();
 
@@ -708,7 +708,7 @@ export default function Initiatives() {
       setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
       setAssignTeamOpen(false);
     } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر إضافة الأعضاء للفريق.\n${err?.message || err}`);
+      if (typeof window !== 'undefined') window.alert(`${t('initiatives.errorAddTeamMembers')}\n${err?.message || err}`);
     } finally {
       setAssignTeamLoading(false);
     }
@@ -734,7 +734,7 @@ export default function Initiatives() {
       setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
       setTeamMemberToAddId('');
     } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر إضافة العضو للفريق.\n${err?.message || err}`);
+      if (typeof window !== 'undefined') window.alert(`${t('initiatives.errorAddMember')}\n${err?.message || err}`);
     }
   };
 
@@ -756,14 +756,14 @@ export default function Initiatives() {
       queryClient.invalidateQueries({ queryKey: ['initiatives'] });
       setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
     } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر حذف العضو من الفريق.\n${err?.message || err}`);
+      if (typeof window !== 'undefined') window.alert(`${t('initiatives.errorRemoveMember')}\n${err?.message || err}`);
     }
   };
 
   const handleDeleteInitiative = async (initiative) => {
     if (!canManageInitiatives) return;
     if (!initiative?.id) return;
-    const confirmed = await requireSecureDeleteConfirmation(`المبادرة "${initiative.title}"`);
+    const confirmed = await requireSecureDeleteConfirmation(`${t('initiatives.confirmDeleteMsg')} "${initiative.title}"`);
     if (!confirmed) return;
 
     setDeletingInitiative(true);
@@ -783,7 +783,7 @@ export default function Initiatives() {
       }
     } catch (err) {
       if (typeof window !== 'undefined') {
-        window.alert(`تعذر حذف المبادرة.\n${err?.message || err}`);
+        window.alert(`${t('initiatives.errorDeleteInitiative')}\n${err?.message || err}`);
       }
     } finally {
       setDeletingInitiative(false);
@@ -799,7 +799,7 @@ export default function Initiatives() {
       const toCreate = selectedSuggestedKpis.filter((k) => !existing.has(String(k.kpi_name || '').trim()));
 
       if (toCreate.length === 0) {
-        if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة المؤشرات المقترحة مسبقاً.');
+        if (!silent && typeof window !== 'undefined') window.alert(t('initiatives.kpisAlreadyAdded'));
         return;
       }
 
@@ -815,9 +815,9 @@ export default function Initiatives() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['kpis', selectedInitiative.id] });
-      if (!silent && typeof window !== 'undefined') window.alert('تمت إضافة مؤشرات الأداء المقترحة للمبادرة.');
+      if (!silent && typeof window !== 'undefined') window.alert(t('initiatives.kpisAddedSuccess'));
     } catch (err) {
-      if (!silent && typeof window !== 'undefined') window.alert(`تعذر إضافة المؤشرات المقترحة.\n${err?.message || err}`);
+      if (!silent && typeof window !== 'undefined') window.alert(`${t('initiatives.errorAddKpis')}\n${err?.message || err}`);
     } finally {
       setApplyingSuggestedKpis(false);
     }
@@ -847,9 +847,9 @@ export default function Initiatives() {
       await api.entities.Initiative.update(selectedInitiative.id, updateData);
       queryClient.invalidateQueries({ queryKey: ['initiatives'] });
       setSelectedInitiative((prev) => (prev ? { ...prev, ...updateData } : prev));
-      if (!silent && typeof window !== 'undefined') window.alert('تم ربط الفريق المقترح بالمبادرة.');
+      if (!silent && typeof window !== 'undefined') window.alert(t('initiatives.teamLinkedSuccess'));
     } catch (err) {
-      if (!silent && typeof window !== 'undefined') window.alert(`تعذر ربط الفريق المقترح.\n${err?.message || err}`);
+      if (!silent && typeof window !== 'undefined') window.alert(`${t('initiatives.errorLinkTeam')}\n${err?.message || err}`);
     } finally {
       setApplyingSuggestedTeam(false);
     }
@@ -1031,8 +1031,8 @@ export default function Initiatives() {
               <Lightbulb className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">إدارة المبادرات</h1>
-              <p className="text-white/70 text-sm mt-1">مبادرات المدينة الصحية — المرتبطة بالمحاور والمعايير الـ 80</p>
+              <h1 className="text-2xl md:text-3xl font-bold">{t('initiatives.title')}</h1>
+              <p className="text-white/70 text-sm mt-1">{t('initiatives.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -1045,42 +1045,42 @@ export default function Initiatives() {
             <CardContent className="p-4 text-center">
               <Lightbulb className="w-8 h-8 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">إجمالي المبادرات</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.totalInitiatives')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Clock className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-2xl font-bold">{stats.planning}</p>
-              <p className="text-sm text-muted-foreground">تحت التخطيط</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.underPlanning')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Play className="w-8 h-8 mx-auto mb-2 text-amber-700 dark:text-amber-400" />
               <p className="text-2xl font-bold">{stats.inProgress}</p>
-              <p className="text-sm text-muted-foreground">قيد التنفيذ</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.inProgress')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{stats.completed}</p>
-              <p className="text-sm text-muted-foreground">مكتملة</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.completed')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-8 h-8 mx-auto mb-2 text-slate-600 dark:text-slate-400" />
               <p className="text-2xl font-bold">{stats.totalBeneficiaries}</p>
-              <p className="text-sm text-muted-foreground">المستفيدون</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.beneficiaries')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <DollarSign className="w-8 h-8 mx-auto mb-2 text-secondary" />
               <p className="text-2xl font-bold">{(stats.totalBudget / 1000).toFixed(0)}K</p>
-              <p className="text-sm text-muted-foreground">الميزانية</p>
+              <p className="text-sm text-muted-foreground">{t('initiatives.totalBudget')}</p>
             </CardContent>
           </Card>
         </div>
@@ -1090,7 +1090,7 @@ export default function Initiatives() {
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="بحث بالعنوان أو الرمز..."
+              placeholder={t('initiatives.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
@@ -1099,7 +1099,7 @@ export default function Initiatives() {
           {canManageInitiatives && (
             <Button onClick={() => { resetForm(); setFormOpen(true); }}>
               <Plus className="w-5 h-5 ml-2" />
-              مبادرة جديدة
+              {t('initiatives.addNewInitiative')}
             </Button>
           )}
         </div>
@@ -1107,11 +1107,11 @@ export default function Initiatives() {
         {/* Tabs */}
         <Tabs value={activeStatus} onValueChange={setActiveStatus} className="mb-6">
           <TabsList className="bg-card">
-            <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
-            <TabsTrigger value="planning">تخطيط ({stats.planning})</TabsTrigger>
-            <TabsTrigger value="approved">معتمدة ({stats.approved})</TabsTrigger>
-            <TabsTrigger value="in_progress">قيد التنفيذ ({stats.inProgress})</TabsTrigger>
-            <TabsTrigger value="completed">مكتملة ({stats.completed})</TabsTrigger>
+            <TabsTrigger value="all">{t('common.all')} ({stats.total})</TabsTrigger>
+            <TabsTrigger value="planning">{t('initiatives.planning')} ({stats.planning})</TabsTrigger>
+            <TabsTrigger value="approved">{t('initiatives.approvedStatus')} ({stats.approved})</TabsTrigger>
+            <TabsTrigger value="in_progress">{t('initiatives.inProgressStatus')} ({stats.inProgress})</TabsTrigger>
+            <TabsTrigger value="completed">{t('initiatives.completedStatus')} ({stats.completed})</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -1124,7 +1124,7 @@ export default function Initiatives() {
           <Card className="text-center py-12">
             <CardContent>
               <Lightbulb className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا توجد مبادرات</p>
+              <p className="text-muted-foreground">{t('initiatives.noInitiatives')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -1135,7 +1135,7 @@ export default function Initiatives() {
               const linkedTeam = getInitiativeLinkedTeam(initiative, members);
               const linkedTeamText = linkedTeam.length > 0
                 ? linkedTeam.slice(0, 2).map((m) => m.full_name).join('، ') + (linkedTeam.length > 2 ? ` +${linkedTeam.length - 2}` : '')
-                : 'غير مرتبط';
+                : t('initiatives.noTeamLinked');
               return (
                 <Card key={initiative.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 shadow-md">
                   {/* Header gradient bar */}
@@ -1146,11 +1146,11 @@ export default function Initiatives() {
                           <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{initiative.code}</span>
                           <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-white/25 text-white px-2 py-0.5 rounded-full">
                             <StatusIcon className="w-3 h-3" />
-                            {statusConfig[initiativeStatus]?.label}
+                            {t(statusConfig[initiativeStatus]?.label)}
                           </span>
                           {initiative.priority && (
                             <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white`}>
-                              {priorityConfig[initiative.priority]?.label}
+                              {t(priorityConfig[initiative.priority]?.label)}
                             </span>
                           )}
                         </div>
@@ -1173,7 +1173,7 @@ export default function Initiatives() {
                     {initiative.progress_percentage !== undefined && (
                       <div className="mb-3">
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">التقدم</span>
+                          <span className="text-muted-foreground">{t('common.progress')}</span>
                           <span className="font-semibold">{initiative.progress_percentage}%</span>
                         </div>
                         <Progress value={initiative.progress_percentage} className="h-2" />
@@ -1191,13 +1191,13 @@ export default function Initiatives() {
                       {initiative.budget > 0 && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
                           <DollarSign className="w-3 h-3" />
-                          {initiative.budget.toLocaleString()} ريال
+                          {initiative.budget.toLocaleString()} {t('common.sar')}
                         </span>
                       )}
                       {initiative.expected_beneficiaries > 0 && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800/30 dark:text-slate-300 px-2 py-0.5 rounded-full">
                           <TrendingUp className="w-3 h-3" />
-                          {initiative.expected_beneficiaries} مستفيد
+                          {initiative.expected_beneficiaries} {t('initiatives.beneficiary')}
                         </span>
                       )}
                     </div>
@@ -1211,22 +1211,22 @@ export default function Initiatives() {
                             <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
                               <UserCog className="w-4 h-4 text-primary mx-auto mb-0.5" />
                               <p className="text-lg font-bold text-primary">{teamStats.coordinators}</p>
-                              <p className="text-[10px] text-primary/70">منسق</p>
+                              <p className="text-[10px] text-primary/70">{t('initiatives.coordinator')}</p>
                             </div>
                             <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
                               <Users className="w-4 h-4 text-secondary mx-auto mb-0.5" />
                               <p className="text-lg font-bold text-secondary">{teamStats.members}</p>
-                              <p className="text-[10px] text-secondary/70">أعضاء</p>
+                              <p className="text-[10px] text-secondary/70">{t('initiatives.members')}</p>
                             </div>
                             <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
                               <Eye className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
                               <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{teamStats.supervisors}</p>
-                              <p className="text-[10px] text-amber-600/70">مشرفين</p>
+                              <p className="text-[10px] text-amber-600/70">{t('initiatives.supervisors')}</p>
                             </div>
                             <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
                               <HandHelping className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
                               <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{teamStats.volunteers}</p>
-                              <p className="text-[10px] text-slate-500">متطوعين</p>
+                              <p className="text-[10px] text-slate-500">{t('initiatives.volunteers')}</p>
                             </div>
                           </div>
                           {linkedTeam.length > 0 && (
@@ -1243,13 +1243,13 @@ export default function Initiatives() {
                                 </div>
                               )}
                             </div>
-                            <span className="text-xs text-muted-foreground">{teamStats.total} عضو</span>
+                            <span className="text-xs text-muted-foreground">{teamStats.total} {t('initiatives.member')}</span>
                           </div>
                           )}
                           {linkedTeam.length === 0 && (
                             <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
                               <Users className="w-3.5 h-3.5" />
-                              لا يوجد فريق مرتبط بعد
+                              {t('initiatives.noTeamLinked')}
                             </div>
                           )}
                         </>
@@ -1264,7 +1264,7 @@ export default function Initiatives() {
                         onClick={() => { setSelectedInitiative(initiative); setViewOpen(true); }}
                       >
                         <Eye className="w-4 h-4 ml-1" />
-                        عرض
+                        {t('initiatives.view')}
                       </Button>
                       {canManageInitiatives && (
                       <Button
@@ -1275,7 +1275,7 @@ export default function Initiatives() {
                         onClick={() => handleDeleteInitiative(initiative)}
                       >
                         <Trash2 className="w-4 h-4 ml-1" />
-                        حذف
+                        {t('common.delete')}
                       </Button>
                       )}
                       {canManageInitiatives && initiativeStatus === 'planning' && (
@@ -1285,7 +1285,7 @@ export default function Initiatives() {
                           onClick={() => handleStatusChange(initiative, 'approved')}
                         >
                           <CheckCircle className="w-4 h-4 ml-1" />
-                          اعتماد
+                          {t('initiatives.approveBtn')}
                         </Button>
                       )}
                       {canManageInitiatives && initiativeStatus === 'approved' && (
@@ -1297,7 +1297,7 @@ export default function Initiatives() {
                             onClick={() => handleStatusChange(initiative, 'planning')}
                           >
                             <Clock className="w-4 h-4 ml-1" />
-                            إعادة للانتظار
+                            {t('initiatives.returnToPending')}
                           </Button>
                           <Button 
                             size="sm" 
@@ -1305,7 +1305,7 @@ export default function Initiatives() {
                             onClick={() => handleStatusChange(initiative, 'in_progress')}
                           >
                             <Play className="w-4 h-4 ml-1" />
-                            بدء
+                            {t('initiatives.start')}
                           </Button>
                         </>
                       )}
@@ -1317,7 +1317,7 @@ export default function Initiatives() {
                           onClick={() => handleStatusChange(initiative, 'planning')}
                         >
                           <Clock className="w-4 h-4 ml-1" />
-                          إعادة للانتظار
+                          {t('initiatives.returnToPending')}
                         </Button>
                       )}
                     </div>
@@ -1333,45 +1333,45 @@ export default function Initiatives() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl">مبادرة جديدة</DialogTitle>
+            <DialogTitle className="text-xl">{t('initiatives.formTitle')}</DialogTitle>
           </DialogHeader>
           {openedFromStandardLabel && (
             <div className="rounded-md border border-purple-200 bg-purple-50 px-3 py-2 text-xs text-purple-800">
-              تم فتح هذا النموذج من بطاقة المعيار: <span className="font-semibold">{openedFromStandardLabel}</span>
+              {t('initiatives.openedFromStandard')} <span className="font-semibold">{openedFromStandardLabel}</span>
             </div>
           )}
           <form onSubmit={handleSave} className="space-y-6 mt-4">
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2 text-purple-600">
                 <Lightbulb className="w-5 h-5" />
-                المعلومات الأساسية
+                {t('initiatives.basicInfo')}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>رمز المبادرة</Label>
-                  <Input value={formData.code} readOnly disabled placeholder="يتم توليده تلقائيًا" />
+                  <Label>{t('initiatives.initiativeCode')}</Label>
+                  <Input value={formData.code} readOnly disabled placeholder={t('initiatives.autoGenerated')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>الأولوية *</Label>
+                  <Label>{t('initiatives.priorityLabel')} *</Label>
                   <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(priorityConfig).map(([key, val]) => (
-                        <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                        <SelectItem key={key} value={key}>{t(val.label)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>عنوان المبادرة *</Label>
+                  <Label>{t('initiatives.titleLabel')} *</Label>
                   <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>الوصف *</Label>
+                  <Label>{t('initiatives.descriptionLabel')} *</Label>
                   <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={3} />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>الأهداف</Label>
+                  <Label>{t('initiatives.objectives')}</Label>
                   <Textarea value={formData.objectives} onChange={(e) => setFormData({ ...formData, objectives: e.target.value })} rows={2} />
                 </div>
               </div>
@@ -1382,16 +1382,16 @@ export default function Initiatives() {
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2 text-blue-600">
                 <Target className="w-5 h-5" />
-                الارتباط التنظيمي
+                {t('initiatives.organizationalLink')}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>اللجنة *</Label>
+                  <Label>{t('initiatives.committeeLabel')} *</Label>
                   <Select value={formData.committee_id} onValueChange={(v) => {
                     const committee = committees.find(c => c.id === v);
                     setFormData({ ...formData, committee_id: v, committee_name: committee?.name });
                   }}>
-                    <SelectTrigger><SelectValue placeholder="اختر اللجنة" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('initiatives.selectCommittee')} /></SelectTrigger>
                     <SelectContent>
                       {committees.map(c => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -1400,12 +1400,12 @@ export default function Initiatives() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>المحور</Label>
+                  <Label>{t('initiatives.axisLabel')}</Label>
                   <Select value={formData.axis_id} onValueChange={(v) => {
                     const axis = axes.find(a => a.id === v);
                     setFormData({ ...formData, axis_id: v, axis_name: axis?.name });
                   }}>
-                    <SelectTrigger><SelectValue placeholder="اختر المحور" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('initiatives.selectAxisOptional')} /></SelectTrigger>
                     <SelectContent>
                       {axes.map(a => (
                         <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -1414,7 +1414,7 @@ export default function Initiatives() {
                   </Select>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>المعايير المرتبطة</Label>
+                  <Label>{t('initiatives.relatedStandards')}</Label>
                   {formData.axis_id && axisStandards.length > 0 ? (
                     <div className="border rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
                       {axisStandards.map(standard => (
@@ -1432,19 +1432,19 @@ export default function Initiatives() {
                   ) : (
                     <div className="border rounded-lg p-3 text-xs text-muted-foreground bg-muted/50">
                       {!formData.axis_id
-                        ? 'اختر محورًا أولاً لعرض المعايير المرتبطة.'
-                        : 'لا توجد معايير متاحة لهذا المحور حالياً.'}
+                        ? t('initiatives.selectAxisFirst')
+                        : t('initiatives.noStandardsForAxis')}
                     </div>
                   )}
 
                 </div>
                 <div className="space-y-2">
-                  <Label>قائد المبادرة</Label>
+                  <Label>{t('initiatives.leaderLabel')}</Label>
                   <Select value={formData.leader_id} onValueChange={(v) => {
                     const member = members.find(m => m.id === v);
                     setFormData({ ...formData, leader_id: v, leader_name: member?.full_name });
                   }}>
-                    <SelectTrigger><SelectValue placeholder="اختر القائد" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('initiatives.selectLeader')} /></SelectTrigger>
                     <SelectContent>
                       {members.map(m => (
                         <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
@@ -1453,12 +1453,12 @@ export default function Initiatives() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>مستوى التأثير</Label>
+                  <Label>{t('initiatives.impactLevel')}</Label>
                   <Select value={formData.impact_level} onValueChange={(v) => setFormData({ ...formData, impact_level: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(impactConfig).map(([key, val]) => (
-                        <SelectItem key={key} value={key}>{val}</SelectItem>
+                        <SelectItem key={key} value={key}>{t(val)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1471,33 +1471,33 @@ export default function Initiatives() {
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2 text-green-600">
                 <Calendar className="w-5 h-5" />
-                الجدول الزمني والميزانية
+                {t('initiatives.timeline')}
               </h3>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                <strong>💡 ملاحظة:</strong> يمكنك ربط المبادرة بميزانية وتخصيص مالي محدد. سيتم احتساب ميزانية المبادرة ضمن التخصيص المرتبط في صفحة الميزانية.
+                <strong>💡 {t('initiatives.budgetNoteTitle')}:</strong> {t('initiatives.budgetNoteText')}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>تاريخ البداية *</Label>
+                  <Label>{t('initiatives.startDateLabel')} *</Label>
                   <Input type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>تاريخ النهاية *</Label>
+                  <Label>{t('initiatives.endDateLabel')} *</Label>
                   <Input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>الميزانية المطلوبة (ريال)</Label>
+                  <Label>{t('initiatives.budgetLabel')}</Label>
                   <Input type="number" value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>ربط بميزانية</Label>
+                  <Label>{t('initiatives.linkBudget')}</Label>
                   <Select value={formData.budget_id || 'none'} onValueChange={(v) => {
                     const budget = budgets.find(b => b.id === v);
                     setFormData({ ...formData, budget_id: v === 'none' ? '' : v, budget_name: v === 'none' ? '' : budget?.name || '' });
                   }}>
-                    <SelectTrigger><SelectValue placeholder="اختر الميزانية (اختياري)" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('initiatives.selectBudgetOptional')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">بدون ربط</SelectItem>
+                      <SelectItem value="none">{t('initiatives.withoutLink')}</SelectItem>
                       {budgets.filter(b => b.status === 'active' || b.status === 'draft').map(budget => (
                         <SelectItem key={budget.id} value={budget.id}>
                           {budget.name} ({budget.fiscal_year})
@@ -1507,7 +1507,7 @@ export default function Initiatives() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>ربط بتخصيص مالي</Label>
+                  <Label>{t('initiatives.linkAllocation')}</Label>
                   <Select 
                     value={formData.budget_allocation_id || 'none'} 
                     onValueChange={(v) => {
@@ -1522,38 +1522,38 @@ export default function Initiatives() {
                     }}
                     disabled={!formData.budget_id && allocations.length === 0}
                   >
-                    <SelectTrigger><SelectValue placeholder="اختر التخصيص (اختياري)" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('initiatives.selectAllocationOptional')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">بدون ربط</SelectItem>
+                      <SelectItem value="none">{t('initiatives.withoutLink')}</SelectItem>
                       {allocations
                         .filter(a => !formData.budget_id || a.budget_id === formData.budget_id)
                         .map(allocation => (
                           <SelectItem key={allocation.id} value={allocation.id}>
-                            {allocation.committee_name || allocation.axis_name} - {allocation.category || 'تخصيص عام'} ({allocation.allocated_amount?.toLocaleString()} ريال)
+                            {allocation.committee_name || allocation.axis_name} - {allocation.category || t('initiatives.generalAllocation')} ({allocation.allocated_amount?.toLocaleString()} {t('common.sar')})
                           </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>عدد المستفيدين المتوقع</Label>
+                  <Label>{t('initiatives.expectedBeneficiaries')}</Label>
                   <Input type="number" value={formData.expected_beneficiaries} onChange={(e) => setFormData({ ...formData, expected_beneficiaries: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>الفئة المستهدفة</Label>
-                  <Input value={formData.target_audience} onChange={(e) => setFormData({ ...formData, target_audience: e.target.value })} placeholder="مثال: الأسر، الشباب، المرضى، إلخ" />
+                  <Label>{t('initiatives.targetAudience')}</Label>
+                  <Input value={formData.target_audience} onChange={(e) => setFormData({ ...formData, target_audience: e.target.value })} placeholder={t('initiatives.targetAudiencePlaceholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>الموقع/النطاق الجغرافي</Label>
+                  <Label>{t('initiatives.locationScope')}</Label>
                   <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>الشركاء</Label>
+                  <Label>{t('initiatives.partners')}</Label>
                   <Input value={formData.partners} onChange={(e) => setFormData({ ...formData, partners: e.target.value })} />
                 </div>
                 <div className="col-span-2 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>مؤشرات الأداء الرئيسية (KPIs)</Label>
+                    <Label>{t('initiatives.kpis')}</Label>
                     <Button
                       type="button"
                       size="sm"
@@ -1570,14 +1570,14 @@ export default function Initiatives() {
                       }}
                     >
                       <Plus className="w-4 h-4 ml-1" />
-                      إضافة مؤشر
+                      {t('initiatives.addKPI')}
                     </Button>
                   </div>
                   
                   {kpisList.length === 0 ? (
                     <div className="text-center py-4 border rounded-lg bg-muted/50">
                       <Target className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-                      <p className="text-sm text-muted-foreground">لم يتم إضافة مؤشرات أداء بعد</p>
+                      <p className="text-sm text-muted-foreground">{t('initiatives.noKPIsAdded')}</p>
                     </div>
                   ) : (
                     <div className="space-y-3 border rounded-lg p-3 max-h-64 overflow-y-auto">
@@ -1585,7 +1585,7 @@ export default function Initiatives() {
                         <Card key={index} className="bg-muted/50">
                           <CardContent className="p-3">
                             <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-semibold text-sm">مؤشر #{index + 1}</h4>
+                              <h4 className="font-semibold text-sm">{t('initiatives.kpiNumber', { number: index + 1 })}</h4>
                               <Button
                                 type="button"
                                 size="sm"
@@ -1600,7 +1600,7 @@ export default function Initiatives() {
                             <div className="grid grid-cols-2 gap-2 text-sm">
                               <div className="col-span-2">
                                 <Input
-                                  placeholder="اسم المؤشر *"
+                                  placeholder={t('initiatives.kpiName')}
                                   value={kpi.kpi_name}
                                   onChange={(e) => {
                                     const newList = [...kpisList];
@@ -1612,7 +1612,7 @@ export default function Initiatives() {
                               </div>
                               <Input
                                 type="number"
-                                placeholder="القيمة المستهدفة"
+                                placeholder={t('initiatives.kpiTarget')}
                                 value={kpi.target_value}
                                 onChange={(e) => {
                                   const newList = [...kpisList];
@@ -1621,7 +1621,7 @@ export default function Initiatives() {
                                 }}
                               />
                               <Input
-                                placeholder="وحدة القياس"
+                                placeholder={t('initiatives.kpiUnit')}
                                 value={kpi.unit}
                                 onChange={(e) => {
                                   const newList = [...kpisList];
@@ -1641,11 +1641,11 @@ export default function Initiatives() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="يومي">يومي</SelectItem>
-                                  <SelectItem value="أسبوعي">أسبوعي</SelectItem>
-                                  <SelectItem value="شهري">شهري</SelectItem>
-                                  <SelectItem value="ربع سنوي">ربع سنوي</SelectItem>
-                                  <SelectItem value="سنوي">سنوي</SelectItem>
+                                  <SelectItem value="يومي">{t('initiatives.daily')}</SelectItem>
+                                  <SelectItem value="أسبوعي">{t('initiatives.weekly')}</SelectItem>
+                                  <SelectItem value="شهري">{t('initiatives.monthly')}</SelectItem>
+                                  <SelectItem value="ربع سنوي">{t('initiatives.quarterly')}</SelectItem>
+                                  <SelectItem value="سنوي">{t('initiatives.annual')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1656,17 +1656,17 @@ export default function Initiatives() {
                   )}
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>ملاحظات</Label>
+                  <Label>{t('initiatives.notes')}</Label>
                   <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={2} />
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
                 {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                حفظ المبادرة
+                {t('initiatives.saveInitiative')}
               </Button>
             </div>
           </form>
@@ -1677,7 +1677,7 @@ export default function Initiatives() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'} className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تفاصيل المبادرة - {selectedInitiative?.code}</DialogTitle>
+            <DialogTitle>{t('initiatives.viewTitle')} - {selectedInitiative?.code}</DialogTitle>
           </DialogHeader>
           {selectedInitiative && (
             <div className="space-y-4 mt-4">
@@ -1690,10 +1690,10 @@ export default function Initiatives() {
                     </div>
                     <div className="flex gap-2">
                       <Badge className={statusConfig[selectedInitiativeStatus]?.color}>
-                        {statusConfig[selectedInitiativeStatus]?.label}
+                        {t(statusConfig[selectedInitiativeStatus]?.label)}
                       </Badge>
                       <Badge className={priorityConfig[selectedInitiative.priority]?.color}>
-                        {priorityConfig[selectedInitiative.priority]?.label}
+                        {t(priorityConfig[selectedInitiative.priority]?.label)}
                       </Badge>
                     </div>
                   </div>
@@ -1701,50 +1701,50 @@ export default function Initiatives() {
                 <CardContent className="space-y-4">
                   {selectedInitiative.objectives && (
                     <div>
-                      <h4 className="font-semibold mb-1">الأهداف:</h4>
+                      <h4 className="font-semibold mb-1">{t('initiatives.objectivesView')}:</h4>
                       <p className="text-sm text-muted-foreground">{selectedInitiative.objectives}</p>
                     </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">اللجنة:</span>
+                      <span className="text-muted-foreground">{t('initiatives.committeeView')}:</span>
                       <p className="font-semibold">{selectedInitiative.committee_name}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">المحور:</span>
+                      <span className="text-muted-foreground">{t('initiatives.axis')}:</span>
                       <p className="font-semibold">{selectedInitiative.axis_name}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">الفترة:</span>
+                      <span className="text-muted-foreground">{t('initiatives.period')}:</span>
                       <p className="font-semibold">{selectedInitiative.start_date} - {selectedInitiative.end_date}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">القائد:</span>
-                      <p className="font-semibold">{selectedInitiative.leader_name || 'غير محدد'}</p>
+                      <span className="text-muted-foreground">{t('initiatives.leader')}:</span>
+                      <p className="font-semibold">{selectedInitiative.leader_name || t('initiatives.unassigned')}</p>
                     </div>
                     {selectedInitiative.budget > 0 && (
                       <div>
-                        <span className="text-muted-foreground">الميزانية:</span>
-                        <p className="font-semibold">{selectedInitiative.budget.toLocaleString()} ريال</p>
+                        <span className="text-muted-foreground">{t('initiatives.budgetView')}:</span>
+                        <p className="font-semibold">{selectedInitiative.budget.toLocaleString()} {t('common.sar')}</p>
                       </div>
                     )}
                     {selectedInitiative.budget_allocation_id && (
                       <div>
-                        <span className="text-muted-foreground">ربط المخصص المالي:</span>
-                        <p className="font-semibold">{selectedInitiative.budget_name || 'ميزانية مرتبطة'} — {selectedInitiative.budget_allocation_category || 'بند مخصصات'}</p>
+                        <span className="text-muted-foreground">{t('initiatives.allocationLink')}:</span>
+                        <p className="font-semibold">{selectedInitiative.budget_name || t('initiatives.linkedBudget')} — {selectedInitiative.budget_allocation_category || t('initiatives.allocationItem')}</p>
                       </div>
                     )}
                     {selectedInitiative.expected_beneficiaries > 0 && (
                       <div>
-                        <span className="text-muted-foreground">المستفيدون المتوقعون:</span>
+                        <span className="text-muted-foreground">{t('initiatives.beneficiariesView')}:</span>
                         <p className="font-semibold">{selectedInitiative.expected_beneficiaries}</p>
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <h4 className="font-semibold mb-2">المعايير المرتبطة:</h4>
+                    <h4 className="font-semibold mb-2">{t('initiatives.relatedStandards')}:</h4>
                     {selectedLinkedStandardIds.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {selectedLinkedStandardIds.map((sid) => {
@@ -1757,25 +1757,25 @@ export default function Initiatives() {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">لا يوجد معيار مرتبط بهذه المبادرة حالياً.</p>
+                      <p className="text-sm text-muted-foreground">{t('initiatives.noLinkedStandard')}</p>
                     )}
                   </div>
 
                   <div>
-                    <h4 className="font-semibold mb-2">فريق المبادرة المرتبط:</h4>
+                    <h4 className="font-semibold mb-2">{t('initiatives.linkedTeam')}:</h4>
                     {selectedLinkedTeam.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">لا يوجد فريق مرتبط حالياً.</p>
+                      <p className="text-sm text-muted-foreground">{t('initiatives.noLinkedTeam')}</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {selectedLinkedTeam.map((member) => (
                           <div key={member.id} className="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs bg-card">
-                            <span>{member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}</span>
+                            <span>{member.full_name} {member.role ? `(${t(getRoleLabel(member.role))})` : ''}</span>
                             {canManageInitiatives && (
                               <button
                                 type="button"
                                 className="text-red-600 hover:text-red-700"
                                 onClick={() => handleRemoveTeamMember(member.id)}
-                                title="حذف من الفريق"
+                                title={t('initiatives.removeFromTeam')}
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -1792,26 +1792,26 @@ export default function Initiatives() {
                         className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                       >
                         <UserPlus className="w-4 h-4 ml-2" />
-                        إضافة أعضاء للفريق
+                        {t('initiatives.addTeamMembers')}
                       </Button>
                           <div className="relative">
                             <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
                             <Input
                               value={teamMemberSearch}
                               onChange={(e) => setTeamMemberSearch(e.target.value)}
-                              placeholder="بحث سريع بالاسم أو الجوال أو الجهة..."
+                              placeholder={t('initiatives.quickSearchPlaceholder')}
                               className="pr-9 sm:w-[320px]"
                             />
                           </div>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Select value={teamMemberToAddId} onValueChange={setTeamMemberToAddId}>
                           <SelectTrigger className="sm:w-[320px]">
-                            <SelectValue placeholder="أو اختر عضوًا سريعًا..." />
+                            <SelectValue placeholder={t('initiatives.quickSelectMember')} />
                           </SelectTrigger>
                           <SelectContent>
                                 {filteredTeamMembersForQuickAdd.map((member) => (
                               <SelectItem key={member.id} value={String(member.id)}>
-                                {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
+                                {member.full_name} {member.role ? `(${t(getRoleLabel(member.role))})` : ''}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1823,7 +1823,7 @@ export default function Initiatives() {
                           disabled={!teamMemberToAddId}
                         >
                           <Plus className="w-4 h-4 ml-1" />
-                          إضافة
+                          {t('common.add')}
                         </Button>
                       </div>
                     </div>
@@ -1831,14 +1831,14 @@ export default function Initiatives() {
                   </div>
 
                   <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm">
-                    <h4 className="font-semibold text-blue-800 mb-2">فريق عمل مقترح للمبادرة</h4>
+                    <h4 className="font-semibold text-blue-800 mb-2">{t('initiatives.suggestedTeam')}</h4>
                     {selectedSuggestedTeam.length === 0 ? (
-                      <p className="text-blue-700 text-xs">تم اعتماد الفريق المقترح الحالي أو لا توجد أسماء إضافية.</p>
+                      <p className="text-blue-700 text-xs">{t('initiatives.suggestedTeamEmpty')}</p>
                     ) : (
                       <div className="flex flex-wrap gap-2 mb-1">
                         {selectedSuggestedTeam.map((member) => (
                           <Badge key={member.id} className="bg-card text-blue-700 border border-blue-200">
-                            {member.full_name} {member.role ? `(${getRoleLabel(member.role)})` : ''}
+                            {member.full_name} {member.role ? `(${t(getRoleLabel(member.role))})` : ''}
                           </Badge>
                         ))}
                       </div>
@@ -1846,7 +1846,7 @@ export default function Initiatives() {
                   </div>
 
                   <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 text-sm">
-                    <h4 className="font-semibold text-indigo-800 mb-2">الأعمال المطلوبة من فريق المبادرة</h4>
+                    <h4 className="font-semibold text-indigo-800 mb-2">{t('initiatives.suggestedTasks')}</h4>
                     <ul className="list-disc pr-5 space-y-1 text-indigo-700 text-xs">
                       {selectedSuggestedTasks.map((task, idx) => (
                         <li key={`task-${idx}`}>{task}</li>
@@ -1857,14 +1857,14 @@ export default function Initiatives() {
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm">
                     <h4 className="font-semibold text-amber-800 mb-2 flex items-center gap-1">
                       <Target className="w-4 h-4" />
-                      المستندات المطلوبة (مرجع)
+                      {t('initiatives.suggestedDocs')}
                     </h4>
                     <ul className="list-disc pr-5 space-y-1 text-amber-700 text-xs mb-2">
                       {selectedSuggestedDocs.map((doc, idx) => (
                         <li key={`doc-${idx}`}>{doc}</li>
                       ))}
                     </ul>
-                    <p className="text-amber-600 text-xs">التسمية: <code className="bg-amber-100 px-1 rounded">A[محور]-M[معيار]-[نوع]-YYYY-MM-DD-v1.pdf</code></p>
+                    <p className="text-amber-600 text-xs">{t('initiatives.namingConvention')}: <code className="bg-amber-100 px-1 rounded">A[محور]-M[معيار]-[نوع]-YYYY-MM-DD-v1.pdf</code></p>
                   </div>
 
                   {canManageInitiatives && (
@@ -1877,7 +1877,7 @@ export default function Initiatives() {
                       onClick={() => handleDeleteInitiative(selectedInitiative)}
                     >
                       <Trash2 className="w-4 h-4 ml-1" />
-                      حذف المبادرة
+                      {t('initiatives.confirmDeleteInitiative')}
                     </Button>
                     {selectedInitiativeStatus === 'planning' && (
                       <Button
@@ -1886,7 +1886,7 @@ export default function Initiatives() {
                         onClick={() => handleStatusChange(selectedInitiative, 'approved')}
                       >
                         <CheckCircle className="w-4 h-4 ml-1" />
-                        اعتماد
+                        {t('initiatives.approveBtn')}
                       </Button>
                     )}
                     {selectedInitiativeStatus === 'approved' && (
@@ -1897,7 +1897,7 @@ export default function Initiatives() {
                           onClick={() => handleStatusChange(selectedInitiative, 'planning')}
                         >
                           <Clock className="w-4 h-4 ml-1" />
-                          إعادة للانتظار
+                          {t('initiatives.returnToPending')}
                         </Button>
                         <Button
                           size="sm"
@@ -1905,7 +1905,7 @@ export default function Initiatives() {
                           onClick={() => handleStatusChange(selectedInitiative, 'in_progress')}
                         >
                           <Play className="w-4 h-4 ml-1" />
-                          بدء
+                          {t('initiatives.start')}
                         </Button>
                       </>
                     )}
@@ -1916,7 +1916,7 @@ export default function Initiatives() {
                         onClick={() => handleStatusChange(selectedInitiative, 'planning')}
                       >
                         <Clock className="w-4 h-4 ml-1" />
-                        إعادة للانتظار
+                        {t('initiatives.returnToPending')}
                       </Button>
                     )}
                   </div>
@@ -1936,7 +1936,7 @@ export default function Initiatives() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-green-600" />
-              إضافة أعضاء لفريق المبادرة
+              {t('initiatives.assignTeamTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
@@ -1946,7 +1946,7 @@ export default function Initiatives() {
               <Input
                 value={assignTeamSearch}
                 onChange={(e) => setAssignTeamSearch(e.target.value)}
-                placeholder="بحث بالاسم أو الجوال أو الدور..."
+                placeholder={t('initiatives.searchMembers')}
                 className="pr-9"
               />
             </div>
@@ -1956,10 +1956,10 @@ export default function Initiatives() {
               <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
                 <span className="text-sm text-green-700 font-medium">
                   <UserCheck className="w-4 h-4 inline ml-1" />
-                  تم تحديد {assignTeamSelected.length} عضو
+                  {t('initiatives.selectedCount', { count: assignTeamSelected.length })}
                 </span>
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7" onClick={() => setAssignTeamSelected([])}>
-                  إلغاء التحديد
+                  {t('initiatives.deselectAll')}
                 </Button>
               </div>
             )}
@@ -1968,7 +1968,7 @@ export default function Initiatives() {
             <div className="border rounded-lg max-h-[320px] overflow-y-auto divide-y">
               {filteredAssignTeamMembers.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  {assignTeamSearch ? 'لا توجد نتائج مطابقة' : 'لا يوجد أعضاء متاحون'}
+                  {assignTeamSearch ? t('initiatives.noMatchingResults') : t('initiatives.allMembersAssigned')}
                 </div>
               ) : (
                 filteredAssignTeamMembers.map(m => {
@@ -1992,7 +1992,7 @@ export default function Initiatives() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{m.full_name}</p>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <span>{getRoleLabel(m.role)}</span>
+                          <span>{t(getRoleLabel(m.role))}</span>
                           {memberCommittee && (
                             <>
                               <span>•</span>
@@ -2010,14 +2010,14 @@ export default function Initiatives() {
 
             {/* Actions */}
             <div className="flex gap-3 justify-end pt-2">
-              <Button type="button" variant="outline" onClick={() => setAssignTeamOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setAssignTeamOpen(false)}>{t('common.cancel')}</Button>
               <Button
                 onClick={handleAssignTeamMembers}
                 disabled={assignTeamSelected.length === 0 || assignTeamLoading}
                 className="bg-green-600 hover:bg-green-700"
               >
                 {assignTeamLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                إضافة {assignTeamSelected.length > 0 ? `(${assignTeamSelected.length})` : ''} للفريق
+                {t('initiatives.addToTeam')} {assignTeamSelected.length > 0 ? `(${assignTeamSelected.length})` : ''}
               </Button>
             </div>
           </div>

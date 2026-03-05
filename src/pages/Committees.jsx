@@ -167,7 +167,7 @@ export default function Committees() {
       <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-destructive font-semibold">غير مصرح لك بالوصول إلى صفحة اللجان. الصلاحيات مرتبطة بمنصبك في الفريق.</p>
+            <p className="text-destructive font-semibold">{t('committees.noAccess')} {t('committees.noAccessNote')}</p>
           </CardContent>
         </Card>
       </div>
@@ -224,7 +224,7 @@ export default function Committees() {
   const handleDelete = async () => {
     if (!canManage) return;
     if (deleteDialog.committee) {
-      const confirmed = await requireSecureDeleteConfirmation(`اللجنة "${deleteDialog.committee.name}"`);
+      const confirmed = await requireSecureDeleteConfirmation(`${t('committees.deleteCommittee')} "${deleteDialog.committee.name}"`);
       if (!confirmed) return;
       await deleteMutation.mutateAsync(deleteDialog.committee.id);
       setDeleteDialog({ open: false, committee: null });
@@ -310,20 +310,20 @@ export default function Committees() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
             <Building className="w-8 h-8" />
-            إدارة اللجان
+            {t('committees.title')}
           </h1>
-          <p className="text-white/70">لجان برنامج المدينة الصحية</p>
+          <p className="text-white/70">{t('committees.subtitle')}</p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">{summaryStats.committees}</p><p className="text-sm text-muted-foreground">إجمالي اللجان</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.activeCommittees}</p><p className="text-sm text-muted-foreground">لجان نشطة</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{summaryStats.totalMembers}</p><p className="text-sm text-muted-foreground">إجمالي الأعضاء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-700 dark:text-sky-400">{summaryStats.coordinators}</p><p className="text-sm text-muted-foreground">المنسقون والرؤساء</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summaryStats.supervisors}</p><p className="text-sm text-muted-foreground">المشرفون</p></CardContent></Card>
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.volunteers}</p><p className="text-sm text-muted-foreground">المتطوعون</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-primary">{summaryStats.committees}</p><p className="text-sm text-muted-foreground">{t('committees.totalCommittees')}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.activeCommittees}</p><p className="text-sm text-muted-foreground">{t('committees.activeCommittees')}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{summaryStats.totalMembers}</p><p className="text-sm text-muted-foreground">{t('committees.totalMembers')}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-sky-700 dark:text-sky-400">{summaryStats.coordinators}</p><p className="text-sm text-muted-foreground">{t('committees.coordinatorsAndHeads')}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summaryStats.supervisors}</p><p className="text-sm text-muted-foreground">{t('committees.supervisorsTotal')}</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-secondary">{summaryStats.volunteers}</p><p className="text-sm text-muted-foreground">{t('committees.volunteersTotal')}</p></CardContent></Card>
         </div>
 
         {/* Search + Filters */}
@@ -333,7 +333,7 @@ export default function Committees() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث في اللجان (الاسم، الوصف، المحور)..."
+              placeholder={t('committees.searchPlaceholder')}
               className="pr-9"
             />
           </div>
@@ -341,36 +341,36 @@ export default function Committees() {
             <Filter className="w-4 h-4 text-muted-foreground" />
             <Select value={filterAxis} onValueChange={setFilterAxis}>
               <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
-                <SelectValue placeholder="جميع المحاور" />
+                <SelectValue placeholder={t('committees.allAxes')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع المحاور</SelectItem>
+                <SelectItem value="all">{t('committees.allAxes')}</SelectItem>
                 {axes.map(axis => (
                   <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
                 ))}
-                <SelectItem value="none">بدون محور</SelectItem>
+                <SelectItem value="none">{t('committees.withoutAxis')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-auto min-w-[120px] h-9 text-sm">
-                <SelectValue placeholder="جميع الحالات" />
+                <SelectValue placeholder={t('committees.allStatuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="active">نشطة فقط</SelectItem>
-                <SelectItem value="inactive">غير نشطة</SelectItem>
+                <SelectItem value="all">{t('committees.allStatuses')}</SelectItem>
+                <SelectItem value="active">{t('committees.activeOnly')}</SelectItem>
+                <SelectItem value="inactive">{t('committees.inactiveOnly')}</SelectItem>
               </SelectContent>
             </Select>
             {(filterAxis !== 'all' || filterStatus !== 'all') && (
               <Button variant="ghost" size="sm" className="h-9 text-sm text-muted-foreground" onClick={() => { setFilterAxis('all'); setFilterStatus('all'); }}>
-                إزالة الفلاتر
+                {t('committees.removeFilters')}
               </Button>
             )}
             <div className="flex-1" />
             {canManage && (
               <Button onClick={() => handleOpenForm()} className="bg-primary hover:bg-primary/90 h-9">
                 <Plus className="w-4 h-4 ml-1" />
-                إضافة لجنة
+                {t('committees.addCommittee')}
               </Button>
             )}
           </div>
@@ -384,10 +384,10 @@ export default function Committees() {
           <Card className="text-center py-12">
             <CardContent>
               <Building className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">لا توجد نتائج مطابقة للبحث</p>
+              <p className="text-muted-foreground">{t('committees.noResults')}</p>
               {canManage && (
                 <Button variant="outline" className="mt-4" onClick={() => handleOpenForm()}>
-                  إضافة لجنة جديدة
+                  {t('committees.addNewCommittee')}
                 </Button>
               )}
             </CardContent>
@@ -430,7 +430,7 @@ export default function Committees() {
                       <div className="flex items-center gap-1 shrink-0">
                         <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-black/20 text-white/80'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-300' : 'bg-gray-300'}`}></span>
-                          {isActive ? 'نشطة' : 'غير نشطة'}
+                          {isActive ? t('committees.activeStatus') : t('committees.inactiveStatus')}
                         </span>
                         {canManage && (
                           <DropdownMenu>
@@ -442,11 +442,11 @@ export default function Committees() {
                             <DropdownMenuContent align="start" dir={rtl ? 'rtl' : 'ltr'}>
                               <DropdownMenuItem onClick={() => handleOpenForm(committee)} className="gap-2">
                                 <Edit className="w-4 h-4 text-primary" />
-                                <span>تعديل اللجنة</span>
+                                <span>{t('committees.editBtn')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleOpenAssignMember(committee)} className="gap-2">
                                 <UserPlus className="w-4 h-4 text-secondary" />
-                                <span>إضافة عضو</span>
+                                <span>{t('committees.addMember')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 setEditingCommittee(null);
@@ -454,17 +454,17 @@ export default function Committees() {
                                 setFormOpen(true);
                               }} className="gap-2">
                                 <Building className="w-4 h-4 text-indigo-600" />
-                                <span>إضافة لجنة فرعية</span>
+                                <span>{t('committees.addSubCommittee')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleStatus(committee)} className="gap-2">
                                 <Power className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-secondary'}`} />
-                                <span>{isActive ? 'تعطيل اللجنة' : 'تفعيل اللجنة'}</span>
+                                <span>{isActive ? t('committees.disableCommittee') : t('committees.enableCommittee')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, committee })} className="gap-2 text-destructive focus:text-destructive">
                                 <Trash2 className="w-4 h-4" />
-                                <span>حذف اللجنة</span>
+                                <span>{t('committees.deleteCommittee')}</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -482,13 +482,13 @@ export default function Committees() {
                     {committee.parent_committee_name && (
                       <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
                         <Building className="w-3.5 h-3.5 text-primary/70" />
-                        <span>تابعة لـ: <strong className="text-foreground"><T>{committee.parent_committee_name}</T></strong></span>
+                        <span>{t('committees.belongsTo')} <strong className="text-foreground"><T>{committee.parent_committee_name}</T></strong></span>
                         <span className={`mr-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           committee.level === 'main' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
                           committee.level === 'primary' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                           'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                         }`}>
-                          {committee.level === 'main' ? '🏢 رئيسية' : committee.level === 'primary' ? '📋 رئيسية' : '📌 فرعية'}
+                          {committee.level === 'main' ? `🏢 ${t('committees.mainLevel')}` : committee.level === 'primary' ? `📋 ${t('committees.primaryLevel')}` : `📌 ${t('committees.subLevel')}`}
                         </span>
                       </div>
                     )}
@@ -500,7 +500,7 @@ export default function Committees() {
                         <div className="flex items-center gap-1.5 mb-2 text-xs">
                           <span className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-medium">
                             <Building className="w-3 h-3" />
-                            {subCommittees.length} لجنة فرعية
+                            {subCommittees.length} {t('committees.subCommittee')}
                           </span>
                           <span className="text-muted-foreground truncate">
                             ({subCommittees.map(s => s.name).join('، ')})
@@ -514,7 +514,7 @@ export default function Committees() {
                       {standardsCount > 0 && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           <BookOpen className="w-3 h-3" />
-                          {standardsCount} معيار
+                          {standardsCount} {t('committees.standardLabel')}
                         </span>
                       )}
                       {committee.related_standards && (() => {
@@ -522,7 +522,7 @@ export default function Committees() {
                         return rs.length > 0 ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3 h-3" />
-                            {rs.length} مرتبط
+                            {rs.length} {t('committees.linked')}
                           </span>
                         ) : null;
                       })()}
@@ -533,22 +533,22 @@ export default function Committees() {
                       <div className="text-center p-2 rounded-lg bg-primary/5 dark:bg-primary/10">
                         <UserCog className="w-4 h-4 text-primary mx-auto mb-0.5" />
                         <p className="text-lg font-bold text-primary">{stats.coordinators}</p>
-                        <p className="text-[10px] text-primary/70">منسق</p>
+                        <p className="text-[10px] text-primary/70">{t('committees.coordinatorStat')}</p>
                       </div>
                       <div className="text-center p-2 rounded-lg bg-secondary/5 dark:bg-secondary/10">
                         <Users className="w-4 h-4 text-secondary mx-auto mb-0.5" />
                         <p className="text-lg font-bold text-secondary">{stats.committee_members}</p>
-                        <p className="text-[10px] text-secondary/70">أعضاء</p>
+                        <p className="text-[10px] text-secondary/70">{t('committees.membersStat')}</p>
                       </div>
                       <div className="text-center p-2 rounded-lg bg-amber-50/80 dark:bg-amber-900/10">
                         <Eye className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-0.5" />
                         <p className="text-lg font-bold text-amber-800 dark:text-amber-300">{stats.supervisors}</p>
-                        <p className="text-[10px] text-amber-600/70">مشرفين</p>
+                        <p className="text-[10px] text-amber-600/70">{t('committees.supervisorsStat')}</p>
                       </div>
                       <div className="text-center p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/30">
                         <HandHelping className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto mb-0.5" />
                         <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{stats.volunteers}</p>
-                        <p className="text-[10px] text-slate-500">متطوعين</p>
+                        <p className="text-[10px] text-slate-500">{t('committees.volunteersStat')}</p>
                       </div>
                     </div>
 
@@ -567,13 +567,13 @@ export default function Committees() {
                             </div>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground">{stats.total} عضو</span>
+                        <span className="text-xs text-muted-foreground">{t('committees.membersCount', { count: stats.total })}</span>
                       </div>
                     )}
                     {committeeMembers.length === 0 && (
                       <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
                         <Users className="w-3.5 h-3.5" />
-                        لا يوجد أعضاء بعد
+                        {t('committees.noMembersYet')}
                       </div>
                     )}
 
@@ -582,14 +582,14 @@ export default function Committees() {
                       <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/5 group-hover:border-primary/30 group-hover:text-primary transition-colors">
                           <Users className="w-3.5 h-3.5 ml-1" />
-                          الأعضاء
+                          {t('committees.membersTitle')}
                           <ChevronLeft className="w-3.5 h-3.5 mr-auto" />
                         </Button>
                       </Link>
                       {canManage && (
                         <Button variant="outline" size="sm" className="group-hover:bg-secondary/5 group-hover:border-secondary/30 group-hover:text-secondary transition-colors" onClick={() => handleOpenAssignMember(committee)}>
                           <UserPlus className="w-3.5 h-3.5 ml-1" />
-                          إضافة عضو
+                          {t('committees.addMemberBtn')}
                         </Button>
                       )}
                     </div>
@@ -605,14 +605,14 @@ export default function Committees() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>{editingCommittee ? 'تعديل اللجنة' : 'إضافة لجنة جديدة'}</DialogTitle>
+            <DialogTitle>{editingCommittee ? t('committees.editFormTitle') : t('committees.formTitle')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 mt-4">
             {/* حقل اللجنة الأم */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <Building className="w-4 h-4 text-primary" />
-                تابعة لـ (اللجنة الأم)
+                {t('committees.parentCommittee')}
               </Label>
               <Select
                 value={formData.parent_committee_id || 'none'}
@@ -635,10 +635,10 @@ export default function Committees() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر اللجنة الأم (اختياري)" />
+                  <SelectValue placeholder={t('committees.selectParent')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">بدون ربط (لجنة مستقلة)</SelectItem>
+                  <SelectItem value="none">{t('committees.independent')}</SelectItem>
                   {committees
                     .filter(c => !editingCommittee || c.id !== editingCommittee.id)
                     .filter(c => c.level === 'main' || c.type === 'main' || !c.parent_committee_id)
@@ -653,33 +653,33 @@ export default function Committees() {
               {formData.parent_committee_id && (
                 <div className="flex items-center gap-2 text-xs px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                   <span className="text-green-700 dark:text-green-300 font-semibold">
-                    {formData.level === 'primary' ? '📋 ستُنشأ كـ: لجنة رئيسية' : '📌 ستُنشأ كـ: لجنة فرعية'}
+                    {formData.level === 'primary' ? `📋 ${t('committees.createdAsMain')}` : `📌 ${t('committees.createdAsSub')}`}
                   </span>
-                  <span className="text-green-600 dark:text-green-400">← تابعة لـ {formData.parent_committee_name}</span>
+                  <span className="text-green-600 dark:text-green-400">← {t('committees.belongsTo')} {formData.parent_committee_name}</span>
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>اسم اللجنة *</Label>
+              <Label>{t('committees.nameLabel')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="مثال: لجنة الصحة العامة"
+                placeholder={t('committees.namePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label>{t('committees.descriptionLabel')}</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="وصف مختصر للجنة..."
+                placeholder={t('committees.descriptionPlaceholder')}
                 rows={3}
               />
             </div>
             <div className="space-y-2">
-              <Label>المحور</Label>
+              <Label>{t('committees.axisLabel')}</Label>
               <Select 
                 value={formData.axis_id || 'none'} 
                 onValueChange={(v) => {
@@ -692,9 +692,9 @@ export default function Committees() {
                   });
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="اختر المحور (اختياري)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('committees.selectAxis')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">بدون ربط</SelectItem>
+                  <SelectItem value="none">{t('committees.withoutLink')}</SelectItem>
                   {axes.map(axis => (
                     <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
                   ))}
@@ -702,7 +702,7 @@ export default function Committees() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>المعايير المرتبطة</Label>
+              <Label>{t('committees.relatedStandards')}</Label>
               {formData.axis_id && (() => {
                 const axisStandards = sortAndDeduplicateStandardsByCode(standards.filter(s => s.axis_id === formData.axis_id));
                 return axisStandards.length > 0 ? (
@@ -727,21 +727,21 @@ export default function Committees() {
                   </div>
                 ) : (
                   <div className="border rounded-lg p-3 text-xs text-muted-foreground bg-muted/50">
-                    لا توجد معايير متاحة لهذا المحور حالياً.
+                    {t('committees.noStandardsForAxis')}
                   </div>
                 );
               })()}
               {!formData.axis_id && (
                 <div className="border rounded-lg p-3 text-xs text-muted-foreground bg-muted/50">
-                  اختر محوراً أولاً لعرض المعايير المرتبطة.
+                  {t('committees.selectAxisFirst')}
                 </div>
               )}
             </div>
             <div className="flex gap-3 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
                 {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                {editingCommittee ? 'حفظ' : 'إضافة'}
+                {editingCommittee ? t('committees.saveBtn') : t('committees.addBtn')}
               </Button>
             </div>
           </form>
@@ -752,14 +752,14 @@ export default function Committees() {
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
         <AlertDialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
-            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogTitle>{t('committees.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف لجنة "{deleteDialog.committee?.name}"؟
+              {t('committees.confirmDeleteMsg', { name: deleteDialog.committee?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">{t('committees.deleteBtn')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -770,7 +770,7 @@ export default function Committees() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-secondary" />
-              إضافة أعضاء إلى {assignTargetCommittee?.name}
+              {t('committees.assignTitle')} {assignTargetCommittee?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
@@ -780,7 +780,7 @@ export default function Committees() {
               <Input
                 value={assignSearch}
                 onChange={(e) => setAssignSearch(e.target.value)}
-                placeholder="بحث بالاسم أو الجوال أو الجهة..."
+                placeholder={t('committees.assignSearch')}
                 className="pr-9"
               />
             </div>
@@ -790,10 +790,10 @@ export default function Committees() {
               <div className="flex items-center justify-between bg-secondary/10 rounded-lg px-3 py-2">
                 <span className="text-sm text-secondary font-medium">
                   <UserCheck className="w-4 h-4 inline ml-1" />
-                  تم تحديد {assignSelected.length} عضو
+                  {t('committees.selectedCount', { count: assignSelected.length })}
                 </span>
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7" onClick={() => setAssignSelected([])}>
-                  إلغاء التحديد
+                  {t('committees.deselectAll')}
                 </Button>
               </div>
             )}
@@ -802,17 +802,17 @@ export default function Committees() {
             <div className="border rounded-lg max-h-[320px] overflow-y-auto divide-y">
               {filteredAvailableMembers.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  {assignSearch ? 'لا توجد نتائج مطابقة' : 'جميع الأعضاء مسجلون في هذه اللجنة'}
+                  {assignSearch ? t('committees.noMatchingMembers') : t('committees.allMembersAssigned')}
                 </div>
               ) : (
                 filteredAvailableMembers.map(m => {
                   const isSelected = assignSelected.includes(m.id);
                   const currentCommittee = m.committee_id ? committees.find(c => c.id === m.committee_id) : null;
                   const roleLabels = {
-                    governor: 'المشرف العام', coordinator: 'منسق', committee_head: 'رئيس لجنة',
-                    committee_coordinator: 'منسق لجنة', committee_supervisor: 'مشرف', committee_member: 'عضو',
-                    member: 'عضو', volunteer: 'متطوع', budget_manager: 'مدير ميزانية',
-                    accountant: 'محاسب', financial_officer: 'موظف مالي'
+                    governor: t('rolesShort.governor'), coordinator: t('rolesShort.coordinator'), committee_head: t('rolesShort.committee_head'),
+                    committee_coordinator: t('rolesShort.committee_coordinator'), committee_supervisor: t('rolesShort.committee_supervisor'), committee_member: t('rolesShort.committee_member'),
+                    member: t('rolesShort.member'), volunteer: t('rolesShort.volunteer'), budget_manager: t('rolesShort.budget_manager'),
+                    accountant: t('rolesShort.accountant'), financial_officer: t('rolesShort.financial_officer')
                   };
                   return (
                     <div
@@ -839,7 +839,7 @@ export default function Committees() {
                               <span className="text-amber-700 dark:text-amber-400">{currentCommittee.name}</span>
                             </>
                           )}
-                          {!currentCommittee && <span className="text-muted-foreground">بدون لجنة</span>}
+                          {!currentCommittee && <span className="text-muted-foreground">{t('committees.withoutCommittee')}</span>}
                         </div>
                       </div>
                       {m.phone && <span className="text-[11px] text-muted-foreground shrink-0 dir-ltr">{m.phone}</span>}
@@ -851,14 +851,14 @@ export default function Committees() {
 
             {/* Actions */}
             <div className="flex gap-3 justify-end pt-2">
-              <Button type="button" variant="outline" onClick={() => setAssignMemberOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setAssignMemberOpen(false)}>{t('common.cancel')}</Button>
               <Button
                 onClick={handleAssignMembers}
                 disabled={assignSelected.length === 0 || assignLoading}
                 className="bg-secondary hover:bg-secondary/90"
               >
                 {assignLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                نقل {assignSelected.length > 0 ? `(${assignSelected.length})` : ''} للجنة
+                {t('committees.moveToCommittee')} {assignSelected.length > 0 ? `(${assignSelected.length})` : ''}
               </Button>
             </div>
           </div>

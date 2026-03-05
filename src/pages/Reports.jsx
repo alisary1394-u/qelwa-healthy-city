@@ -113,6 +113,7 @@ function AxisProgressCard({ name, order, completed, total, color }) {
 export default function Reports() {
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
+  const t_col = (key) => t(`reports.columns.${key}`);
   const { permissions } = usePermissions();
   const { toast } = useToast();
   const [selectedCommittee, setSelectedCommittee] = useState('all');
@@ -161,48 +162,48 @@ export default function Reports() {
     return { id: axis.id, name: axis.name, order, total: expected, completed, color: AXIS_COLORS[idx % AXIS_COLORS.length] };
   }), [axes, standards]);
 
-  const statusLabels = { not_started: 'لم يبدأ', in_progress: 'قيد التنفيذ', completed: 'مكتمل', approved: 'معتمد', pending: 'معلقة', planning: 'تخطيط', on_hold: 'معلق', cancelled: 'ملغي' };
-  const priorityLabels = { low: 'منخفضة', medium: 'متوسطة', high: 'عالية', urgent: 'عاجلة' };
+  const statusLabels = { not_started: t('reports.statuses.not_started'), in_progress: t('reports.statuses.in_progress'), completed: t('reports.statuses.completed'), approved: t('reports.statuses.approved'), pending: t('reports.statuses.pending'), planning: t('reports.statuses.planning'), on_hold: t('reports.statuses.on_hold'), cancelled: t('reports.statuses.cancelled') };
+  const priorityLabels = { low: t('reports.priorities.low'), medium: t('reports.priorities.medium'), high: t('reports.priorities.high'), urgent: t('reports.priorities.urgent') };
 
   const standardsByStatus = [
-    { name: 'لم يبدأ', value: standards.filter(s => s.status === 'not_started').length, color: STATUS_COLORS.not_started },
-    { name: 'قيد التنفيذ', value: standards.filter(s => s.status === 'in_progress').length, color: STATUS_COLORS.in_progress },
-    { name: 'مكتمل', value: standards.filter(s => s.status === 'completed').length, color: STATUS_COLORS.completed },
-    { name: 'معتمد', value: standards.filter(s => s.status === 'approved').length, color: STATUS_COLORS.approved },
+    { name: t('reports.statuses.not_started'), value: standards.filter(s => s.status === 'not_started').length, color: STATUS_COLORS.not_started },
+    { name: t('reports.statuses.in_progress'), value: standards.filter(s => s.status === 'in_progress').length, color: STATUS_COLORS.in_progress },
+    { name: t('reports.statuses.completed'), value: standards.filter(s => s.status === 'completed').length, color: STATUS_COLORS.completed },
+    { name: t('reports.statuses.approved'), value: standards.filter(s => s.status === 'approved').length, color: STATUS_COLORS.approved },
   ];
 
   const initiativesByStatus = [
-    { name: 'التخطيط', value: filteredInitiatives.filter(i => i.status === 'planning').length, color: '#94a3b8' },
-    { name: 'معتمد', value: filteredInitiatives.filter(i => i.status === 'approved').length, color: '#3b82f6' },
-    { name: 'قيد التنفيذ', value: filteredInitiatives.filter(i => i.status === 'in_progress').length, color: '#f59e0b' },
-    { name: 'مكتمل', value: filteredInitiatives.filter(i => i.status === 'completed').length, color: '#10b981' },
-    { name: 'معلق', value: filteredInitiatives.filter(i => i.status === 'on_hold').length, color: '#6b7280' },
-    { name: 'ملغي', value: filteredInitiatives.filter(i => i.status === 'cancelled').length, color: '#ef4444' },
+    { name: t('reports.statuses.planningLabel'), value: filteredInitiatives.filter(i => i.status === 'planning').length, color: '#94a3b8' },
+    { name: t('reports.statuses.approved'), value: filteredInitiatives.filter(i => i.status === 'approved').length, color: '#3b82f6' },
+    { name: t('reports.statuses.in_progress'), value: filteredInitiatives.filter(i => i.status === 'in_progress').length, color: '#f59e0b' },
+    { name: t('reports.statuses.completed'), value: filteredInitiatives.filter(i => i.status === 'completed').length, color: '#10b981' },
+    { name: t('reports.statuses.on_hold'), value: filteredInitiatives.filter(i => i.status === 'on_hold').length, color: '#6b7280' },
+    { name: t('reports.statuses.cancelled'), value: filteredInitiatives.filter(i => i.status === 'cancelled').length, color: '#ef4444' },
   ];
 
   const initiativesByCommittee = committees
     .map(c => ({
-      name: c.name?.slice(0, 20) || 'غير محدد',
+      name: c.name?.slice(0, 20) || t('reports.unspecified'),
       count: filteredInitiatives.filter(i => i.committee_id === c.id).length,
     }))
     .filter(item => item.count > 0);
 
   const initiativesByPriority = [
-    { name: 'منخفضة', count: filteredInitiatives.filter(i => i.priority === 'low').length, color: '#94a3b8' },
-    { name: 'متوسطة', count: filteredInitiatives.filter(i => i.priority === 'medium').length, color: '#3b82f6' },
-    { name: 'عالية', count: filteredInitiatives.filter(i => i.priority === 'high').length, color: '#f59e0b' },
-    { name: 'عاجلة', count: filteredInitiatives.filter(i => i.priority === 'urgent').length, color: '#ef4444' },
+    { name: t('reports.priorities.low'), count: filteredInitiatives.filter(i => i.priority === 'low').length, color: '#94a3b8' },
+    { name: t('reports.priorities.medium'), count: filteredInitiatives.filter(i => i.priority === 'medium').length, color: '#3b82f6' },
+    { name: t('reports.priorities.high'), count: filteredInitiatives.filter(i => i.priority === 'high').length, color: '#f59e0b' },
+    { name: t('reports.priorities.urgent'), count: filteredInitiatives.filter(i => i.priority === 'urgent').length, color: '#ef4444' },
   ];
 
   const tasksByStatus = [
-    { name: 'معلقة', value: filteredTasks.filter(t => t.status === 'pending').length, color: '#94a3b8' },
-    { name: 'قيد التنفيذ', value: filteredTasks.filter(t => t.status === 'in_progress').length, color: '#f59e0b' },
-    { name: 'مكتملة', value: filteredTasks.filter(t => t.status === 'completed').length, color: '#10b981' },
-    { name: 'ملغاة', value: filteredTasks.filter(t => t.status === 'cancelled').length, color: '#ef4444' },
+    { name: t('reports.statuses.pending'), value: filteredTasks.filter(t => t.status === 'pending').length, color: '#94a3b8' },
+    { name: t('reports.statuses.in_progress'), value: filteredTasks.filter(t => t.status === 'in_progress').length, color: '#f59e0b' },
+    { name: t('reports.statuses.completedF'), value: filteredTasks.filter(t => t.status === 'completed').length, color: '#10b981' },
+    { name: t('reports.statuses.cancelledF'), value: filteredTasks.filter(t => t.status === 'cancelled').length, color: '#ef4444' },
   ];
 
   const tasksByMember = members.slice(0, 10).map(m => ({
-    name: m.full_name?.slice(0, 15) || 'غير محدد',
+    name: m.full_name?.slice(0, 15) || t('reports.unspecified'),
     completed: tasks.filter(t => t.assigned_to === m.id && t.status === 'completed').length,
     pending: tasks.filter(t => t.assigned_to === m.id && t.status === 'pending').length,
     inProgress: tasks.filter(t => t.assigned_to === m.id && t.status === 'in_progress').length,
@@ -211,8 +212,8 @@ export default function Reports() {
   const overdueTasks = filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
   const currencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }), []);
   const compactCurrencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }), []);
-  const formatCurrency = (value) => `${currencyFormatter.format(Number(value) || 0)} ر.س`;
-  const formatCompactCurrency = (value) => `${compactCurrencyFormatter.format(Number(value) || 0)} ر.س`;
+  const formatCurrency = (value) => `${currencyFormatter.format(Number(value) || 0)} ${t('reports.currencySymbol')}`;
+  const formatCompactCurrency = (value) => `${compactCurrencyFormatter.format(Number(value) || 0)} ${t('reports.currencySymbol')}`;
 
   const paidIncome = filteredTransactions
     .filter((t) => t.type === 'income' && t.status === 'paid')
@@ -233,7 +234,7 @@ export default function Reports() {
     const grouped = filteredTransactions
       .filter((t) => t.type === 'expense' && t.status === 'paid')
       .reduce((acc, t) => {
-        const key = t.category || 'أخرى';
+        const key = t.category || t('reports.otherCategory');
         acc[key] = (acc[key] || 0) + (Number(t.amount) || 0);
         return acc;
       }, {});
@@ -279,7 +280,7 @@ export default function Reports() {
 
   const allocationsByCommittee = useMemo(() => {
     const grouped = filteredAllocations.reduce((acc, a) => {
-      const name = a.committee_name || committees.find((c) => String(c.id) === String(a.committee_id))?.name || 'غير محدد';
+      const name = a.committee_name || committees.find((c) => String(c.id) === String(a.committee_id))?.name || t('reports.unspecified');
       acc[name] = (acc[name] || 0) + (Number(a.allocated_amount) || 0);
       return acc;
     }, {});
@@ -307,24 +308,24 @@ export default function Reports() {
   const getKpiInitiativeTitle = (k) => initiatives.find(i => i.id === k.initiative_id)?.title || '';
 
   const detailedReportConfig = [
-    { value: 'tasks_all', label: 'المهام (كافة)', getData: () => filteredTasks.map(t => ({ 'العنوان': t.title, 'الحالة': statusLabels[t.status] || t.status, 'الأولوية': priorityLabels[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t), 'المبادرة': getTaskInitiativeTitle(t) })) },
-    { value: 'tasks_completed', label: 'المهام المنجزة', getData: () => filteredTasks.filter(t => t.status === 'completed').map(t => ({ 'العنوان': t.title, 'الأولوية': priorityLabels[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '—', 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t) })) },
-    { value: 'tasks_overdue', label: 'المهام المتأخرة', getData: () => overdueTasks.map(t => ({ 'العنوان': t.title, 'الحالة': statusLabels[t.status] || t.status, 'تاريخ الاستحقاق': t.due_date, 'المكلف': t.assigned_to_name || '—', 'اللجنة': getTaskCommitteeName(t) })) },
-    { value: 'initiatives_all', label: 'المبادرات (كافة)', getData: () => filteredInitiatives.map(i => ({ 'العنوان': i.title, 'اللجنة': i.committee_name || '—', 'الحالة': statusLabels[i.status] || i.status, 'نسبة الإنجاز %': i.progress_percentage ?? '—', 'تاريخ البدء': i.start_date || '—', 'تاريخ الانتهاء': i.end_date || '—' })) },
-    { value: 'team', label: 'أعضاء الفريق', getData: () => members.map(m => ({ 'الاسم': m.full_name || '—', 'المنصب': m.role || '—', 'اللجنة': getMemberCommitteeName(m), 'القسم/الجهة': m.department || '—', 'البريد': m.email || '—', 'الهاتف': m.phone || '—' })) },
-    { value: 'standards', label: 'المعايير', getData: () => dedupedStandards.map(s => ({ 'الرمز': s.code || '—', 'العنوان': s.title || '—', 'المحور': s.axis_name || '—', 'الحالة': statusLabels[s.status] || s.status })) },
-    { value: 'kpis', label: 'المؤشرات', getData: () => kpis.map(k => ({ 'المؤشر': k.kpi_name || '—', 'المبادرة': getKpiInitiativeTitle(k), 'القيمة الحالية': k.current_value, 'المستهدف': k.target_value, 'الوحدة': k.unit || '—', 'نسبة الإنجاز %': k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
-    { value: 'budget_overview', label: 'ملخص الميزانية', getData: () => [{ 'اسم الميزانية النشطة': activeBudget?.name || '—', 'السنة المالية': activeBudget?.fiscal_year || '—', 'الإيرادات المدفوعة': paidIncome, 'المصروفات المدفوعة': paidExpenses, 'الرصيد الصافي': netBalance, 'العمليات المعلقة': pendingFinancialOps, 'إجمالي الميزانية': activeBudgetTotal, 'نسبة الصرف %': activeBudgetUsagePct }] },
-    { value: 'budget_transactions', label: 'العمليات المالية', getData: () => filteredTransactions.map(t => ({ 'التاريخ': t.date || '—', 'النوع': t.type === 'income' ? 'إيراد' : 'مصروف', 'الفئة': t.category || '—', 'القيمة': Number(t.amount) || 0, 'الحالة': t.status === 'paid' ? 'مدفوعة' : t.status === 'pending' ? 'معلقة' : t.status === 'rejected' ? 'مرفوضة' : (t.status || '—'), 'اللجنة': t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || '—', 'المستفيد/الجهة': t.beneficiary || '—', 'مرجع السند': t.receipt_number || '—' })) },
-    { value: 'budget_allocations', label: 'توزيعات الميزانية', getData: () => filteredAllocations.map(a => ({ 'الميزانية': a.budget_name || budgets.find(b => String(b.id) === String(a.budget_id))?.name || '—', 'اللجنة': a.committee_name || committees.find(c => String(c.id) === String(a.committee_id))?.name || '—', 'التصنيف': a.category || '—', 'المبلغ المخصص': Number(a.allocated_amount) || 0, 'المبلغ المتبقي': Number(a.remaining_amount) || 0, 'المبادرة': a.initiative_title || initiatives.find(i => String(i.id) === String(a.initiative_id))?.title || '—' })) },
+    { value: 'tasks_all', label: t('reports.detailedConfig.tasks_all'), getData: () => filteredTasks.map(t => ({ [t_col('title')]: t.title, [t_col('status')]: statusLabels[t.status] || t.status, [t_col('priority')]: priorityLabels[t.priority] || t.priority, [t_col('dueDate')]: t.due_date || '—', [t_col('assignee')]: t.assigned_to_name || '—', [t_col('committee')]: getTaskCommitteeName(t), [t_col('initiative')]: getTaskInitiativeTitle(t) })) },
+    { value: 'tasks_completed', label: t('reports.detailedConfig.tasks_completed'), getData: () => filteredTasks.filter(t => t.status === 'completed').map(t => ({ [t_col('title')]: t.title, [t_col('priority')]: priorityLabels[t.priority] || t.priority, [t_col('dueDate')]: t.due_date || '—', [t_col('assignee')]: t.assigned_to_name || '—', [t_col('committee')]: getTaskCommitteeName(t) })) },
+    { value: 'tasks_overdue', label: t('reports.detailedConfig.tasks_overdue'), getData: () => overdueTasks.map(t => ({ [t_col('title')]: t.title, [t_col('status')]: statusLabels[t.status] || t.status, [t_col('dueDate')]: t.due_date, [t_col('assignee')]: t.assigned_to_name || '—', [t_col('committee')]: getTaskCommitteeName(t) })) },
+    { value: 'initiatives_all', label: t('reports.detailedConfig.initiatives_all'), getData: () => filteredInitiatives.map(i => ({ [t_col('title')]: i.title, [t_col('committee')]: i.committee_name || '—', [t_col('status')]: statusLabels[i.status] || i.status, [t_col('completionPct')]: i.progress_percentage ?? '—', [t_col('startDate')]: i.start_date || '—', [t_col('endDate')]: i.end_date || '—' })) },
+    { value: 'team', label: t('reports.detailedConfig.team'), getData: () => members.map(m => ({ [t_col('name')]: m.full_name || '—', [t_col('position')]: m.role || '—', [t_col('committee')]: getMemberCommitteeName(m), [t_col('department')]: m.department || '—', [t_col('email')]: m.email || '—', [t_col('phone')]: m.phone || '—' })) },
+    { value: 'standards', label: t('reports.detailedConfig.standards'), getData: () => dedupedStandards.map(s => ({ [t_col('code')]: s.code || '—', [t_col('title')]: s.title || '—', [t_col('axis')]: s.axis_name || '—', [t_col('status')]: statusLabels[s.status] || s.status })) },
+    { value: 'kpis', label: t('reports.detailedConfig.kpis'), getData: () => kpis.map(k => ({ [t_col('indicator')]: k.kpi_name || '—', [t_col('initiative')]: getKpiInitiativeTitle(k), [t_col('currentValue')]: k.current_value, [t_col('target')]: k.target_value, [t_col('unit')]: k.unit || '—', [t_col('completionPct')]: k.target_value > 0 ? Math.round((k.current_value / k.target_value) * 100) : 0 })) },
+    { value: 'budget_overview', label: t('reports.detailedConfig.budget_overview'), getData: () => [{ [t_col('activeBudgetName')]: activeBudget?.name || '—', [t_col('fiscalYear')]: activeBudget?.fiscal_year || '—', [t_col('paidRevenue')]: paidIncome, [t_col('paidExpenses')]: paidExpenses, [t_col('netBalance')]: netBalance, [t_col('pendingOps')]: pendingFinancialOps, [t_col('totalBudget')]: activeBudgetTotal, [t_col('spendingPct')]: activeBudgetUsagePct }] },
+    { value: 'budget_transactions', label: t('reports.detailedConfig.budget_transactions'), getData: () => filteredTransactions.map(tx => ({ [t_col('date')]: tx.date || '—', [t_col('type')]: tx.type === 'income' ? t('reports.transactionTypes.income') : t('reports.transactionTypes.expense'), [t_col('category')]: tx.category || '—', [t_col('value')]: Number(tx.amount) || 0, [t_col('status')]: tx.status === 'paid' ? t('reports.transactionStatuses.paid') : tx.status === 'pending' ? t('reports.transactionStatuses.pending') : tx.status === 'rejected' ? t('reports.transactionStatuses.rejected') : (tx.status || '—'), [t_col('committee')]: tx.committee_name || committees.find(c => String(c.id) === String(tx.committee_id))?.name || '—', [t_col('beneficiary')]: tx.beneficiary || '—', [t_col('receiptRef')]: tx.receipt_number || '—' })) },
+    { value: 'budget_allocations', label: t('reports.detailedConfig.budget_allocations'), getData: () => filteredAllocations.map(a => ({ [t_col('budget')]: a.budget_name || budgets.find(b => String(b.id) === String(a.budget_id))?.name || '—', [t_col('committee')]: a.committee_name || committees.find(c => String(c.id) === String(a.committee_id))?.name || '—', [t_col('classification')]: a.category || '—', [t_col('allocatedAmount')]: Number(a.allocated_amount) || 0, [t_col('remainingAmount')]: Number(a.remaining_amount) || 0, [t_col('initiative')]: a.initiative_title || initiatives.find(i => String(i.id) === String(a.initiative_id))?.title || '—' })) },
   ];
 
   const currentDetailedData = (() => { const c = detailedReportConfig.find(c2 => c2.value === detailedReportType); return c ? c.getData() : []; })();
-  const detailedReportFilename = (() => { const c = detailedReportConfig.find(c2 => c2.value === detailedReportType); return c ? c.label.replace(/\s*[(\（].*?[)\）]\s*/g, '').trim() : 'تقرير'; })();
+  const detailedReportFilename = (() => { const c = detailedReportConfig.find(c2 => c2.value === detailedReportType); return c ? c.label.replace(/\s*[(（].*?[)）]\s*/g, '').trim() : t('reports.report'); })();
 
   const exportToCSV = (data, filename) => {
     try {
-      if (!Array.isArray(data) || data.length === 0) { toast({ title: 'لا توجد بيانات للتصدير' }); return; }
+      if (!Array.isArray(data) || data.length === 0) { toast({ title: t('reports.noDataToExport') }); return; }
       const headers = Object.keys(data[0]);
       const esc = (v) => { const s = String(v ?? ''); return /[,"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
       const csv = '\ufeff' + [headers.map(esc).join(','), ...data.map(r => headers.map(h => esc(r[h])).join(','))].join('\n');
@@ -332,17 +333,17 @@ export default function Reports() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `${filename}.csv`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 200);
-      toast({ title: 'تم التصدير', description: `${filename}.csv` });
-    } catch (e) { toast({ title: 'فشل التصدير', description: e?.message, variant: 'destructive' }); }
+      toast({ title: t('reports.exportSuccess'), description: `${filename}.csv` });
+    } catch (e) { toast({ title: t('reports.exportFailed'), description: e?.message, variant: 'destructive' }); }
   };
 
   const tabExportIds = {
-    overview: { id: 'reports-overview', filename: 'تقرير-النظرة-العامة.pdf' },
-    standards: { id: 'reports-standards', filename: 'تقرير-المعايير.pdf' },
-    initiatives: { id: 'reports-initiatives', filename: 'تقرير-المبادرات.pdf' },
-    tasks: { id: 'reports-tasks', filename: 'تقرير-المهام.pdf' },
-    budget: { id: 'reports-budget', filename: 'تقرير-الميزانية.pdf' },
-    detailed: { id: 'detailed-report-content', filename: `تقرير-تفصيلي-${detailedReportFilename}.pdf` },
+    overview: { id: 'reports-overview', filename: `${t('reports.filenames.overview')}.pdf` },
+    standards: { id: 'reports-standards', filename: `${t('reports.filenames.standards')}.pdf` },
+    initiatives: { id: 'reports-initiatives', filename: `${t('reports.filenames.initiatives')}.pdf` },
+    tasks: { id: 'reports-tasks', filename: `${t('reports.filenames.tasks')}.pdf` },
+    budget: { id: 'reports-budget', filename: `${t('reports.filenames.budget')}.pdf` },
+    detailed: { id: 'detailed-report-content', filename: `${t('reports.filenames.detailed')}-${detailedReportFilename}.pdf` },
   };
 
   const exportToPDF = async (elementId, filename) => {
@@ -355,7 +356,7 @@ export default function Reports() {
       ]);
 
       const element = document.getElementById(elementId);
-      if (!element) { toast({ title: 'فشل التصدير', description: 'العنصر غير موجود.', variant: 'destructive' }); return; }
+      if (!element) { toast({ title: t('reports.exportFailed'), description: t('reports.elementNotFound'), variant: 'destructive' }); return; }
       let el = element;
       while (el && el !== document.body) {
         restore.push({ el, display: el.style.display, visibility: el.style.visibility, hidden: el.getAttribute('hidden') });
@@ -375,7 +376,7 @@ export default function Reports() {
           clonedElement.querySelectorAll('[class*="gradient"]').forEach(e => { e.style.background = '#2563eb'; e.style.backgroundImage = 'none'; });
         },
       });
-      if (!canvas.width || !canvas.height) { toast({ title: 'فشل', description: 'المحتوى فارغ', variant: 'destructive' }); return; }
+      if (!canvas.width || !canvas.height) { toast({ title: t('reports.failed'), description: t('reports.contentEmpty'), variant: 'destructive' }); return; }
       let imgSrc; let imgType = 'JPEG';
       try { const j = canvas.toDataURL('image/jpeg', 0.86); if (j?.startsWith('data:image/')) imgSrc = j; } catch {}
       if (!imgSrc) { try { const p = canvas.toDataURL('image/png'); if (p?.startsWith('data:image/')) { imgSrc = p; imgType = 'PNG'; } } catch {} }
@@ -389,8 +390,8 @@ export default function Reports() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 200);
-      toast({ title: 'تم التصدير', description: filename });
-    } catch (e) { toast({ title: 'فشل', description: e?.message, variant: 'destructive' }); }
+      toast({ title: t('reports.exportSuccess'), description: filename });
+    } catch (e) { toast({ title: t('reports.failed'), description: e?.message, variant: 'destructive' }); }
     finally {
       restore.forEach(({ el: e, display, visibility, hidden }) => { e.style.display = display; e.style.visibility = visibility; if (hidden != null) e.setAttribute('hidden', hidden); });
       setExportingPDF(false);
@@ -405,7 +406,7 @@ export default function Reports() {
       <div className="min-h-screen bg-background flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md"><CardContent className="p-6 text-center">
           <Shield className="w-12 h-12 mx-auto text-red-400 mb-3" />
-          <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى صفحة التقارير.</p>
+          <p className="text-red-600 font-semibold">{t('reports.noAccess')}</p>
         </CardContent></Card>
       </div>
     );
@@ -422,23 +423,23 @@ export default function Reports() {
                 <BarChart3 className="w-7 h-7" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold">التقارير والتحليلات</h1>
-                <p className="text-blue-100 text-sm mt-1">مدينة {settings[0]?.city_name || 'قلوة'} الصحية — تحليل شامل للأداء</p>
+                <h1 className="text-2xl md:text-3xl font-bold">{t('reports.title')}</h1>
+                <p className="text-blue-100 text-sm mt-1">{t('reports.citySubtitle', { city: settings[0]?.city_name || 'قلوة' })}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Select value={selectedCommittee} onValueChange={setSelectedCommittee}>
                 <SelectTrigger className="w-[180px] bg-white/15 border-white/30 text-white">
-                  <SelectValue placeholder="جميع اللجان" />
+                  <SelectValue placeholder={t('reports.allCommittees')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع اللجان</SelectItem>
+                  <SelectItem value="all">{t('reports.allCommittees')}</SelectItem>
                   {committees.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button onClick={() => { const t = tabExportIds[activeTab]; if (t) exportToPDF(t.id, t.filename); }} disabled={exportingPDF} variant="secondary" size="sm">
+              <Button onClick={() => { const te = tabExportIds[activeTab]; if (te) exportToPDF(te.id, te.filename); }} disabled={exportingPDF} variant="secondary" size="sm">
                 <Download className="w-4 h-4 ml-1" />
-                {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+                {exportingPDF ? t('reports.exporting') : t('reports.exportPDF')}
               </Button>
             </div>
           </div>
@@ -448,38 +449,38 @@ export default function Reports() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 mb-6 bg-card border border-border shadow-sm rounded-xl p-1">
-            <TabsTrigger value="overview" className="rounded-lg">نظرة عامة</TabsTrigger>
-            <TabsTrigger value="standards" className="rounded-lg">المعايير</TabsTrigger>
-            <TabsTrigger value="initiatives" className="rounded-lg">المبادرات</TabsTrigger>
-            <TabsTrigger value="tasks" className="rounded-lg">المهام</TabsTrigger>
-            <TabsTrigger value="budget" className="rounded-lg">الميزانية</TabsTrigger>
-            <TabsTrigger value="detailed" className="rounded-lg">تقارير تفصيلية</TabsTrigger>
+            <TabsTrigger value="overview" className="rounded-lg">{t('reports.tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="standards" className="rounded-lg">{t('reports.tabs.standards')}</TabsTrigger>
+            <TabsTrigger value="initiatives" className="rounded-lg">{t('reports.tabs.initiatives')}</TabsTrigger>
+            <TabsTrigger value="tasks" className="rounded-lg">{t('reports.tabs.tasks')}</TabsTrigger>
+            <TabsTrigger value="budget" className="rounded-lg">{t('reports.tabs.budget')}</TabsTrigger>
+            <TabsTrigger value="detailed" className="rounded-lg">{t('reports.tabs.detailed')}</TabsTrigger>
           </TabsList>
 
           {/* ==================== OVERVIEW ==================== */}
           <TabsContent value="overview">
             <div id="reports-overview" className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Target} label="المعايير الدولية" value={REFERENCE_TOTAL} sub={`${overallStandardsPct}% مكتمل`} color="blue" />
-                <StatCard icon={Lightbulb} label="المبادرات" value={filteredInitiatives.length} sub={`${filteredInitiatives.filter(i => i.status === 'completed').length} مكتملة`} color="purple" />
-                <StatCard icon={ClipboardList} label="المهام" value={filteredTasks.length} sub={`${filteredTasks.filter(t => t.status === 'completed').length} مكتملة`} color="green" />
-                <StatCard icon={Users} label="الفريق" value={members.filter(m => m.status === 'active').length} sub={`${committees.length} لجنة`} color="teal" />
+                <StatCard icon={Target} label={t('reports.stats.internationalStandards')} value={REFERENCE_TOTAL} sub={t('reports.completedPct', { pct: overallStandardsPct })} color="blue" />
+                <StatCard icon={Lightbulb} label={t('reports.stats.initiatives')} value={filteredInitiatives.length} sub={t('reports.completedCount', { count: filteredInitiatives.filter(i => i.status === 'completed').length })} color="purple" />
+                <StatCard icon={ClipboardList} label={t('reports.stats.tasks')} value={filteredTasks.length} sub={t('reports.completedCount', { count: filteredTasks.filter(t => t.status === 'completed').length })} color="green" />
+                <StatCard icon={Users} label={t('reports.stats.team')} value={members.filter(m => m.status === 'active').length} sub={t('reports.committeeCount', { count: committees.length })} color="teal" />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Progress Rings */}
                 <Card className="col-span-1">
-                  <CardHeader><CardTitle className="text-lg">نسب الإنجاز</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.overview.completionRates')}</CardTitle></CardHeader>
                   <CardContent className="flex justify-around items-center py-6">
-                    <div className="relative"><ProgressRing value={overallStandardsPct} color="#3B82F6" /><p className="text-xs text-center text-muted-foreground mt-2">المعايير</p></div>
-                    <div className="relative"><ProgressRing value={completedInitPct} color="#8B5CF6" /><p className="text-xs text-center text-muted-foreground mt-2">المبادرات</p></div>
-                    <div className="relative"><ProgressRing value={completedTasksPct} color="#10B981" /><p className="text-xs text-center text-muted-foreground mt-2">المهام</p></div>
+                    <div className="relative"><ProgressRing value={overallStandardsPct} color="#3B82F6" /><p className="text-xs text-center text-muted-foreground mt-2">{t('reports.tabs.standards')}</p></div>
+                    <div className="relative"><ProgressRing value={completedInitPct} color="#8B5CF6" /><p className="text-xs text-center text-muted-foreground mt-2">{t('reports.tabs.initiatives')}</p></div>
+                    <div className="relative"><ProgressRing value={completedTasksPct} color="#10B981" /><p className="text-xs text-center text-muted-foreground mt-2">{t('reports.tabs.tasks')}</p></div>
                   </CardContent>
                 </Card>
 
                 {/* Initiatives by Status */}
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">المبادرات حسب الحالة</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.overview.initiativesByStatus')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
@@ -494,7 +495,7 @@ export default function Reports() {
 
                 {/* Tasks by Status */}
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">المهام حسب الحالة</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.overview.tasksByStatus')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
@@ -512,7 +513,7 @@ export default function Reports() {
               {overdueTasks.length > 0 && (
                 <Card className="border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/30">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg text-red-700 dark:text-red-300 flex items-center gap-2"><AlertCircle className="w-5 h-5" /> مهام متأخرة ({overdueTasks.length})</CardTitle>
+                    <CardTitle className="text-lg text-red-700 dark:text-red-300 flex items-center gap-2"><AlertCircle className="w-5 h-5" /> {t('reports.overview.overdueTasks')} ({overdueTasks.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -532,25 +533,25 @@ export default function Reports() {
           {/* ==================== STANDARDS ==================== */}
           <TabsContent value="standards">
             <div id="reports-standards" className="space-y-6">
-              <SectionHeader icon={Target} title="تقرير المعايير الدولية" description={`${REFERENCE_TOTAL} معيار — 9 محاور`}>
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(dedupedStandards.map(s => ({ 'الرمز': s.code, 'العنوان': s.title, 'المحور': s.axis_name, 'الحالة': statusLabels[s.status] || s.status })), 'المعايير')}>
+              <SectionHeader icon={Target} title={t('reports.standardsReport.title')} description={t('reports.standardsCount', { count: REFERENCE_TOTAL })}>
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(dedupedStandards.map(s => ({ [t_col('code')]: s.code, [t_col('title')]: s.title, [t_col('axis')]: s.axis_name, [t_col('status')]: statusLabels[s.status] || s.status })), t('reports.detailedConfig.standards'))}>
                   <Download className="w-4 h-4 ml-1" /> CSV
                 </Button>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => exportToPDF('who-report', 'تقرير-معايير-WHO.pdf')} disabled={exportingPDF}>
-                  <Award className="w-4 h-4 ml-1" /> تقرير WHO
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => exportToPDF('who-report', `${t('reports.filenames.whoStandards')}.pdf`)} disabled={exportingPDF}>
+                  <Award className="w-4 h-4 ml-1" /> {t('reports.standardsReport.whoReport')}
                 </Button>
               </SectionHeader>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Target} label="إجمالي المعايير" value={REFERENCE_TOTAL} color="blue" />
-                <StatCard icon={CheckCircle} label="مكتمل + معتمد" value={standards.filter(s => s.status === 'completed' || s.status === 'approved').length} color="green" />
-                <StatCard icon={Clock} label="قيد التنفيذ" value={standards.filter(s => s.status === 'in_progress').length} color="amber" />
-                <StatCard icon={TrendingUp} label="نسبة الإنجاز" value={`${overallStandardsPct}%`} color="purple" />
+                <StatCard icon={Target} label={t('reports.standardsReport.totalStandards')} value={REFERENCE_TOTAL} color="blue" />
+                <StatCard icon={CheckCircle} label={t('reports.standardsReport.completedApproved')} value={standards.filter(s => s.status === 'completed' || s.status === 'approved').length} color="green" />
+                <StatCard icon={Clock} label={t('reports.standardsReport.inProgress')} value={standards.filter(s => s.status === 'in_progress').length} color="amber" />
+                <StatCard icon={TrendingUp} label={t('reports.standardsReport.completionRate')} value={`${overallStandardsPct}%`} color="purple" />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">توزيع المعايير حسب الحالة</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.standardsReport.statusDistribution')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={260}>
                       <PieChart>
@@ -564,7 +565,7 @@ export default function Reports() {
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">الإنجاز حسب المحاور</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.standardsReport.byAxis')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={axisSummary} layout="vertical">
@@ -572,7 +573,7 @@ export default function Reports() {
                         <XAxis type="number" domain={[0, 100]} unit="%" />
                         <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11 }} />
                         <Tooltip formatter={(v) => `${v}%`} />
-                        <Bar dataKey="completed" fill="#10b981" name="مكتمل" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="completed" fill="#10b981" name={t('reports.statuses.completed')} radius={[0, 4, 4, 0]}>
                           {axisSummary.map((e, i) => <Cell key={i} fill={e.color} />)}
                         </Bar>
                       </BarChart>
@@ -583,7 +584,7 @@ export default function Reports() {
 
               {/* Axis Progress List */}
               <Card>
-                <CardHeader><CardTitle className="text-lg">تفاصيل المحاور</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">{t('reports.standardsReport.axisDetails')}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {axisSummary.map(a => (
                     <AxisProgressCard key={a.id} name={a.name} order={a.order} completed={a.completed} total={a.total} color={a.color} />
@@ -600,39 +601,39 @@ export default function Reports() {
           {/* ==================== INITIATIVES ==================== */}
           <TabsContent value="initiatives">
             <div id="reports-initiatives" className="space-y-6">
-              <SectionHeader icon={Lightbulb} title="تقرير المبادرات" description={`${filteredInitiatives.length} مبادرة`}>
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredInitiatives.map(i => ({ 'العنوان': i.title, 'اللجنة': i.committee_name, 'الحالة': statusLabels[i.status] || i.status, 'نسبة الإنجاز': i.progress_percentage })), 'المبادرات')}>
+              <SectionHeader icon={Lightbulb} title={t('reports.initiativesReport.title')} description={t('reports.initiativeCount', { count: filteredInitiatives.length })}>
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredInitiatives.map(i => ({ [t_col('title')]: i.title, [t_col('committee')]: i.committee_name, [t_col('status')]: statusLabels[i.status] || i.status, [t_col('completionPct')]: i.progress_percentage })), t('reports.tabs.initiatives'))}>
                   <Download className="w-4 h-4 ml-1" /> CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-initiatives', 'تقرير-المبادرات.pdf')} disabled={exportingPDF}>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-initiatives', `${t('reports.filenames.initiatives')}.pdf`)} disabled={exportingPDF}>
                   <Download className="w-4 h-4 ml-1" /> PDF
                 </Button>
               </SectionHeader>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Lightbulb} label="إجمالي المبادرات" value={filteredInitiatives.length} color="purple" />
-                <StatCard icon={CheckCircle} label="مكتملة" value={filteredInitiatives.filter(i => i.status === 'completed').length} color="green" />
-                <StatCard icon={Activity} label="قيد التنفيذ" value={filteredInitiatives.filter(i => i.status === 'in_progress').length} color="amber" />
-                <StatCard icon={TrendingUp} label="نسبة الإنجاز" value={`${completedInitPct}%`} color="blue" />
+                <StatCard icon={Lightbulb} label={t('reports.initiativesReport.totalInitiatives')} value={filteredInitiatives.length} color="purple" />
+                <StatCard icon={CheckCircle} label={t('reports.initiativesReport.completedF')} value={filteredInitiatives.filter(i => i.status === 'completed').length} color="green" />
+                <StatCard icon={Activity} label={t('reports.initiativesReport.inProgress')} value={filteredInitiatives.filter(i => i.status === 'in_progress').length} color="amber" />
+                <StatCard icon={TrendingUp} label={t('reports.initiativesReport.completionRate')} value={`${completedInitPct}%`} color="blue" />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">المبادرات حسب اللجنة</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.initiativesReport.byCommittee')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={280}>
                       <BarChart data={initiativesByCommittee}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis /><Tooltip />
-                        <Bar dataKey="count" fill="#8B5CF6" name="عدد المبادرات" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="count" fill="#8B5CF6" name={t('reports.initiativesReport.initiativeCount')} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">توزيع المبادرات حسب الأولوية</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.initiativesReport.initiativesByPriority')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={280}>
                       <BarChart data={initiativesByPriority}>
@@ -640,7 +641,7 @@ export default function Reports() {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="count" name="عدد المبادرات" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="count" name={t('reports.initiativesReport.initiativeCount')} radius={[4, 4, 0, 0]}>
                           {initiativesByPriority.map((item, index) => (
                             <Cell key={`init-priority-${index}`} fill={item.color} />
                           ))}
@@ -656,36 +657,36 @@ export default function Reports() {
           {/* ==================== TASKS ==================== */}
           <TabsContent value="tasks">
             <div id="reports-tasks" className="space-y-6">
-              <SectionHeader icon={ClipboardList} title="تقرير المهام" description={`${filteredTasks.length} مهمة`}>
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTasks.map(t => ({ 'العنوان': t.title, 'المكلف': t.assigned_to_name, 'الحالة': statusLabels[t.status] || t.status, 'الأولوية': priorityLabels[t.priority] || t.priority, 'تاريخ الاستحقاق': t.due_date || '' })), 'المهام')}>
+              <SectionHeader icon={ClipboardList} title={t('reports.tasksReport.title')} description={t('reports.taskCount', { count: filteredTasks.length })}>
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTasks.map(tk => ({ [t_col('title')]: tk.title, [t_col('assignee')]: tk.assigned_to_name, [t_col('status')]: statusLabels[tk.status] || tk.status, [t_col('priority')]: priorityLabels[tk.priority] || tk.priority, [t_col('dueDate')]: tk.due_date || '' })), t('reports.tabs.tasks'))}>
                   <Download className="w-4 h-4 ml-1" /> CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-tasks', 'تقرير-المهام.pdf')} disabled={exportingPDF}>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-tasks', `${t('reports.filenames.tasks')}.pdf`)} disabled={exportingPDF}>
                   <Download className="w-4 h-4 ml-1" /> PDF
                 </Button>
               </SectionHeader>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={ClipboardList} label="إجمالي المهام" value={filteredTasks.length} color="blue" />
-                <StatCard icon={CheckCircle} label="مكتملة" value={filteredTasks.filter(t => t.status === 'completed').length} color="green" />
-                <StatCard icon={AlertCircle} label="متأخرة" value={overdueTasks.length} color="red" />
-                <StatCard icon={TrendingUp} label="نسبة الإنجاز" value={`${completedTasksPct}%`} color="teal" />
+                <StatCard icon={ClipboardList} label={t('reports.tasksReport.totalTasks')} value={filteredTasks.length} color="blue" />
+                <StatCard icon={CheckCircle} label={t('reports.tasksReport.completedF')} value={filteredTasks.filter(t => t.status === 'completed').length} color="green" />
+                <StatCard icon={AlertCircle} label={t('reports.tasksReport.overdue')} value={overdueTasks.length} color="red" />
+                <StatCard icon={TrendingUp} label={t('reports.tasksReport.completionRate')} value={`${completedTasksPct}%`} color="teal" />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">المهام حسب الأولوية</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.tasksReport.tasksByPriority')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={[
-                        { name: 'منخفضة', value: filteredTasks.filter(t => t.priority === 'low').length, fill: '#94a3b8' },
-                        { name: 'متوسطة', value: filteredTasks.filter(t => t.priority === 'medium').length, fill: '#3b82f6' },
-                        { name: 'عالية', value: filteredTasks.filter(t => t.priority === 'high').length, fill: '#f59e0b' },
-                        { name: 'عاجلة', value: filteredTasks.filter(t => t.priority === 'urgent').length, fill: '#ef4444' },
+                        { name: t('reports.priorities.low'), value: filteredTasks.filter(t => t.priority === 'low').length, fill: '#94a3b8' },
+                        { name: t('reports.priorities.medium'), value: filteredTasks.filter(t => t.priority === 'medium').length, fill: '#3b82f6' },
+                        { name: t('reports.priorities.high'), value: filteredTasks.filter(t => t.priority === 'high').length, fill: '#f59e0b' },
+                        { name: t('reports.priorities.urgent'), value: filteredTasks.filter(t => t.priority === 'urgent').length, fill: '#ef4444' },
                       ]}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" /><YAxis /><Tooltip />
-                        <Bar dataKey="value" name="عدد المهام" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="value" name={t('reports.tasksReport.taskCount')} radius={[4, 4, 0, 0]}>
                           {[{ fill: '#94a3b8' }, { fill: '#3b82f6' }, { fill: '#f59e0b' }, { fill: '#ef4444' }].map((e, i) => <Cell key={i} fill={e.fill} />)}
                         </Bar>
                       </BarChart>
@@ -694,15 +695,15 @@ export default function Reports() {
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">أداء الأعضاء</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.tasksReport.memberPerformance')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={tasksByMember.filter(m => m.completed + m.inProgress + m.pending > 0)} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" /><YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} /><Tooltip /><Legend />
-                        <Bar dataKey="completed" fill="#10b981" name="مكتملة" stackId="a" />
-                        <Bar dataKey="inProgress" fill="#f59e0b" name="قيد التنفيذ" stackId="a" />
-                        <Bar dataKey="pending" fill="#94a3b8" name="معلقة" stackId="a" />
+                        <Bar dataKey="completed" fill="#10b981" name={t('reports.tasksReport.completedF')} stackId="a" />
+                        <Bar dataKey="inProgress" fill="#f59e0b" name={t('reports.tasksReport.inProgressF')} stackId="a" />
+                        <Bar dataKey="pending" fill="#94a3b8" name={t('reports.tasksReport.pendingF')} stackId="a" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -714,34 +715,34 @@ export default function Reports() {
           {/* ==================== BUDGET ==================== */}
           <TabsContent value="budget">
             <div id="reports-budget" className="space-y-6">
-              <SectionHeader icon={DollarSign} title="تقارير إدارة الميزانية" description="ملخص احترافي قابل للمشاركة مع المسؤول">
-                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTransactions.map(t => ({ 'التاريخ': t.date || '—', 'النوع': t.type === 'income' ? 'إيراد' : 'مصروف', 'الفئة': t.category || '—', 'القيمة': Number(t.amount) || 0, 'الحالة': t.status === 'paid' ? 'مدفوعة' : t.status === 'pending' ? 'معلقة' : t.status === 'rejected' ? 'مرفوضة' : (t.status || '—'), 'اللجنة': t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || '—', 'المستفيد/الجهة': t.beneficiary || '—', 'الوصف': t.description || '—' })), 'العمليات-المالية')}>
+              <SectionHeader icon={DollarSign} title={t('reports.budgetReport.title')} description={t('reports.budgetReport.description')}>
+                <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTransactions.map(tx => ({ [t_col('date')]: tx.date || '—', [t_col('type')]: tx.type === 'income' ? t('reports.transactionTypes.income') : t('reports.transactionTypes.expense'), [t_col('category')]: tx.category || '—', [t_col('value')]: Number(tx.amount) || 0, [t_col('status')]: tx.status === 'paid' ? t('reports.transactionStatuses.paid') : tx.status === 'pending' ? t('reports.transactionStatuses.pending') : tx.status === 'rejected' ? t('reports.transactionStatuses.rejected') : (tx.status || '—'), [t_col('committee')]: tx.committee_name || committees.find(c => String(c.id) === String(tx.committee_id))?.name || '—', [t_col('beneficiary')]: tx.beneficiary || '—', [t_col('description')]: tx.description || '—' })), t('reports.detailedConfig.budget_transactions'))}>
                   <Download className="w-4 h-4 ml-1" /> CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-budget', 'تقرير-إدارة-الميزانية.pdf')} disabled={exportingPDF}>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-budget', `${t('reports.filenames.budget')}.pdf`)} disabled={exportingPDF}>
                   <Download className="w-4 h-4 ml-1" /> PDF
                 </Button>
               </SectionHeader>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={TrendingUp} label="الإيرادات المدفوعة" value={formatCompactCurrency(paidIncome)} sub={formatCurrency(paidIncome)} color="green" />
-                <StatCard icon={TrendingDown} label="المصروفات المدفوعة" value={formatCompactCurrency(paidExpenses)} sub={formatCurrency(paidExpenses)} color="red" />
-                <StatCard icon={Wallet} label="الرصيد الصافي" value={formatCompactCurrency(netBalance)} sub={formatCurrency(netBalance)} color={netBalance >= 0 ? 'blue' : 'amber'} />
-                <StatCard icon={Clock} label="عمليات معلقة" value={pendingFinancialOps} color="gray" />
+                <StatCard icon={TrendingUp} label={t('reports.budgetReport.paidRevenue')} value={formatCompactCurrency(paidIncome)} sub={formatCurrency(paidIncome)} color="green" />
+                <StatCard icon={TrendingDown} label={t('reports.budgetReport.paidExpenses')} value={formatCompactCurrency(paidExpenses)} sub={formatCurrency(paidExpenses)} color="red" />
+                <StatCard icon={Wallet} label={t('reports.budgetReport.netBalance')} value={formatCompactCurrency(netBalance)} sub={formatCurrency(netBalance)} color={netBalance >= 0 ? 'blue' : 'amber'} />
+                <StatCard icon={Clock} label={t('reports.budgetReport.pendingOps')} value={pendingFinancialOps} color="gray" />
               </div>
 
               <Card className="border-emerald-100 dark:border-emerald-900/30">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center justify-between gap-2">
-                    <span>حالة الميزانية النشطة</span>
-                    <Badge variant="secondary">{activeBudget?.name || 'لا توجد ميزانية نشطة'}</Badge>
+                    <span>{t('reports.budgetReport.activeBudgetStatus')}</span>
+                    <Badge variant="secondary">{activeBudget?.name || t('reports.budgetReport.noActiveBudget')}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">السنة المالية:</span> <span className="font-semibold">{activeBudget?.fiscal_year || '—'}</span></div>
-                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">إجمالي الميزانية:</span> <span className="font-semibold">{formatCurrency(activeBudgetTotal)}</span></div>
-                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">نسبة الصرف:</span> <span className="font-semibold">{activeBudgetUsagePct}%</span></div>
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">{t('reports.budgetReport.fiscalYear')}</span> <span className="font-semibold">{activeBudget?.fiscal_year || '—'}</span></div>
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">{t('reports.budgetReport.totalBudget')}</span> <span className="font-semibold">{formatCurrency(activeBudgetTotal)}</span></div>
+                    <div className="p-3 rounded-lg border bg-card"><span className="text-muted-foreground">{t('reports.budgetReport.spendingRate')}</span> <span className="font-semibold">{activeBudgetUsagePct}%</span></div>
                   </div>
                   <Progress value={activeBudgetUsagePct} className="h-3" />
                 </CardContent>
@@ -749,7 +750,7 @@ export default function Reports() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">المصروفات حسب الفئة</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.budgetReport.expensesByCategory')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={280}>
                       <BarChart data={expensesByCategory}>
@@ -757,7 +758,7 @@ export default function Reports() {
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis />
                         <Tooltip formatter={(v) => formatCurrency(v)} />
-                        <Bar dataKey="amount" name="إجمالي المصروف" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="amount" name={t('reports.budgetReport.totalExpense')} radius={[4, 4, 0, 0]}>
                           {expensesByCategory.map((item, index) => (
                             <Cell key={`expense-cat-${index}`} fill={item.color} />
                           ))}
@@ -768,7 +769,7 @@ export default function Reports() {
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-lg">التدفق المالي (آخر 6 أشهر)</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-lg">{t('reports.budgetReport.cashFlow')}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={280}>
                       <BarChart data={monthlyCashflow}>
@@ -777,8 +778,8 @@ export default function Reports() {
                         <YAxis />
                         <Tooltip formatter={(v) => formatCurrency(v)} />
                         <Legend />
-                        <Bar dataKey="income" fill="#10b981" name="إيرادات" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="expense" fill="#ef4444" name="مصروفات" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="income" fill="#10b981" name={t('reports.budgetReport.incomeLabel')} radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="expense" fill="#ef4444" name={t('reports.budgetReport.expensesLabel')} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -786,19 +787,19 @@ export default function Reports() {
               </div>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">أعلى المصروفات المعتمدة</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">{t('reports.budgetReport.topExpenses')}</CardTitle></CardHeader>
                 <CardContent>
                   {topExpenses.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">لا توجد مصروفات مدفوعة لعرضها حالياً.</p>
+                    <p className="text-sm text-muted-foreground text-center py-6">{t('reports.budgetReport.noExpenses')}</p>
                   ) : (
                     <div className="space-y-2">
-                      {topExpenses.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                      {topExpenses.map((te) => (
+                        <div key={te.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                           <div className="min-w-0">
-                            <p className="font-medium truncate">{t.description || t.category || 'مصروف'}</p>
-                            <p className="text-xs text-muted-foreground">{t.date || '—'} • {t.committee_name || committees.find(c => String(c.id) === String(t.committee_id))?.name || 'غير محدد'}</p>
+                            <p className="font-medium truncate">{te.description || te.category || t('reports.budgetReport.expense')}</p>
+                            <p className="text-xs text-muted-foreground">{te.date || '—'} • {te.committee_name || committees.find(c => String(c.id) === String(te.committee_id))?.name || t('reports.unspecified')}</p>
                           </div>
-                          <Badge variant="destructive">{formatCurrency(t.amount)}</Badge>
+                          <Badge variant="destructive">{formatCurrency(te.amount)}</Badge>
                         </div>
                       ))}
                     </div>
@@ -807,7 +808,7 @@ export default function Reports() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">توزيعات الميزانية حسب اللجنة</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">{t('reports.budgetReport.allocationByCommittee')}</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={allocationsByCommittee} layout="vertical">
@@ -815,7 +816,7 @@ export default function Reports() {
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11 }} />
                       <Tooltip formatter={(v) => formatCurrency(v)} />
-                      <Bar dataKey="amount" name="المبلغ المخصص" radius={[0, 4, 4, 0]}>
+                      <Bar dataKey="amount" name={t('reports.budgetReport.allocatedAmount')} radius={[0, 4, 4, 0]}>
                         {allocationsByCommittee.map((item, index) => (
                           <Cell key={`alloc-committee-${index}`} fill={item.color} />
                         ))}
@@ -830,9 +831,9 @@ export default function Reports() {
           {/* ==================== DETAILED ==================== */}
           <TabsContent value="detailed">
             <div id="detailed-report-content" className="space-y-6">
-              <SectionHeader icon={FileText} title="التقارير التفصيلية" description="اختر نوع التقرير ثم صدّره بصيغة CSV أو PDF">
+              <SectionHeader icon={FileText} title={t('reports.detailedReport.title')} description={t('reports.detailedReport.description')}>
                 <Select value={detailedReportType} onValueChange={setDetailedReportType}>
-                  <SelectTrigger className="w-[200px]"><SelectValue placeholder="نوع التقرير" /></SelectTrigger>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder={t('reports.detailedReport.reportType')} /></SelectTrigger>
                   <SelectContent>
                     {detailedReportConfig.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
@@ -840,7 +841,7 @@ export default function Reports() {
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(currentDetailedData, detailedReportFilename)} disabled={currentDetailedData.length === 0}>
                   <Download className="w-4 h-4 ml-1" /> CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => exportToPDF('detailed-report-content', `تقرير-${detailedReportFilename}.pdf`)} disabled={exportingPDF || currentDetailedData.length === 0}>
+                <Button variant="outline" size="sm" onClick={() => exportToPDF('detailed-report-content', `${t('reports.filenames.report')}-${detailedReportFilename}.pdf`)} disabled={exportingPDF || currentDetailedData.length === 0}>
                   <Download className="w-4 h-4 ml-1" /> PDF
                 </Button>
               </SectionHeader>
@@ -849,14 +850,14 @@ export default function Reports() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{detailedReportConfig.find(c => c.value === detailedReportType)?.label}</CardTitle>
-                    <Badge variant="secondary">{currentDetailedData.length} سجل</Badge>
+                    <Badge variant="secondary">{currentDetailedData.length} {t('reports.detailedReport.record')}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   {currentDetailedData.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>لا توجد بيانات لهذا التقرير</p>
+                      <p>{t('reports.detailedReport.noData')}</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto rounded-lg border">

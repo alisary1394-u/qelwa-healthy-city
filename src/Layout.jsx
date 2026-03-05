@@ -135,9 +135,7 @@ export default function Layout({ children }) {
       {!backendReady && (
         <div className="bg-amber-500 text-white px-4 py-3 flex items-center justify-center gap-3 flex-wrap text-center z-[60] relative shrink-0">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-          <span>
-            إعداد النظام مطلوب: افتح ملف <strong>.env.local</strong> وضع فيه <strong>VITE_BASE44_APP_ID</strong> و <strong>VITE_BASE44_APP_BASE_URL</strong> من لوحة الإدارة.
-          </span>
+          <span>{t('layout.setupRequired')}</span>
         </div>
       )}
 
@@ -183,7 +181,7 @@ export default function Layout({ children }) {
                 )}
                 <div>
                   <p className="font-bold text-sidebar-foreground text-sm">{currentSetting.city_name || t('home.healthyCity')}</p>
-                  <p className="text-xs text-sidebar-foreground/60">{currentSetting.city_location || (rtl ? 'محافظة قلوة' : 'Qelwa')}</p>
+                  <p className="text-xs text-sidebar-foreground/60">{currentSetting.city_location || t('layout.defaultCity')}</p>
                 </div>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground">
@@ -246,7 +244,7 @@ export default function Layout({ children }) {
               {!sidebarCollapsed && (
                 <div className="min-w-0">
                   <p className="font-bold text-sidebar-foreground text-sm truncate">{currentSetting.city_name || t('home.healthyCity')}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentSetting.city_location || (rtl ? 'محافظة قلوة' : 'Qelwa')}</p>
+                  <p className="text-[10px] text-sidebar-foreground/50 truncate">{currentSetting.city_location || t('layout.defaultCity')}</p>
                 </div>
               )}
             </Link>
@@ -451,7 +449,7 @@ export default function Layout({ children }) {
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">{t('nav.idleWarning', { minutes: Math.floor(remainingSeconds / 60) })}</h3>
             <p className="text-muted-foreground mb-4">
-              {rtl ? 'سيتم تسجيل خروجك تلقائياً بعد' : 'You will be logged out automatically in'}
+              {t('layout.idleTimeoutTitle')}
             </p>
             <div className="flex items-center justify-center gap-2 mb-6">
               <Clock className="w-5 h-5 text-destructive" />
@@ -460,14 +458,14 @@ export default function Layout({ children }) {
               </span>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              {rtl ? 'بسبب عدم النشاط لفترة طويلة، اضغط «المتابعة» للبقاء في النظام.' : 'Due to inactivity, press "Continue" to stay logged in.'}
+              {t('layout.idleTimeoutMsg', { minutes: Math.floor(remainingSeconds / 60) })}
             </p>
             <div className="flex gap-3 justify-center">
               <Button
                 onClick={dismissWarning}
                 className="flex-1 h-11 text-base font-semibold"
               >
-                {rtl ? 'متابعة العمل' : 'Continue'}
+                {t('layout.continueWorking')}
               </Button>
               <Button
                 variant="outline"
