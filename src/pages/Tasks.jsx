@@ -15,6 +15,7 @@ import TaskForm from "@/components/tasks/TaskForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import T from '@/components/T';
 
 function parseTeamMemberIds(rawValue) {
   if (Array.isArray(rawValue)) {
@@ -320,31 +321,31 @@ export default function Tasks() {
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
               placeholder={t('tasks.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
             />
           </div>
           {accessibleInitiatives.length > 0 && (
             <Select value={filterInitiative} onValueChange={setFilterInitiative}>
               <SelectTrigger className="w-[200px]">
-                <Lightbulb className="w-4 h-4 ml-1 text-primary" />
+                <Lightbulb className="w-4 h-4 ms-1 text-primary" />
                 <SelectValue placeholder={t('tasks.selectInitiative')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('tasks.allInitiatives')}</SelectItem>
                 {accessibleInitiatives.map(i => (
-                  <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</SelectItem>
+                  <SelectItem key={i.id} value={i.id}>{i.code} - <T>{(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</T></SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
           <Select value={filterPriority} onValueChange={setFilterPriority}>
             <SelectTrigger className="w-[140px]">
-              <Filter className="w-4 h-4 ml-1 text-amber-700 dark:text-amber-400" />
+              <Filter className="w-4 h-4 ms-1 text-amber-700 dark:text-amber-400" />
               <SelectValue placeholder={t('tasks.selectPriority')} />
             </SelectTrigger>
             <SelectContent>
@@ -358,13 +359,13 @@ export default function Tasks() {
           {assigneesWithTasks.length > 1 && (
             <Select value={filterAssignee} onValueChange={setFilterAssignee}>
               <SelectTrigger className="w-[180px]">
-                <Users className="w-4 h-4 ml-1 text-slate-600 dark:text-slate-400" />
+                <Users className="w-4 h-4 ms-1 text-slate-600 dark:text-slate-400" />
                 <SelectValue placeholder={t('tasks.assignedTo')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('tasks.allMembers')}</SelectItem>
                 {assigneesWithTasks.map(a => (
-                  <SelectItem key={a.id} value={String(a.id)}>{a.name} ({a.count})</SelectItem>
+                  <SelectItem key={a.id} value={String(a.id)}><T>{a.name}</T> ({a.count})</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -375,7 +376,7 @@ export default function Tasks() {
             rel="noopener noreferrer"
           >
             <Button variant="outline" className="w-full md:w-auto bg-secondary/10 hover:bg-secondary/20 text-secondary border-secondary/30">
-              <MessageCircle className="w-5 h-5 ml-2" />
+              <MessageCircle className="w-5 h-5 ms-2" />
               {t('tasks.whatsappReminders')}
             </Button>
           </a>
@@ -384,7 +385,7 @@ export default function Tasks() {
               onClick={() => { setEditingTask(null); setFormOpen(true); }}
               className="bg-primary hover:bg-primary/90"
             >
-              <Plus className="w-5 h-5 ml-2" />
+              <Plus className="w-5 h-5 ms-2" />
               {t('tasks.addTask')}
             </Button>
           )}

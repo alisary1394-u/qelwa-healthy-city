@@ -339,7 +339,9 @@
     "completed": "Completed",
     "cancelled": "Cancelled",
     "inProgress": "In Progress",
+    "in_progress": "In Progress",
     "notStarted": "Not Started",
+    "not_started": "Not Started",
     "planning": "Planning",
     "paused": "Paused",
     "open": "Open for Registration",
@@ -360,6 +362,7 @@
 
   "categories": {
     "fieldWork": "Field Work",
+    "field_work": "Field Work",
     "meeting": "Meeting",
     "report": "Report",
     "survey": "Survey",
@@ -512,7 +515,22 @@
     "markComplete": "Complete",
     "reminder": "Reminder:",
     "doneOn": "Completed",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "pendingStatus": "Pending",
+    "inProgressStatus": "In Progress",
+    "completedStatus": "Completed",
+    "overdueLabel": "Overdue",
+    "assignees": "Assignees",
+    "whatsappReminders": "WhatsApp Reminders",
+    "allMembers": "All Members",
+    "urgentPriority": "Urgent",
+    "highPriority": "High",
+    "mediumPriority": "Medium",
+    "lowPriority": "Low",
+    "confirmDeleteTask": "Confirm Delete Task",
+    "confirmDeleteMessage": "Are you sure you want to delete task \"{{title}}\"?",
+    "newTaskAssigned": "New task assigned to you",
+    "deleteTask": "Delete Task"
   },
 
   "memberCard": {
@@ -525,8 +543,10 @@
     "startExecution": "Start Execution",
     "returnToPending": "Return to Pending",
     "markComplete": "Complete",
+    "complete": "Complete",
     "reminder": "Reminder:",
     "doneOn": "Completed",
+    "completedOn": "Completed on",
     "unassigned": "Unassigned"
   },
 

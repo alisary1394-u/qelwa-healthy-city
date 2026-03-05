@@ -339,7 +339,9 @@
     "completed": "مكتملة",
     "cancelled": "ملغاة",
     "inProgress": "قيد التنفيذ",
+    "in_progress": "قيد التنفيذ",
     "notStarted": "لم يبدأ",
+    "not_started": "لم يبدأ",
     "planning": "تخطيط",
     "paused": "متوقفة",
     "open": "مفتوحة للتسجيل",
@@ -360,6 +362,7 @@
 
   "categories": {
     "fieldWork": "عمل ميداني",
+    "field_work": "عمل ميداني",
     "meeting": "اجتماع",
     "report": "تقرير",
     "survey": "مسح",
@@ -512,7 +515,22 @@
     "markComplete": "إنجاز",
     "reminder": "تذكير:",
     "doneOn": "تم الإنجاز",
-    "unassigned": "غير محدد"
+    "unassigned": "غير محدد",
+    "pendingStatus": "معلقة",
+    "inProgressStatus": "قيد التنفيذ",
+    "completedStatus": "مكتملة",
+    "overdueLabel": "متأخرة",
+    "assignees": "المكلفون",
+    "whatsappReminders": "تذكيرات واتساب",
+    "allMembers": "جميع الأعضاء",
+    "urgentPriority": "عاجلة",
+    "highPriority": "عالية",
+    "mediumPriority": "متوسطة",
+    "lowPriority": "منخفضة",
+    "confirmDeleteTask": "تأكيد حذف المهمة",
+    "confirmDeleteMessage": "هل أنت متأكد من حذف المهمة \"{{title}}\"؟",
+    "newTaskAssigned": "تم تعيين مهمة جديدة لك",
+    "deleteTask": "حذف المهمة"
   },
 
   "memberCard": {
@@ -525,8 +543,10 @@
     "startExecution": "بدء التنفيذ",
     "returnToPending": "إعادة للانتظار",
     "markComplete": "إنجاز",
+    "complete": "إكمال",
     "reminder": "تذكير:",
     "doneOn": "تم الإنجاز",
+    "completedOn": "اكتملت في",
     "unassigned": "غير محدد"
   },
 

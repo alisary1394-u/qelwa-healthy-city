@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, Edit, Trash2, CheckCircle, AlertCircle, Lightbulb, Target, Play, RotateCcw } from "lucide-react";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/documentTypes";
 import { format, formatDistanceToNow } from "date-fns";
-import { ar } from "date-fns/locale";
+import { ar, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import T from "@/components/T";
 
@@ -24,7 +24,9 @@ const statusColors = {
 };
 
 export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEdit, initiatives = [], members = [] }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
+  const dateLocale = rtl ? ar : enUS;
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const initiativeTitle = task.initiative_title || (task.initiative_id && initiatives.find(i => i.id === task.initiative_id)?.title);
   const assignedMember = members.find(m => String(m.id) === String(task.assigned_to));
@@ -36,8 +38,8 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
     ? (() => {
         try {
           const d = new Date(task.due_date);
-          const distance = formatDistanceToNow(d, { locale: ar, addSuffix: true });
-          return { text: format(d, 'dd MMMM yyyy', { locale: ar }), distance };
+          const distance = formatDistanceToNow(d, { locale: dateLocale, addSuffix: true });
+          return { text: format(d, 'dd MMMM yyyy', { locale: dateLocale }), distance };
         } catch { return { text: task.due_date, distance: '' }; }
       })()
     : null;
@@ -64,12 +66,12 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">{t(`categories.${task.category}`)}</Badge>
               )}
               {task.document_type && DOCUMENT_TYPE_LABELS[task.document_type] && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">{DOCUMENT_TYPE_LABELS[task.document_type]}</Badge>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5"><T>{DOCUMENT_TYPE_LABELS[task.document_type]}</T></Badge>
               )}
             </div>
           </div>
           {canEdit && (
-            <div className="flex gap-0.5 shrink-0 mr-1">
+            <div className="flex gap-0.5 shrink-0 me-1">
               <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => onEdit(task)}>
                 <Edit className="w-3.5 h-3.5 text-blue-600" />
               </Button>
@@ -118,7 +120,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 {dueLabel.text}
               </span>
               {dueLabel.distance && (
-                <span className={`text-[10px] mr-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>({dueLabel.distance})</span>
+                <span className={`text-[10px] me-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>({dueLabel.distance})</span>
               )}
             </div>
           )}
@@ -140,7 +142,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 className="flex-1 text-xs h-8"
                 onClick={() => onStatusChange(task.id, 'in_progress')}
               >
-                <Play className="w-3.5 h-3.5 ml-1" />
+                <Play className="w-3.5 h-3.5 ms-1" />
                 {t('taskCard.startExecution')}
               </Button>
             )}
@@ -151,7 +153,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
                 className="flex-1 text-xs h-8"
                 onClick={() => onStatusChange(task.id, 'pending')}
               >
-                <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                <RotateCcw className="w-3.5 h-3.5 ms-1" />
                 {t('taskCard.returnToPending')}
               </Button>
             )}
@@ -160,7 +162,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
               className="flex-1 bg-green-600 hover:bg-green-700 text-xs h-8"
               onClick={() => onStatusChange(task.id, 'completed')}
             >
-              <CheckCircle className="w-3.5 h-3.5 ml-1" />
+              <CheckCircle className="w-3.5 h-3.5 ms-1" />
               {t('taskCard.complete')}
             </Button>
           </div>
@@ -168,7 +170,7 @@ export default function TaskCard({ task, onEdit, onDelete, onStatusChange, canEd
         {task.status === 'completed' && (
           <div className="flex items-center gap-1.5 pt-2 border-t text-green-600 text-xs">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span>{t('taskCard.completedOn')} {task.completion_date ? format(new Date(task.completion_date), 'dd MMMM yyyy', { locale: ar }) : ''}</span>
+            <span>{t('taskCard.completedOn')} {task.completion_date ? format(new Date(task.completion_date), 'dd MMMM yyyy', { locale: dateLocale }) : ''}</span>
           </div>
         )}
       </CardContent>
