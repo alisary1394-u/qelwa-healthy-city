@@ -1,5 +1,6 @@
 ﻿import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -86,18 +87,19 @@ function getInitiativeSuggestionFromStandard(standard, axisName) {
   const axisLabel = axisName || standard?.axis_name || '';
   const impactful = /سلامة|جودة|طوارئ|حوكمة|وقاية|مخاطر/i.test(title);
 
+  const _t = i18n.t.bind(i18n);
   return {
     standard_id: standard?.id,
     standard_code: code,
-    title: `مبادرة تحسين ${title || code || 'المعيار'}`,
-    description: `برنامج تنفيذي لرفع مستوى الامتثال لمتطلبات ${code ? `المعيار ${code}` : 'المعيار'} ضمن ${axisLabel}.`,
-    objectives: `1) إغلاق فجوات ${code || 'المعيار'}\n2) رفع جودة التنفيذ والالتزام\n3) توثيق الإنجاز بالأدلة المطلوبة`,
+    title: _t('standards.suggestedInitiativeTitle', { name: title || code || _t('standards.standard') }),
+    description: _t('standards.suggestedInitiativeDesc', { code: code || _t('standards.standard'), axis: axisLabel }),
+    objectives: _t('standards.suggestedObjectives', { code: code || _t('standards.standard') }),
     priority: impactful ? 'high' : 'medium',
     impact_level: impactful ? 'high' : 'medium',
     estimated_budget: impactful ? 120000 : 70000,
     expected_beneficiaries: impactful ? 800 : 400,
-    target_audience: 'المستفيدون من خدمات المدينة الصحية',
-    notes: `مبادرة مقترحة تلقائياً بناءً على ${code ? `المعيار ${code}` : 'المعيار المحدد'}.`,
+    target_audience: _t('standards.defaultTargetAudience'),
+    notes: _t('standards.suggestedNotes', { code: code || _t('standards.standard') }),
   };
 }
 
@@ -125,7 +127,7 @@ const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 
 function buildRequiredEvidence(documents) {
   const list = Array.isArray(documents) && documents.length ? documents : [];
-  return list.length === 0 ? 'أدلة ومستندات تدعم تحقيق المعيار' : 'أدلة مطلوبة: ' + list.join('، ');
+  return list.length === 0 ? i18n.t('standards.defaultEvidence') : i18n.t('standards.evidencePrefix') + list.join('، ');
 }
 
 function StandardsLegacy() {
@@ -405,7 +407,7 @@ function StandardsLegacy() {
         window.location.href = createPageUrl('Initiatives');
       }
     } catch (err) {
-      if (typeof window !== 'undefined') window.alert(`تعذر فتح نموذج المبادرة المقترحة.\n${err?.message || err}`);
+      if (typeof window !== 'undefined') window.alert(`${t('standards.initiativePrefillError')}\n${err?.message || err}`);
     }
   };
 
@@ -1008,7 +1010,7 @@ function StandardsLegacy() {
                             <p className="text-xs text-muted-foreground mb-1">{t('standards.relatedBudgets')}</p>
                             <p className="text-sm font-semibold mb-1">{relatedBudgets.length} {t('standards.budgetItem')}</p>
                             <p className="text-xs text-success font-medium mb-2">
-                              {t('standards.totalBudget')} {totalRelatedBudget.toLocaleString()} ريال
+                              {t('standards.totalBudget')} {totalRelatedBudget.toLocaleString()} {t('currency.riyal')}
                             </p>
                             <div className="flex flex-wrap gap-1">
                               {visibleBudgets.length > 0 ? visibleBudgets.map((budget) => (

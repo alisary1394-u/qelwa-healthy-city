@@ -51,7 +51,8 @@
     "copiedToClipboard": "تم النسخ",
     "language": "اللغة",
     "arabic": "العربية",
-    "english": "English"
+    "english": "English",
+    "defaultUser": "مستخدم"
   },
 
   "login": {
@@ -184,6 +185,8 @@
 
   "settings": {
     "title": "الإعدادات",
+    "subtitle": "إدارة شعار المدينة، الأحياء، وأدوات البيانات",
+    "districtUnit": "حي",
     "tabs": {
       "branding": "الشعار",
       "districts": "الأحياء",
@@ -204,7 +207,10 @@
       "logoSaved": "تم حفظ إعدادات الشعار",
       "logoSaveFailed": "فشل حفظ الإعدادات",
       "logoUploaded": "تم رفع الشعار بنجاح",
-      "logoUploadFailed": "فشل رفع الشعار"
+      "logoUploadFailed": "فشل رفع الشعار",
+      "logoAlt": "شعار",
+      "cityNamePlaceholder": "المدينة الصحية",
+      "cityLocationPlaceholder": "محافظة قلوة"
     },
     "screenProtection": {
       "title": "حماية تصوير الشاشة",
@@ -213,7 +219,8 @@
       "disabledDesc": "يسمح لجميع المستخدمين بتصوير الشاشة",
       "enabled": "حماية الشاشة مفعّلة",
       "enabledDesc": "يمنع تصوير الشاشة للمستخدمين",
-      "warning": "تنبيه: عند إيقاف الحماية، سيتمكن جميع المستخدمين من تصوير الشاشة ونسخ المحتوى. فعّلها مجدداً عند الانتهاء."
+      "warning": "تنبيه: عند إيقاف الحماية، سيتمكن جميع المستخدمين من تصوير الشاشة ونسخ المحتوى. فعّلها مجدداً عند الانتهاء.",
+      "saveFailed": "فشل حفظ الإعداد"
     },
     "districts": {
       "title": "إدارة الأحياء",
@@ -229,9 +236,17 @@
       "updateSurveysButton": "تحديث أسماء الأحياء في الاستبيانات",
       "districtExists": "هذا الحي موجود بالفعل",
       "districtSaved": "تم حفظ قائمة الأحياء",
-      "districtSaveFailed": "فشل حفظ الأحياء"
+      "districtSaveFailed": "فشل حفظ الأحياء",
+      "defaultsRestored": "تم استعادة الأحياء الافتراضية",
+      "surveysUpdated": "تم تحديث {{updated}} استبيان من أصل {{total}}",
+      "updateFailed": "فشل التحديث",
+      "serverConnectionFailed": "فشل الاتصال بالسيرفر",
+      "emptyState": "لا توجد أحياء. أضف حياً جديداً من الأسفل."
     },
     "data": {
+      "serverLabel": "سيرفر التطبيق",
+      "supabaseLabel": "قاعدة Supabase",
+      "localBackendLabel": "الخلفية المحلية",
       "backup": {
         "title": "النسخ الاحتياطي والاستعادة",
         "subtitle": "استعادة البيانات من آخر نسخة احتياطية تلقائية",
@@ -274,7 +289,12 @@
       "loadingOverrides": "جاري تحميل الصلاحيات المخصصة..."
     },
     "noAccess": "غير مصرح لك بالوصول",
-    "noAccessDesc": "صلاحيات الصفحة مرتبطة بمنصبك في الفريق"
+    "noAccessDesc": "صلاحيات الصفحة مرتبطة بمنصبك في الفريق",
+    "roles": {
+      "systemAdmin": "مدير النظام",
+      "viewOnly": "عرض فقط",
+      "fullAccess": "صلاحيات كاملة"
+    }
   },
 
   "roles": {
@@ -597,7 +617,15 @@
     "standardStatusNotStarted": "لم يبدأ",
     "standardStatusInProgress": "قيد التنفيذ",
     "standardStatusCompleted": "مكتمل",
-    "standardStatusApproved": "معتمد"
+    "standardStatusApproved": "معتمد",
+    "suggestedInitiativeTitle": "مبادرة تحسين {{name}}",
+    "suggestedInitiativeDesc": "برنامج تنفيذي لرفع مستوى الامتثال لمتطلبات {{code}} ضمن {{axis}}.",
+    "suggestedObjectives": "1) إغلاق فجوات {{code}}\n2) رفع جودة التنفيذ والالتزام\n3) توثيق الإنجاز بالأدلة المطلوبة",
+    "defaultTargetAudience": "المستفيدون من خدمات المدينة الصحية",
+    "suggestedNotes": "مبادرة مقترحة تلقائياً بناءً على {{code}}.",
+    "defaultEvidence": "أدلة ومستندات تدعم تحقيق المعيار",
+    "evidencePrefix": "أدلة مطلوبة: ",
+    "initiativePrefillError": "تعذر فتح نموذج المبادرة المقترحة."
   },
 
   "initiatives": {
@@ -717,7 +745,46 @@
     "impactMedium": "تأثير متوسط",
     "impactHigh": "تأثير كبير",
     "impactVeryHigh": "تأثير كبير جداً",
-    "unassigned": "غير محدد"
+    "unassigned": "غير محدد",
+    "suggestedDocsList": {
+      "implementationPlan": "خطة تنفيذ المبادرة",
+      "progressReport": "تقرير تقدم دوري",
+      "meetingMinutes": "محضر اجتماع فريق المبادرة",
+      "qualityChecklist": "قائمة تحقق جودة التنفيذ",
+      "riskRegister": "سجل المخاطر والتحديات",
+      "achievementProof": "دليل إثبات الإنجاز",
+      "budgetReport": "تقرير صرف الميزانية والفواتير",
+      "beneficiaryReport": "كشف المستفيدين وقياس الرضا"
+    },
+    "suggestedTasksList": {
+      "approvePlan": "اعتماد خطة العمل التفصيلية وجدول التنفيذ",
+      "assignRoles": "توزيع الأدوار على فريق المبادرة",
+      "weeklyMeeting": "اجتماع متابعة أسبوعي لتحديث التقدم",
+      "monthlyReport": "رفع تقرير تقدم شهري للإدارة",
+      "riskReview": "مراجعة المخاطر وإجراءات المعالجة",
+      "budgetReview": "مراجعة المصروفات مقابل الميزانية المعتمدة",
+      "standardsAlignment": "التحقق من توافق مخرجات المبادرة مع المعايير المرتبطة"
+    },
+    "kpiNames": {
+      "operationalCompletion": "نسبة إنجاز الأعمال التشغيلية",
+      "documentCompletion": "نسبة استكمال المستندات المطلوبة",
+      "timelineCompliance": "الالتزام بالجدول الزمني",
+      "beneficiaryTarget": "تحقيق المستفيدين المستهدفين",
+      "budgetCompliance": "نسبة الالتزام بالميزانية"
+    },
+    "kpiDescs": {
+      "operationalCompletion": "قياس نسبة تنفيذ الأعمال المطلوب تنفيذها ضمن خطة المبادرة.",
+      "documentCompletion": "قياس اكتمال الوثائق المرجعية والإثباتات المطلوبة للمبادرة.",
+      "timelineCompliance": "عدد الأيام المنفذة ضمن الفترة الزمنية المخططة.",
+      "beneficiaryTarget": "عدد المستفيدين الفعليين مقارنة بالمستهدف.",
+      "budgetCompliance": "قياس الصرف الفعلي ضمن الميزانية المعتمدة."
+    },
+    "kpiUnits": {
+      "task": "مهمة",
+      "document": "مستند",
+      "day": "يوم",
+      "beneficiary": "مستفيد"
+    }
   },
 
   "budget": {

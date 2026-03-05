@@ -211,7 +211,7 @@ export default function Layout({ children }) {
               <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-sidebar-border">
                 <div className="flex items-center gap-3 p-2">
                   <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-sm">
-                    {currentUser.full_name?.charAt(0) || 'م'}
+                    {currentUser.full_name?.charAt(0) || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-sidebar-foreground truncate">{currentUser.full_name}</p>
@@ -365,7 +365,7 @@ export default function Layout({ children }) {
                 <DropdownMenuTrigger asChild>
                   <button className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-2 py-2'} rounded-xl hover:bg-sidebar-accent transition-colors`}>
                     <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {currentUser.full_name?.charAt(0) || 'م'}
+                      {currentUser.full_name?.charAt(0) || '?'}
                     </div>
                     {!sidebarCollapsed && (
                       <div className="flex-1 min-w-0 text-right">

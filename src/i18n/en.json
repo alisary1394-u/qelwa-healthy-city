@@ -51,7 +51,8 @@
     "copiedToClipboard": "Copied",
     "language": "Language",
     "arabic": "العربية",
-    "english": "English"
+    "english": "English",
+    "defaultUser": "User"
   },
 
   "login": {
@@ -184,6 +185,8 @@
 
   "settings": {
     "title": "Settings",
+    "subtitle": "Manage city branding, districts, and data tools",
+    "districtUnit": "districts",
     "tabs": {
       "branding": "Branding",
       "districts": "Districts",
@@ -204,7 +207,10 @@
       "logoSaved": "Logo settings saved",
       "logoSaveFailed": "Failed to save settings",
       "logoUploaded": "Logo uploaded successfully",
-      "logoUploadFailed": "Failed to upload logo"
+      "logoUploadFailed": "Failed to upload logo",
+      "logoAlt": "Logo",
+      "cityNamePlaceholder": "Healthy City",
+      "cityLocationPlaceholder": "Qelwa Governorate"
     },
     "screenProtection": {
       "title": "Screen Capture Protection",
@@ -213,7 +219,8 @@
       "disabledDesc": "Allows all users to take screenshots",
       "enabled": "Screen protection enabled",
       "enabledDesc": "Prevents users from taking screenshots",
-      "warning": "Warning: When protection is disabled, all users can take screenshots and copy content. Re-enable when done."
+      "warning": "Warning: When protection is disabled, all users can take screenshots and copy content. Re-enable when done.",
+      "saveFailed": "Failed to save setting"
     },
     "districts": {
       "title": "District Management",
@@ -229,9 +236,17 @@
       "updateSurveysButton": "Update District Names in Surveys",
       "districtExists": "This district already exists",
       "districtSaved": "Districts list saved",
-      "districtSaveFailed": "Failed to save districts"
+      "districtSaveFailed": "Failed to save districts",
+      "defaultsRestored": "Default districts restored",
+      "surveysUpdated": "Updated {{updated}} surveys out of {{total}}",
+      "updateFailed": "Update failed",
+      "serverConnectionFailed": "Server connection failed",
+      "emptyState": "No districts. Add a new district below."
     },
     "data": {
+      "serverLabel": "App Server",
+      "supabaseLabel": "Supabase DB",
+      "localBackendLabel": "Local Backend",
       "backup": {
         "title": "Backup & Restore",
         "subtitle": "Restore data from the latest automatic backup",
@@ -274,7 +289,12 @@
       "loadingOverrides": "Loading custom permissions..."
     },
     "noAccess": "Access Denied",
-    "noAccessDesc": "Page access is linked to your team role"
+    "noAccessDesc": "Page access is linked to your team role",
+    "roles": {
+      "systemAdmin": "System Admin",
+      "viewOnly": "View Only",
+      "fullAccess": "Full Access"
+    }
   },
 
   "roles": {
@@ -597,7 +617,15 @@
     "standardStatusNotStarted": "Not Started",
     "standardStatusInProgress": "In Progress",
     "standardStatusCompleted": "Completed",
-    "standardStatusApproved": "Approved"
+    "standardStatusApproved": "Approved",
+    "suggestedInitiativeTitle": "Improvement initiative for {{name}}",
+    "suggestedInitiativeDesc": "Executive program to improve compliance with {{code}} requirements within {{axis}}.",
+    "suggestedObjectives": "1) Close gaps in {{code}}\n2) Improve execution quality and compliance\n3) Document achievements with required evidence",
+    "defaultTargetAudience": "Healthy City services beneficiaries",
+    "suggestedNotes": "Auto-suggested initiative based on {{code}}.",
+    "defaultEvidence": "Evidence and documents supporting standard compliance",
+    "evidencePrefix": "Required evidence: ",
+    "initiativePrefillError": "Failed to open the suggested initiative form."
   },
 
   "initiatives": {
@@ -717,7 +745,46 @@
     "impactMedium": "Medium Impact",
     "impactHigh": "High Impact",
     "impactVeryHigh": "Very High Impact",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "suggestedDocsList": {
+      "implementationPlan": "Initiative implementation plan",
+      "progressReport": "Periodic progress report",
+      "meetingMinutes": "Initiative team meeting minutes",
+      "qualityChecklist": "Implementation quality checklist",
+      "riskRegister": "Risk and challenges register",
+      "achievementProof": "Achievement proof documentation",
+      "budgetReport": "Budget expenditure and invoices report",
+      "beneficiaryReport": "Beneficiaries list and satisfaction survey"
+    },
+    "suggestedTasksList": {
+      "approvePlan": "Approve detailed work plan and execution timeline",
+      "assignRoles": "Assign roles to the initiative team",
+      "weeklyMeeting": "Weekly follow-up meeting to update progress",
+      "monthlyReport": "Submit monthly progress report to management",
+      "riskReview": "Review risks and mitigation actions",
+      "budgetReview": "Review expenses against approved budget",
+      "standardsAlignment": "Verify initiative outputs align with related standards"
+    },
+    "kpiNames": {
+      "operationalCompletion": "Operational tasks completion rate",
+      "documentCompletion": "Required documents completion rate",
+      "timelineCompliance": "Timeline compliance",
+      "beneficiaryTarget": "Beneficiary target achievement",
+      "budgetCompliance": "Budget compliance rate"
+    },
+    "kpiDescs": {
+      "operationalCompletion": "Measuring the execution rate of tasks required in the initiative plan.",
+      "documentCompletion": "Measuring the completion of reference documents and required evidence.",
+      "timelineCompliance": "Number of days executed within the planned timeline.",
+      "beneficiaryTarget": "Actual beneficiaries compared to target.",
+      "budgetCompliance": "Measuring actual expenditure within approved budget."
+    },
+    "kpiUnits": {
+      "task": "task",
+      "document": "document",
+      "day": "day",
+      "beneficiary": "beneficiary"
+    }
   },
 
   "budget": {

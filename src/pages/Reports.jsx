@@ -424,7 +424,7 @@ export default function Reports() {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">{t('reports.title')}</h1>
-                <p className="text-blue-100 text-sm mt-1">{t('reports.citySubtitle', { city: settings[0]?.city_name || 'قلوة' })}</p>
+                <p className="text-blue-100 text-sm mt-1">{t('reports.citySubtitle', { city: settings[0]?.city_name || t('layout.defaultCity') })}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

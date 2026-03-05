@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -273,29 +274,31 @@ const pickSuggestedTeam = (initiative, members) => {
 };
 
 const getInitiativeSuggestedDocuments = (initiative) => {
+  const _t = i18n.t.bind(i18n);
   const docs = [
-    'خطة تنفيذ المبادرة',
-    'تقرير تقدم دوري',
-    'محضر اجتماع فريق المبادرة',
-    'قائمة تحقق جودة التنفيذ',
-    'سجل المخاطر والتحديات',
-    'دليل إثبات الإنجاز',
+    _t('initiatives.suggestedDocsList.implementationPlan'),
+    _t('initiatives.suggestedDocsList.progressReport'),
+    _t('initiatives.suggestedDocsList.meetingMinutes'),
+    _t('initiatives.suggestedDocsList.qualityChecklist'),
+    _t('initiatives.suggestedDocsList.riskRegister'),
+    _t('initiatives.suggestedDocsList.achievementProof'),
   ];
-  if ((initiative?.budget || 0) > 0) docs.push('تقرير صرف الميزانية والفواتير');
-  if ((initiative?.expected_beneficiaries || 0) > 0) docs.push('كشف المستفيدين وقياس الرضا');
+  if ((initiative?.budget || 0) > 0) docs.push(_t('initiatives.suggestedDocsList.budgetReport'));
+  if ((initiative?.expected_beneficiaries || 0) > 0) docs.push(_t('initiatives.suggestedDocsList.beneficiaryReport'));
   return docs;
 };
 
 const getInitiativeSuggestedTasks = (initiative) => {
+  const _t = i18n.t.bind(i18n);
   const tasks = [
-    'اعتماد خطة العمل التفصيلية وجدول التنفيذ',
-    'توزيع الأدوار على فريق المبادرة',
-    'اجتماع متابعة أسبوعي لتحديث التقدم',
-    'رفع تقرير تقدم شهري للإدارة',
-    'مراجعة المخاطر وإجراءات المعالجة',
+    _t('initiatives.suggestedTasksList.approvePlan'),
+    _t('initiatives.suggestedTasksList.assignRoles'),
+    _t('initiatives.suggestedTasksList.weeklyMeeting'),
+    _t('initiatives.suggestedTasksList.monthlyReport'),
+    _t('initiatives.suggestedTasksList.riskReview'),
   ];
-  if ((initiative?.budget || 0) > 0) tasks.push('مراجعة المصروفات مقابل الميزانية المعتمدة');
-  if ((initiative?.related_standards || []).length > 0) tasks.push('التحقق من توافق مخرجات المبادرة مع المعايير المرتبطة');
+  if ((initiative?.budget || 0) > 0) tasks.push(_t('initiatives.suggestedTasksList.budgetReview'));
+  if ((initiative?.related_standards || []).length > 0) tasks.push(_t('initiatives.suggestedTasksList.standardsAlignment'));
   return tasks;
 };
 
@@ -306,46 +309,47 @@ const getInitiativeSuggestedKpis = (initiative, docs, tasks) => {
     ? Math.max(1, Math.round((new Date(initiative.end_date) - new Date(initiative.start_date)) / (1000 * 60 * 60 * 24)))
     : 90;
 
+  const _t = i18n.t.bind(i18n);
   return [
     {
-      kpi_name: 'نسبة إنجاز الأعمال التشغيلية',
-      description: 'قياس نسبة تنفيذ الأعمال المطلوب تنفيذها ضمن خطة المبادرة.',
+      kpi_name: _t('initiatives.kpiNames.operationalCompletion'),
+      description: _t('initiatives.kpiDescs.operationalCompletion'),
       target_value: tasks.length,
       current_value: 0,
-      unit: 'مهمة',
-      measurement_frequency: 'أسبوعي',
+      unit: _t('initiatives.kpiUnits.task'),
+      measurement_frequency: 'weekly',
     },
     {
-      kpi_name: 'نسبة استكمال المستندات المطلوبة',
-      description: 'قياس اكتمال الوثائق المرجعية والإثباتات المطلوبة للمبادرة.',
+      kpi_name: _t('initiatives.kpiNames.documentCompletion'),
+      description: _t('initiatives.kpiDescs.documentCompletion'),
       target_value: docs.length,
       current_value: 0,
-      unit: 'مستند',
-      measurement_frequency: 'شهري',
+      unit: _t('initiatives.kpiUnits.document'),
+      measurement_frequency: 'monthly',
     },
     {
-      kpi_name: 'الالتزام بالجدول الزمني',
-      description: 'عدد الأيام المنفذة ضمن الفترة الزمنية المخططة.',
+      kpi_name: _t('initiatives.kpiNames.timelineCompliance'),
+      description: _t('initiatives.kpiDescs.timelineCompliance'),
       target_value: durationDays,
       current_value: 0,
-      unit: 'يوم',
-      measurement_frequency: 'شهري',
+      unit: _t('initiatives.kpiUnits.day'),
+      measurement_frequency: 'monthly',
     },
     {
-      kpi_name: 'تحقيق المستفيدين المستهدفين',
-      description: 'عدد المستفيدين الفعليين مقارنة بالمستهدف.',
+      kpi_name: _t('initiatives.kpiNames.beneficiaryTarget'),
+      description: _t('initiatives.kpiDescs.beneficiaryTarget'),
       target_value: expectedBeneficiaries > 0 ? expectedBeneficiaries : 100,
       current_value: 0,
-      unit: 'مستفيد',
-      measurement_frequency: 'شهري',
+      unit: _t('initiatives.kpiUnits.beneficiary'),
+      measurement_frequency: 'monthly',
     },
     {
-      kpi_name: 'نسبة الالتزام بالميزانية',
-      description: 'قياس الصرف الفعلي ضمن الميزانية المعتمدة.',
+      kpi_name: _t('initiatives.kpiNames.budgetCompliance'),
+      description: _t('initiatives.kpiDescs.budgetCompliance'),
       target_value: budget > 0 ? budget : 100,
       current_value: 0,
-      unit: budget > 0 ? 'ريال' : '%',
-      measurement_frequency: 'شهري',
+      unit: budget > 0 ? _t('currency.riyal') : '%',
+      measurement_frequency: 'monthly',
     },
   ];
 };
@@ -1565,7 +1569,7 @@ export default function Initiatives() {
                           target_value: 0,
                           current_value: 0,
                           unit: '',
-                          measurement_frequency: 'شهري'
+                          measurement_frequency: 'monthly'
                         }]);
                       }}
                     >
@@ -1641,11 +1645,11 @@ export default function Initiatives() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="يومي">{t('initiatives.daily')}</SelectItem>
-                                  <SelectItem value="أسبوعي">{t('initiatives.weekly')}</SelectItem>
-                                  <SelectItem value="شهري">{t('initiatives.monthly')}</SelectItem>
-                                  <SelectItem value="ربع سنوي">{t('initiatives.quarterly')}</SelectItem>
-                                  <SelectItem value="سنوي">{t('initiatives.annual')}</SelectItem>
+                                  <SelectItem value="daily">{t('initiatives.daily')}</SelectItem>
+                                  <SelectItem value="weekly">{t('initiatives.weekly')}</SelectItem>
+                                  <SelectItem value="monthly">{t('initiatives.monthly')}</SelectItem>
+                                  <SelectItem value="quarterly">{t('initiatives.quarterly')}</SelectItem>
+                                  <SelectItem value="annual">{t('initiatives.annual')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1864,7 +1868,7 @@ export default function Initiatives() {
                         <li key={`doc-${idx}`}>{doc}</li>
                       ))}
                     </ul>
-                    <p className="text-amber-600 text-xs">{t('initiatives.namingConvention')}: <code className="bg-amber-100 px-1 rounded">A[محور]-M[معيار]-[نوع]-YYYY-MM-DD-v1.pdf</code></p>
+                    <p className="text-amber-600 text-xs">{t('initiatives.namingConvention')}: <code className="bg-amber-100 px-1 rounded">A[axis]-M[standard]-[type]-YYYY-MM-DD-v1.pdf</code></p>
                   </div>
 
                   {canManageInitiatives && (

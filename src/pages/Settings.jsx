@@ -173,10 +173,10 @@ export default function Settings() {
     appParams.useSupabaseBackend ||
     (appParams.apiUrl && appParams.allowServerReseed);
   const reseedSourceLabel = appParams.apiUrl
-    ? (rtl ? 'سيرفر التطبيق' : 'App Server')
+    ? t('settings.data.serverLabel')
     : appParams.useSupabaseBackend
-      ? (rtl ? 'قاعدة Supabase' : 'Supabase DB')
-      : (rtl ? 'الخلفية المحلية' : 'Local Backend');
+      ? t('settings.data.supabaseLabel')
+      : t('settings.data.localBackendLabel');
 
   const canShowBackupRestore = !!appParams.apiUrl && typeof api.backups?.list === 'function';
   const { data: backupsList = [], isLoading: backupsLoading } = useQuery({
@@ -307,7 +307,7 @@ export default function Settings() {
 
   const handleResetDistricts = () => {
     setDistrictsList(DEFAULT_DISTRICTS);
-    showToast(rtl ? 'تم استعادة الأحياء الافتراضية' : 'Default districts restored');
+    showToast(t('settings.districts.defaultsRestored'));
   };
 
   const handleRenameExistingSurveyDistricts = async () => {
@@ -323,13 +323,13 @@ export default function Settings() {
       const data = await resp.json();
       if (data.ok) {
         queryClient.invalidateQueries({ queryKey: ['surveys'] });
-        showToast(`تم تحديث ${data.updated} استبيان من أصل ${data.total}`);
+        showToast(t('settings.districts.surveysUpdated', { updated: data.updated, total: data.total }));
       } else {
-        showToast(data.error || 'فشل التحديث', 'error');
+        showToast(data.error || t('settings.districts.updateFailed'), 'error');
       }
     } catch (err) {
       console.error('Error renaming districts:', err);
-      showToast('فشل الاتصال بالسيرفر', 'error');
+      showToast(t('settings.districts.serverConnectionFailed'), 'error');
     } finally {
       setRenamingDistricts(false);
     }
@@ -416,16 +416,16 @@ export default function Settings() {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{t('settings.title')}</h1>
-              <p className="text-white/60 text-sm mt-1">{rtl ? 'إدارة شعار المدينة، الأحياء، وأدوات البيانات' : 'Manage city branding, districts, and data tools'}</p>
+              <p className="text-white/60 text-sm mt-1">{t('settings.subtitle')}</p>
             </div>
             {currentUser && (
               <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/15">
                 <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold border-2 border-white/30">
-                  {(currentUser.full_name || currentUser.name || '؟')[0]}
+                  {(currentUser.full_name || currentUser.name || '?')[0]}
                 </div>
                 <div className="text-white text-sm">
-                  <p className="font-medium leading-tight">{currentUser.full_name || currentUser.name || 'مستخدم'}</p>
-                  <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? (rtl ? 'مدير النظام' : 'System Admin') : (rtl ? 'عرض فقط' : 'View Only')}</p>
+                  <p className="font-medium leading-tight">{currentUser.full_name || currentUser.name || t('common.defaultUser')}</p>
+                  <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? t('settings.roles.systemAdmin') : t('settings.roles.viewOnly')}</p>
                 </div>
               </div>
             )}
@@ -439,11 +439,11 @@ export default function Settings() {
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <MapPin className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{districtsList.length} {rtl ? 'حي' : 'districts'}</span>
+              <span className="text-white text-xs font-medium">{districtsList.length} {t('settings.districtUnit')}</span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <Shield className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{permissions.canManageSettings ? (rtl ? 'صلاحيات كاملة' : 'Full Access') : (rtl ? 'عرض فقط' : 'View Only')}</span>
+              <span className="text-white text-xs font-medium">{permissions.canManageSettings ? t('settings.roles.fullAccess') : t('settings.roles.viewOnly')}</span>
             </div>
           </div>
         </div>
@@ -497,7 +497,7 @@ export default function Settings() {
                     <div className="relative group">
                       <div className="w-40 h-40 rounded-2xl border-2 border-dashed border-border bg-gradient-to-br from-slate-50 to-white flex items-center justify-center overflow-hidden shadow-inner transition-all group-hover:border-[#1e3a5f]/30">
                         {logoForm.logo_url ? (
-                          <img src={logoForm.logo_url} alt="شعار" className="w-full h-full object-contain p-2" />
+                          <img src={logoForm.logo_url} alt={t('settings.branding.logoAlt')} className="w-full h-full object-contain p-2" />
                         ) : (
                           <span className="text-5xl font-bold text-white gradient-primary w-full h-full flex items-center justify-center rounded-xl">
                             {logoForm.logo_text || 'ق'}
@@ -571,7 +571,7 @@ export default function Settings() {
                           value={logoForm.city_name}
                           disabled={!permissions.canManageSettings}
                           onChange={(e) => setLogoForm(f => ({ ...f, city_name: e.target.value }))}
-                          placeholder="المدينة الصحية"
+                          placeholder={t('settings.branding.cityNamePlaceholder')}
                           className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
                         />
                       </div>
@@ -582,7 +582,7 @@ export default function Settings() {
                         value={logoForm.city_location}
                         disabled={!permissions.canManageSettings}
                         onChange={(e) => setLogoForm(f => ({ ...f, city_location: e.target.value }))}
-                        placeholder="محافظة قلوة"
+                        placeholder={t('settings.branding.cityLocationPlaceholder')}
                         className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
                       />
                     </div>
@@ -653,9 +653,9 @@ export default function Settings() {
                           }
                           setScreenProtectionDisabled(checked);
                           window.__ALLOW_SCREENSHOTS = checked;
-                          showToast(checked ? (rtl ? 'تم إيقاف حماية تصوير الشاشة' : 'Screen protection disabled') : (rtl ? 'تم تفعيل حماية تصوير الشاشة' : 'Screen protection enabled'));
+                          showToast(checked ? t('settings.screenProtection.disabled') : t('settings.screenProtection.enabled'));
                         } catch {
-                          showToast(rtl ? 'فشل حفظ الإعداد' : 'Failed to save setting', 'error');
+                          showToast(t('settings.screenProtection.saveFailed'), 'error');
                         } finally {
                           setScreenProtSaving(false);
                         }
@@ -691,7 +691,7 @@ export default function Settings() {
                     </div>
                   </div>
                   <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">
-                    {districtsList.length} {rtl ? 'حي' : 'districts'}
+                    {districtsList.length} {t('settings.districtUnit')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -761,7 +761,7 @@ export default function Settings() {
                     {districtsList.length === 0 && (
                       <div className="text-center py-12 text-muted-foreground">
                         <MapPin className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">لا توجد أحياء. أضف حياً جديداً من الأسفل.</p>
+                        <p className="text-sm">{t('settings.districts.emptyState')}</p>
                       </div>
                     )}
                   </div>
