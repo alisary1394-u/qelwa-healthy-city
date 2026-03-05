@@ -647,11 +647,11 @@ function StandardsLegacy() {
   const getStandardEvidence = (standardId) => evidence.filter(e => e.standard_id === standardId);
 
   const activeAxisEntity = activeAxis !== 'all' ? axes.find(a => a.id === activeAxis) : null;
-  const pageTitle = activeAxisEntity
+  const pageTitleRaw = activeAxisEntity
     ? ((activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_SHORT_NAMES.length)
         ? AXIS_SHORT_NAMES[activeAxisEntity.order - 1]
         : activeAxisEntity.name)
-    : t('standards.title');
+    : null;
 
   if (!permissions.canSeeStandards) {
     return (
@@ -671,7 +671,7 @@ function StandardsLegacy() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
             <Target className="w-8 h-8" />
-            {pageTitle}
+            {pageTitleRaw ? <T>{pageTitleRaw}</T> : t('standards.title')}
           </h1>
           <p className="text-white/70">{activeAxisEntity ? t('standards.standardsCount', { count: (activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_COUNTS.length) ? AXIS_COUNTS[activeAxisEntity.order - 1] : scopedStandards.filter(s => s.axis_id === activeAxis).length }) : t('standards.healthyCityStandards')}</p>
         </div>
@@ -682,22 +682,22 @@ function StandardsLegacy() {
           {canManage && (
             <>
               <Button onClick={() => setAxisFormOpen(true)} variant="outline">
-                <Plus className="w-4 h-4 ml-2" />
+                <Plus className="w-4 h-4 ms-2" />
                 {t('standards.addAxis')}
               </Button>
               <Button onClick={() => setStandardFormOpen(true)} className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 ml-2" />
+                <Plus className="w-4 h-4 ms-2" />
                 {t('standards.addStandard')}
               </Button>
             </>
           )}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
               placeholder={t('standards.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
               dir={rtl ? 'rtl' : 'ltr'}
               autoComplete="off"
             />
@@ -715,7 +715,7 @@ function StandardsLegacy() {
               }
             }}
           >
-            <Clock className="w-4 h-4 ml-1" />
+            <Clock className="w-4 h-4 ms-1" />
             {t('standards.pendingReview')}
           </Button>
         </div>
@@ -742,7 +742,7 @@ function StandardsLegacy() {
                   onClick={() => setActiveAxis(axis.id)}
                   className="whitespace-nowrap"
                 >
-                  {tabLabel} ({count})
+                  <T>{tabLabel}</T> ({count})
                 </Button>
               );
             })}
@@ -1081,7 +1081,7 @@ function StandardsLegacy() {
                     <div className="mt-4 pt-4 border-t">
                       <Collapsible className="w-full">
                         <CollapsibleTrigger asChild>
-                          <button type="button" className="w-full text-right group">
+                          <button type="button" className="w-full text-start group">
                             <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/50 p-4 hover:bg-muted transition-colors">
                               <div className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-muted-foreground" />
@@ -1217,7 +1217,7 @@ function StandardsLegacy() {
                   <SelectContent>
                     {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
                       const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
-                      return <SelectItem key={a.id} value={a.id}>{label}</SelectItem>;
+                      return <SelectItem key={a.id} value={a.id}><T>{label}</T></SelectItem>;
                     })}
                   </SelectContent>
                 </Select>
@@ -1271,7 +1271,7 @@ function StandardsLegacy() {
                 ))}
               </ul>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditDocuments([...editDocuments, ''])}>
-                <Plus className="w-4 h-4 ml-2" /> {t('standards.addDocument')}
+                <Plus className="w-4 h-4 ms-2" /> {t('standards.addDocument')}
               </Button>
             </div>
             <div>
@@ -1289,7 +1289,7 @@ function StandardsLegacy() {
                 ))}
               </div>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditKpis([...editKpis, { name: '', target: '', unit: '' }])}>
-                <Plus className="w-4 h-4 ml-2" /> {t('standards.addKPI')}
+                <Plus className="w-4 h-4 ms-2" /> {t('standards.addKPI')}
               </Button>
             </div>
             <div className="flex gap-3 justify-end pt-4">
@@ -1361,7 +1361,7 @@ function StandardsLegacy() {
                     <SelectContent>
                       {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(a => {
                         const label = (a.order >= 1 && a.order <= AXIS_SHORT_NAMES.length) ? AXIS_SHORT_NAMES[a.order - 1] : a.name;
-                        return <SelectItem key={a.id} value={a.id}>{label}</SelectItem>;
+                        return <SelectItem key={a.id} value={a.id}><T>{label}</T></SelectItem>;
                       })}
                     </SelectContent>
                   </Select>
@@ -1424,7 +1424,7 @@ function StandardsLegacy() {
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setEvidenceFormOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={uploading} className="bg-primary">
-                {uploading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {uploading && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {t('standards.uploadEvidence')}
               </Button>
             </div>

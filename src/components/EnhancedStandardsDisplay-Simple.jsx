@@ -4,10 +4,12 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard } from '@/api/enhancedKpis';
 import { ENHANCED_AXIS_KPIS } from '@/api/enhancedAxisKpis';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
+import T from '@/components/T';
 
 // ===== دالة مساعدة لتحليل مصفوفة JSON =====
 
@@ -24,6 +26,7 @@ function parseJsonArray(str, fallback = []) {
 // ===== مكون مؤشر الأداء المحسّن (مبسط) =====
 
 function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
+  const { t } = useTranslation();
   // استخدام المؤشرات المحسنة إذا لم تكن هناك مؤشرات حالية
   const enhancedKpis = currentKpis.length > 0 ? currentKpis : buildAdvancedKpisForStandard(standard.title, standard.global_num, standard.axis_order);
   
@@ -33,9 +36,9 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
         <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-        <h4 className="font-semibold text-blue-900">مؤشرات الأداء المحسنة</h4>
+        <h4 className="font-semibold text-blue-900">{t('enhancedDisplay.enhancedKPIs')}</h4>
         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-          {enhancedKpis.length} مؤشر
+          {enhancedKpis.length} {t('enhancedDisplay.indicator')}
         </span>
       </div>
       
@@ -43,35 +46,35 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
         {enhancedKpis.slice(0, 4).map((kpi, index) => (
           <div key={index} className="bg-card p-3 rounded border border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-sm">{kpi.name}</span>
+              <span className="font-medium text-sm"><T>{kpi.name}</T></span>
               <span className="text-xs bg-muted text-foreground px-2 py-1 rounded">
-                {kpi.category}
+                <T>{kpi.category}</T>
               </span>
             </div>
             
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">الهدف:</span>
-                <span className="font-medium">{kpi.target}</span>
+                <span className="text-muted-foreground">{t('enhancedDisplay.target')}:</span>
+                <span className="font-medium"><T>{kpi.target}</T></span>
               </div>
               
               {kpi.unit && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">الوحدة:</span>
-                  <span>{kpi.unit}</span>
+                  <span className="text-muted-foreground">{t('enhancedDisplay.unit')}:</span>
+                  <span><T>{kpi.unit}</T></span>
                 </div>
               )}
               
               {kpi.weight && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">الوزن:</span>
+                  <span className="text-muted-foreground">{t('enhancedDisplay.weight')}:</span>
                   <span>{Math.round(kpi.weight * 100)}%</span>
                 </div>
               )}
               
               {kpi.description && (
                 <div className="mt-2 pt-2 border-t text-muted-foreground">
-                  {kpi.description}
+                  <T>{kpi.description}</T>
                 </div>
               )}
             </div>
@@ -82,7 +85,7 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
       {enhancedKpis.length > 4 && (
         <div className="mt-3 text-center">
           <span className="text-xs bg-muted text-foreground px-2 py-1 rounded">
-            +{enhancedKpis.length - 4} مؤشرات أخرى
+            +{enhancedKpis.length - 4} {t('enhancedDisplay.moreIndicators')}
           </span>
         </div>
       )}
@@ -93,6 +96,7 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
 // ===== مكون المستندات المطلوبة المحسّن (مبسط) =====
 
 function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
+  const { t } = useTranslation();
   // استخدام المستندات المحسنة إذا لم تكن هناك مستندات حالية
   const enhancedDocuments = currentDocuments.length > 0 ? currentDocuments : buildRequiredDocumentsForStandard(standard.title, standard.axis_order);
   const normalizedDocuments = enhancedDocuments
@@ -115,15 +119,15 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
     <Collapsible className="mt-4">
       <div className="bg-green-50 rounded-lg border border-green-200">
         <CollapsibleTrigger asChild>
-          <button type="button" className="w-full text-right group">
+          <button type="button" className="w-full text-start group">
             <div className="flex items-center justify-between gap-2 p-4 hover:bg-green-100/50 transition-colors rounded-lg">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <h4 className="font-semibold text-green-900">المستندات المطلوبة</h4>
+                <h4 className="font-semibold text-green-900">{t('enhancedDisplay.requiredDocuments')}</h4>
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  {normalizedDocuments.length} مستند
+                  {normalizedDocuments.length} {t('enhancedDisplay.document')}
                 </span>
               </div>
               <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -140,10 +144,10 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <div className="flex-1">
-                    <span className="text-sm font-medium">{doc.name}</span>
+                    <span className="text-sm font-medium"><T>{doc.name}</T></span>
                     {doc.type && (
-                      <span className="text-xs bg-muted text-foreground px-2 py-1 rounded mr-2">
-                        {doc.type}
+                      <span className="text-xs bg-muted text-foreground px-2 py-1 rounded ms-2">
+                        <T>{doc.type}</T>
                       </span>
                     )}
                   </div>
@@ -153,7 +157,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
 
             {normalizedDocuments.length > 5 && (
               <div className="mt-3 text-center text-sm text-muted-foreground">
-                و {normalizedDocuments.length - 5} مستندات أخرى...
+                {t('enhancedDisplay.andMore', { count: normalizedDocuments.length - 5 })}
               </div>
             )}
           </div>
@@ -166,6 +170,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
 // ===== مكون بطاقة المحور المحسّن (مبسط) =====
 
 function EnhancedAxisCard({ axis, standards, onSelect }) {
+  const { t } = useTranslation();
   // الحصول على مؤشرات المحور المحسنة
   const axisKpis = ENHANCED_AXIS_KPIS.find(k => k.axis_order === axis.order)?.kpis || [];
   
@@ -187,15 +192,15 @@ function EnhancedAxisCard({ axis, standards, onSelect }) {
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <h3 className="font-bold text-lg mb-1">{axis.name}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-2">{axis.description}</p>
+          <h3 className="font-bold text-lg mb-1"><T>{axis.name}</T></h3>
+          <p className="text-sm text-muted-foreground line-clamp-2"><T>{axis.description}</T></p>
         </div>
-        <div className="text-left">
+        <div className="text-end">
           <span className="text-xs bg-muted text-foreground px-2 py-1 rounded mb-2 block">
-            {totalStandards} معيار
+            {totalStandards} {t('enhancedDisplay.standard')}
           </span>
           <div className="text-xs text-muted-foreground">
-            المحور {axis.order}
+            {t('enhancedDisplay.axis')} {axis.order}
           </div>
         </div>
       </div>
@@ -208,7 +213,7 @@ function EnhancedAxisCard({ axis, standards, onSelect }) {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              مستوى الإنجاز
+              {t('enhancedDisplay.completionLevel')}
             </span>
             <span className={`font-bold ${progress >= 80 ? 'text-green-600' : progress >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
               {Math.round(progress)}%
@@ -229,7 +234,7 @@ function EnhancedAxisCard({ axis, standards, onSelect }) {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
-              نقاط الأداء
+              {t('enhancedDisplay.performanceScore')}
             </span>
             <span className={`font-bold ${performanceScore >= 80 ? 'text-green-600' : performanceScore >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
               {performanceScore}/100
@@ -249,19 +254,19 @@ function EnhancedAxisCard({ axis, standards, onSelect }) {
             <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
-            <span>{completedStandards} مكتمل</span>
+            <span>{completedStandards} {t('enhancedDisplay.completed')}</span>
           </div>
           <div className="flex items-center gap-1">
             <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{totalStandards - completedStandards} متبقي</span>
+            <span>{totalStandards - completedStandards} {t('enhancedDisplay.remaining')}</span>
           </div>
           <div className="flex items-center gap-1">
             <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            <span>{axisKpis.length} مؤشر</span>
+            <span>{axisKpis.length} {t('enhancedDisplay.indicator')}</span>
           </div>
         </div>
       </div>

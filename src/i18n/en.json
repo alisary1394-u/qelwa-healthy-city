@@ -628,6 +628,24 @@
     "initiativePrefillError": "Failed to open the suggested initiative form."
   },
 
+  "enhancedDisplay": {
+    "enhancedKPIs": "Enhanced Performance Indicators",
+    "indicator": "indicator",
+    "target": "Target",
+    "unit": "Unit",
+    "weight": "Weight",
+    "moreIndicators": "more indicators",
+    "requiredDocuments": "Required Documents",
+    "document": "document",
+    "andMore": "and {{count}} more documents...",
+    "standard": "standard",
+    "axis": "Axis",
+    "completionLevel": "Completion Level",
+    "performanceScore": "Performance Score",
+    "completed": "completed",
+    "remaining": "remaining"
+  },
+
   "initiatives": {
     "title": "Initiative Management",
     "subtitle": "Healthy City initiatives — linked to axes and 80 standards",

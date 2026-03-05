@@ -628,6 +628,24 @@
     "initiativePrefillError": "تعذر فتح نموذج المبادرة المقترحة."
   },
 
+  "enhancedDisplay": {
+    "enhancedKPIs": "مؤشرات الأداء المحسنة",
+    "indicator": "مؤشر",
+    "target": "الهدف",
+    "unit": "الوحدة",
+    "weight": "الوزن",
+    "moreIndicators": "مؤشرات أخرى",
+    "requiredDocuments": "المستندات المطلوبة",
+    "document": "مستند",
+    "andMore": "و {{count}} مستندات أخرى...",
+    "standard": "معيار",
+    "axis": "المحور",
+    "completionLevel": "مستوى الإنجاز",
+    "performanceScore": "نقاط الأداء",
+    "completed": "مكتمل",
+    "remaining": "متبقي"
+  },
+
   "initiatives": {
     "title": "إدارة المبادرات",
     "subtitle": "مبادرات المدينة الصحية — المرتبطة بالمحاور والمعايير الـ 80",
