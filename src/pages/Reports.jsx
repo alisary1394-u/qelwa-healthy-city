@@ -15,6 +15,7 @@ import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
 import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
+import T from '@/components/T';
 
 const REFERENCE_TOTAL = STANDARDS_CSV.length;
 
@@ -99,7 +100,7 @@ function AxisProgressCard({ name, order, completed, total, color }) {
         {order}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{name}</p>
+        <p className="text-sm font-medium text-foreground truncate"><T>{name}</T></p>
         <div className="flex items-center gap-2 mt-1">
           <Progress value={pct} className="h-2 flex-1" />
           <span className="text-xs text-muted-foreground whitespace-nowrap">{completed}/{total}</span>
@@ -210,8 +211,9 @@ export default function Reports() {
   }));
 
   const overdueTasks = filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
-  const currencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }), []);
-  const compactCurrencyFormatter = useMemo(() => new Intl.NumberFormat('ar-SA', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }), []);
+  const locale = rtl ? 'ar-SA' : 'en-US';
+  const currencyFormatter = useMemo(() => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }), [locale]);
+  const compactCurrencyFormatter = useMemo(() => new Intl.NumberFormat(locale, { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 }), [locale]);
   const formatCurrency = (value) => `${currencyFormatter.format(Number(value) || 0)} ${t('reports.currencySymbol')}`;
   const formatCompactCurrency = (value) => `${compactCurrencyFormatter.format(Number(value) || 0)} ${t('reports.currencySymbol')}`;
 
@@ -256,7 +258,7 @@ export default function Reports() {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       return {
         key,
-        name: d.toLocaleDateString('ar-SA', { month: 'short' }),
+        name: d.toLocaleDateString(rtl ? 'ar-SA' : 'en-US', { month: 'short' }),
         income: 0,
         expense: 0,
       };
@@ -424,7 +426,7 @@ export default function Reports() {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">{t('reports.title')}</h1>
-                <p className="text-blue-100 text-sm mt-1">{t('reports.citySubtitle', { city: settings[0]?.city_name || t('layout.defaultCity') })}</p>
+                <p className="text-blue-100 text-sm mt-1"><T>{t('reports.citySubtitle', { city: settings[0]?.city_name || t('layout.defaultCity') })}</T></p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -434,11 +436,11 @@ export default function Reports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('reports.allCommittees')}</SelectItem>
-                  {committees.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {committees.map(c => <SelectItem key={c.id} value={c.id}><T>{c.name}</T></SelectItem>)}
                 </SelectContent>
               </Select>
               <Button onClick={() => { const te = tabExportIds[activeTab]; if (te) exportToPDF(te.id, te.filename); }} disabled={exportingPDF} variant="secondary" size="sm">
-                <Download className="w-4 h-4 ml-1" />
+                <Download className="w-4 h-4 ms-1" />
                 {exportingPDF ? t('reports.exporting') : t('reports.exportPDF')}
               </Button>
             </div>
@@ -519,8 +521,8 @@ export default function Reports() {
                     <div className="space-y-2">
                       {overdueTasks.slice(0, 5).map(t => (
                         <div key={t.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-red-100 dark:border-red-900/40">
-                          <span className="text-sm font-medium truncate flex-1">{t.title}</span>
-                          <Badge variant="destructive" className="text-xs mr-2">{t.due_date}</Badge>
+                          <span className="text-sm font-medium truncate flex-1"><T>{t.title}</T></span>
+                          <Badge variant="destructive" className="text-xs ms-2">{t.due_date}</Badge>
                         </div>
                       ))}
                     </div>
@@ -535,10 +537,10 @@ export default function Reports() {
             <div id="reports-standards" className="space-y-6">
               <SectionHeader icon={Target} title={t('reports.standardsReport.title')} description={t('reports.standardsCount', { count: REFERENCE_TOTAL })}>
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(dedupedStandards.map(s => ({ [t_col('code')]: s.code, [t_col('title')]: s.title, [t_col('axis')]: s.axis_name, [t_col('status')]: statusLabels[s.status] || s.status })), t('reports.detailedConfig.standards'))}>
-                  <Download className="w-4 h-4 ml-1" /> CSV
+                  <Download className="w-4 h-4 ms-1" /> CSV
                 </Button>
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => exportToPDF('who-report', `${t('reports.filenames.whoStandards')}.pdf`)} disabled={exportingPDF}>
-                  <Award className="w-4 h-4 ml-1" /> {t('reports.standardsReport.whoReport')}
+                  <Award className="w-4 h-4 ms-1" /> {t('reports.standardsReport.whoReport')}
                 </Button>
               </SectionHeader>
 
@@ -603,10 +605,10 @@ export default function Reports() {
             <div id="reports-initiatives" className="space-y-6">
               <SectionHeader icon={Lightbulb} title={t('reports.initiativesReport.title')} description={t('reports.initiativeCount', { count: filteredInitiatives.length })}>
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredInitiatives.map(i => ({ [t_col('title')]: i.title, [t_col('committee')]: i.committee_name, [t_col('status')]: statusLabels[i.status] || i.status, [t_col('completionPct')]: i.progress_percentage })), t('reports.tabs.initiatives'))}>
-                  <Download className="w-4 h-4 ml-1" /> CSV
+                  <Download className="w-4 h-4 ms-1" /> CSV
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-initiatives', `${t('reports.filenames.initiatives')}.pdf`)} disabled={exportingPDF}>
-                  <Download className="w-4 h-4 ml-1" /> PDF
+                  <Download className="w-4 h-4 ms-1" /> PDF
                 </Button>
               </SectionHeader>
 
@@ -659,10 +661,10 @@ export default function Reports() {
             <div id="reports-tasks" className="space-y-6">
               <SectionHeader icon={ClipboardList} title={t('reports.tasksReport.title')} description={t('reports.taskCount', { count: filteredTasks.length })}>
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTasks.map(tk => ({ [t_col('title')]: tk.title, [t_col('assignee')]: tk.assigned_to_name, [t_col('status')]: statusLabels[tk.status] || tk.status, [t_col('priority')]: priorityLabels[tk.priority] || tk.priority, [t_col('dueDate')]: tk.due_date || '' })), t('reports.tabs.tasks'))}>
-                  <Download className="w-4 h-4 ml-1" /> CSV
+                  <Download className="w-4 h-4 ms-1" /> CSV
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-tasks', `${t('reports.filenames.tasks')}.pdf`)} disabled={exportingPDF}>
-                  <Download className="w-4 h-4 ml-1" /> PDF
+                  <Download className="w-4 h-4 ms-1" /> PDF
                 </Button>
               </SectionHeader>
 
@@ -717,10 +719,10 @@ export default function Reports() {
             <div id="reports-budget" className="space-y-6">
               <SectionHeader icon={DollarSign} title={t('reports.budgetReport.title')} description={t('reports.budgetReport.description')}>
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredTransactions.map(tx => ({ [t_col('date')]: tx.date || '—', [t_col('type')]: tx.type === 'income' ? t('reports.transactionTypes.income') : t('reports.transactionTypes.expense'), [t_col('category')]: tx.category || '—', [t_col('value')]: Number(tx.amount) || 0, [t_col('status')]: tx.status === 'paid' ? t('reports.transactionStatuses.paid') : tx.status === 'pending' ? t('reports.transactionStatuses.pending') : tx.status === 'rejected' ? t('reports.transactionStatuses.rejected') : (tx.status || '—'), [t_col('committee')]: tx.committee_name || committees.find(c => String(c.id) === String(tx.committee_id))?.name || '—', [t_col('beneficiary')]: tx.beneficiary || '—', [t_col('description')]: tx.description || '—' })), t('reports.detailedConfig.budget_transactions'))}>
-                  <Download className="w-4 h-4 ml-1" /> CSV
+                  <Download className="w-4 h-4 ms-1" /> CSV
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => exportToPDF('reports-budget', `${t('reports.filenames.budget')}.pdf`)} disabled={exportingPDF}>
-                  <Download className="w-4 h-4 ml-1" /> PDF
+                  <Download className="w-4 h-4 ms-1" /> PDF
                 </Button>
               </SectionHeader>
 
@@ -796,8 +798,8 @@ export default function Reports() {
                       {topExpenses.map((te) => (
                         <div key={te.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                           <div className="min-w-0">
-                            <p className="font-medium truncate">{te.description || te.category || t('reports.budgetReport.expense')}</p>
-                            <p className="text-xs text-muted-foreground">{te.date || '—'} • {te.committee_name || committees.find(c => String(c.id) === String(te.committee_id))?.name || t('reports.unspecified')}</p>
+                            <p className="font-medium truncate"><T>{te.description || te.category || t('reports.budgetReport.expense')}</T></p>
+                            <p className="text-xs text-muted-foreground">{te.date || '—'} • <T>{te.committee_name || committees.find(c => String(c.id) === String(te.committee_id))?.name || t('reports.unspecified')}</T></p>
                           </div>
                           <Badge variant="destructive">{formatCurrency(te.amount)}</Badge>
                         </div>
@@ -839,10 +841,10 @@ export default function Reports() {
                   </SelectContent>
                 </Select>
                 <Button variant="outline" size="sm" onClick={() => exportToCSV(currentDetailedData, detailedReportFilename)} disabled={currentDetailedData.length === 0}>
-                  <Download className="w-4 h-4 ml-1" /> CSV
+                  <Download className="w-4 h-4 ms-1" /> CSV
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => exportToPDF('detailed-report-content', `${t('reports.filenames.report')}-${detailedReportFilename}.pdf`)} disabled={exportingPDF || currentDetailedData.length === 0}>
-                  <Download className="w-4 h-4 ml-1" /> PDF
+                  <Download className="w-4 h-4 ms-1" /> PDF
                 </Button>
               </SectionHeader>
 
@@ -865,7 +867,7 @@ export default function Reports() {
                         <TableHeader>
                           <TableRow className="bg-muted/50">
                             {Object.keys(currentDetailedData[0]).map(key => (
-                              <TableHead key={key} className="whitespace-nowrap text-right font-bold text-foreground">{key}</TableHead>
+                              <TableHead key={key} className="whitespace-nowrap text-start font-bold text-foreground">{key}</TableHead>
                             ))}
                           </TableRow>
                         </TableHeader>
@@ -873,7 +875,7 @@ export default function Reports() {
                           {currentDetailedData.map((row, idx) => (
                             <TableRow key={idx} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/30'}>
                               {Object.keys(currentDetailedData[0]).map(key => (
-                                <TableCell key={key} className="text-right max-w-[280px] break-words">{String(row[key] ?? '—')}</TableCell>
+                                <TableCell key={key} className="text-start max-w-[280px] break-words">{String(row[key] ?? '—')}</TableCell>
                               ))}
                             </TableRow>
                           ))}
