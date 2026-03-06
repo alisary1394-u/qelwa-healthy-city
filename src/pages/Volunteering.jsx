@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from '@/hooks/usePermissions';
+import T from '@/components/T';
 import { useToast } from "@/components/ui/use-toast";
 import {
   HandHelping, Plus, Search, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle,
@@ -536,7 +537,7 @@ export default function Volunteering() {
                       return (
                         <div key={name}>
                           <div className="flex justify-between items-center text-sm mb-1">
-                            <span className="font-medium">{name}</span>
+                            <span className="font-medium"><T>{name}</T></span>
                             <span className="text-muted-foreground">{count} {t('volunteering.charts.opportunityCount')}</span>
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-2.5">
@@ -580,8 +581,8 @@ export default function Volunteering() {
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input placeholder={t('volunteering.searchPlaceholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pr-10" />
+                <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+                <Input placeholder={t('volunteering.searchPlaceholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className={rtl ? 'pr-10' : 'pl-10'} />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-44">
@@ -621,7 +622,7 @@ export default function Volunteering() {
                   </p>
                   {canCreateOpp && !searchQuery && statusFilter === 'all' && (
                     <Button onClick={openCreateForm} className="mt-4 gradient-primary text-white">
-                      <Plus className="w-5 h-5 ml-2" />
+                      <Plus className="w-5 h-5 ms-2" />
                       {t('volunteering.newOpportunity')}
                     </Button>
                   )}
@@ -647,7 +648,7 @@ export default function Volunteering() {
                               <TypeIcon className={`w-5 h-5 ${typeInfo.color}`} />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-[#1e3a5f] text-sm leading-tight">{opp.title}</h3>
+                              <h3 className="font-semibold text-[#1e3a5f] text-sm leading-tight"><T>{opp.title}</T></h3>
                               <span className="text-xs text-muted-foreground">{t(typeInfo.label)}</span>
                             </div>
                           </div>
@@ -655,21 +656,21 @@ export default function Volunteering() {
                         </div>
 
                         {opp.description && (
-                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{opp.description}</p>
+                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2"><T>{opp.description}</T></p>
                         )}
 
                         <div className="space-y-1.5 text-xs mb-3">
                           {opp.committee_name && (
-                            <div className="flex items-center gap-1.5"><Building className="w-3.5 h-3.5 text-purple-500" /><span>{opp.committee_name}</span></div>
+                            <div className="flex items-center gap-1.5"><Building className="w-3.5 h-3.5 text-purple-500" /><span><T>{opp.committee_name}</T></span></div>
                           )}
                           {opp.initiative_name && (
-                            <div className="flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5 text-amber-500" /><span>{opp.initiative_name}</span></div>
+                            <div className="flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5 text-amber-500" /><span><T>{opp.initiative_name}</T></span></div>
                           )}
                           {opp.axis_name && (
-                            <div className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-[#0f766e]" /><span>{opp.axis_name}</span></div>
+                            <div className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-[#0f766e]" /><span><T>{opp.axis_name}</T></span></div>
                           )}
                           {opp.location && (
-                            <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-red-400" /><span>{opp.location}</span></div>
+                            <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-red-400" /><span><T>{opp.location}</T></span></div>
                           )}
                           {(opp.start_date || opp.end_date) && (
                             <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-muted-foreground" /><span>{opp.start_date || '?'} — {opp.end_date || '?'}</span></div>
@@ -690,12 +691,12 @@ export default function Volunteering() {
                         <div className="flex gap-2 pt-3 border-t">
                           <Button variant="outline" size="sm" className="flex-1 text-xs hover:bg-[#1e3a5f]/5"
                             onClick={() => { setSelectedOpp(opp); setViewOpen(true); }}>
-                            <Eye className="w-3.5 h-3.5 ml-1" />{t('common.view')}
+                            <Eye className="w-3.5 h-3.5 ms-1" />{t('common.view')}
                           </Button>
                           {opp.status === 'open' && !canEditOpp(opp) && (
                             <Button size="sm" className="flex-1 text-xs bg-[#0f766e] hover:bg-[#0f766e]/90 text-white"
                               onClick={() => handleApplyToOpportunity(opp)}>
-                              <UserPlus className="w-3.5 h-3.5 ml-1" />{t('volunteering.register')}
+                              <UserPlus className="w-3.5 h-3.5 ms-1" />{t('volunteering.register')}
                             </Button>
                           )}
                           {canEditOpp(opp) && (
@@ -767,13 +768,13 @@ export default function Volunteering() {
                           {(vol.full_name || '?')[0]}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-[#1e3a5f]">{vol.full_name}</h3>
+                          <h3 className="font-semibold text-[#1e3a5f]"><T>{vol.full_name}</T></h3>
                           <p className="text-xs text-muted-foreground">{vol.phone || vol.email || ''}</p>
                         </div>
                       </div>
 
                       {vol.specialization && (
-                        <Badge variant="outline" className="mb-2 text-xs">{vol.specialization}</Badge>
+                        <Badge variant="outline" className="mb-2 text-xs"><T>{vol.specialization}</T></Badge>
                       )}
 
                       <div className="grid grid-cols-3 gap-2 text-center mt-3 pt-3 border-t">
@@ -796,7 +797,7 @@ export default function Volunteering() {
                           <p className="text-xs font-medium text-muted-foreground mb-1.5">{t('volunteering.assignedOpportunities')}</p>
                           <div className="flex flex-wrap gap-1">
                             {assignedOpps.slice(0, 3).map(o => (
-                              <Badge key={o.id} variant="outline" className="text-xs bg-[#1e3a5f]/5 text-[#1e3a5f]">{o.title}</Badge>
+                              <Badge key={o.id} variant="outline" className="text-xs bg-[#1e3a5f]/5 text-[#1e3a5f]"><T>{o.title}</T></Badge>
                             ))}
                             {assignedOpps.length > 3 && <Badge variant="outline" className="text-xs">+{assignedOpps.length - 3}</Badge>}
                           </div>
@@ -841,8 +842,8 @@ export default function Volunteering() {
                             <Clock className="w-5 h-5 text-amber-600" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-[#1e3a5f]">{app.volunteer_name}</h4>
-                            <p className="text-xs text-muted-foreground">{t('volunteering.appliedFor')} {app.opportunityTitle}</p>
+                            <h4 className="font-semibold text-[#1e3a5f]"><T>{app.volunteer_name}</T></h4>
+                            <p className="text-xs text-muted-foreground">{t('volunteering.appliedFor')} <T>{app.opportunityTitle}</T></p>
                             <p className="text-xs text-muted-foreground">{t('volunteering.applicationDate')} {app.applied_date}</p>
                           </div>
                         </div>
@@ -850,11 +851,11 @@ export default function Volunteering() {
                           <div className="flex gap-2">
                             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
                               onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'approved')}>
-                              <UserCheck className="w-4 h-4 ml-1" />{t('volunteering.accept')}
+                              <UserCheck className="w-4 h-4 ms-1" />{t('volunteering.accept')}
                             </Button>
                             <Button size="sm" variant="outline" className="text-red-500 hover:text-red-700 text-xs"
                               onClick={() => handleVolunteerAction(app.opportunity, app.volunteer_id, 'rejected')}>
-                              <UserX className="w-4 h-4 ml-1" />{t('volunteering.reject')}
+                              <UserX className="w-4 h-4 ms-1" />{t('volunteering.reject')}
                             </Button>
                           </div>
                         )}
@@ -891,7 +892,7 @@ export default function Volunteering() {
                           )}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-[#1e3a5f]">{vol.name}</h4>
+                          <h4 className="font-semibold text-[#1e3a5f]"><T>{vol.name}</T></h4>
                           <p className="text-xs text-muted-foreground">{vol.count} {t('volunteering.participatedIn')}</p>
                         </div>
                       </div>
@@ -983,7 +984,7 @@ export default function Volunteering() {
                     <SelectTrigger><SelectValue placeholder={t('volunteering.form.selectAxis')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t('volunteering.form.noAxis')}</SelectItem>
-                      {axes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                      {axes.map(a => <SelectItem key={a.id} value={a.id}><T>{a.name}</T></SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -993,7 +994,7 @@ export default function Volunteering() {
                     <SelectTrigger><SelectValue placeholder={t('volunteering.form.selectCommittee')} /></SelectTrigger>
                     <SelectContent>
                       {isTopLevel && <SelectItem value="none">{t('volunteering.form.noCommittee')}</SelectItem>}
-                      {availableCommitteesForForm.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {availableCommitteesForForm.map(c => <SelectItem key={c.id} value={c.id}><T>{c.name}</T></SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1003,7 +1004,7 @@ export default function Volunteering() {
                     <SelectTrigger><SelectValue placeholder={t('volunteering.form.selectInitiative')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t('volunteering.form.noInitiative')}</SelectItem>
-                      {initiatives.map(i => <SelectItem key={i.id} value={i.id}>{i.title}</SelectItem>)}
+                      {initiatives.map(i => <SelectItem key={i.id} value={i.id}><T>{i.title}</T></SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1081,7 +1082,7 @@ export default function Volunteering() {
                         <TypeIcon className={`w-6 h-6 ${typeInfo.color}`} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-[#1e3a5f] text-lg">{selectedOpp.title}</h3>
+                        <h3 className="font-bold text-[#1e3a5f] text-lg"><T>{selectedOpp.title}</T></h3>
                         <div className="flex gap-2 mt-1">
                           <Badge className={`text-xs border ${statusInfo.color}`}>{t(statusInfo.label)}</Badge>
                           <Badge variant="outline" className="text-xs">{t(typeInfo.label)}</Badge>
@@ -1093,18 +1094,18 @@ export default function Volunteering() {
                         </div>
                       </div>
                     </div>
-                    {selectedOpp.description && <p className="text-sm text-muted-foreground">{selectedOpp.description}</p>}
+                    {selectedOpp.description && <p className="text-sm text-muted-foreground"><T>{selectedOpp.description}</T></p>}
                     <div className="grid grid-cols-2 gap-3 text-sm mt-4">
-                      {selectedOpp.axis_name && <div className="flex items-center gap-1.5"><Target className="w-4 h-4 text-[#0f766e]" /><span>{t('volunteering.detail.axis')} <strong>{selectedOpp.axis_name}</strong></span></div>}
-                      {selectedOpp.committee_name && <div className="flex items-center gap-1.5"><Building className="w-4 h-4 text-purple-500" /><span>{t('volunteering.detail.committee')} <strong>{selectedOpp.committee_name}</strong></span></div>}
-                      {selectedOpp.initiative_name && <div className="flex items-center gap-1.5"><Lightbulb className="w-4 h-4 text-amber-500" /><span>{t('volunteering.detail.initiative')} <strong>{selectedOpp.initiative_name}</strong></span></div>}
-                      {selectedOpp.location && <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-red-400" /><span>{t('volunteering.detail.location')} <strong>{selectedOpp.location}</strong></span></div>}
+                      {selectedOpp.axis_name && <div className="flex items-center gap-1.5"><Target className="w-4 h-4 text-[#0f766e]" /><span>{t('volunteering.detail.axis')} <strong><T>{selectedOpp.axis_name}</T></strong></span></div>}
+                      {selectedOpp.committee_name && <div className="flex items-center gap-1.5"><Building className="w-4 h-4 text-purple-500" /><span>{t('volunteering.detail.committee')} <strong><T>{selectedOpp.committee_name}</T></strong></span></div>}
+                      {selectedOpp.initiative_name && <div className="flex items-center gap-1.5"><Lightbulb className="w-4 h-4 text-amber-500" /><span>{t('volunteering.detail.initiative')} <strong><T>{selectedOpp.initiative_name}</T></strong></span></div>}
+                      {selectedOpp.location && <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-red-400" /><span>{t('volunteering.detail.location')} <strong><T>{selectedOpp.location}</T></strong></span></div>}
                       {selectedOpp.start_date && <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-muted-foreground" /><span>{t('volunteering.detail.startDate')} <strong>{selectedOpp.start_date}</strong></span></div>}
                       {selectedOpp.end_date && <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-muted-foreground" /><span>{t('volunteering.detail.endDate')} <strong>{selectedOpp.end_date}</strong></span></div>}
                     </div>
                     {selectedOpp.required_skills && (
                       <div className="mt-3 p-2 bg-muted/50 rounded text-sm">
-                        <span className="font-medium">{t('volunteering.detail.requiredSkills')} </span>{selectedOpp.required_skills}
+                        <span className="font-medium">{t('volunteering.detail.requiredSkills')} </span><T>{selectedOpp.required_skills}</T>
                       </div>
                     )}
                   </CardContent>
@@ -1120,7 +1121,7 @@ export default function Volunteering() {
                       </CardTitle>
                       {canEditOpp(selectedOpp) && (
                         <Button size="sm" variant="outline" className="text-xs" onClick={() => { setAssignTarget(selectedOpp); setAssignSearch(''); setAssignOpen(true); }}>
-                          <UserPlus className="w-4 h-4 ml-1" />{t('volunteering.detail.assignVolunteer')}
+                          <UserPlus className="w-4 h-4 ms-1" />{t('volunteering.detail.assignVolunteer')}
                         </Button>
                       )}
                     </div>
@@ -1140,9 +1141,9 @@ export default function Volunteering() {
                                   {(v.volunteer_name || '?')[0]}
                                 </div>
                                 <div>
-                                  <p className="font-medium text-sm">{v.volunteer_name}</p>
+                                  <p className="font-medium text-sm"><T>{v.volunteer_name}</T></p>
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Badge className={`text-xs ${vStatus.color}`}><VIcon className="w-3 h-3 ml-1" />{t(vStatus.label)}</Badge>
+                                    <Badge className={`text-xs ${vStatus.color}`}><VIcon className="w-3 h-3 ms-1" />{t(vStatus.label)}</Badge>
                                     {v.applied_date && <span>{t('volunteering.detail.appliedDate')} {v.applied_date}</span>}
                                   </div>
                                 </div>
@@ -1171,7 +1172,7 @@ export default function Volunteering() {
                                 {canEditOpp(selectedOpp) && v.status === 'approved' && (
                                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-blue-600"
                                     onClick={() => handleVolunteerAction(selectedOpp, v.volunteer_id, 'completed')}>
-                                    <Award className="w-3.5 h-3.5 ml-1" />{t('volunteering.detail.complete')}
+                                    <Award className="w-3.5 h-3.5 ms-1" />{t('volunteering.detail.complete')}
                                   </Button>
                                 )}
                               </div>
@@ -1199,8 +1200,8 @@ export default function Volunteering() {
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder={t('volunteering.assign.searchPlaceholder')} value={assignSearch} onChange={e => setAssignSearch(e.target.value)} className="pr-9" />
+              <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+              <Input placeholder={t('volunteering.assign.searchPlaceholder')} value={assignSearch} onChange={e => setAssignSearch(e.target.value)} className={rtl ? 'pr-9' : 'pl-9'} />
             </div>
             {filteredAssignVolunteers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">{t('volunteering.assign.noMembersAvailable')}</p>
@@ -1213,13 +1214,13 @@ export default function Volunteering() {
                         {(m.full_name || '?')[0]}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{m.full_name}</p>
+                        <p className="font-medium text-sm"><T>{m.full_name}</T></p>
                         <p className="text-xs text-muted-foreground">{m.role === 'volunteer' ? t('volunteering.assign.volunteerRole') : m.role || ''} {m.phone ? `• ${m.phone}` : ''}</p>
                       </div>
                     </div>
                     <Button size="sm" className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white text-xs"
                       onClick={() => handleAssignVolunteer(m)}>
-                      <UserPlus className="w-3.5 h-3.5 ml-1" />{t('volunteering.assign.assign')}
+                      <UserPlus className="w-3.5 h-3.5 ms-1" />{t('volunteering.assign.assign')}
                     </Button>
                   </div>
                 ))}

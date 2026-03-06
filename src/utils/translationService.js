@@ -30,6 +30,33 @@ const BUILTIN_TRANSLATIONS = {
     // Common labels
     'أخرى': 'Other',
     'غير محدد': 'Unspecified',
+    // Axis names
+    'تنظيم المجتمع والتوعية': 'Community Organization & Awareness',
+    'المعلومات المجتمعية': 'Community Information',
+    'المياه والبيئة والغذاء': 'Water, Environment & Food',
+    'التنمية الصحية': 'Health Development',
+    'الطوارئ والاستجابة': 'Emergency & Response',
+    'التعليم ومحو الأمية': 'Education & Literacy',
+    'المهارات والتدريب': 'Skills & Training',
+    'القروض الصغيرة': 'Microloans',
+    // Common committee names
+    'اللجنة الرئيسية': 'Main Committee',
+    'لجنة الحوكمة والشراكات': 'Governance & Partnerships Committee',
+    'لجنة المشاركة المجتمعية': 'Community Participation Committee',
+    'لجنة البنية التحتية': 'Infrastructure Committee',
+    'لجنة الصحة': 'Health Committee',
+    'لجنة التعليم': 'Education Committee',
+    'لجنة البيئة': 'Environment Committee',
+    // Common category/tag labels
+    'مشاركة مجتمعية': 'Community Participation',
+    'بيئة خضراء': 'Green Environment',
+    'صحة ورعاية': 'Health & Care',
+    'الحوكمة والشراكات': 'Governance & Partnerships',
+    'المشاركة المجتمعية': 'Community Participation',
+    'البيئة والاستدامة': 'Environment & Sustainability',
+    // Common locations
+    'مدينة قلوة': 'Qelwa City',
+    'محافظة قلوة': 'Qelwa Governorate',
   },
 };
 
