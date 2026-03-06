@@ -205,12 +205,17 @@ export default function Reports() {
     { name: t('reports.statuses.cancelledF'), value: filteredTasks.filter(t => t.status === 'cancelled').length, color: '#ef4444' },
   ];
 
-  const tasksByMember = members.slice(0, 10).map(m => ({
-    name: m.full_name?.slice(0, 15) || t('reports.unspecified'),
-    completed: tasks.filter(t => t.assigned_to === m.id && t.status === 'completed').length,
-    pending: tasks.filter(t => t.assigned_to === m.id && t.status === 'pending').length,
-    inProgress: tasks.filter(t => t.assigned_to === m.id && t.status === 'in_progress').length,
-  }));
+  const tasksByMember = members.slice(0, 10).map(m => {
+    const rawName = m.full_name || t('reports.unspecified');
+    const translatedName = !rtl ? translateTextSync(rawName, 'en') : rawName;
+    const displayName = translatedName.length > 22 ? translatedName.slice(0, 20) + '…' : translatedName;
+    return {
+      name: displayName,
+      completed: tasks.filter(t => t.assigned_to === m.id && t.status === 'completed').length,
+      pending: tasks.filter(t => t.assigned_to === m.id && t.status === 'pending').length,
+      inProgress: tasks.filter(t => t.assigned_to === m.id && t.status === 'in_progress').length,
+    };
+  });
 
   const overdueTasks = filteredTasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
   const locale = rtl ? 'ar-SA' : 'en-US';
@@ -701,10 +706,10 @@ export default function Reports() {
                 <Card>
                   <CardHeader><CardTitle className="text-lg">{t('reports.tasksReport.memberPerformance')}</CardTitle></CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={320}>
                       <BarChart data={tasksByMember.filter(m => m.completed + m.inProgress + m.pending > 0)} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" /><YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} /><Tooltip /><Legend />
+                        <XAxis type="number" /><YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} /><Tooltip /><Legend />
                         <Bar dataKey="completed" fill="#10b981" name={t('reports.tasksReport.completedF')} stackId="a" />
                         <Bar dataKey="inProgress" fill="#f59e0b" name={t('reports.tasksReport.inProgressF')} stackId="a" />
                         <Bar dataKey="pending" fill="#94a3b8" name={t('reports.tasksReport.pendingF')} stackId="a" />
