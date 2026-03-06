@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileText, Image, File, Search, Check, X, RotateCcw, Trash2, Eye, Loader2, Clock, CheckCircle, XCircle, AlertTriangle, FolderOpen } from "lucide-react";
 import { usePermissions } from '@/hooks/usePermissions';
+import T from '@/components/T';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const fileTypes = [
@@ -117,7 +118,7 @@ export default function Files() {
       ...e,
       _source: 'evidence',
       status: mapEvidenceStatusToFilesStatus(e.status),
-      committee_name: e.committee_name || e.axis_name || (e.standard_code ? `${t('files.standardLabel')} ${e.standard_code}` : ''),
+      committee_name: e.committee_name || e.axis_name || (e.standard_code ? t('files.standardLabel', { code: e.standard_code }) : ''),
     })),
   ];
 
@@ -337,12 +338,12 @@ export default function Files() {
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input placeholder={t('files.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
+            <Input placeholder={t('files.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={rtl ? 'pr-10' : 'pl-10'} />
           </div>
           {canUploadFiles && (
             <Button onClick={() => setUploadOpen(true)} className="bg-primary hover:bg-primary/90">
-              <Upload className="w-5 h-5 ml-2" />
+              <Upload className="w-5 h-5 ms-2" />
               {t('files.uploadFile')}
             </Button>
           )}
@@ -381,38 +382,38 @@ export default function Files() {
                         <FileIcon className="w-6 h-6 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold">{file.title}</h3>
-                        <p className="text-sm text-muted-foreground">{file.uploaded_by_name}</p>
+                        <h3 className="font-semibold"><T>{file.title}</T></h3>
+                        <p className="text-sm text-muted-foreground"><T>{file.uploaded_by_name}</T></p>
                       </div>
                     </div>
 
-                    {file.description && <p className="text-sm text-muted-foreground mb-3">{file.description}</p>}
+                    {file.description && <p className="text-sm text-muted-foreground mb-3"><T>{file.description}</T></p>}
 
                     <div className="flex flex-wrap gap-2 mb-3">
                       <Badge className={statusConfig[file.status]?.color}>
-                        <StatusIcon className="w-3 h-3 ml-1" />
+                        <StatusIcon className="w-3 h-3 ms-1" />
                         {t(statusConfig[file.status]?.labelKey)}
                       </Badge>
-                      {file.committee_name && <Badge variant="outline">{file.committee_name}</Badge>}
+                      {file.committee_name && <Badge variant="outline"><T>{file.committee_name}</T></Badge>}
                       {file._source === 'evidence' && <Badge variant="outline">{t('files.uploadedEvidence')}</Badge>}
                     </div>
 
                     {file.rejection_reason && (
-                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded mb-3">{t('files.reason')}: {file.rejection_reason}</p>
+                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded mb-3">{t('files.reason')}: <T>{file.rejection_reason}</T></p>
                     )}
 
                     <div className="flex flex-wrap gap-2 pt-3 border-t">
                       <Button variant="outline" size="sm" onClick={() => handlePreviewFile(file.file_url)}>
-                        <Eye className="w-4 h-4 ml-1" />{t('files.viewBtn')}
+                        <Eye className="w-4 h-4 ms-1" />{t('files.viewBtn')}
                       </Button>
 
                       {canApproveAsSupervisor(file) && (
                         <>
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setActionDialog({ open: true, file, action: 'approve_supervisor' })}>
-                            <Check className="w-4 h-4 ml-1" />{t('files.approveBtn')}
+                            <Check className="w-4 h-4 ms-1" />{t('files.approveBtn')}
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setActionDialog({ open: true, file, action: 'reject' })}>
-                            <X className="w-4 h-4 ml-1" />{t('files.rejectBtn')}
+                            <X className="w-4 h-4 ms-1" />{t('files.rejectBtn')}
                           </Button>
                         </>
                       )}
@@ -420,17 +421,17 @@ export default function Files() {
                       {canApproveAsChairman(file) && (
                         <>
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setActionDialog({ open: true, file, action: 'approve_chairman' })}>
-                            <Check className="w-4 h-4 ml-1" />{t('files.finalApprove')}
+                            <Check className="w-4 h-4 ms-1" />{t('files.finalApprove')}
                           </Button>
                           <Button size="sm" variant="destructive" onClick={() => setActionDialog({ open: true, file, action: 'reject' })}>
-                            <X className="w-4 h-4 ml-1" />{t('files.rejectBtn')}
+                            <X className="w-4 h-4 ms-1" />{t('files.rejectBtn')}
                           </Button>
                         </>
                       )}
 
                       {canModifyOrDelete && file._source !== 'evidence' && (
                         <Button size="sm" variant="outline" onClick={() => setActionDialog({ open: true, file, action: 'return' })}>
-                          <RotateCcw className="w-4 h-4 ml-1" />{t('files.returnBtn')}
+                          <RotateCcw className="w-4 h-4 ms-1" />{t('files.returnBtn')}
                         </Button>
                       )}
 
@@ -476,7 +477,7 @@ export default function Files() {
                 <Select value={formData.committee_id} onValueChange={(v) => setFormData({ ...formData, committee_id: v })}>
                   <SelectTrigger><SelectValue placeholder={t('files.form.selectCommittee')} /></SelectTrigger>
                   <SelectContent>
-                    {committees.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {committees.map(c => <SelectItem key={c.id} value={c.id}><T>{c.name}</T></SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -488,7 +489,7 @@ export default function Files() {
             <div className="flex gap-3 justify-end pt-4">
               <Button type="button" variant="outline" onClick={() => setUploadOpen(false)}>{t('common.cancel')}</Button>
               <Button type="submit" disabled={uploading} className="bg-primary hover:bg-primary/90">
-                {uploading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                {uploading && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                 {t('files.form.uploadBtn')}
               </Button>
             </div>
