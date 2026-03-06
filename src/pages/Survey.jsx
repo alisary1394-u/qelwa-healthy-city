@@ -15,6 +15,7 @@ import { Plus, Search, MapPinned, Users, MapPin, Loader2, Eye, CheckCircle, Aler
 import { Separator } from "@/components/ui/separator";
 import YesNoQuestion from "../components/survey/YesNoQuestion";
 import { usePermissions } from '@/hooks/usePermissions';
+import T from '@/components/T';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
@@ -322,7 +323,7 @@ export default function Survey() {
             </div>
             {canCreateSurvey && (
               <Button onClick={() => { resetForm(); setFormOpen(true); }} className="bg-white/20 hover:bg-white/30 text-white border border-white/30">
-                <Plus className="w-5 h-5 ml-2" />
+                <Plus className="w-5 h-5 ms-2" />
                 {t('survey.addSurvey')}
               </Button>
             )}
@@ -474,7 +475,7 @@ export default function Survey() {
                           <div className="flex justify-between items-center text-sm mb-1">
                             <span className="font-medium flex items-center gap-1.5">
                               <MapPin className="w-3.5 h-3.5 text-[#0f766e]" />
-                              {district}
+                              <T>{district}</T>
                             </span>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>{data.total} {t('survey.surveyCount')}</span>
@@ -504,12 +505,12 @@ export default function Survey() {
         {/* Search, Filter & Actions */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
               placeholder={t('survey.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
             />
           </div>
           <Select value={districtFilter} onValueChange={setDistrictFilter}>
@@ -521,7 +522,7 @@ export default function Survey() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('survey.allDistricts')}</SelectItem>
-              {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              {districts.map(d => <SelectItem key={d} value={d}><T>{d}</T></SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -553,7 +554,7 @@ export default function Survey() {
               </p>
               {canCreateSurvey && !searchQuery && districtFilter === 'all' && (
                 <Button onClick={() => { resetForm(); setFormOpen(true); }} className="mt-4 gradient-primary text-white">
-                  <Plus className="w-5 h-5 ml-2" />
+                  <Plus className="w-5 h-5 ms-2" />
                   {t('survey.addSurvey')}
                 </Button>
               )}
@@ -568,8 +569,8 @@ export default function Survey() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <Badge variant="outline" className="mb-2 text-[#1e3a5f] border-[#1e3a5f]/30 bg-[#1e3a5f]/5">{survey.survey_number || t('survey.unspecified')}</Badge>
-                      <h3 className="font-semibold text-[#1e3a5f]">{survey.family_head_name}</h3>
-                      <p className="text-sm text-muted-foreground">{survey.volunteer_name}</p>
+                      <h3 className="font-semibold text-[#1e3a5f]"><T>{survey.family_head_name}</T></h3>
+                      <p className="text-sm text-muted-foreground"><T>{survey.volunteer_name}</T></p>
                     </div>
                     <Badge className={survey.status === 'verified' 
                       ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
@@ -581,7 +582,7 @@ export default function Survey() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-[#0f766e]" />
-                      <span>{survey.district}</span>
+                      <span><T>{survey.district}</T></span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-[#1e3a5f]" />
@@ -599,17 +600,17 @@ export default function Survey() {
                   <div className="flex gap-1.5 mt-3 flex-wrap">
                     {survey.safe_water_access && (
                       <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                        <Droplets className="w-3 h-3 ml-1" />{t('survey.safeWaterBadge')}
+                        <Droplets className="w-3 h-3 ms-1" />{t('survey.safeWaterBadge')}
                       </Badge>
                     )}
                     {survey.children_fully_vaccinated && (
                       <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-600 border-emerald-200">
-                        <Shield className="w-3 h-3 ml-1" />{t('survey.vaccinatedBadge')}
+                        <Shield className="w-3 h-3 ms-1" />{t('survey.vaccinatedBadge')}
                       </Badge>
                     )}
                     {survey.has_chronic_diseases && (
                       <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
-                        <Heart className="w-3 h-3 ml-1" />{t('survey.chronicDiseasesBadge')}
+                        <Heart className="w-3 h-3 ms-1" />{t('survey.chronicDiseasesBadge')}
                       </Badge>
                     )}
                   </div>
@@ -617,12 +618,12 @@ export default function Survey() {
                   <div className="flex gap-2 mt-4 pt-3 border-t">
                     <Button variant="outline" size="sm" onClick={() => { setSelectedSurvey(survey); setViewOpen(true); }}
                       className="flex-1 hover:bg-[#1e3a5f]/5 hover:text-[#1e3a5f] hover:border-[#1e3a5f]/30">
-                      <Eye className="w-4 h-4 ml-1" />
+                      <Eye className="w-4 h-4 ms-1" />
                       {t('survey.viewDetails')}
                     </Button>
                     {canVerify && survey.status === 'submitted' && (
                       <Button size="sm" className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white" onClick={() => handleVerify(survey)}>
-                        <CheckCircle className="w-4 h-4 ml-1" />
+                        <CheckCircle className="w-4 h-4 ms-1" />
                         {t('survey.verify')}
                       </Button>
                     )}
@@ -685,7 +686,7 @@ export default function Survey() {
                     <Select value={formData.district} onValueChange={(v) => setFormData({ ...formData, district: v })}>
                       <SelectTrigger><SelectValue placeholder={t('survey.selectDistrict')} /></SelectTrigger>
                       <SelectContent>
-                        {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        {districts.map(d => <SelectItem key={d} value={d}><T>{d}</T></SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1227,7 +1228,7 @@ export default function Survey() {
                   </Button>
                 ) : (
                   <Button type="submit" disabled={saving} className="bg-[#0f766e] hover:bg-[#0f766e]/90 text-white">
-                    {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+                    {saving && <Loader2 className="w-4 h-4 ms-2 animate-spin" />}
                     {t('survey.saveSurvey')}
                   </Button>
                 )}
@@ -1254,9 +1255,9 @@ export default function Survey() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">{t('survey.familyNumberLabel')}</span> <strong className="text-[#1e3a5f]">{selectedSurvey.survey_number}</strong></div>
-                  <div><span className="text-muted-foreground">{t('survey.headOfFamilyLabel')}</span> <strong>{selectedSurvey.family_head_name}</strong></div>
-                  <div className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#0f766e]" /><span className="text-muted-foreground">{t('survey.districtViewLabel')}</span> <strong>{selectedSurvey.district}</strong></div>
-                  <div><span className="text-muted-foreground">{t('survey.volunteerLabel')}</span> <strong>{selectedSurvey.volunteer_name}</strong></div>
+                  <div><span className="text-muted-foreground">{t('survey.headOfFamilyLabel')}</span> <strong><T>{selectedSurvey.family_head_name}</T></strong></div>
+                  <div className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#0f766e]" /><span className="text-muted-foreground">{t('survey.districtViewLabel')}</span> <strong><T>{selectedSurvey.district}</T></strong></div>
+                  <div><span className="text-muted-foreground">{t('survey.volunteerLabel')}</span> <strong><T>{selectedSurvey.volunteer_name}</T></strong></div>
                 </CardContent>
               </Card>
 
@@ -1285,7 +1286,7 @@ export default function Survey() {
                   {selectedSurvey.has_chronic_diseases && (
                     <div className="p-2 bg-red-50 rounded border border-red-200 flex items-start gap-2">
                       <Heart className="w-4 h-4 text-red-500 mt-0.5" />
-                      <span>{t('survey.chronicDiseasesViewLabel')} {selectedSurvey.chronic_diseases_details}</span>
+                      <span>{t('survey.chronicDiseasesViewLabel')} <T>{selectedSurvey.chronic_diseases_details}</T></span>
                     </div>
                   )}
                 </CardContent>
@@ -1293,7 +1294,7 @@ export default function Survey() {
 
               <div className="text-sm text-muted-foreground pt-3 border-t flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                                {t('survey.researcherLabel')} {selectedSurvey.surveyor_name} | {t('survey.dateLabel')} {selectedSurvey.survey_date}
+                                {t('survey.researcherLabel')} <T>{selectedSurvey.surveyor_name}</T> | {t('survey.dateLabel')} {selectedSurvey.survey_date}
               </div>
             </div>
           )}
