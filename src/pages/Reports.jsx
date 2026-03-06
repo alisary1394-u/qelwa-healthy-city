@@ -16,6 +16,7 @@ import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } fro
 import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
 import T from '@/components/T';
+import { translateTextSync } from '@/utils/translationService';
 
 const REFERENCE_TOTAL = STANDARDS_CSV.length;
 
@@ -160,8 +161,9 @@ export default function Reports() {
     const expected = (order >= 1 && order <= AXIS_COUNTS_CSV.length) ? AXIS_COUNTS_CSV[order - 1] : 0;
     const axStd = standards.filter(s => s.axis_id === axis.id);
     const completed = axStd.filter(s => s.status === 'completed' || s.status === 'approved').length;
-    return { id: axis.id, name: axis.name, order, total: expected, completed, color: AXIS_COLORS[idx % AXIS_COLORS.length] };
-  }), [axes, standards]);
+    const translatedName = !rtl ? translateTextSync(axis.name, 'en') : axis.name;
+    return { id: axis.id, name: translatedName, order, total: expected, completed, color: AXIS_COLORS[idx % AXIS_COLORS.length] };
+  }), [axes, standards, rtl]);
 
   const statusLabels = { not_started: t('reports.statuses.not_started'), in_progress: t('reports.statuses.in_progress'), completed: t('reports.statuses.completed'), approved: t('reports.statuses.approved'), pending: t('reports.statuses.pending'), planning: t('reports.statuses.planning'), on_hold: t('reports.statuses.on_hold'), cancelled: t('reports.statuses.cancelled') };
   const priorityLabels = { low: t('reports.priorities.low'), medium: t('reports.priorities.medium'), high: t('reports.priorities.high'), urgent: t('reports.priorities.urgent') };

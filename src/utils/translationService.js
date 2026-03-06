@@ -32,6 +32,8 @@ const BUILTIN_TRANSLATIONS = {
     'غير محدد': 'Unspecified',
     // Axis names
     'تنظيم المجتمع والتوعية': 'Community Organization & Awareness',
+    'تنظيم المجتمع والتعبئة': 'Community Organization & Mobilization',
+    'الشراكات والتعاون': 'Partnerships & Cooperation',
     'المعلومات المجتمعية': 'Community Information',
     'المياه والبيئة والغذاء': 'Water, Environment & Food',
     'التنمية الصحية': 'Health Development',
