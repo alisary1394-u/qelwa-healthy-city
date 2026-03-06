@@ -883,7 +883,7 @@ export default function Reports() {
                           {currentDetailedData.map((row, idx) => (
                             <TableRow key={idx} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted/30'}>
                               {Object.keys(currentDetailedData[0]).map(key => (
-                                <TableCell key={key} className="text-start max-w-[280px] break-words">{String(row[key] ?? '—')}</TableCell>
+                                <TableCell key={key} className="text-start max-w-[280px] break-words"><T>{String(row[key] ?? '—')}</T></TableCell>
                               ))}
                             </TableRow>
                           ))}
