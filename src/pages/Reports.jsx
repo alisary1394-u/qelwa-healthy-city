@@ -484,9 +484,9 @@ export default function Reports() {
                 <Card>
                   <CardHeader><CardTitle className="text-lg">{t('reports.overview.initiativesByStatus')}</CardTitle></CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={280}>
                       <PieChart>
-                        <Pie data={initiativesByStatus.filter(i => i.value > 0)} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                        <Pie data={initiativesByStatus.filter(i => i.value > 0)} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
                           {initiativesByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                         </Pie>
                         <Tooltip />
@@ -499,9 +499,9 @@ export default function Reports() {
                 <Card>
                   <CardHeader><CardTitle className="text-lg">{t('reports.overview.tasksByStatus')}</CardTitle></CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={280}>
                       <PieChart>
-                        <Pie data={tasksByStatus.filter(t => t.value > 0)} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                        <Pie data={tasksByStatus.filter(t => t.value > 0)} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
                           {tasksByStatus.map((e, i) => <Cell key={i} fill={e.color} />)}
                         </Pie>
                         <Tooltip />
