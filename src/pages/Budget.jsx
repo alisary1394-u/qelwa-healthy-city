@@ -730,7 +730,7 @@ export default function Budget() {
                           .slice(0, 5)
                           .map(([category, amount]) => (
                             <div key={category} className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                              <span className="font-medium">{category}</span>
+                              <span className="font-medium"><T>{category}</T></span>
                               <span className="text-red-600 font-bold">{amount.toLocaleString()} {t('currency.riyal')}</span>
                             </div>
                           ))}
