@@ -289,7 +289,8 @@ export default function Reports() {
 
   const allocationsByCommittee = useMemo(() => {
     const grouped = filteredAllocations.reduce((acc, a) => {
-      const name = a.committee_name || committees.find((c) => String(c.id) === String(a.committee_id))?.name || t('reports.unspecified');
+      const rawName = a.committee_name || committees.find((c) => String(c.id) === String(a.committee_id))?.name || t('reports.unspecified');
+      const name = !rtl ? translateTextSync(rawName, 'en') : rawName;
       acc[name] = (acc[name] || 0) + (Number(a.allocated_amount) || 0);
       return acc;
     }, {});
@@ -302,7 +303,7 @@ export default function Reports() {
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8);
-  }, [filteredAllocations, committees]);
+  }, [filteredAllocations, committees, rtl]);
 
   const topExpenses = useMemo(() => {
     return filteredTransactions

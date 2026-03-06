@@ -85,6 +85,11 @@ const BUILTIN_TRANSLATIONS = {
     'لجنة الصحة': 'Health Committee',
     'لجنة التعليم': 'Education Committee',
     'لجنة البيئة': 'Environment Committee',
+    'لجنة الرياضة والنشاط البدني': 'Sports & Physical Activity Committee',
+    'لجنة البيئة الصحية': 'Healthy Environment Committee',
+    'لجنة التغذية الصحية': 'Healthy Nutrition Committee',
+    'لجنة التوعية والتثقيف الصحي': 'Health Awareness & Education Committee',
+    'لجنة الصحة العامة': 'Public Health Committee',
     // Common category/tag labels
     'مشاركة مجتمعية': 'Community Participation',
     'بيئة خضراء': 'Green Environment',
