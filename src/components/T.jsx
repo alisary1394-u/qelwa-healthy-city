@@ -18,7 +18,7 @@ import { useAutoTranslate } from '@/hooks/useAutoTranslate';
  *   fallback – shown while translating (default: original text)
  */
 export default function T({ text, children, as: Wrapper, className, style, fallback }) {
-  const original = text || (typeof children === 'string' ? children : null);
+  const original = text || (typeof children === 'string' ? children : (Array.isArray(children) ? children.filter(c => c != null && c !== false && c !== '').join('') : null));
   const { translated, isTranslating } = useAutoTranslate(original);
 
   if (!original) return children || null;

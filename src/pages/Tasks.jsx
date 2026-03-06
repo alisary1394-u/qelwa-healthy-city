@@ -337,9 +337,12 @@ export default function Tasks() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('tasks.allInitiatives')}</SelectItem>
-                {accessibleInitiatives.map(i => (
-                  <SelectItem key={i.id} value={i.id}>{i.code} - <T>{(i.title || '').slice(0, 35)}{(i.title?.length || 0) > 35 ? '...' : ''}</T></SelectItem>
-                ))}
+                {accessibleInitiatives.map(i => {
+                  const title = (i.title || '').length > 35 ? (i.title || '').slice(0, 35) + '...' : (i.title || '');
+                  return (
+                    <SelectItem key={i.id} value={i.id}>{i.code} - <T>{title}</T></SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           )}

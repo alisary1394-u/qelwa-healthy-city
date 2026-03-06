@@ -1755,7 +1755,7 @@ export default function Initiatives() {
                           const standard = standardsById.get(String(sid));
                           return standard ? (
                             <Badge key={sid} variant="outline">
-                              {standard.code} - <T>{standard.title?.slice(0, 50)}{(standard.title?.length || 0) > 50 ? '...' : ''}</T>
+                              {standard.code} - <T>{(standard.title || '').length > 50 ? (standard.title || '').slice(0, 50) + '...' : (standard.title || '')}</T>
                             </Badge>
                           ) : null;
                         })}
