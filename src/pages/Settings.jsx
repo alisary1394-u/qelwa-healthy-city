@@ -18,6 +18,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS_BY_ROLE, ROLE_LABELS, ROLE_LABEL_KEYS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
 import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
 
 const DEFAULT_DISTRICTS = ['حي الشفاء', 'حي الخالدية', 'حي الصفاء', 'حي النسيم', 'حي العزيزية', 'حي الشروق'];
 
@@ -424,7 +425,7 @@ export default function Settings() {
                   {(currentUser.full_name || currentUser.name || '?')[0]}
                 </div>
                 <div className="text-white text-sm">
-                  <p className="font-medium leading-tight">{currentUser.full_name || currentUser.name || t('common.defaultUser')}</p>
+                  <p className="font-medium leading-tight"><T>{currentUser.full_name || currentUser.name || t('common.defaultUser')}</T></p>
                   <p className="text-white/50 text-[11px]">{permissions.canManageSettings ? t('settings.roles.systemAdmin') : t('settings.roles.viewOnly')}</p>
                 </div>
               </div>
@@ -435,7 +436,7 @@ export default function Settings() {
           <div className="flex items-center gap-3 mt-6 flex-wrap">
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <Building2 className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white text-xs font-medium">{logoForm.city_name || t('home.healthyCity')}</span>
+              <span className="text-white text-xs font-medium"><T>{logoForm.city_name || t('home.healthyCity')}</T></span>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/15">
               <MapPin className="w-3.5 h-3.5 text-white/70" />
@@ -460,7 +461,7 @@ export default function Settings() {
             <TabsTrigger value="districts" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
               <MapPin className="w-4 h-4" />
               {t('settings.tabs.districts')}
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 mr-1 bg-[#1e3a5f]/10 text-[#1e3a5f] data-[state=active]:bg-white/20 data-[state=active]:text-white">{districtsList.length}</Badge>
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 me-1 bg-[#1e3a5f]/10 text-[#1e3a5f] data-[state=active]:bg-white/20 data-[state=active]:text-white">{districtsList.length}</Badge>
             </TabsTrigger>
             {showDataTab && (
               <TabsTrigger value="data" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-[#1e3a5f] data-[state=active]:text-white data-[state=active]:shadow-md transition-all py-2.5 px-4 text-sm font-medium gap-2">
@@ -533,12 +534,12 @@ export default function Settings() {
                         disabled={logoUploading || !permissions.canManageSettings}
                         onClick={() => document.getElementById('settings-logo-upload').click()}
                       >
-                        <Upload className="w-3.5 h-3.5 ml-1.5" />
+                        <Upload className="w-3.5 h-3.5 ms-1.5" />
                         {logoUploading ? t('common.loading') : t('settings.branding.uploadImage')}
                       </Button>
                       {logoForm.logo_url && permissions.canManageSettings && (
                         <Button variant="outline" size="sm" className="text-xs text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleRemoveLogo}>
-                          <Trash2 className="w-3.5 h-3.5 ml-1.5" />
+                          <Trash2 className="w-3.5 h-3.5 ms-1.5" />
                           {t('common.delete')}
                         </Button>
                       )}
@@ -595,11 +596,11 @@ export default function Settings() {
                       className="w-full h-11 bg-[#1e3a5f] hover:bg-[#1e3a5f]/90 text-white shadow-md hover:shadow-lg transition-all"
                     >
                       {updateMutation.isPending || createMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                        <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                       ) : logoSaved ? (
-                        <CheckCircle2 className="w-4 h-4 ml-2" />
+                        <CheckCircle2 className="w-4 h-4 ms-2" />
                       ) : (
-                        <Save className="w-4 h-4 ml-2" />
+                        <Save className="w-4 h-4 ms-2" />
                       )}
                       {logoSaved ? t('common.success') : t('settings.branding.saveLogo')}
                     </Button>
@@ -706,7 +707,7 @@ export default function Settings() {
                       onClick={handleResetDistricts}
                       className="text-xs text-muted-foreground hover:text-amber-600 h-7"
                     >
-                      <RotateCcw className="w-3 h-3 ml-1" />
+                      <RotateCcw className="w-3 h-3 ms-1" />
                       {t('settings.districts.restoreDefault')}
                     </Button>
                   </div>
@@ -732,7 +733,7 @@ export default function Settings() {
                               }}
                             />
                           ) : (
-                            <span className="text-sm font-medium truncate">{district}</span>
+                            <span className="text-sm font-medium truncate"><T>{district}</T></span>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
@@ -785,7 +786,7 @@ export default function Settings() {
                       disabled={!newDistrict.trim()}
                       className="h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
                     >
-                      <Plus className="w-4 h-4 ml-1.5" />
+                      <Plus className="w-4 h-4 ms-1.5" />
                       {t('common.add')}
                     </Button>
                   </div>
@@ -801,9 +802,9 @@ export default function Settings() {
                     className="flex-1 h-11 bg-[#1e3a5f] hover:bg-[#1e3a5f]/90 text-white shadow-md"
                   >
                     {districtsSaving ? (
-                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                     ) : (
-                      <Save className="w-4 h-4 ml-2" />
+                      <Save className="w-4 h-4 ms-2" />
                     )}
                     {districtsSaving ? t('common.saving') : t('settings.districts.saveDistricts')}
                   </Button>
@@ -829,9 +830,9 @@ export default function Settings() {
                           onClick={handleRenameExistingSurveyDistricts}
                         >
                           {renamingDistricts ? (
-                            <Loader2 className="w-3.5 h-3.5 ml-1.5 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 ms-1.5 animate-spin" />
                           ) : (
-                            <RotateCcw className="w-3.5 h-3.5 ml-1.5" />
+                            <RotateCcw className="w-3.5 h-3.5 ms-1.5" />
                           )}
                           {renamingDistricts ? t('common.loading') : t('settings.districts.updateSurveysButton')}
                         </Button>
@@ -895,9 +896,9 @@ export default function Settings() {
                           onClick={() => restoreMutation.mutate()}
                         >
                           {restoreMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                           ) : (
-                            <Database className="w-4 h-4 ml-2" />
+                            <Database className="w-4 h-4 ms-2" />
                           )}
                           {restoreMutation.isPending ? t('settings.data.backup.restoring') : t('settings.data.backup.restoreButton')}
                         </Button>
@@ -944,7 +945,7 @@ export default function Settings() {
                       className="w-full h-11 border-amber-400 text-amber-700 hover:bg-amber-100 font-medium"
                       onClick={() => api.clearLocalDataAndReseed()}
                     >
-                      <RotateCcw className="w-4 h-4 ml-2" />
+                      <RotateCcw className="w-4 h-4 ms-2" />
                       {t('settings.data.reseed.button')}
                     </Button>
                   </CardContent>
@@ -1009,11 +1010,11 @@ export default function Settings() {
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={permIsSaving} className="border-amber-400 text-amber-700 hover:bg-amber-100 text-xs">
-                          <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                          <RotateCcw className="w-3.5 h-3.5 ms-1" />
                           {t('common.cancel')}
                         </Button>
                         <Button size="sm" onClick={handleSavePermissions} disabled={permIsSaving} className="bg-amber-600 hover:bg-amber-700 text-white text-xs">
-                          {permIsSaving ? <Loader2 className="w-3.5 h-3.5 ml-1 animate-spin" /> : <Save className="w-3.5 h-3.5 ml-1" />}
+                          {permIsSaving ? <Loader2 className="w-3.5 h-3.5 ms-1 animate-spin" /> : <Save className="w-3.5 h-3.5 ms-1" />}
                           {permIsSaving ? t('common.saving') : t('common.save')}
                         </Button>
                       </div>
@@ -1023,21 +1024,21 @@ export default function Settings() {
                   {/* Search + actions */}
                   <div className="flex flex-col md:flex-row-reverse gap-3">
                     <div className="relative flex-1">
-                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Search className={`absolute ${rtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                       <Input
                         placeholder={t('settings.permissions.searchPlaceholder')}
                         value={permSearchQuery}
                         onChange={(e) => setPermSearchQuery(e.target.value)}
-                        className="pr-10 h-10 border-border/50 focus:border-purple-500 focus:ring-purple-500/20"
+                        className={`${rtl ? 'pl-10' : 'pr-10'} h-10 border-border/50 focus:border-purple-500 focus:ring-purple-500/20`}
                       />
                     </div>
                     <div className="flex gap-2 flex-row-reverse">
                       <Button size="sm" onClick={handleSavePermissions} disabled={!permHasChanges || permIsSaving} className="h-10 bg-purple-600 hover:bg-purple-700 text-white text-xs">
-                        {permIsSaving ? <Loader2 className="w-4 h-4 ml-1.5 animate-spin" /> : <Save className="w-4 h-4 ml-1.5" />}
+                        {permIsSaving ? <Loader2 className="w-4 h-4 ms-1.5 animate-spin" /> : <Save className="w-4 h-4 ms-1.5" />}
                         {permIsSaving ? t('common.saving') : t('settings.permissions.savePermissions')}
                       </Button>
                       <Button variant="outline" size="sm" onClick={handleResetPermissions} disabled={!permHasChanges || permIsSaving} className="h-10 text-xs">
-                        <RotateCcw className="w-4 h-4 ml-1.5" />
+                        <RotateCcw className="w-4 h-4 ms-1.5" />
                         {t('common.reset')}
                       </Button>
                     </div>

@@ -54,6 +54,9 @@ const BUILTIN_TRANSLATIONS = {
     'الحوكمة والشراكات': 'Governance & Partnerships',
     'المشاركة المجتمعية': 'Community Participation',
     'البيئة والاستدامة': 'Environment & Sustainability',
+    // Common role/title names
+    'المشرف': 'Supervisor',
+    'المدينة الصحية': 'Healthy City',
     // Common locations
     'مدينة قلوة': 'Qelwa City',
     'محافظة قلوة': 'Qelwa Governorate',
