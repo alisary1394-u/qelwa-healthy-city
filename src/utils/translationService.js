@@ -8,6 +8,36 @@ const CACHE_KEY = 'auto_translations_cache';
 const MAX_CACHE_SIZE = 2000; // max entries
 const BATCH_DELAY = 80; // ms debounce for batching
 
+// ─── Built-in dictionary for known values ────────────────────
+// These translations are guaranteed and don't depend on external API.
+const BUILTIN_TRANSLATIONS = {
+  'ar>en': {
+    // Default district names
+    'حي الشفاء': 'Al-Shifa Neighborhood',
+    'حي الخالدية': 'Al-Khalidiyah Neighborhood',
+    'حي الصفاء': 'Al-Safa Neighborhood',
+    'حي النسيم': 'Al-Naseem Neighborhood',
+    'حي العزيزية': 'Al-Aziziyah Neighborhood',
+    'حي الشروق': 'Al-Shorouk Neighborhood',
+    // Common role titles
+    'متطوع اللجنة الرئيسية': 'Main Committee Volunteer',
+    'متطوع لجنة الحوكمة والشراكات': 'Governance & Partnerships Committee Volunteer',
+    'متطوع لجنة المشاركة المجتمعية': 'Community Participation Committee Volunteer',
+    'متطوع لجنة البنية التحتية': 'Infrastructure Committee Volunteer',
+    'متطوع لجنة الصحة': 'Health Committee Volunteer',
+    'متطوع لجنة التعليم': 'Education Committee Volunteer',
+    'متطوع لجنة البيئة': 'Environment Committee Volunteer',
+    // Common labels
+    'أخرى': 'Other',
+    'غير محدد': 'Unspecified',
+  },
+};
+
+function builtinLookup(text, from, to) {
+  const key = `${from}>${to}`;
+  return BUILTIN_TRANSLATIONS[key]?.[text] || null;
+}
+
 // ─── Cache helpers ───────────────────────────────────────────
 function loadCache() {
   try {
@@ -121,7 +151,11 @@ export async function translateText(text, targetLang) {
   const from = sourceLang;
   const to = targetLang;
   
-  // Check cache first
+  // Check built-in dictionary first
+  const builtin = builtinLookup(text, from, to);
+  if (builtin) return builtin;
+  
+  // Check cache
   const cache = loadCache();
   const key = cacheKey(text, from, to);
   if (cache[key]) return cache[key];
@@ -152,6 +186,10 @@ export function translateTextSync(text, targetLang) {
   const sourceLang = detectLanguage(text);
   if (sourceLang === targetLang || sourceLang === 'unknown') return text;
   
+  // Check built-in dictionary first
+  const builtin = builtinLookup(text, sourceLang, targetLang);
+  if (builtin) return builtin;
+  
   const cache = loadCache();
   const key = cacheKey(text, sourceLang, targetLang);
   return cache[key] || text;
@@ -174,6 +212,12 @@ export async function translateBatch(texts, targetLang) {
     const sourceLang = detectLanguage(text);
     if (sourceLang === targetLang || sourceLang === 'unknown') {
       results.set(text, text);
+      continue;
+    }
+    // Check built-in dictionary first
+    const builtin = builtinLookup(text, sourceLang, targetLang);
+    if (builtin) {
+      results.set(text, builtin);
       continue;
     }
     const key = cacheKey(text, sourceLang, targetLang);
