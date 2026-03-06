@@ -346,7 +346,7 @@ export default function Committees() {
               <SelectContent>
                 <SelectItem value="all">{t('committees.allAxes')}</SelectItem>
                 {axes.map(axis => (
-                  <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                  <SelectItem key={axis.id} value={axis.id}><T>{axis.name}</T></SelectItem>
                 ))}
                 <SelectItem value="none">{t('committees.withoutAxis')}</SelectItem>
               </SelectContent>
@@ -369,7 +369,7 @@ export default function Committees() {
             <div className="flex-1" />
             {canManage && (
               <Button onClick={() => handleOpenForm()} className="bg-primary hover:bg-primary/90 h-9">
-                <Plus className="w-4 h-4 ml-1" />
+                <Plus className="w-4 h-4 me-1" />
                 {t('committees.addCommittee')}
               </Button>
             )}
@@ -483,7 +483,7 @@ export default function Committees() {
                       <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
                         <Building className="w-3.5 h-3.5 text-primary/70" />
                         <span>{t('committees.belongsTo')} <strong className="text-foreground"><T>{committee.parent_committee_name}</T></strong></span>
-                        <span className={`mr-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        <span className={`me-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           committee.level === 'main' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
                           committee.level === 'primary' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                           'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
@@ -581,14 +581,14 @@ export default function Committees() {
                     <div className="flex gap-2">
                       <Link to={`${createPageUrl('TeamManagement')}?committee=${committee.id}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/5 group-hover:border-primary/30 group-hover:text-primary transition-colors">
-                          <Users className="w-3.5 h-3.5 ml-1" />
+                          <Users className="w-3.5 h-3.5 me-1" />
                           {t('committees.membersTitle')}
                           <ChevronLeft className="w-3.5 h-3.5 mr-auto" />
                         </Button>
                       </Link>
                       {canManage && (
                         <Button variant="outline" size="sm" className="group-hover:bg-secondary/5 group-hover:border-secondary/30 group-hover:text-secondary transition-colors" onClick={() => handleOpenAssignMember(committee)}>
-                          <UserPlus className="w-3.5 h-3.5 ml-1" />
+                          <UserPlus className="w-3.5 h-3.5 me-1" />
                           {t('committees.addMemberBtn')}
                         </Button>
                       )}
@@ -644,7 +644,7 @@ export default function Committees() {
                     .filter(c => c.level === 'main' || c.type === 'main' || !c.parent_committee_id)
                     .map(c => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.level === 'main' || c.type === 'main' ? '🏢' : '📋'} {c.name}
+                        {c.level === 'main' || c.type === 'main' ? '🏢' : '📋'} <T>{c.name}</T>
                       </SelectItem>
                     ))
                   }
@@ -696,7 +696,7 @@ export default function Committees() {
                 <SelectContent>
                   <SelectItem value="none">{t('committees.withoutLink')}</SelectItem>
                   {axes.map(axis => (
-                    <SelectItem key={axis.id} value={axis.id}>{axis.name}</SelectItem>
+                    <SelectItem key={axis.id} value={axis.id}><T>{axis.name}</T></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -721,7 +721,7 @@ export default function Committees() {
                           }}
                           className="rounded"
                         />
-                        <span className="text-sm">{standard.code} - {standard.title}</span>
+                        <span className="text-sm">{standard.code} - <T>{standard.title}</T></span>
                       </div>
                     ))}
                   </div>
@@ -770,7 +770,7 @@ export default function Committees() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-secondary" />
-              {t('committees.assignTitle')} {assignTargetCommittee?.name}
+              {t('committees.assignTitle')} <T>{assignTargetCommittee?.name}</T>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
@@ -789,7 +789,7 @@ export default function Committees() {
             {assignSelected.length > 0 && (
               <div className="flex items-center justify-between bg-secondary/10 rounded-lg px-3 py-2">
                 <span className="text-sm text-secondary font-medium">
-                  <UserCheck className="w-4 h-4 inline ml-1" />
+                  <UserCheck className="w-4 h-4 inline me-1" />
                   {t('committees.selectedCount', { count: assignSelected.length })}
                 </span>
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-7" onClick={() => setAssignSelected([])}>
@@ -830,13 +830,13 @@ export default function Committees() {
                         {isSelected ? <UserCheck className="w-4 h-4" /> : (m.full_name || '').charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{m.full_name}</p>
+                        <p className="text-sm font-semibold text-foreground truncate"><T>{m.full_name}</T></p>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{roleLabels[m.role] || m.role}</span>
                           {currentCommittee && (
                             <>
                               <span>•</span>
-                              <span className="text-amber-700 dark:text-amber-400">{currentCommittee.name}</span>
+                              <span className="text-amber-700 dark:text-amber-400"><T>{currentCommittee.name}</T></span>
                             </>
                           )}
                           {!currentCommittee && <span className="text-muted-foreground">{t('committees.withoutCommittee')}</span>}

@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Lightbulb, Target, Search, UserCheck, X } from "lucide-react";
 import { DOCUMENT_TYPES } from "@/lib/documentTypes";
+import T from "@/components/T";
 
 const ROLE_LABELS_AR = {
   governor: 'المشرف العام',
@@ -39,6 +41,8 @@ const categories = [
 ];
 
 export default function TaskForm({ open, onOpenChange, task, onSave, members, initiatives = [], standards = [] }) {
+  const { i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -130,16 +134,16 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={rtl ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="text-xl">
-            {task ? 'تعديل المهمة' : 'إضافة مهمة جديدة'}
+            <T>{task ? 'تعديل المهمة' : 'إضافة مهمة جديدة'}</T>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label>عنوان المهمة *</Label>
+            <Label><T>عنوان المهمة</T> *</Label>
             <Input
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -149,7 +153,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
           </div>
 
           <div className="space-y-2">
-            <Label>الوصف</Label>
+            <Label><T>الوصف</T></Label>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -160,7 +164,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>المكلف بالمهمة *</Label>
+              <Label><T>المكلف بالمهمة</T> *</Label>
               {/* Selected member display */}
               {formData.assigned_to && (() => {
                 const selected = members.find(m => m.id === formData.assigned_to);
@@ -170,8 +174,8 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                       {(selected.full_name || '').charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{selected.full_name}</p>
-                      <p className="text-[11px] text-muted-foreground">{ROLE_LABELS_AR[selected.role] || selected.role}</p>
+                      <p className="text-sm font-semibold text-foreground truncate"><T>{selected.full_name}</T></p>
+                      <p className="text-[11px] text-muted-foreground"><T>{ROLE_LABELS_AR[selected.role] || selected.role}</T></p>
                     </div>
                     <button type="button" className="text-muted-foreground hover:text-red-500" onClick={() => setFormData({ ...formData, assigned_to: '', assigned_to_name: '' })}>
                       <X className="w-4 h-4" />
@@ -194,7 +198,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
               {memberSearchOpen && (
                 <div className="border rounded-lg max-h-[180px] overflow-y-auto divide-y bg-card shadow-sm">
                   {filteredMembers.length === 0 ? (
-                    <div className="p-3 text-center text-sm text-muted-foreground">لا توجد نتائج</div>
+                    <div className="p-3 text-center text-sm text-muted-foreground"><T>لا توجد نتائج</T></div>
                   ) : (
                     filteredMembers.map(m => {
                       const isSelected = String(formData.assigned_to) === String(m.id);
@@ -214,8 +218,8 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                             {isSelected ? <UserCheck className="w-3.5 h-3.5" /> : (m.full_name || '').charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{m.full_name}</p>
-                            <p className="text-[10px] text-muted-foreground">{ROLE_LABELS_AR[m.role] || m.role}</p>
+                            <p className="text-sm font-medium text-foreground truncate"><T>{m.full_name}</T></p>
+                            <p className="text-[10px] text-muted-foreground"><T>{ROLE_LABELS_AR[m.role] || m.role}</T></p>
                           </div>
                           {m.phone && <span className="text-[10px] text-muted-foreground shrink-0">{m.phone}</span>}
                         </div>
@@ -228,7 +232,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
             {initiatives?.length > 0 && (
               <div className="space-y-2">
-                <Label className="flex items-center gap-1"><Lightbulb className="w-4 h-4" /> المبادرة المرتبطة</Label>
+                <Label className="flex items-center gap-1"><Lightbulb className="w-4 h-4" /> <T>المبادرة المرتبطة</T></Label>
                 <Select
                   value={formData.initiative_id || 'none'}
                   onValueChange={(v) => {
@@ -237,10 +241,10 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="بدون مبادرة" />
+                    <SelectValue placeholder={rtl ? 'بدون مبادرة' : 'Without initiative'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون مبادرة</SelectItem>
+                    <SelectItem value="none"><T>بدون مبادرة</T></SelectItem>
                     {initiatives.map(i => (
                       <SelectItem key={i.id} value={i.id}>{i.code} - {(i.title || '').slice(0, 45)}{(i.title?.length || 0) > 45 ? '...' : ''}</SelectItem>
                     ))}
@@ -251,7 +255,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
             {standards?.length > 0 && (
               <div className="space-y-2 md:col-span-2">
-                <Label className="flex items-center gap-1"><Target className="w-4 h-4" /> المعيار المرتبط (للإثبات)</Label>
+                <Label className="flex items-center gap-1"><Target className="w-4 h-4" /> <T>المعيار المرتبط (للإثبات)</T></Label>
                 <Select
                   value={formData.standard_id || 'none'}
                   onValueChange={(v) => {
@@ -260,10 +264,10 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="بدون معيار" />
+                    <SelectValue placeholder={rtl ? 'بدون معيار' : 'Without standard'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون معيار</SelectItem>
+                    <SelectItem value="none"><T>بدون معيار</T></SelectItem>
                     {standards.map(s => (
                       <SelectItem key={s.id} value={s.id}>{s.code} - {s.title?.slice(0, 50)}...</SelectItem>
                     ))}
@@ -274,13 +278,13 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
             {formData.standard_id && (
               <div className="space-y-2">
-                <Label>نوع المستند</Label>
+                <Label><T>نوع المستند</T></Label>
                 <Select value={formData.document_type} onValueChange={(v) => setFormData({ ...formData, document_type: v })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر النوع" />
+                    <SelectValue placeholder={rtl ? 'اختر النوع' : 'Select type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">بدون نوع</SelectItem>
+                    <SelectItem value="none"><T>بدون نوع</T></SelectItem>
                     {DOCUMENT_TYPES.map(d => (
                       <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
                     ))}
@@ -290,35 +294,35 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
             )}
 
             <div className="space-y-2">
-              <Label>التصنيف</Label>
+              <Label><T>التصنيف</T></Label>
               <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(c => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    <SelectItem key={c.value} value={c.value}><T>{c.label}</T></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>الأولوية</Label>
+              <Label><T>الأولوية</T></Label>
               <Select value={formData.priority} onValueChange={(v) => setFormData({...formData, priority: v})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {priorities.map(p => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    <SelectItem key={p.value} value={p.value}><T>{p.label}</T></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>تاريخ الاستحقاق</Label>
+              <Label><T>تاريخ الاستحقاق</T></Label>
               <Input
                 type="date"
                 value={formData.due_date}
@@ -327,18 +331,18 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label>تاريخ ووقت التذكير</Label>
+              <Label><T>تاريخ ووقت التذكير</T></Label>
               <Input
                 type="datetime-local"
                 value={formData.reminder_date}
                 onChange={(e) => setFormData({...formData, reminder_date: e.target.value, reminder_sent: false})}
               />
-              <p className="text-xs text-muted-foreground">سيتم إرسال تذكير بالبريد الإلكتروني للمكلف في هذا التاريخ</p>
+              <p className="text-xs text-muted-foreground"><T>سيتم إرسال تذكير بالبريد الإلكتروني للمكلف في هذا التاريخ</T></p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>ملاحظات</Label>
+            <Label><T>ملاحظات</T></Label>
             <Textarea
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
@@ -349,11 +353,11 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
 
           <div className="flex gap-3 justify-end pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              إلغاء
+              <T>إلغاء</T>
             </Button>
             <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
-              {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-              {task ? 'حفظ التعديلات' : 'إضافة المهمة'}
+              {loading && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+              <T>{task ? 'حفظ التعديلات' : 'إضافة المهمة'}</T>
             </Button>
           </div>
         </form>

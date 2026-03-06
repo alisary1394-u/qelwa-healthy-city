@@ -2,6 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import T from "@/components/T";
 
 export default function YesNoQuestion({ question, value, onChange, bgColor = "bg-blue-50" }) {
   return (
@@ -17,7 +18,7 @@ export default function YesNoQuestion({ question, value, onChange, bgColor = "bg
             value === true && "bg-green-600 hover:bg-green-700"
           )}
         >
-          نعم
+          <T>نعم</T>
         </Button>
         <Button
           type="button"
@@ -28,7 +29,7 @@ export default function YesNoQuestion({ question, value, onChange, bgColor = "bg
             value === false && "bg-destructive hover:bg-destructive/90"
           )}
         >
-          لا
+          <T>لا</T>
         </Button>
       </div>
     </div>

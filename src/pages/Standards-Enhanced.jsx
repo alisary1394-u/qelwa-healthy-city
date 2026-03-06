@@ -1,9 +1,13 @@
-﻿/**
+/**
  * تحديث صفحة المعايير لاستخدام المؤشرات المحسنة
  * إضافة المؤشرات المتقدمة والعرض المحسّن
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
+import T from '@/components/T';
+import { translateTextSync } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -30,6 +34,9 @@ import {
   Plus, Search, Target, Upload, FileText, Image, Check, X, Eye, Loader2, Trash2, Edit3, 
   BarChart3, ChevronDown, ChevronUp, TrendingUp, Clock, AlertCircle, CheckCircle2
 } from "lucide-react";
+
+// Module-level translation helper for non-JSX contexts
+const tt = (text) => i18n.language === 'ar' ? text : (translateTextSync(text) || text);
 
 function parseJsonArray(str, fallback = []) {
   if (!str) return fallback;
@@ -87,14 +94,14 @@ function formatDateSafe(value) {
 	if (!value) return '—';
 	const d = new Date(value);
 	if (!Number.isFinite(d.getTime())) return '—';
-	return d.toLocaleDateString('ar-SA');
+	return d.toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US');
 }
 
 const statusConfig = {
-  not_started: { label: 'لم يبدأ', color: 'bg-muted text-foreground' },
-  in_progress: { label: 'قيد التنفيذ', color: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'مكتمل', color: 'bg-green-100 text-green-700' },
-  approved: { label: 'معتمد', color: 'bg-purple-100 text-purple-700' }
+  not_started: { label: tt('لم يبدأ'), color: 'bg-muted text-foreground' },
+  in_progress: { label: tt('قيد التنفيذ'), color: 'bg-blue-100 text-blue-700' },
+  completed: { label: tt('مكتمل'), color: 'bg-green-100 text-green-700' },
+  approved: { label: tt('معتمد'), color: 'bg-purple-100 text-purple-700' }
 };
 
 /** إجمالي المعايير حسب مرجع المعايير (9 محاور، 80 معياراً) */
@@ -102,7 +109,7 @@ const REFERENCE_TOTAL_STANDARDS = STANDARDS_CSV.length;
 
 function buildRequiredEvidence(documents) {
   const list = Array.isArray(documents) && documents.length ? documents : [];
-  return list.length === 0 ? 'أدلة ومستندات تدعم تحقيق المعيار' : 'أدلة مطلوبة: ' + list.join('، ');
+  return list.length === 0 ? tt('أدلة ومستندات تدعم تحقيق المعيار') : tt('أدلة مطلوبة') + ': ' + list.join('، ');
 }
 
 function getStandardIndexFromCode(code) {
@@ -186,14 +193,14 @@ function KpiIndicator({ kpi, value, showProgress = true }) {
       
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">القيمة:</span>
+          <span className="text-muted-foreground"><T>القيمة</T>:</span>
           <span className={`font-medium ${getStatusColor()}`}>
-            {value || 'غير متوفر'}
+            {value || tt('غير متوفر')}
           </span>
         </div>
         
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">الهدف:</span>
+          <span className="text-muted-foreground"><T>الهدف</T>:</span>
           <span className="font-medium">{kpi.target}</span>
         </div>
         
@@ -201,8 +208,8 @@ function KpiIndicator({ kpi, value, showProgress = true }) {
           <div>
             <Progress value={score} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>الإنجاز: {Math.round(score)}%</span>
-              <span>الوزن: {Math.round(kpi.weight * 100)}%</span>
+              <span><T>الإنجاز</T>: {Math.round(score)}%</span>
+              <span><T>الوزن</T>: {Math.round(kpi.weight * 100)}%</span>
             </div>
           </div>
         )}
@@ -223,7 +230,7 @@ function StandardKpisCard({ standard, kpis, values = {} }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <BarChart3 className="w-5 h-5" />
-          مؤشرات الأداء المحسنة
+          <T>مؤشرات الأداء المحسنة</T>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -241,7 +248,7 @@ function StandardKpisCard({ standard, kpis, values = {} }) {
         {enhancedKpis.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>لا توجد مؤشرات أداء محددة لهذا المعيار</p>
+            <p><T>لا توجد مؤشرات أداء محددة لهذا المعيار</T></p>
           </div>
         )}
       </CardContent>
@@ -288,14 +295,14 @@ function AxisPerformanceCard({ axis, standards }) {
             <p className="text-sm text-muted-foreground mt-1">{axis.description}</p>
           </div>
           <Badge variant="outline" className="text-sm">
-            {standards.length} معيار
+            <T>{standards.length} معيار</T>
           </Badge>
         </div>
         
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">مستوى الإنجاز</span>
+              <span className="text-muted-foreground"><T>مستوى الإنجاز</T></span>
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -303,7 +310,7 @@ function AxisPerformanceCard({ axis, standards }) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">نقاط الأداء</span>
+              <span className="text-muted-foreground"><T>نقاط الأداء</T></span>
               <span className={`font-medium ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {Math.round(score)}/100
               </span>
@@ -314,11 +321,11 @@ function AxisPerformanceCard({ axis, standards }) {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span>{completedStandards} مكتمل</span>
+              <span><T>{completedStandards} مكتمل</T></span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4 text-blue-600" />
-              <span>{standards.length - completedStandards} متبقي</span>
+              <span><T>{standards.length - completedStandards} متبقي</T></span>
             </div>
           </div>
         </div>
@@ -336,13 +343,13 @@ function VerificationStatusCard({ standard, documents = [] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="w-5 h-5" />
-          حالة التحقق والمستندات
+          <T>حالة التحقق والمستندات</T>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">اكتمال المستندات</span>
+            <span className="text-sm font-medium"><T>اكتمال المستندات</T></span>
             <Badge variant={documentStatus.completeness >= 80 ? 'default' : 'secondary'}>
               {documentStatus.completeness}%
             </Badge>
@@ -360,19 +367,19 @@ function VerificationStatusCard({ standard, documents = [] }) {
                 <X className="w-4 h-4 text-red-600" />
               )}
               <span>
-                {documentStatus.completed} من {documentStatus.total} مستند مكتمل
+                <T>{documentStatus.completed} من {documentStatus.total} مستند مكتمل</T>
               </span>
             </div>
             
             {documentStatus.missing.length > 0 && (
               <div className="text-sm text-muted-foreground">
-                <p className="font-medium mb-1">المستندات المفقودة:</p>
+                <p className="font-medium mb-1"><T>المستندات المفقودة</T>:</p>
                 <ul className="list-disc list-inside space-y-1">
                   {documentStatus.missing.slice(0, 3).map((doc, index) => (
                     <li key={index} className="text-xs">{doc.name}</li>
                   ))}
                   {documentStatus.missing.length > 3 && (
-                    <li className="text-xs">و {documentStatus.missing.length - 3} مستندات أخرى...</li>
+                    <li className="text-xs"><T>و {documentStatus.missing.length - 3} مستندات أخرى...</T></li>
                   )}
                 </ul>
               </div>
@@ -385,6 +392,8 @@ function VerificationStatusCard({ standard, documents = [] }) {
 }
 
 export default function Standards() {
+  const { i18n: i18nInstance } = useTranslation();
+  const rtl = i18nInstance.language === 'ar';
   const [activeAxis, setActiveAxis] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [axisFormOpen, setAxisFormOpen] = useState(false);
@@ -638,8 +647,7 @@ export default function Standards() {
 		if (!allow) return;
 		const kpi = kpis[index];
 		if (!kpi?.name) return;
-		const ok = await requireSecureDeleteConfirmation(`مؤشر المعيار "${kpi.name}"`);
-		if (!ok) return;
+		const ok = await requireSecureDeleteConfirmation(`${tt('مؤشر المعيار')} "${kpi.name}"`);		if (!ok) return;
 
 		try {
 			const attachments = getKpiEvidence(standard.id, kpi.name);
@@ -661,7 +669,7 @@ export default function Standards() {
 				});
 			}
 		} catch (err) {
-			if (typeof window !== 'undefined') window.alert(`فشل حذف المؤشر.\n${err?.message || err}`);
+			if (typeof window !== 'undefined') window.alert(`${tt('فشل حذف المؤشر')}\n${err?.message || err}`);
 		}
 	};
 
@@ -733,7 +741,7 @@ export default function Standards() {
 			setKpiEvidenceKpiName('');
 			setKpiEvidenceForm({ title: '', description: '', files: [] });
 		} catch (err) {
-			if (typeof window !== 'undefined') window.alert(`فشل رفع المرفقات.\n${err?.message || err}`);
+			if (typeof window !== 'undefined') window.alert(`${tt('فشل رفع المرفقات')}\n${err?.message || err}`);
 		} finally {
 			setUploadingKpiEvidence(false);
 		}
@@ -863,8 +871,7 @@ const handleUploadEvidence = async (e) => {
   const handleDeleteEvidence = async (evidenceItem) => {
     if (!canDeleteAnyEvidence) return;
     if (!evidenceItem?.id) return;
-    const ok = await requireSecureDeleteConfirmation(`المرفق "${evidenceItem.title || 'غير معنون'}"`);
-    if (!ok) return;
+    const ok = await requireSecureDeleteConfirmation(`${tt('المرفق')} "${evidenceItem.title || tt('غير معنون')}"`);    if (!ok) return;
     await deleteEvidenceMutation.mutateAsync(evidenceItem.id);
   };
 
@@ -912,7 +919,7 @@ const handleUploadEvidence = async (e) => {
     ? ((activeAxisEntity.order >= 1 && activeAxisEntity.order <= AXIS_SHORT_NAMES.length)
         ? AXIS_SHORT_NAMES[activeAxisEntity.order - 1]
         : activeAxisEntity.name)
-    : 'جميع المحاور';
+    : tt('جميع المحاور');
 
   const filteredStandardsFn = useCallback(() => {
     let list = Array.isArray(standards) ? standards : [];
@@ -959,25 +966,25 @@ const handleUploadEvidence = async (e) => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">المعايير والمؤشرات</h1>
+          <h1 className="text-3xl font-bold"><T>المعايير والمؤشرات</T></h1>
           <p className="text-muted-foreground mt-1">{pageTitle}</p>
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4`} />
             <Input
-              placeholder="البحث في المعايير (العنوان، الرمز، الوصف)..."
+              placeholder={rtl ? 'البحث في المعايير (العنوان، الرمز، الوصف)...' : 'Search standards (title, code, description)...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 w-64 min-w-[200px]"
-              dir="rtl"
+              className={`${rtl ? 'pl-10 pr-10' : 'pl-10 pr-4'} w-64 min-w-[200px]`}
+              dir={rtl ? 'rtl' : 'ltr'}
               autoComplete="off"
             />
           </div>
           {canManage && (
             <Button onClick={() => setStandardFormOpen(true)}>
-              <Plus className="w-4 h-4 ml-2" />
-              معيار جديد
+              <Plus className="w-4 h-4 me-2" />
+              <T>معيار جديد</T>
             </Button>
           )}
         </div>
@@ -991,7 +998,7 @@ const handleUploadEvidence = async (e) => {
             onClick={() => setActiveAxis('all')}
             className="whitespace-nowrap"
           >
-            جميع المحاور ({REFERENCE_TOTAL_STANDARDS})
+            <T>جميع المحاور</T> ({REFERENCE_TOTAL_STANDARDS})
           </Button>
           {[...axes].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(axis => {
             const order = axis.order ?? 0;
@@ -1040,10 +1047,10 @@ const handleUploadEvidence = async (e) => {
         <Card className="text-center py-12">
           <CardContent>
             <Target className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">لا توجد معايير</p>
+            <p className="text-muted-foreground"><T>لا توجد معايير</T></p>
             {canManage && (
               <Button variant="outline" className="mt-4" onClick={() => setStandardFormOpen(true)}>
-                إضافة معيار جديد
+                <T>إضافة معيار جديد</T>
               </Button>
             )}
           </CardContent>
@@ -1078,10 +1085,10 @@ const handleUploadEvidence = async (e) => {
                     </Badge>
                     <h3 className="font-semibold text-base truncate">{standard.title}</h3>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 mr-3">
+                  <div className="flex items-center gap-3 shrink-0 me-3">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>مؤشرات: {standardKpis.length}</span>
-                      <span>أدلة: {approvedEvidence}/{standardEvidence.length}</span>
+                      <span><T>مؤشرات</T>: {standardKpis.length}</span>
+                      <span><T>أدلة</T>: {approvedEvidence}/{standardEvidence.length}</span>
                     </div>
                     {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
                   </div>
@@ -1099,7 +1106,7 @@ const handleUploadEvidence = async (e) => {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium flex items-center gap-2">
                             <BarChart3 className="w-5 h-5" />
-                            مؤشرات الأداء
+                            <T>مؤشرات الأداء</T>
                           </h4>
                           <Button
                             variant="ghost"
@@ -1115,14 +1122,14 @@ const handleUploadEvidence = async (e) => {
 								<div className="flex items-center justify-end gap-2">
 									{canEditThisStandardKpis && (
 										<Button size="sm" onClick={() => openCreateKpiDialog(standard)} className="bg-purple-600 hover:bg-purple-700">
-											<Plus className="w-4 h-4 ml-2" />
-											مؤشر جديد
+											<Plus className="w-4 h-4 me-2" />
+											<T>مؤشر جديد</T>
 										</Button>
 									)}
 								</div>
 
 								{standardKpis.length === 0 ? (
-									<div className="text-sm text-muted-foreground">لا توجد مؤشرات لهذا المعيار</div>
+									<div className="text-sm text-muted-foreground"><T>لا توجد مؤشرات لهذا المعيار</T></div>
 								) : (
 									<div className="space-y-3">
 										{standardKpis.map((kpi, idx) => {
@@ -1136,17 +1143,17 @@ const handleUploadEvidence = async (e) => {
 															<div className="flex-1 min-w-0">
 																<div className="font-semibold truncate">{kpi.name}</div>
 																{kpi.description && <div className="text-sm text-muted-foreground">{kpi.description}</div>}
-																<div className="text-xs text-muted-foreground mt-1">الهدف: {kpi.target} {kpi.unit}</div>
+																<div className="text-xs text-muted-foreground mt-1"><T>الهدف</T>: {kpi.target} {kpi.unit}</div>
 															</div>
 															<div className="flex items-center gap-2">
 																<Badge variant="outline" className="text-xs">{Math.round(score)}%</Badge>
 																{canEditThisStandardKpis && (
-																	<Button size="icon" variant="ghost" onClick={() => openEditKpiDialog(standard, standardKpis, idx)} title="تعديل">
+																	<Button size="icon" variant="ghost" onClick={() => openEditKpiDialog(standard, standardKpis, idx)} title={tt('تعديل')}>
 																		<Edit3 className="w-4 h-4" />
 																	</Button>
 																)}
 																{canEditThisStandardKpis && (
-																	<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteKpi(standard, standardKpis, idx)} title="حذف">
+																	<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteKpi(standard, standardKpis, idx)} title={tt('حذف')}>
 																		<Trash2 className="w-4 h-4" />
 																	</Button>
 																)}
@@ -1158,7 +1165,7 @@ const handleUploadEvidence = async (e) => {
 																value={currentValue}
 																disabled={!canEditThisStandardKpis}
 																onChange={(e) => handleUpdateKpiValue(standard, kpi.name, e.target.value)}
-																placeholder="القيمة الحالية"
+																placeholder={rtl ? 'القيمة الحالية' : 'Current value'}
 															/>
 															<Progress value={score} className="h-2" />
 														</div>
@@ -1167,11 +1174,11 @@ const handleUploadEvidence = async (e) => {
 															<div className="flex items-center justify-between">
 																<div className="text-sm text-foreground flex items-center gap-2">
 																	<Upload className="w-4 h-4" />
-																	<span>مرفقات المؤشر</span>
+																	<span><T>مرفقات المؤشر</T></span>
 																	<Badge variant="outline" className="text-xs">{attachments.length}</Badge>
 																</div>
 																<Button size="sm" variant="outline" disabled={!canEditThisStandardKpis} onClick={() => openKpiEvidenceDialog(standard, kpi.name)}>
-																	رفع مرفق
+																	<T>رفع مرفق</T>
 																</Button>
 															</div>
 
@@ -1190,21 +1197,21 @@ const handleUploadEvidence = async (e) => {
 																				className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate text-right"
 																				title={att.title}
 																			>
-																				{att.title || 'مرفق'}
+																				{att.title || tt('مرفق')}
 																			</button>
 																			{canApproveEvidence && isPendingEvidenceStatus(att.status) && (
 																				<>
 																					<Button size="sm" variant="ghost" className="text-green-700" onClick={() => handleApproveEvidence(att)}>
-																						اعتماد
+																						<T>اعتماد</T>
 																					</Button>
 																					<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleRejectEvidence(att, 'غير مطابق للمتطلبات')}>
-																						رفض
+																						<T>رفض</T>
 																					</Button>
 																				</>
 																			)}
 																			{canDeleteAnyEvidence && (
 																				<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleDeleteEvidence(att)}>
-																					حذف
+																					<T>حذف</T>
 																				</Button>
 																			)}
 																		</div>
@@ -1230,7 +1237,7 @@ const handleUploadEvidence = async (e) => {
                             ))}
 								{standardKpis.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-									+{standardKpis.length - 3} مؤشرات أخرى
+									<T><T>+{standardKpis.length - 3} مؤشرات أخرى</T></T>
 								</Badge>
                             )}
                           </div>
@@ -1241,7 +1248,7 @@ const handleUploadEvidence = async (e) => {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium flex items-center gap-2">
                             <FileText className="w-5 h-5" />
-                            المستندات المطلوبة
+                            <T>المستندات المطلوبة</T>
                           </h4>
                           <Button
                             variant="ghost"
@@ -1265,7 +1272,7 @@ const handleUploadEvidence = async (e) => {
                             ))}
                             {requiredDocuments.length > 5 && (
                               <p className="text-sm text-muted-foreground">
-                                و {requiredDocuments.length - 5} مستندات أخرى...
+                                <T><T>و {requiredDocuments.length - 5} مستندات أخرى...</T></T>
                               </p>
                             )}
                           </div>
@@ -1278,7 +1285,7 @@ const handleUploadEvidence = async (e) => {
                             ))}
                             {requiredDocuments.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{requiredDocuments.length - 3} مستندات
+                                <T><T>+{requiredDocuments.length - 3} مستندات</T></T>
                               </Badge>
                             )}
                           </div>
@@ -1286,10 +1293,10 @@ const handleUploadEvidence = async (e) => {
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-muted-foreground border-t pt-4">
-                        <span>المحور: {standard.axis_name}</span>
-                        <span>الأدلة: {approvedEvidence}/{standardEvidence.length}</span>
-                        <span>المؤشرات: {standardKpis.length}</span>
-                        <span>المستندات: {requiredDocuments.length}</span>
+                        <span><T>المحور</T>: <T>{standard.axis_name}</T></span>
+                        <span><T>الأدلة</T>: {approvedEvidence}/{standardEvidence.length}</span>
+                        <span><T>المؤشرات</T>: {standardKpis.length}</span>
+                        <span><T>المستندات</T>: {requiredDocuments.length}</span>
                       </div>
                     </div>
                     
@@ -1312,9 +1319,7 @@ const handleUploadEvidence = async (e) => {
 							setStandardFormOpen(true);
                           }}
                         >
-                          <Edit3 className="w-4 h-4 ml-2" />
-                          تعديل
-                        </Button>
+                          <Edit3 className="w-4 h-4 me-2" /><T>تعديل</T></Button>
                       )}
 
 						{canEditThisStandardKpis && standardKpis.length > 0 && (
@@ -1323,9 +1328,7 @@ const handleUploadEvidence = async (e) => {
 								size="sm"
 								onClick={() => openKpiValuesDialog(standard)}
 							>
-								<BarChart3 className="w-4 h-4 ml-2" />
-								تحديث قيم المؤشرات
-							</Button>
+								<BarChart3 className="w-4 h-4 me-2" /><T>تحديث قيم المؤشرات</T></Button>
 						)}
                       
                       <Button
@@ -1336,16 +1339,14 @@ const handleUploadEvidence = async (e) => {
                           setEvidenceFormOpen(true);
                         }}
                       >
-                        <Upload className="w-4 h-4 ml-2" />
-                        رفع دليل
-                      </Button>
+                        <Upload className="w-4 h-4 me-2" /><T>رفع دليل</T></Button>
                     </div>
                   </div>
                   
                   {/* Evidence List */}
                   {standardEvidence.length > 0 && (
                     <div className="border-t pt-4 mt-4">
-                      <h4 className="font-medium mb-3">الأدلة المرفوعة</h4>
+                      <h4 className="font-medium mb-3"><T>الأدلة المرفوعة</T></h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                         {standardEvidence.map((evidence) => (
                           <Card key={evidence.id} className="relative h-fit self-start">
@@ -1360,7 +1361,7 @@ const handleUploadEvidence = async (e) => {
                                   <h5 className="font-medium text-sm truncate">{evidence.title}</h5>
                                 </div>
                                 <Badge variant={evidence.status === 'approved' ? 'default' : evidence.status === 'rejected' ? 'destructive' : 'secondary'}>
-                                  {evidence.status === 'approved' ? 'معتمد' : evidence.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                                  {evidence.status === 'approved' ? tt('معتمد') : evidence.status === 'rejected' ? tt('مرفوض') : tt('قيد المراجعة')}
                                 </Badge>
                               </div>
                               
@@ -1369,27 +1370,23 @@ const handleUploadEvidence = async (e) => {
                               )}
                               
                               <div className="flex justify-between items-center gap-2 mt-2 text-xs text-muted-foreground">
-                                <span className="truncate">بواسطة: {evidence.uploaded_by_name}</span>
+                                <span className="truncate"><T>بواسطة</T>: {evidence.uploaded_by_name}</span>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span>{formatDateSafe(evidence.created_at)}</span>
-                                  <Button size="icon" variant="ghost" className="text-blue-700" title="معاينة" onClick={() => handlePreviewFile(evidence.file_url)}>
+                                  <Button size="icon" variant="ghost" className="text-blue-700" title={tt('معاينة')} onClick={() => handlePreviewFile(evidence.file_url)}>
                                     <Eye className="w-4 h-4" />
                                   </Button>
                                   {canApproveEvidence && isPendingEvidenceStatus(evidence.status) && (
                                     <div className="flex gap-2">
                                       <Button size="sm" variant="outline" onClick={() => handleApproveEvidence(evidence)}>
-                                        <Check className="w-3 h-3 ml-1" />
-                                        اعتماد
-                                      </Button>
+                                        <Check className="w-3 h-3 me-1" /><T>اعتماد</T></Button>
                                       <Button size="sm" variant="outline" onClick={() => handleRejectEvidence(evidence, 'غير مطابق للمتطلبات')}>
-                                        <X className="w-3 h-3 ml-1" />
-                                        رفض
-                                      </Button>
+                                        <X className="w-3 h-3 me-1" /><T>رفض</T></Button>
                                     </div>
                                   )}
                                   {canDeleteAnyEvidence && (
                                     <Button size="sm" variant="outline" className="text-red-700" onClick={() => handleDeleteEvidence(evidence)}>
-                                      حذف
+                                      <T>حذف</T>
                                     </Button>
                                   )}
                                 </div>
@@ -1413,11 +1410,11 @@ const handleUploadEvidence = async (e) => {
       <Dialog open={axisFormOpen} onOpenChange={setAxisFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>إضافة محور جديد</DialogTitle>
+            <DialogTitle><T>إضافة محور جديد</T></DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveAxis} className="space-y-4">
             <div>
-              <Label htmlFor="axis-name">اسم المحور</Label>
+              <Label htmlFor="axis-name"><T>اسم المحور</T></Label>
               <Input
                 id="axis-name"
                 value={axisForm.name}
@@ -1426,7 +1423,7 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="axis-description">وصف المحور</Label>
+              <Label htmlFor="axis-description"><T>وصف المحور</T></Label>
               <Textarea
                 id="axis-description"
                 value={axisForm.description}
@@ -1435,7 +1432,7 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="axis-order">الترتيب</Label>
+              <Label htmlFor="axis-order"><T>الترتيب</T></Label>
               <Input
                 id="axis-order"
                 type="number"
@@ -1446,10 +1443,10 @@ const handleUploadEvidence = async (e) => {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setAxisFormOpen(false)}>
-                إلغاء
+                <T>إلغاء</T>
               </Button>
               <Button type="submit">
-                إضافة
+                <T>إضافة</T>
               </Button>
             </div>
           </form>
@@ -1469,12 +1466,12 @@ const handleUploadEvidence = async (e) => {
 		>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editStandard?.id ? 'تعديل المعيار' : 'إضافة معيار جديد'}</DialogTitle>
+            <DialogTitle>{editStandard?.id ? tt('تعديل المعيار') : tt('إضافة معيار جديد')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveStandard} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="standard-code">رمز المعيار</Label>
+                <Label htmlFor="standard-code"><T>رمز المعيار</T></Label>
                 <Input
                   id="standard-code"
                   value={standardForm.code}
@@ -1484,10 +1481,10 @@ const handleUploadEvidence = async (e) => {
                 />
               </div>
               <div>
-                <Label htmlFor="standard-axis">المحور</Label>
+                <Label htmlFor="standard-axis"><T>المحور</T></Label>
                 <Select value={standardForm.axis_id} onValueChange={(value) => setStandardForm({ ...standardForm, axis_id: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر المحور" />
+                    <SelectValue placeholder={rtl ? 'اختر المحور' : 'Select axis'} />
                   </SelectTrigger>
                   <SelectContent>
                     {axes.map(axis => (
@@ -1500,7 +1497,7 @@ const handleUploadEvidence = async (e) => {
               </div>
             </div>
             <div>
-              <Label htmlFor="standard-title">عنوان المعيار</Label>
+              <Label htmlFor="standard-title"><T>عنوان المعيار</T></Label>
               <Input
                 id="standard-title"
                 value={standardForm.title}
@@ -1509,7 +1506,7 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="standard-description">وصف المعيار</Label>
+              <Label htmlFor="standard-description"><T>وصف المعيار</T></Label>
               <Textarea
                 id="standard-description"
                 value={standardForm.description}
@@ -1518,21 +1515,21 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="standard-evidence">الأدلة المطلوبة</Label>
+              <Label htmlFor="standard-evidence"><T>الأدلة المطلوبة</T></Label>
               <Textarea
                 id="standard-evidence"
                 value={standardForm.required_evidence}
                 onChange={(e) => setStandardForm({ ...standardForm, required_evidence: e.target.value })}
                 rows={2}
-                placeholder="صف الأدلة والمستندات المطلوبة لتحقيق هذا المعيار"
+                placeholder={rtl ? 'صف الأدلة والمستندات المطلوبة لتحقيق هذا المعيار' : 'Describe the evidence and documents required'}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setStandardFormOpen(false)}>
-                إلغاء
+                <T>إلغاء</T>
               </Button>
               <Button type="submit">
-					{editStandard?.id ? 'حفظ' : 'إضافة'}
+					{editStandard?.id ? tt('حفظ') : tt('إضافة')}
               </Button>
             </div>
           </form>
@@ -1541,13 +1538,13 @@ const handleUploadEvidence = async (e) => {
 
       {/* Evidence Upload Dialog */}
       <Dialog open={evidenceFormOpen} onOpenChange={setEvidenceFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>رفع دليل للمعيار: {selectedStandard?.code}</DialogTitle>
+            <DialogTitle><T>رفع دليل للمعيار</T>: {selectedStandard?.code}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadEvidence} className="space-y-4">
             <div>
-              <Label htmlFor="evidence-title">عنوان الدليل</Label>
+              <Label htmlFor="evidence-title"><T>عنوان الدليل</T></Label>
               <Input
                 id="evidence-title"
                 value={evidenceForm.title}
@@ -1556,7 +1553,7 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="evidence-description">وصف الدليل</Label>
+              <Label htmlFor="evidence-description"><T>وصف الدليل</T></Label>
               <Textarea
                 id="evidence-description"
                 value={evidenceForm.description}
@@ -1565,7 +1562,7 @@ const handleUploadEvidence = async (e) => {
               />
             </div>
             <div>
-              <Label htmlFor="evidence-file">الملف</Label>
+              <Label htmlFor="evidence-file"><T>الملف</T></Label>
               <Input
                 id="evidence-file"
                 type="file"
@@ -1576,18 +1573,18 @@ const handleUploadEvidence = async (e) => {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setEvidenceFormOpen(false)}>
-                إلغاء
+                <T>إلغاء</T>
               </Button>
               <Button type="submit" disabled={uploading}>
                 {uploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    جاري الرفع...
+                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                    <T>جاري الرفع...</T>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    رفع
+                    <Upload className="w-4 h-4 me-2" />
+                    <T>رفع</T>
                   </>
                 )}
               </Button>
@@ -1601,32 +1598,32 @@ const handleUploadEvidence = async (e) => {
 			<DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						تحديث قيم مؤشرات الأداء — {kpiValuesStandard?.code || ''}
+						<T>تحديث قيم مؤشرات الأداء</T> — {kpiValuesStandard?.code || ''}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="space-y-4 mt-4">
 					{parseJsonArray(kpiValuesStandard?.kpis).length === 0 ? (
-						<div className="text-sm text-muted-foreground">لا توجد مؤشرات مسجلة لهذا المعيار.</div>
+						<div className="text-sm text-muted-foreground"><T>لا توجد مؤشرات مسجلة لهذا المعيار.</T></div>
 					) : (
 						<div className="space-y-3">
 							{parseJsonArray(kpiValuesStandard?.kpis).map((kpi, idx) => (
 								<div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-2 bg-muted/50 rounded-lg">
 									<div className="md:col-span-2">
 										<div className="text-sm font-medium">{kpi?.name || ''}</div>
-										<div className="text-xs text-muted-foreground">الهدف: {kpi?.target || ''}</div>
+										<div className="text-xs text-muted-foreground"><T>الهدف</T>: {kpi?.target || ''}</div>
 									</div>
 									<Input
 										value={kpiValuesForm?.[kpi?.name] ?? ''}
 										onChange={(e) => setKpiValuesForm((prev) => ({ ...prev, [kpi?.name]: e.target.value }))}
-										placeholder="القيمة الحالية"
+										placeholder={rtl ? 'القيمة الحالية' : 'Current value'}
 									/>
 								</div>
 							))}
 						</div>
 					)}
 					<div className="flex gap-3 justify-end pt-4 border-t">
-						<Button type="button" variant="outline" onClick={() => setKpiValuesOpen(false)}>إلغاء</Button>
-						<Button type="button" className="bg-primary" onClick={handleSaveKpiValues}>حفظ</Button>
+						<Button type="button" variant="outline" onClick={() => setKpiValuesOpen(false)}><T>إلغاء</T></Button>
+						<Button type="button" className="bg-primary" onClick={handleSaveKpiValues}><T>حفظ</T></Button>
 					</div>
 				</div>
 			</DialogContent>
@@ -1636,38 +1633,38 @@ const handleUploadEvidence = async (e) => {
 		<Dialog open={kpiFormOpen} onOpenChange={setKpiFormOpen}>
 			<DialogContent dir="rtl" className="max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>{editingKpiIndex != null ? 'تعديل مؤشر' : 'مؤشر جديد'}</DialogTitle>
+					<DialogTitle>{editingKpiIndex != null ? tt('تعديل مؤشر') : tt('مؤشر جديد')}</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={handleSaveKpiDefinition} className="space-y-4 mt-4">
 					<div className="space-y-2">
-						<Label>اسم المؤشر *</Label>
+						<Label><T>اسم المؤشر</T> *</Label>
 						<Input value={kpiFormData.name} onChange={(e) => setKpiFormData((p) => ({ ...p, name: e.target.value }))} required />
 					</div>
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label>الهدف</Label>
+							<Label><T>الهدف</T></Label>
 							<Input value={kpiFormData.target} onChange={(e) => setKpiFormData((p) => ({ ...p, target: e.target.value }))} />
 						</div>
 						<div className="space-y-2">
-							<Label>الوحدة</Label>
+							<Label><T>الوحدة</T></Label>
 							<Input value={kpiFormData.unit} onChange={(e) => setKpiFormData((p) => ({ ...p, unit: e.target.value }))} />
 						</div>
 						<div className="space-y-2">
-							<Label>التصنيف</Label>
+							<Label><T>التصنيف</T></Label>
 							<Input value={kpiFormData.category} onChange={(e) => setKpiFormData((p) => ({ ...p, category: e.target.value }))} />
 						</div>
 						<div className="space-y-2">
-							<Label>الوزن</Label>
+							<Label><T>الوزن</T></Label>
 							<Input type="number" value={kpiFormData.weight} onChange={(e) => setKpiFormData((p) => ({ ...p, weight: parseFloat(e.target.value) || 1 }))} />
 						</div>
 					</div>
 					<div className="space-y-2">
-						<Label>الوصف</Label>
+						<Label><T>الوصف</T></Label>
 						<Textarea value={kpiFormData.description} onChange={(e) => setKpiFormData((p) => ({ ...p, description: e.target.value }))} rows={2} />
 					</div>
 					<div className="flex gap-3 justify-end pt-4 border-t">
-						<Button type="button" variant="outline" onClick={() => setKpiFormOpen(false)}>إلغاء</Button>
-						<Button type="submit" className="bg-purple-600 hover:bg-purple-700">حفظ</Button>
+						<Button type="button" variant="outline" onClick={() => setKpiFormOpen(false)}><T>إلغاء</T></Button>
+						<Button type="submit" className="bg-purple-600 hover:bg-purple-700"><T>حفظ</T></Button>
 					</div>
 				</form>
 			</DialogContent>
@@ -1675,28 +1672,28 @@ const handleUploadEvidence = async (e) => {
 
 		{/* KPI Evidence Upload Dialog */}
 		<Dialog open={kpiEvidenceOpen} onOpenChange={setKpiEvidenceOpen}>
-			<DialogContent dir="rtl">
+			<DialogContent dir={rtl ? 'rtl' : 'ltr'}>
 				<DialogHeader>
-					<DialogTitle>رفع مرفقات للمؤشر: {kpiEvidenceKpiName || ''}</DialogTitle>
+					<DialogTitle><T>رفع مرفقات للمؤشر</T>: {kpiEvidenceKpiName || ''}</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={handleUploadKpiEvidence} className="space-y-4 mt-4">
 					<div className="space-y-2">
-						<Label>عنوان المرفق (اختياري)</Label>
+						<Label><T>عنوان المرفق (اختياري)</T></Label>
 						<Input value={kpiEvidenceForm.title} onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, title: e.target.value }))} />
 					</div>
 					<div className="space-y-2">
-						<Label>وصف (اختياري)</Label>
+						<Label><T>وصف (اختياري)</T></Label>
 						<Textarea value={kpiEvidenceForm.description} onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, description: e.target.value }))} rows={2} />
 					</div>
 					<div className="space-y-2">
-						<Label>اختر ملفات (يمكن أكثر من ملف)</Label>
+						<Label><T>اختر ملفات (يمكن أكثر من ملف)</T></Label>
 						<Input type="file" multiple accept="image/*,.pdf,.doc,.docx" onChange={(e) => setKpiEvidenceForm((p) => ({ ...p, files: Array.from(e.target.files || []) }))} required />
 					</div>
 					<div className="flex gap-3 justify-end pt-4 border-t">
-						<Button type="button" variant="outline" onClick={() => setKpiEvidenceOpen(false)}>إلغاء</Button>
+						<Button type="button" variant="outline" onClick={() => setKpiEvidenceOpen(false)}><T>إلغاء</T></Button>
 						<Button type="submit" disabled={uploadingKpiEvidence} className="bg-purple-600 hover:bg-purple-700">
-							{uploadingKpiEvidence && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-							رفع
+							{uploadingKpiEvidence && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+							<T>رفع</T>
 						</Button>
 					</div>
 				</form>

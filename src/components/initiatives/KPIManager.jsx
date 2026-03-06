@@ -1,4 +1,7 @@
 ﻿import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
+import { translateTextSync } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -15,6 +18,9 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 export default function KPIManager({ initiativeId, initiativeTitle }) {
+	const { i18n } = useTranslation();
+	const rtl = i18n.language === 'ar';
+	const tt = (text) => rtl ? text : (translateTextSync(text) || text);
 	const { permissions, role, currentMember } = usePermissions();
 	const isGlobalInitiativeManager = role === 'governor' || role === 'coordinator' || permissions?.canManageInitiatives === true;
 	const isCommitteeLeader = role === 'committee_head' || role === 'committee_coordinator' || role === 'committee_supervisor';
@@ -303,11 +309,11 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg">مؤشرات الأداء (KPIs)</h3>
+        <h3 className="font-semibold text-lg"><T>مؤشرات الأداء (KPIs)</T></h3>
 			{canEditKpis && (
 				<Button size="sm" onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
-					<Plus className="w-4 h-4 ml-1" />
-					مؤشر جديد
+					<Plus className="w-4 h-4 me-1" />
+					<T>مؤشر جديد</T>
 				</Button>
 			)}
       </div>
@@ -316,7 +322,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
         <Card className="text-center py-8 bg-muted/50">
           <CardContent>
             <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
-            <p className="text-muted-foreground text-sm">لا توجد مؤشرات أداء بعد</p>
+            <p className="text-muted-foreground text-sm"><T>لا توجد مؤشرات أداء بعد</T></p>
           </CardContent>
         </Card>
       ) : (
@@ -353,11 +359,11 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">التقدم</span>
+                      <span className="text-muted-foreground"><T>التقدم</T></span>
                       <span className="font-semibold">{kpi.current_value} / {kpi.target_value} {kpi.unit}</span>
                     </div>
                     <Progress value={percentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}% محقق</p>
+                    <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}% <T>محقق</T></p>
 
                     <div className="flex items-center gap-2 pt-2">
                       <Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, kpi.current_value - 1))}>
@@ -379,12 +385,12 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-foreground">
                           <Paperclip className="w-4 h-4" />
-                          <span>مرفقات المؤشر</span>
+                          <span><T>مرفقات المؤشر</T></span>
                           <Badge variant="outline" className="text-xs">{attachments.length}</Badge>
                         </div>
                         <Button size="sm" variant="outline" disabled={!canUploadEvidence} onClick={() => openEvidenceDialog(kpi)}>
-                          <Upload className="w-4 h-4 ml-2" />
-                          رفع مرفق
+                          <Upload className="w-4 h-4 me-2" />
+                          <T>رفع مرفق</T>
                         </Button>
                       </div>
 
@@ -404,7 +410,7 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
                                 className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate"
                                 title={att.title || att.file_name}
                               >
-                                {att.title || att.file_name || 'مرفق'}
+                                {att.title || att.file_name || tt('مرفق')}
                               </a>
 										{canDeleteEvidence && (
 											<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteEvidence(att)}>
@@ -426,51 +432,51 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
       {/* KPI Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
-				<DialogTitle>{editingKpi ? 'تعديل مؤشر الأداء' : 'مؤشر أداء جديد'}</DialogTitle>
+				<DialogTitle>{editingKpi ? <T>تعديل مؤشر الأداء</T> : <T>مؤشر أداء جديد</T>}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>اسم المؤشر *</Label>
+              <Label><T>اسم المؤشر</T> *</Label>
               <Input value={formData.kpi_name} onChange={(e) => setFormData({ ...formData, kpi_name: e.target.value })} required />
             </div>
             <div className="space-y-2">
-              <Label>الوصف</Label>
+              <Label><T>الوصف</T></Label>
               <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>القيمة المستهدفة *</Label>
+                <Label><T>القيمة المستهدفة</T> *</Label>
                 <Input type="number" value={formData.target_value} onChange={(e) => setFormData({ ...formData, target_value: parseFloat(e.target.value) || 0 })} required />
               </div>
               <div className="space-y-2">
-                <Label>القيمة الحالية</Label>
+                <Label><T>القيمة الحالية</T></Label>
                 <Input type="number" value={formData.current_value} onChange={(e) => setFormData({ ...formData, current_value: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="space-y-2">
-                <Label>وحدة القياس</Label>
-                <Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder="مثال: مستفيد، جلسة، يوم" />
+                <Label><T>وحدة القياس</T></Label>
+                <Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder={rtl ? 'مثال: مستفيد، جلسة، يوم' : 'e.g. beneficiary, session, day'} />
               </div>
               <div className="space-y-2">
-                <Label>تكرار القياس</Label>
+                <Label><T>تكرار القياس</T></Label>
                 <Select value={formData.measurement_frequency} onValueChange={(v) => setFormData({ ...formData, measurement_frequency: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="يومي">يومي</SelectItem>
-                    <SelectItem value="أسبوعي">أسبوعي</SelectItem>
-                    <SelectItem value="شهري">شهري</SelectItem>
-                    <SelectItem value="ربع سنوي">ربع سنوي</SelectItem>
-                    <SelectItem value="سنوي">سنوي</SelectItem>
+                    <SelectItem value="يومي"><T>يومي</T></SelectItem>
+                    <SelectItem value="أسبوعي"><T>أسبوعي</T></SelectItem>
+                    <SelectItem value="شهري"><T>شهري</T></SelectItem>
+                    <SelectItem value="ربع سنوي"><T>ربع سنوي</T></SelectItem>
+                    <SelectItem value="سنوي"><T>سنوي</T></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}><T>إلغاء</T></Button>
               <Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
-                {saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                حفظ المؤشر
+                {saving && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+                <T>حفظ المؤشر</T>
               </Button>
             </div>
           </form>
@@ -479,21 +485,21 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
 
       {/* KPI Evidence Upload Dialog */}
       <Dialog open={evidenceOpen} onOpenChange={setEvidenceOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent dir={rtl ? 'rtl' : 'ltr'}>
           <DialogHeader>
-            <DialogTitle>رفع مرفقات للمؤشر: {selectedKpi?.kpi_name || ''}</DialogTitle>
+            <DialogTitle><T>رفع مرفقات للمؤشر</T>: {selectedKpi?.kpi_name || ''}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUploadEvidence} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>عنوان المرفق (اختياري)</Label>
+              <Label><T>عنوان المرفق (اختياري)</T></Label>
               <Input value={evidenceForm.title} onChange={(e) => setEvidenceForm({ ...evidenceForm, title: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>وصف (اختياري)</Label>
+              <Label><T>وصف (اختياري)</T></Label>
               <Textarea value={evidenceForm.description} onChange={(e) => setEvidenceForm({ ...evidenceForm, description: e.target.value })} rows={2} />
             </div>
             <div className="space-y-2">
-              <Label>اختر ملفات (يمكن أكثر من ملف)</Label>
+              <Label><T>اختر ملفات (يمكن أكثر من ملف)</T></Label>
               <Input
                 type="file"
                 multiple
@@ -503,15 +509,15 @@ export default function KPIManager({ initiativeId, initiativeTitle }) {
               />
               {Array.isArray(evidenceForm.files) && evidenceForm.files.length > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  {evidenceForm.files.length} ملف(ات) محدد
+                  {evidenceForm.files.length} <T>ملف(ات) محدد</T>
                 </div>
               )}
             </div>
             <div className="flex gap-3 justify-end pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setEvidenceOpen(false)}>إلغاء</Button>
+              <Button type="button" variant="outline" onClick={() => setEvidenceOpen(false)}><T>إلغاء</T></Button>
               <Button type="submit" disabled={uploadingEvidence} className="bg-purple-600 hover:bg-purple-700">
-                {uploadingEvidence && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                رفع
+                {uploadingEvidence && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+                <T>رفع</T>
               </Button>
             </div>
           </form>

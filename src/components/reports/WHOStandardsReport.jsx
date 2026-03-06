@@ -1,4 +1,7 @@
 ﻿import React from 'react';
+import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
+import { translateTextSync } from '@/utils/translationService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileText, Target } from "lucide-react";
@@ -17,6 +20,10 @@ function parseJsonArray(str, fallback = []) {
 }
 
 export default function WHOStandardsReport({ standards, axes, evidence, settings }) {
+  const { i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
+  const tt = (text) => rtl ? text : (translateTextSync(text) || text);
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       not_started: { label: 'لم يبدأ', color: 'bg-gray-500', icon: Clock },
@@ -27,9 +34,9 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
     const config = statusConfig[status] || statusConfig.not_started;
     const Icon = config.icon;
     return (
-      <Badge className={`${config.color} text-white shrink-0 whitespace-nowrap text-sm font-medium px-4 py-2 min-h-[2.25rem] rounded-lg inline-flex items-center gap-1.5`} dir="rtl">
+      <Badge className={`${config.color} text-white shrink-0 whitespace-nowrap text-sm font-medium px-4 py-2 min-h-[2.25rem] rounded-lg inline-flex items-center gap-1.5`} dir={rtl ? 'rtl' : 'ltr'}>
         <Icon className="w-4 h-4 shrink-0 rtl:order-2" />
-        <span>{config.label}</span>
+        <span><T>{config.label}</T></span>
       </Badge>
     );
   };
@@ -61,51 +68,51 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
   const totalStandards = REFERENCE_TOTAL_STANDARDS;
 
   return (
-    <div dir="rtl" className="report-font bg-card p-8 space-y-8 text-right font-sans antialiased" id="who-report">
+    <div dir={rtl ? 'rtl' : 'ltr'} className="report-font bg-card p-8 space-y-8 text-right font-sans antialiased" id="who-report">
       {/* Report Header */}
       <div className="text-center border-b-4 border-blue-600 pb-6">
         <div className="flex justify-center mb-4">
           {settings?.logo_url && (
-            <img src={settings.logo_url} alt="شعار المدينة" className="w-20 h-20 object-cover" />
+            <img src={settings.logo_url} alt={tt('شعار المدينة')} className="w-20 h-20 object-cover" />
           )}
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          تقرير تحقيق معايير المدن الصحية
+          <T>تقرير تحقيق معايير المدن الصحية</T>
         </h1>
         <h2 className="text-xl text-foreground mb-1">
-          {settings?.city_name || 'المدينة الصحية'}
+          {settings?.city_name || tt('المدينة الصحية')}
         </h2>
         <p className="text-muted-foreground">{settings?.city_location || ''}</p>
         <p className="text-sm text-muted-foreground mt-4">
-          إعداد التقرير: {new Date().toLocaleDateString('ar-SA')}
+          <T>إعداد التقرير</T>: {new Date().toLocaleDateString(rtl ? 'ar-SA' : 'en-US')}
         </p>
         <p className="text-sm text-muted-foreground">
-          وفقاً لمعايير المدن الصحية (مرجع المعايير) — 9 محاور و 80 معياراً
+          <T>وفقاً لمعايير المدن الصحية (مرجع المعايير) — 9 محاور و 80 معياراً</T>
         </p>
       </div>
 
       {/* Executive Summary */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-foreground border-r-4 border-blue-600 pr-3">
-          الملخص التنفيذي
+          <T>الملخص التنفيذي</T>
         </h2>
         <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-4xl font-bold text-blue-600">{overallCompletion}%</p>
-              <p className="text-sm text-muted-foreground mt-2">نسبة الإنجاز الإجمالية</p>
+              <p className="text-sm text-muted-foreground mt-2"><T>نسبة الإنجاز الإجمالية</T></p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-4xl font-bold text-green-600">{completedStandards}</p>
-              <p className="text-sm text-muted-foreground mt-2">المعايير المكتملة</p>
+              <p className="text-sm text-muted-foreground mt-2"><T>المعايير المكتملة</T></p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-4xl font-bold text-foreground">{totalStandards}</p>
-              <p className="text-sm text-muted-foreground mt-2">إجمالي المعايير</p>
+              <p className="text-sm text-muted-foreground mt-2"><T>إجمالي المعايير</T></p>
             </CardContent>
           </Card>
         </div>
@@ -114,7 +121,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
       {/* Progress by Axis */}
       <div className="space-y-4 text-right">
         <h2 className="text-2xl font-bold text-foreground border-r-4 border-green-600 pr-3">
-          التقدم حسب المحاور
+          <T>التقدم حسب المحاور</T>
         </h2>
         <div className="space-y-3">
           {axes.map(axis => {
@@ -136,7 +143,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {completedCount} من {expectedCount} معيار مكتمل
+                  {completedCount} <T>من</T> {expectedCount} <T>معيار مكتمل</T>
                 </p>
               </div>
             );
@@ -181,14 +188,14 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                     <CardContent className="space-y-3 text-right">
                       {standard.description && (
                         <div>
-                          <p className="text-sm font-semibold text-foreground">الوصف:</p>
+                          <p className="text-sm font-semibold text-foreground"><T>الوصف</T>:</p>
                           <p className="text-sm text-muted-foreground">{standard.description}</p>
                         </div>
                       )}
                       
                       {standard.required_evidence && (
                         <div>
-                          <p className="text-sm font-semibold text-foreground">الأدلة المطلوبة:</p>
+                          <p className="text-sm font-semibold text-foreground"><T>الأدلة المطلوبة</T>:</p>
                           <p className="text-sm text-muted-foreground">{standard.required_evidence}</p>
                         </div>
                       )}
@@ -196,13 +203,13 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                         <div>
                           <p className="text-sm font-semibold text-foreground flex items-center gap-1 justify-end">
                             <Target className="w-4 h-4" />
-                            مؤشرات الأداء:
+                            <T>مؤشرات الأداء</T>:
                           </p>
                           <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 mt-1">
                             {parseJsonArray(standard.kpis).map((k, i) => (
                               <li key={i}>
                                 <span className="font-medium">{k.name}</span>
-                                {k.target && ` — الهدف: ${k.target}`}
+                                {k.target && ` — ${tt('الهدف')}: ${k.target}`}
                                 {k.unit && k.unit !== '-' && ` (${k.unit})`}
                               </li>
                             ))}
@@ -211,7 +218,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                       )}
                       {standard.assigned_to && (
                         <div>
-                          <p className="text-sm font-semibold text-foreground">المسؤول:</p>
+                          <p className="text-sm font-semibold text-foreground"><T>المسؤول</T>:</p>
                           <p className="text-sm text-muted-foreground">{standard.assigned_to}</p>
                         </div>
                       )}
@@ -220,7 +227,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                         <div>
                           <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1 justify-end">
                             <FileText className="w-4 h-4" />
-                            الأدلة المرفقة ({standardEvidence.length}):
+                            <T>الأدلة المرفقة</T> ({standardEvidence.length}):
                           </p>
                           <div className="space-y-1">
                             {standardEvidence.map(ev => (
@@ -231,8 +238,8 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                                   ev.status === 'rejected' ? 'bg-destructive' :
                                   'bg-gray-500'
                                 }>
-                                  {ev.status === 'approved' ? 'معتمد' : 
-                                   ev.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                                  {ev.status === 'approved' ? <T>معتمد</T> : 
+                                   ev.status === 'rejected' ? <T>مرفوض</T> : <T>قيد المراجعة</T>}
                                 </Badge>
                               </div>
                             ))}
@@ -242,7 +249,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                       
                       {standard.notes && (
                         <div>
-                          <p className="text-sm font-semibold text-foreground">ملاحظات:</p>
+                          <p className="text-sm font-semibold text-foreground"><T>ملاحظات</T>:</p>
                           <p className="text-sm text-muted-foreground italic">{standard.notes}</p>
                         </div>
                       )}
@@ -258,12 +265,12 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
       {/* Recommendations */}
       <div className="space-y-4 break-inside-avoid">
         <h2 className="text-2xl font-bold text-foreground border-r-4 border-green-600 pr-3">
-          التوصيات والخطوات القادمة
+          <T>التوصيات والخطوات القادمة</T>
         </h2>
         <div className="bg-green-50 border-r-4 border-green-600 p-6 space-y-3">
           {dedupedStandards.filter(s => s.status !== 'completed' && s.status !== 'approved').length > 0 && (
             <div>
-              <p className="font-semibold text-foreground mb-2">المعايير التي تحتاج إلى إكمال:</p>
+              <p className="font-semibold text-foreground mb-2"><T>المعايير التي تحتاج إلى إكمال</T>:</p>
               <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
                 {dedupedStandards
                   .filter(s => s.status !== 'completed' && s.status !== 'approved')
@@ -276,12 +283,12 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
           )}
           
           <div>
-            <p className="font-semibold text-foreground mb-2">التوصيات العامة:</p>
+            <p className="font-semibold text-foreground mb-2"><T>التوصيات العامة</T>:</p>
             <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
-              <li>مراجعة المعايير غير المكتملة وتحديد الموارد اللازمة</li>
-              <li>تعزيز التوثيق وجمع الأدلة للمعايير قيد التنفيذ</li>
-              <li>تحديث خطة العمل بناءً على التقدم الحالي</li>
-              <li>التنسيق مع جميع اللجان لضمان استكمال المتطلبات</li>
+              <li><T>مراجعة المعايير غير المكتملة وتحديد الموارد اللازمة</T></li>
+              <li><T>تعزيز التوثيق وجمع الأدلة للمعايير قيد التنفيذ</T></li>
+              <li><T>تحديث خطة العمل بناءً على التقدم الحالي</T></li>
+              <li><T>التنسيق مع جميع اللجان لضمان استكمال المتطلبات</T></li>
             </ul>
           </div>
         </div>
@@ -290,10 +297,10 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
       {/* Footer */}
       <div className="border-t-2 border-border pt-6 text-center text-muted-foreground">
         <p className="text-sm">
-          هذا التقرير معد وفقاً لمعايير المدن الصحية (مرجع المعايير) — 9 محاور و 80 معياراً
+          <T>هذا التقرير معد وفقاً لمعايير المدن الصحية (مرجع المعايير) — 9 محاور و 80 معياراً</T>
         </p>
         <p className="text-sm mt-2">
-          للمزيد من المعلومات: {settings?.city_name || 'المدينة الصحية'}
+          <T>للمزيد من المعلومات</T>: {settings?.city_name || tt('المدينة الصحية')}
         </p>
       </div>
     </div>

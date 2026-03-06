@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,11 @@ import {
 import { Bell, Check, Trash2, Clock, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import T from "@/components/T";
 
 export default function NotificationBell({ userEmail }) {
+  const { i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const queryClient = useQueryClient();
 
   const handleDeleteNotification = async (notification) => {
@@ -59,9 +63,15 @@ export default function NotificationBell({ userEmail }) {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    return `منذ ${diffDays} يوم`;
+    if (rtl) {
+      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+      return `منذ ${diffDays} يوم`;
+    } else {
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
+    }
   };
 
   return (
@@ -76,18 +86,18 @@ export default function NotificationBell({ userEmail }) {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-80 max-h-96 overflow-y-auto" dir="rtl">
+      <DropdownMenuContent align="start" className="w-80 max-h-96 overflow-y-auto" dir={rtl ? 'rtl' : 'ltr'}>
         <div className="p-3 border-b">
-          <h3 className="font-semibold">الإشعارات</h3>
+          <h3 className="font-semibold"><T>الإشعارات</T></h3>
           {unreadCount > 0 && (
-            <p className="text-xs text-muted-foreground">{unreadCount} إشعار غير مقروء</p>
+            <p className="text-xs text-muted-foreground">{unreadCount} <T>إشعار غير مقروء</T></p>
           )}
         </div>
         
         {notifications.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground">
             <Bell className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-            <p className="text-sm">لا توجد إشعارات</p>
+            <p className="text-sm"><T>لا توجد إشعارات</T></p>
           </div>
         ) : (
           <div className="divide-y">
@@ -102,8 +112,8 @@ export default function NotificationBell({ userEmail }) {
                 <div className="flex gap-3">
                   <div className="mt-1">{getIcon(notification.type)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                    <p className="font-semibold text-sm"><T>{notification.title}</T></p>
+                    <p className="text-xs text-muted-foreground mt-1"><T>{notification.message}</T></p>
                     <p className="text-xs text-muted-foreground mt-1">{getTimeAgo(notification.created_date)}</p>
                   </div>
                   <div className="flex gap-1">

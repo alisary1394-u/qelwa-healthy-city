@@ -1,4 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,13 @@ import { PERMISSIONS_BY_ROLE, ROLE_LABELS, PERMISSION_REVIEW_KEYS } from '@/lib/
 import { useToast } from "@/components/ui/use-toast";
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import T from "@/components/T";
+import { translateTextSync } from '@/utils/translationService';
 
 export default function PermissionsManager() {
+  const { i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
+  const tt = (text) => rtl ? text : (translateTextSync(text) || text);
   const { permissions, role } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -82,12 +88,12 @@ export default function PermissionsManager() {
 
   if (!canManagePermissions) {
     return (
-      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center" dir={rtl ? 'rtl' : 'ltr'}>
         <Card className="max-w-md">
           <CardContent className="p-6 text-center">
             <Lock className="w-16 h-16 mx-auto text-red-300 mb-4" />
-            <p className="text-red-600 font-semibold">غير مصرح لك بالوصول إلى لوحة الصلاحيات.</p>
-            <p className="text-muted-foreground text-sm mt-2">هذه الصفحة متاحة للمشرف العام ومنسق المدينة الصحية فقط.</p>
+            <p className="text-red-600 font-semibold"><T>غير مصرح لك بالوصول إلى لوحة الصلاحيات.</T></p>
+            <p className="text-muted-foreground text-sm mt-2"><T>هذه الصفحة متاحة للمشرف العام ومنسق المدينة الصحية فقط.</T></p>
           </CardContent>
         </Card>
       </div>
@@ -156,8 +162,8 @@ export default function PermissionsManager() {
       }
       
       toast({
-        title: 'تم الحفظ بنجاح',
-        description: 'تم حفظ تغييرات الصلاحيات. يُرجى إعادة تحميل الصفحة لتطبيق التغييرات.',
+        title: tt('تم الحفظ بنجاح'),
+        description: tt('تم حفظ تغييرات الصلاحيات. يُرجى إعادة تحميل الصفحة لتطبيق التغييرات.'),
         variant: 'default',
       });
       
@@ -168,8 +174,8 @@ export default function PermissionsManager() {
       }, 2000);
     } catch (error) {
       toast({
-        title: 'خطأ في الحفظ',
-        description: error?.message || 'حدث خطأ أثناء حفظ الصلاحيات. يرجى المحاولة مرة أخرى.',
+        title: tt('خطأ في الحفظ'),
+        description: error?.message || tt('حدث خطأ أثناء حفظ الصلاحيات. يرجى المحاولة مرة أخرى.'),
         variant: 'destructive',
       });
     } finally {
@@ -187,8 +193,8 @@ export default function PermissionsManager() {
       setHasChanges(false);
       
       toast({
-        title: 'تمت إعادة التعيين',
-        description: 'تم إعادة تعيين جميع الصلاحيات إلى القيم الافتراضية.',
+        title: tt('تمت إعادة التعيين'),
+        description: tt('تم إعادة تعيين جميع الصلاحيات إلى القيم الافتراضية.'),
       });
       
       setTimeout(() => {
@@ -196,15 +202,15 @@ export default function PermissionsManager() {
       }, 1500);
     } catch (error) {
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ أثناء إعادة التعيين.',
+        title: tt('خطأ'),
+        description: tt('حدث خطأ أثناء إعادة التعيين.'),
         variant: 'destructive',
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-muted/50" dir="rtl">
+    <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="bg-gradient-to-l from-purple-700 via-purple-600 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -213,8 +219,8 @@ export default function PermissionsManager() {
               <Shield className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">لوحة إدارة الصلاحيات</h1>
-              <p className="text-purple-100 text-sm mt-1">التحكم الكامل بمصفوفة صلاحيات المناصب</p>
+              <h1 className="text-2xl md:text-3xl font-bold"><T>لوحة إدارة الصلاحيات</T></h1>
+              <p className="text-purple-100 text-sm mt-1"><T>التحكم الكامل بمصفوفة صلاحيات المناصب</T></p>
             </div>
           </div>
         </div>
@@ -227,26 +233,26 @@ export default function PermissionsManager() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-purple-900">ملخص الصلاحيات</span>
+                <span className="font-medium text-purple-900"><T>ملخص الصلاحيات</T></span>
               </div>
               <div className="flex gap-6 text-sm">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-700">
                     {Object.values(activeRolePermissions).filter(Boolean).length}
                   </p>
-                  <p className="text-purple-600">مُفعّلة</p>
+                  <p className="text-purple-600"><T>مُفعّلة</T></p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-muted-foreground">
                     {Object.values(activeRolePermissions).filter(v => !v).length}
                   </p>
-                  <p className="text-muted-foreground">معطّلة</p>
+                  <p className="text-muted-foreground"><T>معطّلة</T></p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-700">
                     {Object.keys(activeRolePermissions).length}
                   </p>
-                  <p className="text-purple-600">إجمالي</p>
+                  <p className="text-purple-600"><T>إجمالي</T></p>
                 </div>
               </div>
             </div>
@@ -257,7 +263,7 @@ export default function PermissionsManager() {
           <Card className="mb-6 border-blue-200 bg-blue-50">
             <CardContent className="p-4 flex items-center gap-3">
               <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-              <p className="text-blue-800">جاري تحميل الصلاحيات المخصصة...</p>
+              <p className="text-blue-800"><T>جاري تحميل الصلاحيات المخصصة...</T></p>
             </CardContent>
           </Card>
         )}
@@ -267,8 +273,8 @@ export default function PermissionsManager() {
             <CardContent className="p-4 flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
               <div className="flex-1">
-                <p className="text-orange-800 font-medium">لديك تغييرات غير محفوظة</p>
-                <p className="text-orange-600 text-sm">احفظ التغييرات لتطبيقها على النظام</p>
+                <p className="text-orange-800 font-medium"><T>لديك تغييرات غير محفوظة</T></p>
+                <p className="text-orange-600 text-sm"><T>احفظ التغييرات لتطبيقها على النظام</T></p>
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -278,8 +284,8 @@ export default function PermissionsManager() {
                   disabled={isSaving}
                   className="border-orange-300 text-orange-700 hover:bg-orange-100"
                 >
-                  <RotateCcw className="w-4 h-4 ml-1" />
-                  إلغاء
+                  <RotateCcw className="w-4 h-4 me-1" />
+                  <T>إلغاء</T>
                 </Button>
                 <Button 
                   size="sm" 
@@ -288,11 +294,11 @@ export default function PermissionsManager() {
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   {isSaving ? (
-                    <Loader2 className="w-4 h-4 ml-1 animate-spin" />
+                    <Loader2 className="w-4 h-4 me-1 animate-spin" />
                   ) : (
-                    <Save className="w-4 h-4 ml-1" />
+                    <Save className="w-4 h-4 me-1" />
                   )}
-                  {isSaving ? 'جاري الحفظ...' : 'حفظ'}
+                  {isSaving ? <T>جاري الحفظ...</T> : <T>حفظ</T>}
                 </Button>
               </div>
             </CardContent>
@@ -302,12 +308,12 @@ export default function PermissionsManager() {
         {/* Actions Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
-              placeholder="بحث في الصلاحيات..."
+              placeholder={rtl ? 'بحث في الصلاحيات...' : 'Search permissions...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
             />
           </div>
           <div className="flex gap-2">
@@ -316,8 +322,8 @@ export default function PermissionsManager() {
               onClick={handleReset}
               disabled={!hasChanges || isSaving}
             >
-              <RotateCcw className="w-5 h-5 ml-2" />
-              إعادة تعيين الكل
+              <RotateCcw className="w-5 h-5 me-2" />
+              <T>إعادة تعيين الكل</T>
             </Button>
             <Button 
               onClick={handleSave}
@@ -325,11 +331,11 @@ export default function PermissionsManager() {
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isSaving ? (
-                <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                <Loader2 className="w-5 h-5 me-2 animate-spin" />
               ) : (
-                <Save className="w-5 h-5 ml-2" />
+                <Save className="w-5 h-5 me-2" />
               )}
-              {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+              {isSaving ? <T>جاري الحفظ...</T> : <T>حفظ التغييرات</T>}}
             </Button>
           </div>
         </div>
@@ -337,7 +343,7 @@ export default function PermissionsManager() {
         {/* Role Tabs */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">اختر المنصب لتعديل صلاحياته</CardTitle>
+            <CardTitle className="text-lg"><T>اختر المنصب لتعديل صلاحياته</T></CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs value={activeRole} onValueChange={setActiveRole}>
@@ -348,7 +354,7 @@ export default function PermissionsManager() {
                     value={roleKey}
                     className="text-sm"
                   >
-                    {ROLE_LABELS[roleKey]}
+                    <T>{ROLE_LABELS[roleKey]}</T>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -361,14 +367,14 @@ export default function PermissionsManager() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-purple-600" />
-              صلاحيات: {activeRoleLabel}
+              <T>صلاحيات</T>: <T>{activeRoleLabel}</T>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {filteredPermissionKeys.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Search className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p>لا توجد صلاحيات تطابق البحث</p>
+                <p><T>لا توجد صلاحيات تطابق البحث</T></p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -390,7 +396,7 @@ export default function PermissionsManager() {
                             htmlFor={`${activeRole}-${key}`}
                             className="text-base font-medium cursor-pointer"
                           >
-                            {label}
+                            <T>{label}</T>
                           </Label>
                           <p className="text-xs text-muted-foreground mt-0.5">{key}</p>
                         </div>

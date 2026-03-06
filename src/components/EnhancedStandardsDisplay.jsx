@@ -4,6 +4,8 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
 import { buildAdvancedKpisForStandard, buildRequiredDocumentsForStandard } from '@/api/enhancedKpis';
 import { ENHANCED_AXIS_KPIS } from '@/api/enhancedAxisKpis';
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,9 +35,9 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
     <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
       <div className="flex items-center gap-2 mb-3">
         <BarChart3 className="w-5 h-5 text-blue-600" />
-        <h4 className="font-semibold text-blue-900">مؤشرات الأداء المحسنة</h4>
+        <h4 className="font-semibold text-blue-900"><T>مؤشرات الأداء المحسنة</T></h4>
         <Badge variant="secondary" className="text-xs">
-          {enhancedKpis.length} مؤشر
+          {enhancedKpis.length} <T>مؤشر</T>
         </Badge>
       </div>
       
@@ -51,20 +53,20 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
             
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">الهدف:</span>
+                <span className="text-muted-foreground"><T>الهدف</T>:</span>
                 <span className="font-medium">{kpi.target}</span>
               </div>
               
               {kpi.unit && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">الوحدة:</span>
+                  <span className="text-muted-foreground"><T>الوحدة</T>:</span>
                   <span>{kpi.unit}</span>
                 </div>
               )}
               
               {kpi.weight && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">الوزن:</span>
+                  <span className="text-muted-foreground"><T>الوزن</T>:</span>
                   <span>{Math.round(kpi.weight * 100)}%</span>
                 </div>
               )}
@@ -82,7 +84,7 @@ function EnhancedKpiDisplay({ standard, currentKpis = [] }) {
       {enhancedKpis.length > 4 && (
         <div className="mt-3 text-center">
           <Badge variant="outline" className="text-xs">
-            +{enhancedKpis.length - 4} مؤشرات أخرى
+            +{enhancedKpis.length - 4} <T>مؤشرات أخرى</T>
           </Badge>
         </div>
       )}
@@ -100,9 +102,9 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
     <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
       <div className="flex items-center gap-2 mb-3">
         <FileText className="w-5 h-5 text-green-600" />
-        <h4 className="font-semibold text-green-900">المستندات المطلوبة</h4>
+        <h4 className="font-semibold text-green-900"><T>المستندات المطلوبة</T></h4>
         <Badge variant="secondary" className="text-xs">
-          {enhancedDocuments.length} مستند
+          {enhancedDocuments.length} <T>مستند</T>
         </Badge>
       </div>
       
@@ -113,7 +115,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
             <div className="flex-1">
               <span className="text-sm font-medium">{doc.name}</span>
               {doc.type && (
-                <Badge variant="outline" className="text-xs mr-2">
+                <Badge variant="outline" className="text-xs me-2">
                   {doc.type}
                 </Badge>
               )}
@@ -124,7 +126,7 @@ function EnhancedDocumentsDisplay({ standard, currentDocuments = [] }) {
       
       {enhancedDocuments.length > 5 && (
         <div className="mt-3 text-center text-sm text-muted-foreground">
-          و {enhancedDocuments.length - 5} مستندات أخرى...
+                    <T>و</T> {enhancedDocuments.length - 5} <T>مستندات أخرى</T>...
         </div>
       )}
     </div>
@@ -156,10 +158,10 @@ function EnhancedAxisCard({ axis, standards }) {
           </div>
           <div className="text-left">
             <Badge variant="outline" className="mb-2">
-              {totalStandards} معيار
+              {totalStandards} <T>معيار</T>
             </Badge>
             <div className="text-xs text-muted-foreground">
-              المحور {axis.order}
+              <T>المحور</T> {axis.order}
             </div>
           </div>
         </div>
@@ -170,7 +172,7 @@ function EnhancedAxisCard({ axis, standards }) {
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium flex items-center gap-1">
                 <Target className="w-4 h-4" />
-                مستوى الإنجاز
+                <T>مستوى الإنجاز</T>
               </span>
               <span className={`font-bold ${progress >= 80 ? 'text-green-600' : progress >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {Math.round(progress)}%
@@ -184,7 +186,7 @@ function EnhancedAxisCard({ axis, standards }) {
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium flex items-center gap-1">
                 <Award className="w-4 h-4" />
-                نقاط الأداء
+                <T>نقاط الأداء</T>
               </span>
               <span className={`font-bold ${performanceScore >= 80 ? 'text-green-600' : performanceScore >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {performanceScore}/100
@@ -197,15 +199,15 @@ function EnhancedAxisCard({ axis, standards }) {
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
             <div className="flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 text-green-600" />
-              <span>{completedStandards} مكتمل</span>
+              <span>{completedStandards} <T>مكتمل</T></span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-blue-600" />
-              <span>{totalStandards - completedStandards} متبقي</span>
+              <span>{totalStandards - completedStandards} <T>متبقي</T></span>
             </div>
             <div className="flex items-center gap-1">
               <BarChart3 className="w-3 h-3 text-purple-600" />
-              <span>{axisKpis.length} مؤشر</span>
+              <span>{axisKpis.length} <T>مؤشر</T></span>
             </div>
           </div>
         </div>

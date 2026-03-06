@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import T from "@/components/T";
 
 const ALL_ROLES = [
   { value: "governor", label: "المشرف العام (المحافظ)" },
@@ -22,6 +24,8 @@ const ALL_ROLES = [
 ];
 
 export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], restrictedRoles = [] }) {
+  const { i18n } = useTranslation();
+  const rtl = i18n.language === 'ar';
   const roles = (restrictedRoles && restrictedRoles.length) ? ALL_ROLES.filter((r) => !restrictedRoles.includes(r.value)) : ALL_ROLES;
   const [formData, setFormData] = useState({
     full_name: '',
@@ -139,17 +143,17 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={rtl ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="text-xl">
-            {member ? 'تعديل بيانات العضو' : 'إضافة عضو جديد'}
+            <T>{member ? 'تعديل بيانات العضو' : 'إضافة عضو جديد'}</T>
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>الاسم الكامل *</Label>
+              <Label><T>الاسم الكامل</T> *</Label>
               <Input
                 value={formData.full_name}
                 onChange={(e) => setFormData({...formData, full_name: e.target.value})}
@@ -159,7 +163,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>رقم الهوية *</Label>
+              <Label><T>رقم الهوية</T> *</Label>
               <Input
                 value={formData.national_id}
                 onChange={(e) => handleNationalIdChange(e.target.value)}
@@ -171,26 +175,26 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 className={validationErrors.national_id ? 'border-red-500' : ''}
               />
               {validationErrors.national_id && (
-                <p className="text-xs text-red-600">{validationErrors.national_id}</p>
+                <p className="text-xs text-red-600"><T>{validationErrors.national_id}</T></p>
               )}
             </div>
             
             <div className="space-y-2">
-              <Label>الدور *</Label>
+              <Label><T>الدور</T> *</Label>
               <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    <SelectItem key={r.value} value={r.value}><T>{r.label}</T></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label>رقم الجوال *</Label>
+              <Label><T>رقم الجوال</T> *</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) => handlePhoneChange(e.target.value)}
@@ -202,12 +206,12 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 className={validationErrors.phone ? 'border-red-500' : ''}
               />
               {validationErrors.phone && (
-                <p className="text-xs text-red-600">{validationErrors.phone}</p>
+                <p className="text-xs text-red-600"><T>{validationErrors.phone}</T></p>
               )}
             </div>
             
             <div className="space-y-2">
-              <Label>البريد الإلكتروني</Label>
+              <Label><T>البريد الإلكتروني</T></Label>
               <Input
                 type="email"
                 value={formData.email}
@@ -218,7 +222,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>كلمة المرور (للدخول للنظام)</Label>
+              <Label><T>كلمة المرور (للدخول للنظام)</T></Label>
               <Input
                 type="password"
                 value={formData.password || ''}
@@ -226,27 +230,27 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 placeholder={member ? 'اتركه فارغاً للإبقاء على كلمة المرور الحالية' : 'اختر كلمة مرور قوية'}
               />
               <p className="text-xs text-muted-foreground">
-                {member ? 'لا تُرسل كلمة مرور جديدة إن تركت الحقل فارغاً.' : 'يستخدم رقم الهوية وكلمة المرور لتسجيل الدخول'}
+                <T>{member ? 'لا تُرسل كلمة مرور جديدة إن تركت الحقل فارغاً.' : 'يستخدم رقم الهوية وكلمة المرور لتسجيل الدخول'}</T>
               </p>
             </div>
             
           <div className="space-y-2">
-            <Label>اللجنة</Label>
+            <Label><T>اللجنة</T></Label>
             <Select value={formData.committee_id} onValueChange={handleCommitteeChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر اللجنة" />
+                  <SelectValue placeholder={rtl ? 'اختر اللجنة' : 'Select committee'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>بدون لجنة</SelectItem>
+                  <SelectItem value={null}><T>بدون لجنة</T></SelectItem>
                   {committees?.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}><T>{c.name}</T></SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label>القسم/الجهة</Label>
+              <Label><T>القسم/الجهة</T></Label>
               <Input
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
@@ -256,15 +260,15 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             
             {(formData.role === 'volunteer' || formData.role === 'member') && (
               <div className="space-y-2">
-                <Label>المشرف المباشر</Label>
+                <Label><T>المشرف المباشر</T></Label>
                 <Select value={formData.supervisor_id} onValueChange={(v) => setFormData({...formData, supervisor_id: v})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر المشرف" />
+                    <SelectValue placeholder={rtl ? 'اختر المشرف' : 'Select supervisor'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>بدون مشرف</SelectItem>
+                    <SelectItem value={null}><T>بدون مشرف</T></SelectItem>
                     {supervisors?.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}><T>{s.full_name}</T></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -272,7 +276,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             )}
             
             <div className="space-y-2">
-              <Label>تاريخ الانضمام</Label>
+              <Label><T>تاريخ الانضمام</T></Label>
               <Input
                 type="date"
                 value={formData.join_date}
@@ -281,14 +285,14 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
             </div>
             
             <div className="space-y-2">
-              <Label>الحالة</Label>
+              <Label><T>الحالة</T></Label>
               <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">نشط</SelectItem>
-                  <SelectItem value="inactive">غير نشط</SelectItem>
+                  <SelectItem value="active"><T>نشط</T></SelectItem>
+                  <SelectItem value="inactive"><T>غير نشط</T></SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -296,26 +300,26 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>المؤهل</Label>
+              <Label><T>المؤهل</T></Label>
               <Select value={formData.qualification} onValueChange={(v) => setFormData({...formData, qualification: v})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر المؤهل" />
+                  <SelectValue placeholder={rtl ? 'اختر المؤهل' : 'Select qualification'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="primary">ابتدائي</SelectItem>
-                  <SelectItem value="intermediate">متوسط</SelectItem>
-                  <SelectItem value="secondary">ثانوي</SelectItem>
-                  <SelectItem value="diploma">دبلوم</SelectItem>
-                  <SelectItem value="bachelor">بكالوريوس</SelectItem>
-                  <SelectItem value="master">ماجستير</SelectItem>
-                  <SelectItem value="doctorate">دكتوراه</SelectItem>
-                  <SelectItem value="other">أخرى</SelectItem>
+                  <SelectItem value="primary"><T>ابتدائي</T></SelectItem>
+                  <SelectItem value="intermediate"><T>متوسط</T></SelectItem>
+                  <SelectItem value="secondary"><T>ثانوي</T></SelectItem>
+                  <SelectItem value="diploma"><T>دبلوم</T></SelectItem>
+                  <SelectItem value="bachelor"><T>بكالوريوس</T></SelectItem>
+                  <SelectItem value="master"><T>ماجستير</T></SelectItem>
+                  <SelectItem value="doctorate"><T>دكتوراه</T></SelectItem>
+                  <SelectItem value="other"><T>أخرى</T></SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>التخصص</Label>
+              <Label><T>التخصص</T></Label>
               <Input
                 value={formData.specialization}
                 onChange={(e) => setFormData({...formData, specialization: e.target.value})}
@@ -325,7 +329,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
           </div>
 
           <div className="space-y-2">
-            <Label>نبذة عن العضو</Label>
+            <Label><T>نبذة عن العضو</T></Label>
             <Textarea
               value={formData.bio}
               onChange={(e) => setFormData({...formData, bio: e.target.value})}
@@ -335,7 +339,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
           </div>
 
           <div className="space-y-2">
-            <Label>ملاحظات</Label>
+            <Label><T>ملاحظات</T></Label>
             <Textarea
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
@@ -346,11 +350,11 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
           
           <div className="flex gap-3 justify-end pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              إلغاء
+              <T>إلغاء</T>
             </Button>
             <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
-              {loading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-              {member ? 'حفظ التعديلات' : 'إضافة العضو'}
+              {loading && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+              <T>{member ? 'حفظ التعديلات' : 'إضافة العضو'}</T>
             </Button>
           </div>
         </form>

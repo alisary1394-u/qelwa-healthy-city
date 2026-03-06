@@ -1,4 +1,7 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
+import { translateTextSync } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -96,6 +99,9 @@ function getStatusLabel(status) {
 }
 
 export default function StandardKPIManager({ standard, evidence = [] }) {
+	const { i18n } = useTranslation();
+	const rtl = i18n.language === 'ar';
+	const tt = (text) => rtl ? text : (translateTextSync(text) || text);
 	const { permissions, role, currentMember, isGovernor } = usePermissions();
 	const queryClient = useQueryClient();
 
@@ -414,7 +420,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 					<button type="button" className="w-full text-right group">
 						<div className="flex items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100/50 transition-colors">
 							<div className="flex items-center gap-2">
-								<h3 className="font-semibold text-lg text-blue-900">مؤشرات الأداء (KPIs)</h3>
+								<h3 className="font-semibold text-lg text-blue-900"><T>مؤشرات الأداء (KPIs)</T></h3>
 								<Badge variant="secondary" className="text-xs">{normalizedKpis.length}</Badge>
 							</div>
 							<ChevronDown className="w-5 h-5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
@@ -426,8 +432,8 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 						<div className="flex items-center justify-end">
 							{canEditKpis && (
 								<Button size="sm" onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
-									<Plus className="w-4 h-4 ml-1" />
-									مؤشر جديد
+									<Plus className="w-4 h-4 me-1" />
+									<T>مؤشر جديد</T>
 								</Button>
 							)}
 						</div>
@@ -435,7 +441,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 						{normalizedKpis.length === 0 ? (
 							<Card className="text-center py-8 bg-muted/50">
 								<CardContent>
-									<p className="text-muted-foreground text-sm">لا توجد مؤشرات أداء بعد</p>
+									<p className="text-muted-foreground text-sm"><T>لا توجد مؤشرات أداء بعد</T></p>
 								</CardContent>
 							</Card>
 						) : (
@@ -459,7 +465,7 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 															</Button>
 														)}
 														{canEditKpis && (
-															<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteKpi(idx)} title="حذف">
+															<Button size="icon" variant="ghost" className="text-red-600" onClick={() => handleDeleteKpi(idx)} title={tt('حذف')}>
 																<Trash2 className="w-4 h-4" />
 															</Button>
 														)}
@@ -469,13 +475,13 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 
 											<div className="space-y-2">
 												<div className="flex justify-between text-sm">
-													<span className="text-muted-foreground">التقدم</span>
+													<span className="text-muted-foreground"><T>التقدم</T></span>
 								<span className="font-semibold">
 													{currentValue} / {Number(kpi.target_value) || 0} {kpi.unit === 'تحقق' ? 'مستند' : kpi.unit}
 												</span>
 												</div>
 												<Progress value={Math.min(percentage, 100)} className="h-2" />
-												<p className="text-xs text-muted-foreground">{Math.min(percentage, 100).toFixed(1)}% محقق</p>
+												<p className="text-xs text-muted-foreground">{Math.min(percentage, 100).toFixed(1)}% <T>محقق</T></p>
 
 											<div className="flex items-center gap-2 pt-2">
 												<Button size="sm" variant="outline" disabled={!canEditKpis} onClick={() => handleUpdateValue(kpi, Math.max(0, Number(currentValue) - 1))}>
@@ -532,9 +538,9 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 																				className="text-sm text-blue-700 hover:underline flex-1 min-w-0 truncate text-right"
 																				title={att.title || att.file_name}
 																			>
-																				{att.title || att.file_name || 'مرفق'}
+																				{att.title || att.file_name || tt('مرفق')}
 																			</button>
-																			<Button size="icon" variant="ghost" className="text-blue-700" title="معاينة" onClick={() => handlePreviewEvidence(att.file_url)}>
+																			<Button size="icon" variant="ghost" className="text-blue-700" title={tt('معاينة')} onClick={() => handlePreviewEvidence(att.file_url)}>
 																				<Eye className="w-4 h-4" />
 																			</Button>
 																			{canApproveEvidence && isPendingEvidenceStatus(att.status) && (
@@ -549,14 +555,14 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 																			)}
 																			{canDeleteEvidence && (
 																				<Button size="sm" variant="ghost" className="text-red-700" onClick={() => handleDeleteEvidence(att)}>
-																					<Trash2 className="w-4 h-4 ml-1" />حذف
+																					<Trash2 className="w-4 h-4 me-1" /><T>حذف</T>
 																				</Button>
 																			)}
 																		</div>
 																	))}
 																</div>
 															) : (
-																<div className="mt-2 text-sm text-muted-foreground">لا توجد مرفقات</div>
+																<div className="mt-2 text-sm text-muted-foreground"><T>لا توجد مرفقات</T></div>
 															)}
 														</CollapsibleContent>
 													</Collapsible>
@@ -573,51 +579,51 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 			</Collapsible>
 
 			<Dialog open={formOpen} onOpenChange={setFormOpen}>
-				<DialogContent dir="rtl">
+				<DialogContent dir={rtl ? 'rtl' : 'ltr'}>
 					<DialogHeader>
-						<DialogTitle>{editingKpiIndex != null ? 'تعديل مؤشر الأداء' : 'مؤشر أداء جديد'}</DialogTitle>
+						<DialogTitle>{editingKpiIndex != null ? <T>تعديل مؤشر الأداء</T> : <T>مؤشر أداء جديد</T>}</DialogTitle>
 					</DialogHeader>
 					<form onSubmit={handleSave} className="space-y-4 mt-4">
 						<div className="space-y-2">
-							<Label>اسم المؤشر *</Label>
+							<Label><T>اسم المؤشر</T> *</Label>
 							<Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
 						</div>
 						<div className="space-y-2">
-							<Label>الوصف</Label>
+							<Label><T>الوصف</T></Label>
 							<Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} />
 						</div>
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label>القيمة المستهدفة *</Label>
+								<Label><T>القيمة المستهدفة</T> *</Label>
 								<Input type="number" value={formData.target_value} onChange={(e) => setFormData({ ...formData, target_value: parseFloat(e.target.value) || 0 })} required />
 							</div>
 							<div className="space-y-2">
-								<Label>وحدة القياس</Label>
-								<Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder="مثال: مستفيد، جلسة، يوم" />
+								<Label><T>وحدة القياس</T></Label>
+								<Input value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder={rtl ? 'مثال: مستفيد، جلسة، يوم' : 'e.g. beneficiary, session, day'} />
 							</div>
 							<div className="space-y-2">
-								<Label>تكرار القياس</Label>
+								<Label><T>تكرار القياس</T></Label>
 								<Select value={formData.measurement_frequency} onValueChange={(v) => setFormData({ ...formData, measurement_frequency: v })}>
 									<SelectTrigger><SelectValue /></SelectTrigger>
 									<SelectContent>
-										<SelectItem value="يومي">يومي</SelectItem>
-										<SelectItem value="أسبوعي">أسبوعي</SelectItem>
-										<SelectItem value="شهري">شهري</SelectItem>
-										<SelectItem value="ربع سنوي">ربع سنوي</SelectItem>
-										<SelectItem value="سنوي">سنوي</SelectItem>
+										<SelectItem value="يومي"><T>يومي</T></SelectItem>
+										<SelectItem value="أسبوعي"><T>أسبوعي</T></SelectItem>
+										<SelectItem value="شهري"><T>شهري</T></SelectItem>
+										<SelectItem value="ربع سنوي"><T>ربع سنوي</T></SelectItem>
+										<SelectItem value="سنوي"><T>سنوي</T></SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 							<div className="space-y-2">
-								<Label>ملاحظات</Label>
+								<Label><T>ملاحظات</T></Label>
 								<Input value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
 							</div>
 						</div>
 						<div className="flex gap-3 justify-end pt-4 border-t">
-							<Button type="button" variant="outline" onClick={() => setFormOpen(false)}>إلغاء</Button>
+							<Button type="button" variant="outline" onClick={() => setFormOpen(false)}><T>إلغاء</T></Button>
 							<Button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700">
-								{saving && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-								حفظ المؤشر
+								{saving && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+								<T>حفظ المؤشر</T>
 							</Button>
 						</div>
 					</form>
@@ -625,21 +631,21 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 			</Dialog>
 
 			<Dialog open={evidenceOpen} onOpenChange={setEvidenceOpen}>
-				<DialogContent dir="rtl">
+				<DialogContent dir={rtl ? 'rtl' : 'ltr'}>
 					<DialogHeader>
-						<DialogTitle>رفع مرفقات للمؤشر: {selectedKpiName || ''}</DialogTitle>
+						<DialogTitle><T>رفع مرفقات للمؤشر</T>: {selectedKpiName || ''}</DialogTitle>
 					</DialogHeader>
 					<form onSubmit={handleUploadEvidence} className="space-y-4 mt-4">
 						<div className="space-y-2">
-							<Label>عنوان المرفق (اختياري)</Label>
+							<Label><T>عنوان المرفق (اختياري)</T></Label>
 							<Input value={evidenceForm.title} onChange={(e) => setEvidenceForm({ ...evidenceForm, title: e.target.value })} />
 						</div>
 						<div className="space-y-2">
-							<Label>وصف (اختياري)</Label>
+							<Label><T>وصف (اختياري)</T></Label>
 							<Textarea value={evidenceForm.description} onChange={(e) => setEvidenceForm({ ...evidenceForm, description: e.target.value })} rows={2} />
 						</div>
 						<div className="space-y-2">
-							<Label>اختر ملفات (يمكن أكثر من ملف)</Label>
+							<Label><T>اختر ملفات (يمكن أكثر من ملف)</T></Label>
 							<Input
 								type="file"
 								multiple
@@ -648,14 +654,14 @@ export default function StandardKPIManager({ standard, evidence = [] }) {
 								required
 							/>
 							{Array.isArray(evidenceForm.files) && evidenceForm.files.length > 0 && (
-								<div className="text-xs text-muted-foreground">{evidenceForm.files.length} ملف(ات) محدد</div>
+								<div className="text-xs text-muted-foreground">{evidenceForm.files.length} <T>ملف(ات) محدد</T></div>
 							)}
 						</div>
 						<div className="flex gap-3 justify-end pt-4 border-t">
-							<Button type="button" variant="outline" onClick={() => setEvidenceOpen(false)}>إلغاء</Button>
+							<Button type="button" variant="outline" onClick={() => setEvidenceOpen(false)}><T>إلغاء</T></Button>
 							<Button type="submit" disabled={uploadingEvidence} className="bg-purple-600 hover:bg-purple-700">
-								{uploadingEvidence && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-								رفع
+								{uploadingEvidence && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
+								<T>رفع</T>
 							</Button>
 						</div>
 					</form>

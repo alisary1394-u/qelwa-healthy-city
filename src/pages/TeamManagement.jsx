@@ -1,5 +1,6 @@
 ﻿import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import T from '@/components/T';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -303,7 +304,7 @@ export default function TeamManagement() {
               <SelectContent>
                 <SelectItem value={null}>{t('team.allCommittees')}</SelectItem>
                 {scopedCommittees.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}><T>{c.name}</T></SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -318,12 +319,12 @@ export default function TeamManagement() {
         {/* Actions Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className={`absolute ${rtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
             <Input
               placeholder={t('team.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className={rtl ? 'pr-10' : 'pl-10'}
             />
           </div>
           {canAdd && (
@@ -331,7 +332,7 @@ export default function TeamManagement() {
               onClick={() => { setEditingMember(null); setFormOpen(true); }}
               className="bg-primary hover:bg-primary/90"
             >
-              <UserPlus className="w-5 h-5 ml-2" />
+              <UserPlus className="w-5 h-5 me-2" />
               {t('team.addMember')}
             </Button>
           )}
