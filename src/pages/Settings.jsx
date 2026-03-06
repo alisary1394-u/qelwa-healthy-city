@@ -565,6 +565,7 @@ export default function Settings() {
                           maxLength={3}
                           className="h-11 text-center text-lg font-bold border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
                         />
+                        {!rtl && logoForm.logo_text && <p className="text-[10px] text-blue-500 mt-1"><T>{logoForm.logo_text}</T></p>}
                       </div>
                       <div className="space-y-2">
                         <Label className="text-sm font-medium">{t('settings.branding.cityName')}</Label>
@@ -575,6 +576,7 @@ export default function Settings() {
                           placeholder={t('settings.branding.cityNamePlaceholder')}
                           className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
                         />
+                        {!rtl && logoForm.city_name && <p className="text-[10px] text-blue-500 mt-1"><T>{logoForm.city_name}</T></p>}
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -586,6 +588,7 @@ export default function Settings() {
                         placeholder={t('settings.branding.cityLocationPlaceholder')}
                         className="h-11 border-border/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]/20"
                       />
+                      {!rtl && logoForm.city_location && <p className="text-[10px] text-blue-500 mt-1"><T>{logoForm.city_location}</T></p>}
                     </div>
 
                     <Separator />
