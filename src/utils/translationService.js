@@ -97,6 +97,14 @@ const BUILTIN_TRANSLATIONS = {
     'الحوكمة والشراكات': 'Governance & Partnerships',
     'المشاركة المجتمعية': 'Community Participation',
     'البيئة والاستدامة': 'Environment & Sustainability',
+    // Initiative / category names
+    'نقل آمن': 'Safe Transportation',
+    'إسكان وخدمات': 'Housing & Services',
+    'تعليم وثقافة': 'Education & Culture',
+    'اقتصاد وتشغيل': 'Economy & Employment',
+    'سلامة وعدالة': 'Safety & Justice',
+    'حوكمة وشراكات': 'Governance & Partnerships',
+    'حملة التطعيم الموسمي': 'Seasonal Vaccination Campaign',
     // Common role/title names
     'المشرف': 'Supervisor',
     'المدينة الصحية': 'Healthy City',
