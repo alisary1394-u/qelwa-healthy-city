@@ -827,7 +827,7 @@ export default function Budget() {
                           <Badge className={transaction.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
                             {transaction.type === 'income' ? t('budget.transactionTab.incomeLabel') : t('budget.transactionTab.expenseLabel')}
                           </Badge>
-                          <Badge variant="outline">{t(`budget.transactionCategories.${transaction.category}`, transaction.category)}</Badge>
+                          <Badge variant="outline"><T>{t(`budget.transactionCategories.${transaction.category}`, transaction.category)}</T></Badge>
                           <Badge className={
                             transaction.status === 'paid' ? 'bg-green-600' :
                             transaction.status === 'approved' ? 'bg-primary' :
@@ -858,7 +858,7 @@ export default function Budget() {
                           </strong></div>
                           {transaction.beneficiary && <div>{t('budget.transactionTab.payee')} <strong><T>{transaction.beneficiary}</T></strong></div>}
                           <div>{t('budget.transactionTab.transDate')} <strong>{transaction.date}</strong></div>
-                          {transaction.payment_method && <div>{t('budget.transactionTab.paymentMethod')} <strong>{t(`budget.paymentMethods.${transaction.payment_method}`, transaction.payment_method)}</strong></div>}
+                          {transaction.payment_method && <div>{t('budget.transactionTab.paymentMethod')} <strong><T>{t(`budget.paymentMethods.${transaction.payment_method}`, transaction.payment_method)}</T></strong></div>}
                           {transaction.committee_name && <div>{t('budget.transactionTab.committeeLabel')} <strong><T>{transaction.committee_name}</T></strong></div>}
                           {transaction.axis_name && <div>{t('budget.transactionTab.axisLabel')} <strong><T>{transaction.axis_name}</T></strong></div>}
                         </div>
