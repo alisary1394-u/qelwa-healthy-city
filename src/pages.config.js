@@ -50,22 +50,38 @@
 import { lazy } from 'react';
 import __Layout from './Layout.jsx';
 
+// Retry dynamic imports: on failure (e.g. new deploy changed chunk hashes),
+// reload the page once to get fresh HTML with correct chunk URLs.
+function lazyRetry(importFn) {
+  return lazy(() =>
+    importFn().catch(() => {
+      const reloaded = sessionStorage.getItem('chunk_reload');
+      if (!reloaded) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+        return new Promise(() => {}); // never resolves — page is reloading
+      }
+      sessionStorage.removeItem('chunk_reload');
+      return importFn(); // second attempt after reload
+    })
+  );
+}
 
 export const PAGES = {
-    "Budget": lazy(() => import('./pages/Budget')),
-    "Committees": lazy(() => import('./pages/Committees')),
-    "Dashboard": lazy(() => import('./pages/Dashboard')),
-    "Files": lazy(() => import('./pages/Files')),
-    "Home": lazy(() => import('./pages/Home')),
-    "Initiatives": lazy(() => import('./pages/Initiatives')),
-    "Reports": lazy(() => import('./pages/Reports')),
-    "Settings": lazy(() => import('./pages/Settings')),
-    "Standards": lazy(() => import('./pages/Standards')),
-    "Survey": lazy(() => import('./pages/Survey')),
-    "Tasks": lazy(() => import('./pages/Tasks')),
-    "TeamManagement": lazy(() => import('./pages/TeamManagement')),
-    "UserSettings": lazy(() => import('./pages/UserSettings')),
-    "Volunteering": lazy(() => import('./pages/Volunteering')),
+    "Budget": lazyRetry(() => import('./pages/Budget')),
+    "Committees": lazyRetry(() => import('./pages/Committees')),
+    "Dashboard": lazyRetry(() => import('./pages/Dashboard')),
+    "Files": lazyRetry(() => import('./pages/Files')),
+    "Home": lazyRetry(() => import('./pages/Home')),
+    "Initiatives": lazyRetry(() => import('./pages/Initiatives')),
+    "Reports": lazyRetry(() => import('./pages/Reports')),
+    "Settings": lazyRetry(() => import('./pages/Settings')),
+    "Standards": lazyRetry(() => import('./pages/Standards')),
+    "Survey": lazyRetry(() => import('./pages/Survey')),
+    "Tasks": lazyRetry(() => import('./pages/Tasks')),
+    "TeamManagement": lazyRetry(() => import('./pages/TeamManagement')),
+    "UserSettings": lazyRetry(() => import('./pages/UserSettings')),
+    "Volunteering": lazyRetry(() => import('./pages/Volunteering')),
 }
 
 export const pagesConfig = {

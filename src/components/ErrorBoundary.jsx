@@ -16,6 +16,19 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     if (typeof console !== 'undefined') console.error('App error:', error, info);
+    // Auto-reload once on chunk loading failures (new deploy changed hashes)
+    if (
+      error?.message &&
+      /Failed to fetch dynamically imported module|Loading chunk|import.*failed/i.test(error.message)
+    ) {
+      const reloaded = sessionStorage.getItem('chunk_reload');
+      if (!reloaded) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+        return;
+      }
+      sessionStorage.removeItem('chunk_reload');
+    }
   }
 
   render() {
