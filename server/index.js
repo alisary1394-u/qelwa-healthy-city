@@ -24,6 +24,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// على Railway (وراء reverse proxy) — ضروري لمعرفة IP الحقيقي للمستخدم
+app.set('trust proxy', true);
+
 const sessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
 let backupSnapshotInFlight = false;
@@ -204,7 +207,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
-    "connect-src 'self' https://www.qeelwah.com https://*.railway.app; " +
+    "connect-src 'self' https://www.qeelwah.com https://*.railway.app https://*.supabase.co wss://*.supabase.co; " +
     "frame-ancestors 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self';"
