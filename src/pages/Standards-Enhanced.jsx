@@ -7,7 +7,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import T from '@/components/T';
-import { translateTextSync } from '@/utils/translationService';
+import { translateTextSync, localizeStandardCode } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS, getAxisOrderFromStandardIndex } from '@/api/seedAxesAndStandards';
@@ -1079,7 +1079,7 @@ const handleUploadEvidence = async (e) => {
                   onClick={() => setExpandedCards(prev => ({ ...prev, [standard.id]: !prev[standard.id] }))}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Badge variant="outline" className="font-mono shrink-0">{standard.code}</Badge>
+                    <Badge variant="outline" className="font-mono shrink-0">{localizeStandardCode(standard.code)}</Badge>
                     <Badge className={`${statusConfig[standard.status]?.color} shrink-0`}>
                       {statusConfig[standard.status]?.label}
                     </Badge>
@@ -1476,7 +1476,7 @@ const handleUploadEvidence = async (e) => {
                   id="standard-code"
                   value={standardForm.code}
                   onChange={(e) => setStandardForm({ ...standardForm, code: e.target.value })}
-                  placeholder="م1-1"
+                  placeholder={i18n.language === 'ar' ? 'م1-1' : 'S1-1'}
                   required
                 />
               </div>

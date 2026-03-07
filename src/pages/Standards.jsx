@@ -6,6 +6,7 @@ import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AXIS_SHORT_NAMES, AXIS_COUNTS } from '@/api/seedAxesAndStandards';
 import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode, getShortTitleByCode } from '@/api/standardsFromCsv';
+import { localizeStandardCode } from '@/utils/translationService';
 import { usePermissions } from '@/hooks/usePermissions';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -525,7 +526,7 @@ function StandardsLegacy() {
 
   const handleDeleteStandard = async (standard) => {
     if (!canManage) return;
-    const ok = await requireSecureDeleteConfirmation(`${t('standards.standard')} "${standard.code} - ${standard.title}"`);
+    const ok = await requireSecureDeleteConfirmation(`${t('standards.standard')} "${localizeStandardCode(standard.code)} - ${standard.title}"`);
     if (!ok) return;
     await deleteStandardMutation.mutateAsync(standard.id);
   };
@@ -877,7 +878,7 @@ function StandardsLegacy() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{standard.code}</span>
+                          <span className="inline-flex items-center font-mono text-xs font-bold bg-white/25 text-white px-2 py-0.5 rounded-full">{localizeStandardCode(standard.code)}</span>
                           <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusConfig[standard.status]?.headerColor || 'bg-white/20 text-white'}`}>
                             {t(statusConfig[standard.status]?.label)}
                           </span>

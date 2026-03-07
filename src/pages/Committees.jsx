@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
+import { localizeStandardCode } from '@/utils/translationService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -721,7 +722,7 @@ export default function Committees() {
                           }}
                           className="rounded"
                         />
-                        <span className="text-sm">{standard.code} - <T>{standard.title}</T></span>
+                        <span className="text-sm">{localizeStandardCode(standard.code)} - <T>{standard.title}</T></span>
                       </div>
                     ))}
                   </div>

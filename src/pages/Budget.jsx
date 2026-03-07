@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { localizeStandardCode } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -1374,7 +1375,7 @@ export default function Budget() {
                       .filter(s => !transactionForm.axis_id || s.axis_id === transactionForm.axis_id))
                       .map(standard => (
                         <SelectItem key={standard.id} value={standard.id}>
-                          {standard.code} - <T>{standard.name}</T>
+                          {localizeStandardCode(standard.code)} - <T>{standard.name}</T>
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -1563,7 +1564,7 @@ export default function Budget() {
                     <SelectItem value="none">{t('budget.form.noLink')}</SelectItem>
                     {filteredStandardsForAllocation.map(standard => (
                       <SelectItem key={standard.id} value={standard.id}>
-                        {standard.code} - <T>{standard.name || standard.title}</T>
+                        {localizeStandardCode(standard.code)} - <T>{standard.name || standard.title}</T>
                       </SelectItem>
                     ))}
                   </SelectContent>

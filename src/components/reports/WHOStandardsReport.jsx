@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import T from '@/components/T';
-import { translateTextSync } from '@/utils/translationService';
+import { translateTextSync, localizeStandardCode } from '@/utils/translationService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, FileText, Target } from "lucide-react";
@@ -175,7 +175,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                       <div className="flex items-start justify-between gap-4 overflow-visible">
                         <div className="flex-1 min-w-0 text-right overflow-visible">
                           <div className="flex flex-wrap items-center gap-2 mb-2 justify-end overflow-visible">
-                            <Badge variant="outline" className="text-sm shrink-0 whitespace-nowrap">{standard.code}</Badge>
+                            <Badge variant="outline" className="text-sm shrink-0 whitespace-nowrap">{localizeStandardCode(standard.code)}</Badge>
                             {getStatusBadge(standard.status)}
                           </div>
                           <CardTitle className="report-standard-title text-lg text-right leading-snug">{standard.title}</CardTitle>
@@ -276,7 +276,7 @@ export default function WHOStandardsReport({ standards, axes, evidence, settings
                   .filter(s => s.status !== 'completed' && s.status !== 'approved')
                   .slice(0, 5)
                   .map(s => (
-                    <li key={s.id}>{s.code} - {s.title} ({s.completion_percentage || 0}%)</li>
+                    <li key={s.id}>{localizeStandardCode(s.code)} - {s.title} ({s.completion_percentage || 0}%)</li>
                   ))}
               </ul>
             </div>

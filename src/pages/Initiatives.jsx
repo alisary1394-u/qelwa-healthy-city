@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { localizeStandardCode } from '@/utils/translationService';
 import { api } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -1429,7 +1430,7 @@ export default function Initiatives() {
                             onChange={() => toggleStandard(standard.id)}
                             className="rounded"
                           />
-                          <span className="text-sm">{standard.code} - {standard.title}</span>
+                          <span className="text-sm">{localizeStandardCode(standard.code)} - {standard.title}</span>
                         </div>
                       ))}
                     </div>
@@ -1755,7 +1756,7 @@ export default function Initiatives() {
                           const standard = standardsById.get(String(sid));
                           return standard ? (
                             <Badge key={sid} variant="outline">
-                              {standard.code} - <T>{(standard.title || '').length > 50 ? (standard.title || '').slice(0, 50) + '...' : (standard.title || '')}</T>
+                              {localizeStandardCode(standard.code)} - <T>{(standard.title || '').length > 50 ? (standard.title || '').slice(0, 50) + '...' : (standard.title || '')}</T>
                             </Badge>
                           ) : null;
                         })}

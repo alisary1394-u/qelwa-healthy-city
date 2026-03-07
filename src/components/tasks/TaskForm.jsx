@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Lightbulb, Target, Search, UserCheck, X } from "lucide-react";
+import { localizeStandardCode } from '@/utils/translationService';
 import { DOCUMENT_TYPES } from "@/lib/documentTypes";
 import T from "@/components/T";
 
@@ -269,7 +270,7 @@ export default function TaskForm({ open, onOpenChange, task, onSave, members, in
                   <SelectContent>
                     <SelectItem value="none"><T>بدون معيار</T></SelectItem>
                     {standards.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.code} - {s.title?.slice(0, 50)}...</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{localizeStandardCode(s.code)} - {s.title?.slice(0, 50)}...</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

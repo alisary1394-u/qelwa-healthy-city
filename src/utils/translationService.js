@@ -543,3 +543,13 @@ export async function translateBatch(texts, targetLang) {
 export function clearTranslationCache() {
   localStorage.removeItem(CACHE_KEY);
 }
+
+/**
+ * Localize a standard code: م1-1 → S1-1 in English, keep as-is in Arabic.
+ */
+export function localizeStandardCode(code) {
+  if (!code || typeof code !== 'string') return code;
+  const lang = localStorage.getItem('app_language') || 'ar';
+  if (lang === 'ar') return code;
+  return code.replace(/م/g, 'S');
+}
