@@ -107,8 +107,8 @@ const BLOCKED_USER_AGENTS = [
 // Rate Limiting — حماية من الطلبات المفرطة
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // دقيقة واحدة
-const RATE_LIMIT_MAX = 120; // أقصى عدد طلبات في الدقيقة
-const API_RATE_LIMIT_MAX = 60; // أقصى عدد طلبات API في الدقيقة
+const RATE_LIMIT_MAX = 600; // أقصى عدد طلبات في الدقيقة
+const API_RATE_LIMIT_MAX = 300; // أقصى عدد طلبات API في الدقيقة
 
 function getRateLimitKey(req) {
   return req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
