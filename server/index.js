@@ -18,17 +18,40 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createBackup, listBackups, restoreBackup, restoreTableFromBackup, startAutoBackup } from './backup.js';
+import { randomBytes } from 'crypto';
+import bcrypt from 'bcryptjs';
 // عدم استيراد db هنا — تحميله كسولاً عند أول طلب حتى لا يتعطل السيرفر إن فشل better-sqlite3 (مثلاً على Railway)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// على Railway (وراء reverse proxy) — ضروري لمعرفة IP الحقيقي للمستخدم
-app.set('trust proxy', true);
+// على Railway (وراء reverse proxy) — ثق بـ proxy واحد فقط للحماية من تزوير X-Forwarded-For
+app.set('trust proxy', 1);
 
 const sessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
+const loginAttempts = new Map(); // ip -> { count, lockedUntil }
+const verifyCodeRequests = new Map(); // email -> { count, windowStart }
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 دقيقة
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 ساعات
+const VERIFY_CODE_MAX = 3;
+const VERIFY_CODE_WINDOW = 10 * 60 * 1000; // 10 دقائق
+
+// تنظيف دوري للجلسات المنتهية ومحاولات الدخول القديمة
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, session] of sessions.entries()) {
+    if (now > session.expiresAt) sessions.delete(token);
+  }
+  for (const [ip, data] of loginAttempts.entries()) {
+    if (now > data.lockedUntil + LOGIN_LOCKOUT_MS) loginAttempts.delete(ip);
+  }
+  for (const [email, data] of verifyCodeRequests.entries()) {
+    if (now - data.windowStart > VERIFY_CODE_WINDOW * 2) verifyCodeRequests.delete(email);
+  }
+}, 30 * 60 * 1000);
 let backupSnapshotInFlight = false;
 let lastMutationBackupAt = 0;
 
@@ -84,7 +107,15 @@ function enqueueMutationBackup(reason) {
     });
 }
 
-app.use(cors({ origin: true, credentials: true }));
+const ALLOWED_ORIGINS = [
+  'https://www.qeelwah.com',
+  'https://qelwa-healthy-city.railway.app',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'] : [])
+];
+app.use(cors({
+  origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 
 // ============ حماية الموقع من النسخ والسحب ============
@@ -203,7 +234,7 @@ app.use((req, res, next) => {
   // Content Security Policy — منع تحميل المحتوى من مصادر خارجية غير مصرح بها
   res.setHeader('Content-Security-Policy', 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; " +
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
@@ -281,53 +312,170 @@ function entityToTable(name) {
 }
 
 function getAuthUser(req) {
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '') || req.query.token;
-  return token ? sessions.get(token) : null;
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const session = sessions.get(token);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) { sessions.delete(token); return null; }
+  return session.user;
+}
+
+function requireAuth(req, res, next) {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
+  req.currentUser = user;
+  next();
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    const u = req.currentUser;
+    const r = u?.role || (u?.user_role === 'admin' ? 'governor' : u?.user_role);
+    if (!u || !roles.includes(r)) return res.status(403).json({ error: 'غير مصرح بهذه العملية' });
+    next();
+  };
+}
+
+/** إرجاع خطأ عام للعميل مع تسجيل التفاصيل في السجلات فقط */
+function safeError(res, e, status = 500) {
+  console.error('[Server Error]', e?.message || e);
+  if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
+    return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
+  }
+  return res.status(status).json({ error: 'حدث خطأ في الخادم' });
+}
+
+/**
+ * صلاحيات الكتابة لكل جدول — الأدوار المسموح لها بالتعديل والحذف والإنشاء.
+ * الجداول غير المذكورة: يمكن لأي مستخدم مصادق عليه الكتابة.
+ */
+const WRITE_PERMISSION_MAP = {
+  settings:          ['governor'],
+  axis:              ['governor', 'coordinator'],
+  standard:          ['governor', 'coordinator'],
+  team_member:       ['governor'],
+  committee:         ['governor', 'coordinator', 'committee_head'],
+  initiative:        ['governor', 'coordinator', 'committee_head'],
+  initiative_kpi:    ['governor', 'coordinator', 'committee_head'],
+  budget:            ['governor', 'coordinator', 'budget_manager'],
+  budget_allocation: ['governor', 'coordinator', 'budget_manager', 'accountant'],
+  transaction:       ['governor', 'coordinator', 'budget_manager', 'accountant', 'financial_officer'],
+};
+
+/** يعيد true إذا كان المستخدم مسموحاً له بالكتابة على هذا الجدول */
+function canWriteTable(user, table) {
+  const allowed = WRITE_PERMISSION_MAP[table];
+  if (!allowed) return true; // لا قيود خاصة
+  const role = user?.role || (user?.user_role === 'admin' ? 'governor' : user?.user_role);
+  return allowed.includes(role);
+}
+
+/** يُزيل حقل password وأي حقول حساسة من كائن عضو الفريق قبل إرساله */
+function sanitizeMember(member) {
+  if (!member || typeof member !== 'object') return member;
+  const { password, ...safe } = member;
+  return safe;
 }
 
 // تسجيل الدخول
 app.post('/api/auth/login', async (req, res) => {
   try {
+    const ip = getRateLimitKey(req);
+    const now = Date.now();
+
+    // حماية القوة الغاشمة: فحص قفل الـ IP
+    const attempt = loginAttempts.get(ip);
+    if (attempt && now < attempt.lockedUntil) {
+      const remaining = Math.ceil((attempt.lockedUntil - now) / 60000);
+      return res.status(429).json({ error: `تم تجاوز عدد محاولات الدخول. حاول بعد ${remaining} دقيقة.` });
+    }
+
     const db = await getDb();
     const { national_id, password } = req.body || {};
+    if (!national_id || !password) {
+      return res.status(400).json({ error: 'رقم الهوية وكلمة المرور مطلوبان' });
+    }
+
     const members = db.list('team_member');
     const member = members.find((m) => m.national_id === String(national_id));
+
+    // دالة تسجيل محاولة فاشلة
+    const recordFailedAttempt = () => {
+      const cur = loginAttempts.get(ip) || { count: 0, lockedUntil: 0 };
+      cur.count++;
+      if (cur.count >= LOGIN_MAX_ATTEMPTS) {
+        cur.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+        console.warn(`[Security] Login locked for IP: ${ip} after ${cur.count} failed attempts`);
+      }
+      loginAttempts.set(ip, cur);
+    };
+
+    // رسالة موحّدة لعدم الكشف عن وجود المستخدم
     if (!member) {
-      return res.status(401).json({ error: 'رقم الهوية غير مسجل' });
+      recordFailedAttempt();
+      return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
     }
-    if (member.password !== password) {
-      return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+
+    let isValid = false;
+    if (member.password?.startsWith('$2b$') || member.password?.startsWith('$2a$')) {
+      isValid = await bcrypt.compare(String(password), member.password);
+    } else {
+      // كلمة مرور قديمة غير مشفّرة — نتحقق ثم نُشفّرها فوراً (ترقية تلقائية)
+      isValid = member.password === String(password);
+      if (isValid) {
+        const hashed = await bcrypt.hash(String(password), 12);
+        db.update('team_member', member.id, { password: hashed });
+      }
     }
+
+    if (!isValid) {
+      recordFailedAttempt();
+      return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
+    }
+
+    // نجح الدخول — نظّف محاولات الفشل
+    loginAttempts.delete(ip);
+
     const user = {
+      id: member.id,
       email: member.email || (member.role === 'governor' ? 'admin@qeelwah.com' : `member-${member.national_id}@local`),
       full_name: member.full_name || 'المشرف',
       user_role: member.role === 'governor' ? 'admin' : 'user',
+      role: member.role,
       national_id: member.national_id,
     };
-    const token = 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
-    sessions.set(token, user);
+    const token = randomBytes(32).toString('hex');
+    sessions.set(token, { user, expiresAt: Date.now() + SESSION_TTL_MS });
+    console.log(`[Auth] Login success: ${member.full_name} (${member.role}) IP: ${ip}`);
     res.json({ user, token });
   } catch (e) {
     if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
       return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
     }
-    res.status(500).json({ error: e.message });
+    console.error('[Login Error]', e.message || e);
+    res.status(500).json({ error: 'حدث خطأ في الخادم' });
   }
 });
 
-app.get('/api/auth/me', (req, res) => {
-  const user = getAuthUser(req);
-  if (!user) return res.status(401).json({ error: 'غير مسجل الدخول' });
-  res.json(user);
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json(req.currentUser);
+});
+
+app.post('/api/auth/logout', requireAuth, (req, res) => {
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (token) sessions.delete(token);
+  res.json({ ok: true });
 });
 
 // كيانات: list, get, create, update, delete
-app.get('/api/entities/:name', async (req, res) => {
+app.get('/api/entities/:name', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     let list = db.list(table);
+    // إخفاء كلمات المرور من نتائج قائمة الأعضاء
+    if (table === 'team_member') list = list.map(sanitizeMember);
     const orderBy = req.query.orderBy;
     if (orderBy && typeof orderBy === 'string') {
       const [field, dir] = orderBy.startsWith('-') ? [orderBy.slice(1), -1] : [orderBy, 1];
@@ -343,52 +491,52 @@ app.get('/api/entities/:name', async (req, res) => {
     }
     res.json(list);
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
-app.get('/api/entities/:name/:id', async (req, res) => {
+app.get('/api/entities/:name/:id', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     const row = db.get(table, req.params.id);
     if (!row) return res.status(404).json({ error: 'غير موجود' });
-    res.json(row);
+    res.json(table === 'team_member' ? sanitizeMember(row) : row);
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
-app.post('/api/entities/:name', async (req, res) => {
+app.post('/api/entities/:name', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    // فحص صلاحية الكتابة على هذا الجدول
+    if (!canWriteTable(req.currentUser, table)) {
+      return res.status(403).json({ error: 'ليس لديك صلاحية الإضافة إلى هذا القسم' });
+    }
     const data = req.body || {};
     const id = data.id || null;
     const body = { ...data };
     delete body.id;
+    // تشفير كلمة المرور عند إنشاء عضو جديد
+    if (table === 'team_member' && body.password &&
+        !body.password.startsWith('$2b$') && !body.password.startsWith('$2a$')) {
+      body.password = await bcrypt.hash(String(body.password).trim(), 12);
+    }
     const record = db.create(table, id, body);
     if (table === 'team_member' || table === 'task') {
       enqueueMutationBackup(`entity_create:${table}`);
     }
-    res.status(201).json(record);
+    res.status(201).json(table === 'team_member' ? sanitizeMember(record) : record);
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
-app.patch('/api/entities/:name/:id', async (req, res) => {
+app.patch('/api/entities/:name/:id', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const table = entityToTable(req.params.name);
@@ -400,6 +548,10 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
 
       if (body.password === '' || body.password == null) {
         delete body.password;
+      } else if (body.password && typeof body.password === 'string' &&
+                 !body.password.startsWith('$2b$') && !body.password.startsWith('$2a$')) {
+        // تشفير كلمة المرور الجديدة قبل الحفظ
+        body.password = await bcrypt.hash(body.password.trim(), 12);
       }
 
       // حماية بيانات التواصل: عند تحديث المنصب/الصلاحيات لا نحذف البريد أو الهاتف — لا نستبدل قيمة موجودة بقيمة فارغة.
@@ -420,40 +572,42 @@ app.patch('/api/entities/:name/:id', async (req, res) => {
         }
       });
     }
+    // فحص صلاحية التعديل على هذا الجدول
+    if (!canWriteTable(req.currentUser, table)) {
+      return res.status(403).json({ error: 'ليس لديك صلاحية تعديل هذا القسم' });
+    }
     const updated = db.update(table, req.params.id, body);
     if (!updated) return res.status(404).json({ error: 'غير موجود' });
     if (table === 'team_member' || table === 'task') {
       enqueueMutationBackup(`entity_update:${table}`);
     }
-    res.json(updated);
+    res.json(table === 'team_member' ? sanitizeMember(updated) : updated);
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
-app.delete('/api/entities/:name/:id', async (req, res) => {
+app.delete('/api/entities/:name/:id', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
+    // فحص صلاحية الحذف على هذا الجدول
+    if (!canWriteTable(req.currentUser, table)) {
+      return res.status(403).json({ error: 'ليس لديك صلاحية حذف هذا العنصر' });
+    }
     db.remove(table, req.params.id);
     if (table === 'team_member' || table === 'task') {
       enqueueMutationBackup(`entity_delete:${table}`);
     }
     res.status(204).send();
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // بذر مسوحات ميدانية تجريبية (يُنفذ تلقائياً ضمن seed أيضاً)
-app.post('/api/seed-surveys', async (req, res) => {
+app.post('/api/seed-surveys', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const db = await getDb();
     const { runSeed } = await import('./seed.js');
@@ -462,15 +616,12 @@ app.post('/api/seed-surveys', async (req, res) => {
     enqueueMutationBackup('seed-surveys');
     res.json({ ok: true, count: surveys.length, message: `يوجد ${surveys.length} مسح ميداني` });
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // تحديث أسماء الأحياء في الاستبيانات الموجودة
-app.post('/api/rename-survey-districts', async (req, res) => {
+app.post('/api/rename-survey-districts', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const db = await getDb();
     const newDistricts = req.body?.districts;
@@ -503,10 +654,7 @@ app.post('/api/rename-survey-districts', async (req, res) => {
     enqueueMutationBackup('rename-survey-districts');
     res.json({ ok: true, total, updated, renameMap, message: `تم تحديث ${updated} استبيان` });
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
@@ -518,7 +666,7 @@ const TABLES_CLEAR_ON_RESEED = [
 ];
 const NEVER_CLEAR_TABLES = ['team_member'];
 
-app.post('/api/seed', async (req, res) => {
+app.post('/api/seed', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     if (!isSeedApiEnabled()) {
       return res.status(403).json({
@@ -537,15 +685,12 @@ app.post('/api/seed', async (req, res) => {
     enqueueMutationBackup('seed');
     res.json({ ok: true, message: 'تم تنفيذ البذرة' });
   } catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' || e.message?.includes('better-sqlite3')) {
-      return res.status(503).json({ error: 'قاعدة البيانات غير متاحة حالياً' });
-    }
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // تبديل ترتيب محورين في قاعدة البيانات وتحديث رموز المعايير
-app.post('/api/swap-axes', async (req, res) => {
+app.post('/api/swap-axes', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const { orderA, orderB } = req.body || {};
     if (!orderA || !orderB || orderA === orderB) return res.status(400).json({ error: 'يجب تحديد orderA و orderB مختلفين' });
@@ -577,12 +722,12 @@ app.post('/api/swap-axes', async (req, res) => {
     const result = db.list('axis').sort((a, b) => Number(a.order) - Number(b.order)).map(a => ({ id: a.id, order: a.order, name: a.name }));
     res.json({ ok: true, codesSwapped, axes: result, message: `تم تبديل المحور ${orderA} والمحور ${orderB}. تم تحديث ${codesSwapped} رمز معيار.` });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // استعادة المحاور المفقودة — يضمن وجود جميع المحاور الـ 9
-app.post('/api/restore-axes', async (req, res) => {
+app.post('/api/restore-axes', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const db = await getDb();
     const AXES_REF = [
@@ -661,12 +806,12 @@ app.post('/api/restore-axes', async (req, res) => {
     const axesList = db.list('axis').sort((a, b) => Number(a.order) - Number(b.order)).map(a => ({ id: a.id, order: a.order, name: a.name }));
     res.json({ ok: true, restored, fixed, duplicatesRemoved, namesFixed, remaining, axes: axesList, message: `تم استعادة ${restored}، حذف ${fixed} غير صالح، حذف ${duplicatesRemoved} مكرر، تصحيح أسماء ${namesFixed}. المتبقي: ${remaining}` });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // إزالة المعايير المكررة والزائدة من قاعدة البيانات — يُستدعى تلقائياً أو يدوياً
-app.post('/api/deduplicate-standards', async (req, res) => {
+app.post('/api/deduplicate-standards', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const db = await getDb();
     const standards = db.list('standard');
@@ -733,22 +878,22 @@ app.post('/api/deduplicate-standards', async (req, res) => {
     }
     res.json({ ok: true, removed, remaining, relinked, message: `تم إزالة ${removed} معيار مكرر/زائد. المتبقي: ${remaining}. تم ربط ${relinked} معيار بالمحور الصحيح.` });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // قائمة النسخ الاحتياطية (تُستدعى من صفحة الإعدادات للمشرف)
-app.get('/api/backups', async (req, res) => {
+app.get('/api/backups', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const files = listBackups();
     res.json(files.map((f) => ({ name: f.name, mtime: f.mtime, size: f.size })));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return safeError(res, e);
   }
 });
 
 // استعادة من أحدث نسخة احتياطية
-app.post('/api/backups/restore-latest', async (req, res) => {
+app.post('/api/backups/restore-latest', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const files = listBackups();
     if (files.length === 0) {
@@ -758,12 +903,12 @@ app.post('/api/backups/restore-latest', async (req, res) => {
     enqueueMutationBackup('after_restore');
     res.json({ ok: true, message: 'تمت استعادة البيانات من آخر نسخة', restoredCounts: result.restoredCounts });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    return safeError(res, e);
   }
 });
 
 // استعادة المهام فقط من أحدث نسخة احتياطية (بدون المساس ببقية الجداول)
-app.post('/api/backups/restore-tasks-latest', async (req, res) => {
+app.post('/api/backups/restore-tasks-latest', requireAuth, requireRole('governor'), async (req, res) => {
   try {
     const files = listBackups();
     if (files.length === 0) {
@@ -779,7 +924,7 @@ app.post('/api/backups/restore-tasks-latest', async (req, res) => {
       from: files[0].name,
     });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    return safeError(res, e);
   }
 });
 
@@ -795,6 +940,17 @@ app.post('/api/functions/sendVerificationCode', async (req, res) => {
   email = String(email).trim().toLowerCase();
   if (!isValidEmail(email)) {
     return res.json({ success: false, message: 'عنوان البريد غير صالح. يرجى تصحيح البريد في بيانات العضو (يجب أن يكون بصيغة مثال@نطاق.كوم). لا يتم حذف أي بيانات.' });
+  }
+  // تحديد المعدل: أقصى 3 طلبات لكل بريد في 10 دقائق
+  const now = Date.now();
+  const vcr = verifyCodeRequests.get(email);
+  if (vcr && now - vcr.windowStart < VERIFY_CODE_WINDOW) {
+    if (vcr.count >= VERIFY_CODE_MAX) {
+      return res.status(429).json({ success: false, message: 'تجاوزت عدد طلبات رمز التحقق. حاول بعد 10 دقائق.' });
+    }
+    vcr.count++;
+  } else {
+    verifyCodeRequests.set(email, { count: 1, windowStart: now });
   }
   const code = Math.floor(1000 + Math.random() * 9000).toString(); // 4 أرقام
   verificationCodes.set(email, { code, expires_at: Date.now() + 5 * 60 * 1000 });

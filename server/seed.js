@@ -3,6 +3,7 @@
  * لا نعدّل أعضاء الفريق الموجودين أبداً — نضيف فقط مناصب ناقصة (مثل منسق إن لم يوجد).
  */
 import * as db from './db.js';
+import bcrypt from 'bcryptjs';
 
 const PASS = '123456';
 const DEFAULT_COORDINATOR_EMAIL = (process.env.DEFAULT_COORDINATOR_EMAIL || 'coordinator@local').trim().toLowerCase();
@@ -45,6 +46,11 @@ function id() {
 
 export async function runSeed(options = {}) {
   const baseDate = new Date().toISOString().split('T')[0];
+  // تشفير كلمات المرور الافتراضية مرة واحدة
+  const hashedPass = await bcrypt.hash(PASS, 10);
+  const hashedCoordinatorPass = (DEFAULT_COORDINATOR_PASSWORD === PASS)
+    ? hashedPass
+    : await bcrypt.hash(DEFAULT_COORDINATOR_PASSWORD, 10);
   // افتراضيًا لا نضيف أعضاء فريق تجريبيين (مثل coordinator@local) على السيرفر الحقيقي.
   // لتفعيل هذا السلوك التجريبي صراحةً: SEED_SAMPLE_TEAM=true
   const forceSampleTeam = options?.forceSampleTeam === true;
@@ -54,7 +60,7 @@ export async function runSeed(options = {}) {
     db.create('team_member', null, {
       full_name: 'المشرف',
       national_id: '1',
-      password: PASS,
+      password: hashedPass,
       email: 'admin@qeelwah.com',
       role: 'governor',
       status: 'active',
@@ -199,7 +205,7 @@ export async function runSeed(options = {}) {
       db.create('team_member', null, {
         full_name: 'منسق المدينة الصحية',
         national_id: String(nextId++),
-        password: DEFAULT_COORDINATOR_PASSWORD,
+        password: hashedCoordinatorPass,
         email: DEFAULT_COORDINATOR_EMAIL,
         phone: DEFAULT_COORDINATOR_PHONE,
         role: 'coordinator',
@@ -230,7 +236,7 @@ export async function runSeed(options = {}) {
           const committee = committeesNow.find((c) => c.name === m.committee_name);
           db.create('team_member', null, {
             ...m,
-            password: PASS,
+            password: hashedPass,
             committee_id: committee?.id,
             status: 'active',
             join_date: baseDate,
@@ -246,7 +252,7 @@ export async function runSeed(options = {}) {
           db.create('team_member', null, {
             full_name: `${labels[role]} ${c.name}`,
             national_id: String(nextId++),
-            password: PASS,
+            password: hashedPass,
             email: `${role}${i}@local`,
             role,
             committee_id: c.id,
@@ -263,7 +269,7 @@ export async function runSeed(options = {}) {
       db.create('team_member', null, {
         full_name: 'مدير الميزانية',
         national_id: String(nextId++),
-        password: PASS,
+        password: hashedPass,
         email: 'budget@local',
         role: 'budget_manager',
         department: 'الميزانية',
@@ -275,7 +281,7 @@ export async function runSeed(options = {}) {
       db.create('team_member', null, {
         full_name: 'المحاسب',
         national_id: String(nextId++),
-        password: PASS,
+        password: hashedPass,
         email: 'accountant@local',
         role: 'accountant',
         department: 'الميزانية',
@@ -287,7 +293,7 @@ export async function runSeed(options = {}) {
       db.create('team_member', null, {
         full_name: 'الموظف المالي',
         national_id: String(nextId++),
-        password: PASS,
+        password: hashedPass,
         email: 'financial@local',
         role: 'financial_officer',
         department: 'الميزانية',

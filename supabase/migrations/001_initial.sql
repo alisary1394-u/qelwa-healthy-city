@@ -86,5 +86,44 @@ CREATE TABLE IF NOT EXISTS verification_code (
   body jsonb NOT NULL DEFAULT '{}'
 );
 
--- تفعيل RLS (Row Level Security) اختياري — يمكن تفعيله لاحقاً حسب الصلاحيات
--- ALTER TABLE committee ENABLE ROW LEVEL SECURITY;
+-- تفعيل RLS (Row Level Security) على جميع الجداول
+-- السياسة: السماح فقط للمستخدمين المصادق عليهم (authenticated)
+
+ALTER TABLE committee ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_member ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE axis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE standard ENABLE ROW LEVEL SECURITY;
+ALTER TABLE initiative ENABLE ROW LEVEL SECURITY;
+ALTER TABLE initiative_kpi ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budget_allocation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "transaction" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evidence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification ENABLE ROW LEVEL SECURITY;
+ALTER TABLE file_upload ENABLE ROW LEVEL SECURITY;
+ALTER TABLE family_survey ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE verification_code ENABLE ROW LEVEL SECURITY;
+
+-- سياسة موحّدة: المستخدمون المصادق عليهم فقط يستطيعون القراءة والكتابة
+DO $$
+DECLARE
+  tbl TEXT;
+  tbls TEXT[] := ARRAY[
+    'committee','team_member','settings','axis','standard','initiative',
+    'initiative_kpi','task','budget','budget_allocation','transaction',
+    'evidence','notification','file_upload','family_survey',
+    'user_preferences','verification_code'
+  ];
+BEGIN
+  FOREACH tbl IN ARRAY tbls LOOP
+    EXECUTE format(
+      'CREATE POLICY "authenticated_access" ON %I FOR ALL
+       USING (auth.role() = ''authenticated'')
+       WITH CHECK (auth.role() = ''authenticated'')',
+      tbl
+    );
+  END LOOP;
+END $$;
