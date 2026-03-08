@@ -14,6 +14,10 @@ export function useIdleTimeout(onTimeout, timeoutMs = 20 * 60 * 1000, warningMs 
   const warningRef = useRef(null);
   const countdownRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
+  // ref لتتبع حالة التحذير بدون إعادة تشغيل الـ effect
+  const showWarningRef = useRef(false);
+  const onTimeoutRef = useRef(onTimeout);
+  useEffect(() => { onTimeoutRef.current = onTimeout; }, [onTimeout]);
 
   const clearAllTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -27,10 +31,12 @@ export function useIdleTimeout(onTimeout, timeoutMs = 20 * 60 * 1000, warningMs 
   const resetTimer = useCallback(() => {
     lastActivityRef.current = Date.now();
     clearAllTimers();
+    showWarningRef.current = false;
     setShowWarning(false);
 
     // تعيين مؤقت التحذير (قبل دقيقتين من انتهاء الوقت)
     warningRef.current = setTimeout(() => {
+      showWarningRef.current = true;
       setShowWarning(true);
       setRemainingSeconds(Math.ceil(warningMs / 1000));
 
@@ -49,26 +55,22 @@ export function useIdleTimeout(onTimeout, timeoutMs = 20 * 60 * 1000, warningMs 
     // تعيين مؤقت تسجيل الخروج
     timeoutRef.current = setTimeout(() => {
       clearAllTimers();
+      showWarningRef.current = false;
       setShowWarning(false);
-      onTimeout();
+      onTimeoutRef.current();
     }, timeoutMs);
-  }, [onTimeout, timeoutMs, warningMs, clearAllTimers]);
+  }, [timeoutMs, warningMs, clearAllTimers]);
 
   const dismissWarning = useCallback(() => {
     resetTimer();
   }, [resetTimer]);
 
   useEffect(() => {
-    // الأحداث التي تُعتبر نشاطاً من المستخدم
-    const events = [
-      'mousemove', 'mousedown', 'keydown', 'touchstart',
-      'scroll', 'click', 'wheel'
-    ];
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click', 'wheel'];
 
     const handleActivity = () => {
-      // فقط إعادة تعيين إذا لم يكن التحذير ظاهراً
-      // (لتجنب إعادة تعيين عند تحريك الماوس أثناء ظهور التحذير عن غير قصد)
-      if (!showWarning) {
+      // لا نُعيد التعيين أثناء ظهور التحذير (قراءة من ref لا تُعيد تشغيل الـ effect)
+      if (!showWarningRef.current) {
         resetTimer();
       }
     };
@@ -76,46 +78,45 @@ export function useIdleTimeout(onTimeout, timeoutMs = 20 * 60 * 1000, warningMs 
     // تشغيل المؤقت عند البدء
     resetTimer();
 
-    // تسجيل أحداث النشاط
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity, { passive: true });
-    });
+    events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
 
-    // مراقبة تغيير التبويب (visibility change)
+    // مراقبة تغيير التبويب
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        // عند العودة للتبويب، تحقق هل انتهت المهلة
         const elapsed = Date.now() - lastActivityRef.current;
         if (elapsed >= timeoutMs) {
           clearAllTimers();
+          showWarningRef.current = false;
           setShowWarning(false);
-          onTimeout();
-        } else {
+          onTimeoutRef.current();
+        } else if (!showWarningRef.current) {
           resetTimer();
         }
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // مراقبة التخزين المحلي (لمزامنة تسجيل الخروج بين التبويبات)
+    // مزامنة تسجيل الخروج بين التبويبات
     const handleStorage = (e) => {
       if (e.key === 'idle_logout_signal' && e.newValue === 'true') {
         clearAllTimers();
+        showWarningRef.current = false;
         setShowWarning(false);
-        onTimeout();
+        onTimeoutRef.current();
       }
     };
     window.addEventListener('storage', handleStorage);
 
     return () => {
       clearAllTimers();
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
+      events.forEach(event => window.removeEventListener(event, handleActivity));
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [resetTimer, clearAllTimers, onTimeout, timeoutMs, showWarning]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetTimer, clearAllTimers, timeoutMs]);
+  // ملاحظة: showWarning مُزالة من القائمة عمداً — نستخدم showWarningRef بدلاً منها
+  // لمنع إعادة تشغيل الـ effect (وإعادة تعيين المؤقت) عند ظهور التحذير
 
   return { showWarning, remainingSeconds, dismissWarning };
 }
