@@ -26,6 +26,7 @@ export default function Home() {
   const [resendTimer, setResendTimer] = useState(0);
 
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
+  const [pendingAuth, setPendingAuth] = useState(null);
   const navigate = useNavigate();
   const isEmailVerificationTemporarilyDisabled = appParams.disableEmailVerification === true;
   const apiBaseUrl = (appParams.apiUrl || '').replace(/\/$/, '');
@@ -55,7 +56,7 @@ export default function Home() {
     }
   }, [resendTimer]);
 
-  const completeLogin = (member) => {
+  const completeLogin = (member, token) => {
     if (!member) return false;
     const navItems = getNavItemsForRole(member.role || 'volunteer');
     const firstPage = navItems[0]?.name || 'Dashboard';
@@ -65,8 +66,9 @@ export default function Home() {
         email: userEmail,
         full_name: member.full_name,
         user_role: member.role === 'governor' ? 'admin' : 'user',
+        role: member.role,
         national_id: member.national_id,
-      });
+      }, token);
       window.location.href = createPageUrl(firstPage);
     } else {
       api.auth.redirectToLogin(createPageUrl(firstPage));
@@ -85,35 +87,24 @@ export default function Home() {
         setLoading(false);
         return;
       }
-      const members = await api.entities.TeamMember.list();
-      const member = members.find(m => m.national_id === nationalId);
-      
-      if (!member) {
-        setError(t('login.errors.idNotRegistered'));
-        setLoading(false);
-        return;
-      }
-
-      if (member.password !== password) {
-        setError(t('login.errors.wrongPassword'));
-        setLoading(false);
-        return;
-      }
+      const { user, token } = await api.auth.login(nationalId, password);
 
       if (isEmailVerificationTemporarilyDisabled) {
-        completeLogin(member);
+        completeLogin(user, token);
         setLoading(false);
         return;
       }
 
-      if (!member.email) {
+      const email = user.email;
+      if (!email) {
         setError(t('login.errors.noEmail'));
         setLoading(false);
         return;
       }
 
-      setMemberEmail(member.email);
-      const codeSent = await sendVerificationCodeEmail(member.email);
+      setPendingAuth({ user, token });
+      setMemberEmail(email);
+      const codeSent = await sendVerificationCodeEmail(email);
       if (codeSent) {
         setStep(2);
         setResendTimer(60);
@@ -150,10 +141,8 @@ export default function Home() {
     try {
       const result = await api.functions.verifyCode({ email: memberEmail, code: verificationCode });
       if (result.success) {
-        const members = await api.entities.TeamMember.list();
-        const member = members.find(m => m.national_id === nationalId);
-        if (member) {
-          completeLogin(member);
+        if (pendingAuth) {
+          completeLogin(pendingAuth.user, pendingAuth.token);
         } else {
           setError(t('login.errors.userNotRegistered'));
           setLoading(false);

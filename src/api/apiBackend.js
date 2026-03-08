@@ -7,6 +7,7 @@ import { AXES_SEED, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequir
 import { STANDARDS_CSV, getStandardIndexFromCode } from '@/api/standardsFromCsv';
 
 const AUTH_USER_KEY = 'api_auth_user';
+const AUTH_TOKEN_KEY = 'api_auth_token';
 const CSV_SYNC_VERSION = '6';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const LEGACY_FILES_MIGRATION_KEY = 'legacy_local_to_api_files_migrated_v1';
@@ -26,12 +27,18 @@ function getBaseUrl() {
 
 const allowServerReseed = import.meta.env.DEV || appParams.allowServerReseed === true;
 
+function getStoredToken() {
+  try { return localStorage.getItem(AUTH_TOKEN_KEY) || null; } catch { return null; }
+}
+
 async function api(method, path, body) {
   const base = getBaseUrl();
   const opts = {
     method,
     headers: { 'Content-Type': 'application/json' },
   };
+  const storedToken = getStoredToken();
+  if (storedToken) opts.headers['Authorization'] = `Bearer ${storedToken}`;
   if (body !== undefined) opts.body = JSON.stringify(body);
   const res = await fetch(base + path, opts);
   if (res.status === 204) return null;
@@ -118,18 +125,36 @@ const auth = {
     return user;
   },
   isAuthenticated() {
-    return !!getStoredUser();
+    return !!(getStoredUser() && getStoredToken());
   },
   logout(redirectUrl) {
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     if (redirectUrl && typeof window !== 'undefined') window.location.href = redirectUrl;
   },
   redirectToLogin(url) {
     if (typeof window !== 'undefined') window.location.href = url || window.location.pathname || '/';
   },
-  setUser(user) {
+  setUser(user, token) {
     if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
     else localStorage.removeItem(AUTH_USER_KEY);
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    else localStorage.removeItem(AUTH_TOKEN_KEY);
+  },
+  async login(national_id, password) {
+    const base = getBaseUrl();
+    const res = await fetch(base + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ national_id, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status >= 400) {
+      const err = new Error(data.error || res.statusText);
+      err.status = res.status;
+      throw err;
+    }
+    return data; // { user, token }
   },
 };
 
