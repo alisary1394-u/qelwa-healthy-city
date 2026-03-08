@@ -110,7 +110,11 @@ function enqueueMutationBackup(reason) {
 const ALLOWED_ORIGINS = [
   'https://www.qeelwah.com',
   'https://qelwa-healthy-city.railway.app',
-  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'] : [])
+  // localhost مسموح دائماً (للتطوير المحلي) — لا خطر أمني لأن Bearer tokens تُستخدم بدل cookies
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:8080',
+  'http://localhost:3000',
 ];
 app.use(cors({
   origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
