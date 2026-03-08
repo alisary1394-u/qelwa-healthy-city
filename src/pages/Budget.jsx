@@ -12,18 +12,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, Clock, Loader2, Pencil } from "lucide-react";
+import { Plus, DollarSign, TrendingUp, TrendingDown, Search, FileText, Clock, Loader2, Pencil, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from '@/hooks/usePermissions';
 import T from '@/components/T';
 import { AXES_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 
 const transactionCategories = {
-  expense: ['salaries', 'supplies', 'operations', 'events', 'transportation', 'communication', 'printing', 'other_expense'],
-  income: ['sponsorship', 'donation', 'government', 'other_income']
+  expense: ['salaries', 'supplies', 'operations', 'events', 'transportation', 'communication', 'printing', 'maintenance', 'contracts', 'training', 'rent', 'hospitality', 'other_expense'],
+  income: ['sponsorship', 'donation', 'government', 'fees', 'other_income']
 };
 
 const paymentMethods = ['cash', 'check', 'bankTransfer', 'card', 'other'];
+
+// حساب ضريبة القيمة المضافة
+const calcVat = (amount, rate) => Math.round(amount * (rate / 100) * 100) / 100;
 
 export default function Budget() {
   const { t, i18n } = useTranslation();
@@ -56,6 +59,10 @@ export default function Budget() {
     initiative_id: '',
     initiative_title: '',
     payment_method: 'cash',
+    payment_reference: '',
+    vat_rate: 0,
+    vat_amount: 0,
+    total_amount: 0,
     receipt_number: '',
     beneficiary: '',
     notes: '',
@@ -220,15 +227,22 @@ export default function Budget() {
   // Statistics
   const totalIncome = transactions
     .filter(t => t.type === 'income' && t.status === 'paid')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+    .reduce((sum, t) => sum + (Number(t.total_amount) || Number(t.amount) || 0), 0);
 
   const totalExpenses = transactions
     .filter(t => t.type === 'expense' && t.status === 'paid')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+    .reduce((sum, t) => sum + (Number(t.total_amount) || Number(t.amount) || 0), 0);
+
+  // المصروفات المعتمدة (لم تُصرف بعد) — تمثل التزامات مالية
+  const committedExpenses = transactions
+    .filter(t => t.type === 'expense' && t.status === 'approved')
+    .reduce((sum, t) => sum + (Number(t.total_amount) || Number(t.amount) || 0), 0);
 
   const pendingTransactions = transactions.filter(t => t.status === 'pending').length;
 
   const balance = totalIncome - totalExpenses;
+  // الرصيد المتاح = الإيرادات - المصروف الفعلي - الملتزم به (معتمد)
+  const availableBalance = totalIncome - totalExpenses - committedExpenses;
 
   // Calculate total allocated budgets (excluding initiative-level allocations that are covered by committee/axis allocations)
   const { totalAllocatedBudgets, totalInitiativesBudgets, totalCommitted } = useMemo(() => {
@@ -294,6 +308,23 @@ export default function Budget() {
     }, {});
   }, [allocations, initiatives]);
 
+  // الإنفاق الفعلي المحتسب من المعاملات المدفوعة لكل تخصيص
+  const allocationSpentMap = useMemo(() => {
+    const result = {};
+    transactions
+      .filter(t => t.type === 'expense' && t.status === 'paid')
+      .forEach(t => {
+        const amount = Number(t.total_amount) || Number(t.amount) || 0;
+        const match = allocations.find(a =>
+          (t.initiative_id && a.initiative_id && String(a.initiative_id) === String(t.initiative_id)) ||
+          (t.committee_id && a.committee_id && String(a.committee_id) === String(t.committee_id)) ||
+          (t.axis_id && a.axis_id && String(a.axis_id) === String(t.axis_id))
+        );
+        if (match) result[match.id] = (result[match.id] || 0) + amount;
+      });
+    return result;
+  }, [transactions, allocations]);
+
   const filteredStandardsForAllocation = useMemo(() => {
     if (!allocationForm.axis_id) return sortAndDeduplicateStandardsByCode(standards);
     return sortAndDeduplicateStandardsByCode(standards.filter((standard) => String(standard.axis_id || '') === String(allocationForm.axis_id)));
@@ -331,6 +362,10 @@ export default function Budget() {
       initiative_id: '',
       initiative_title: '',
       payment_method: 'cash',
+      payment_reference: '',
+      vat_rate: 0,
+      vat_amount: 0,
+      total_amount: 0,
       receipt_number: '',
       beneficiary: '',
       notes: '',
@@ -372,19 +407,35 @@ export default function Budget() {
   const handleSaveTransaction = async (e) => {
     e.preventDefault();
     if (!canCreateTransactions) return;
+
+    // تحذير تجاوز الميزانية المتاحة
+    if (!editingTransaction && transactionForm.type === 'expense' && activeBudget) {
+      const newAmount = Number(transactionForm.total_amount) || Number(transactionForm.amount) || 0;
+      const remainingAvailable = (activeBudget.total_budget || 0) - totalExpenses - committedExpenses;
+      if (newAmount > remainingAvailable && remainingAvailable >= 0) {
+        const confirmOver = window.confirm(
+          `⚠️ تحذير: هذه المعاملة (${newAmount.toLocaleString()} ريال) تتجاوز الرصيد المتاح (${remainingAvailable.toLocaleString()} ريال).\nهل تريد المتابعة رغم ذلك؟`
+        );
+        if (!confirmOver) return;
+      }
+    }
+
     setSaving(true);
     
     if (editingTransaction) {
       await updateTransactionMutation.mutateAsync({
         id: editingTransaction.id,
-        data: {
-          ...transactionForm
-        }
+        data: { ...transactionForm }
       });
     } else {
-      const transactionNumber = `T${Date.now().toString().slice(-6)}`;
+      const year = new Date().getFullYear();
+      const typePrefix = transactionForm.type === 'expense' ? 'EXP' : 'INC';
+      const typeCount = transactions.filter(tx => tx.type === transactionForm.type).length;
+      const transactionNumber = `${typePrefix}-${year}-${String(typeCount + 1).padStart(3, '0')}`;
+      const totalAmount = Number(transactionForm.total_amount) || Number(transactionForm.amount) || 0;
       await createTransactionMutation.mutateAsync({
         ...transactionForm,
+        total_amount: totalAmount,
         transaction_number: transactionNumber,
         status: 'pending'
       });
@@ -554,13 +605,14 @@ export default function Budget() {
             </CardContent>
           </Card>
 
-          <Card className={`bg-gradient-to-br ${balance >= 0 ? 'from-[#0f766e] to-[#14918a]' : 'from-amber-700 to-amber-800'} text-white`}>
+          <Card className={`bg-gradient-to-br ${availableBalance >= 0 ? 'from-[#0f766e] to-[#14918a]' : 'from-red-700 to-red-900'} text-white`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white text-opacity-80 text-sm mb-1">{t('budget.currentBalance')}</p>
-                  <p className="text-3xl font-bold">{balance.toLocaleString()}</p>
+                  <p className="text-white text-opacity-80 text-sm mb-1">{t('budget.availableBalance')}</p>
+                  <p className="text-3xl font-bold">{availableBalance.toLocaleString()}</p>
                   <p className="text-sm text-white text-opacity-80 mt-1">{t('currency.sar')}</p>
+                  <p className="text-xs text-white/60 mt-1">{t('budget.paidBalance')}: {balance.toLocaleString()}</p>
                 </div>
                 <DollarSign className="w-12 h-12 text-white text-opacity-60" />
               </div>
@@ -571,9 +623,12 @@ export default function Budget() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/70 text-sm mb-1">{t('budget.pendingTransactions')}</p>
-                  <p className="text-3xl font-bold">{pendingTransactions}</p>
-                  <p className="text-sm text-white/70 mt-1">{t('budget.awaitingApproval')}</p>
+                  <p className="text-white/70 text-sm mb-1">{t('budget.committedExpenses')}</p>
+                  <p className="text-3xl font-bold">{committedExpenses.toLocaleString()}</p>
+                  <p className="text-sm text-white/70 mt-1">{t('currency.sar')}</p>
+                  {pendingTransactions > 0 && (
+                    <p className="text-xs text-yellow-300 mt-1">⏳ {pendingTransactions} {t('budget.awaitingApproval')}</p>
+                  )}
                 </div>
                 <Clock className="w-12 h-12 text-white/30" />
               </div>
@@ -862,6 +917,10 @@ export default function Budget() {
                           {transaction.payment_method && <div>{t('budget.transactionTab.paymentMethod')} <strong><T>{t(`budget.paymentMethods.${transaction.payment_method}`, transaction.payment_method)}</T></strong></div>}
                           {transaction.committee_name && <div>{t('budget.transactionTab.committeeLabel')} <strong><T>{transaction.committee_name}</T></strong></div>}
                           {transaction.axis_name && <div>{t('budget.transactionTab.axisLabel')} <strong><T>{transaction.axis_name}</T></strong></div>}
+                          {(transaction.vat_rate > 0) && <div>{t('budget.transactionTab.vatLabel')} <strong className="text-amber-600">{(transaction.vat_amount || 0).toLocaleString()} {t('currency.riyal')} ({transaction.vat_rate}%)</strong> — {t('budget.transactionTab.totalLabel')}: <strong>{(Number(transaction.total_amount) || Number(transaction.amount) || 0).toLocaleString()} {t('currency.riyal')}</strong></div>}
+                          {transaction.payment_reference && <div>{t('budget.transactionTab.paymentReferenceLabel')} <strong className="font-mono">{transaction.payment_reference}</strong></div>}
+                          {transaction.approved_by && <div>{t('budget.transactionTab.approvedBy')} <strong>{transaction.approved_by}</strong>{transaction.approval_date ? ` — ${transaction.approval_date}` : ''}</div>}
+                          {transaction.payment_date && <div>{t('budget.transactionTab.paymentDate')} <strong>{transaction.payment_date}</strong></div>}
                         </div>
                       </div>
                       {canCreateTransactions && (
@@ -874,7 +933,10 @@ export default function Budget() {
                             setTransactionForm({
                               type: transaction.type,
                               category: transaction.category,
-                              amount: transaction.amount,
+                              amount: transaction.amount || 0,
+                              vat_rate: transaction.vat_rate || 0,
+                              vat_amount: transaction.vat_amount || 0,
+                              total_amount: transaction.total_amount || transaction.amount || 0,
                               description: transaction.description,
                               date: transaction.date,
                               committee_id: transaction.committee_id || '',
@@ -886,6 +948,7 @@ export default function Budget() {
                               initiative_id: transaction.initiative_id || '',
                               initiative_title: transaction.initiative_title || '',
                               payment_method: transaction.payment_method || 'cash',
+                              payment_reference: transaction.payment_reference || '',
                               receipt_number: transaction.receipt_number || '',
                               beneficiary: transaction.beneficiary || '',
                               notes: transaction.notes || '',
@@ -1117,7 +1180,7 @@ export default function Budget() {
                 (() => {
                   const linkedInitiatives = allocationInitiativesMap[allocation.id] || [];
                   const initiativesBudgetTotal = linkedInitiatives.reduce((sum, initiative) => sum + (Number(initiative.budget) || 0), 0);
-                  const actualSpent = Number(allocation.spent_amount) || 0;
+                  const actualSpent = allocationSpentMap[allocation.id] ?? Number(allocation.spent_amount) ?? 0;
                   const totalUtilized = actualSpent + initiativesBudgetTotal;
                   const remaining = (Number(allocation.allocated_amount) || 0) - totalUtilized;
                   const utilizationPct = Number(allocation.allocated_amount) > 0
@@ -1308,8 +1371,42 @@ export default function Budget() {
               </div>
               <div className="space-y-2">
                 <Label>{t('budget.form.amountRiyal')}</Label>
-                <Input type="number" value={transactionForm.amount} onChange={(e) => setTransactionForm({ ...transactionForm, amount: parseFloat(e.target.value) || 0 })} required />
+                <Input type="number" min="0" step="0.01" value={transactionForm.amount} onChange={(e) => {
+                  const amount = parseFloat(e.target.value) || 0;
+                  const vatAmount = calcVat(amount, transactionForm.vat_rate);
+                  setTransactionForm({ ...transactionForm, amount, vat_amount: vatAmount, total_amount: amount + vatAmount });
+                }} required />
               </div>
+              <div className="space-y-2">
+                <Label>{t('budget.form.vatRate')}</Label>
+                <Select value={String(transactionForm.vat_rate)} onValueChange={(v) => {
+                  const rate = Number(v);
+                  const vatAmount = calcVat(transactionForm.amount, rate);
+                  setTransactionForm({ ...transactionForm, vat_rate: rate, vat_amount: vatAmount, total_amount: transactionForm.amount + vatAmount });
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">{t('budget.form.vatNone')}</SelectItem>
+                    <SelectItem value="15">{t('budget.form.vat15')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {transactionForm.vat_rate > 0 && (
+                <div className="col-span-2 bg-amber-50 border border-amber-200 rounded p-3 text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('budget.form.amountBeforeVat')}:</span>
+                    <strong>{transactionForm.amount.toLocaleString()} {t('currency.riyal')}</strong>
+                  </div>
+                  <div className="flex justify-between text-amber-700">
+                    <span>{t('budget.form.vatAmount')} ({transactionForm.vat_rate}%):</span>
+                    <strong>{transactionForm.vat_amount.toLocaleString()} {t('currency.riyal')}</strong>
+                  </div>
+                  <div className="flex justify-between font-bold border-t border-amber-200 pt-1">
+                    <span>{t('budget.form.totalWithVat')}:</span>
+                    <strong className="text-amber-700">{transactionForm.total_amount.toLocaleString()} {t('currency.riyal')}</strong>
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>{t('budget.form.dateRequired')}</Label>
                 <Input type="date" value={transactionForm.date} onChange={(e) => setTransactionForm({ ...transactionForm, date: e.target.value })} required />
@@ -1335,8 +1432,19 @@ export default function Budget() {
               </div>
               <div className="space-y-2">
                 <Label>{t('budget.form.receiptNumber')}</Label>
-                <Input value={transactionForm.receipt_number} onChange={(e) => setTransactionForm({ ...transactionForm, receipt_number: e.target.value })} />
+                <Input value={transactionForm.receipt_number} onChange={(e) => setTransactionForm({ ...transactionForm, receipt_number: e.target.value })} placeholder={t('budget.form.receiptPlaceholder')} />
               </div>
+              {transactionForm.payment_method !== 'cash' && (
+                <div className="space-y-2">
+                  <Label>{t('budget.form.paymentReference')} <span className="text-red-500 text-xs">*</span></Label>
+                  <Input
+                    value={transactionForm.payment_reference}
+                    onChange={(e) => setTransactionForm({ ...transactionForm, payment_reference: e.target.value })}
+                    required={transactionForm.payment_method !== 'cash'}
+                    placeholder={transactionForm.payment_method === 'check' ? t('budget.form.checkNumberPlaceholder') : t('budget.form.transferReferencePlaceholder')}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>{t('budget.form.axis')}</Label>
                 <Select value={transactionForm.axis_id || 'none'} onValueChange={(v) => {
