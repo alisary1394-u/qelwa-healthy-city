@@ -77,12 +77,7 @@ export default function Layout({ children }) {
     queryFn: () => api.auth.me()
   });
 
-  const { data: settings = [] } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => api.entities.Settings.list()
-  });
-
-  const currentSetting = settings[0] || {};
+  const currentSetting = appSetting;
 
   const toggleSidebar = () => {
     const next = !sidebarCollapsed;

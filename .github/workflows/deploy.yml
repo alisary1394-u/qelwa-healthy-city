@@ -27,9 +27,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
       - name: Deploy to Railway
-        uses: railwayapp/cli@v1
-        with:
-          command: up
+        run: railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

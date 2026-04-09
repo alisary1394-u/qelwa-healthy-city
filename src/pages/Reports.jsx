@@ -133,6 +133,7 @@ export default function Reports() {
   const { data: axes = [] } = useQuery({ queryKey: ['axes'], queryFn: () => api.entities.Axis.list('order') });
   const { data: evidence = [] } = useQuery({ queryKey: ['evidence'], queryFn: () => api.entities.Evidence.list() });
   const { data: settings = [] } = useQuery({ queryKey: ['settings'], queryFn: () => api.entities.Settings.list() });
+  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
   const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.entities.Transaction.list('-date') });
   const { data: budgets = [] } = useQuery({ queryKey: ['budgets'], queryFn: () => api.entities.Budget.list('-created_date') });
   const { data: allocations = [] } = useQuery({ queryKey: ['allocations'], queryFn: () => api.entities.BudgetAllocation.list() });
@@ -434,7 +435,7 @@ export default function Reports() {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">{t('reports.title')}</h1>
-                <p className="text-blue-100 text-sm mt-1"><T>{t('reports.citySubtitle', { city: settings[0]?.city_name || t('layout.defaultCity') })}</T></p>
+                <p className="text-blue-100 text-sm mt-1"><T>{t('reports.citySubtitle', { city: currentSetting?.city_name || t('layout.defaultCity') })}</T></p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -603,7 +604,7 @@ export default function Reports() {
               </Card>
 
               <div className="hidden">
-                <WHOStandardsReport standards={standards} axes={axes} evidence={evidence} settings={settings[0]} />
+                <WHOStandardsReport standards={standards} axes={axes} evidence={evidence} settings={currentSetting} />
               </div>
             </div>
           </TabsContent>

@@ -47,7 +47,7 @@ export default function Home() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const currentSetting = settings[0] || {};
+  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
 
   React.useEffect(() => {
     if (resendTimer > 0) {
