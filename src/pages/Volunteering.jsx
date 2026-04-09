@@ -19,7 +19,7 @@ import {
   HandHelping, Plus, Search, Users, MapPin, Loader2, Eye, CheckCircle, AlertCircle,
   Clock, Calendar, Target, Building, Lightbulb, ClipboardList, UserPlus, UserCheck,
   UserX, Filter, TrendingUp, BarChart3, Star, Heart, Edit, Trash2, X, ChevronDown,
-  Award, Briefcase, GraduationCap, Megaphone, Activity, Lock, Shield
+  Award, Briefcase, GraduationCap, Megaphone, Activity, Lock, Shield, Play, Square
 } from "lucide-react";
 
 // --- Constants ---
@@ -257,6 +257,26 @@ export default function Volunteering() {
       toast({ title: t('volunteering.toast.deleted'), description: t('volunteering.toast.opportunityDeleted') });
     } catch (err) {
       toast({ title: t('common.error'), description: err?.message || t('volunteering.toast.deleteFailed'), variant: 'destructive' });
+    }
+  };
+
+  const handleToggleOpportunityRunStop = async (opp) => {
+    if (!canEditOpp(opp)) return;
+    const isRunning = opp.status === 'open' || opp.status === 'in_progress';
+    const nextStatus = isRunning ? 'closed' : 'open';
+
+    try {
+      await updateMutation.mutateAsync({ id: opp.id, data: { ...opp, id: undefined, status: nextStatus } });
+      toast({
+        title: t('volunteering.toast.updated'),
+        description: isRunning ? 'تم إيقاف الفرصة بنجاح.' : 'تم تشغيل الفرصة بنجاح.',
+      });
+
+      if (selectedOpp?.id === opp.id) {
+        setSelectedOpp({ ...opp, status: nextStatus });
+      }
+    } catch (err) {
+      toast({ title: t('common.error'), description: err?.message || t('volunteering.toast.updateFailed'), variant: 'destructive' });
     }
   };
 
@@ -693,6 +713,24 @@ export default function Volunteering() {
                             onClick={() => { setSelectedOpp(opp); setViewOpen(true); }}>
                             <Eye className="w-3.5 h-3.5 ms-1" />{t('common.view')}
                           </Button>
+                          {canEditOpp(opp) && (
+                            <Button
+                              size="sm"
+                              className={`flex-1 text-xs text-white ${opp.status === 'open' || opp.status === 'in_progress' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#0f766e] hover:bg-[#0f766e]/90'}`}
+                              onClick={() => handleToggleOpportunityRunStop(opp)}
+                              disabled={updateMutation.isPending}
+                            >
+                              {opp.status === 'open' || opp.status === 'in_progress' ? (
+                                <>
+                                  <Square className="w-3.5 h-3.5 ms-1" />إيقاف
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-3.5 h-3.5 ms-1" />تشغيل
+                                </>
+                              )}
+                            </Button>
+                          )}
                           {opp.status === 'open' && !canEditOpp(opp) && (
                             <Button size="sm" className="flex-1 text-xs bg-[#0f766e] hover:bg-[#0f766e]/90 text-white"
                               onClick={() => handleApplyToOpportunity(opp)}>
