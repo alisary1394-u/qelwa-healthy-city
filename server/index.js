@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 8080;
 // على Railway (وراء reverse proxy) — ثق بـ proxy واحد فقط للحماية من تزوير X-Forwarded-For
 app.set('trust proxy', 1);
 
-const sessions = new Map();
+const inMemorySessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
 const loginAttempts = new Map(); // ip -> { count, lockedUntil }
 const verifyCodeRequests = new Map(); // email -> { count, windowStart }
@@ -39,12 +39,77 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 ساعات
 const VERIFY_CODE_MAX = 3;
 const VERIFY_CODE_WINDOW = 10 * 60 * 1000; // 10 دقائق
 
-// تنظيف دوري للجلسات المنتهية ومحاولات الدخول القديمة
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, session] of sessions.entries()) {
-    if (now > session.expiresAt) sessions.delete(token);
+async function saveSession(token, user, expiresAt) {
+  const payload = {
+    user,
+    expiresAt,
+    created_at: new Date().toISOString(),
+  };
+  try {
+    const db = await getDb();
+    const existing = db.get('auth_session', token);
+    if (existing) db.update('auth_session', token, payload);
+    else db.create('auth_session', token, payload);
+    inMemorySessions.delete(token);
+  } catch {
+    // Fallback to in-memory session if DB is temporarily unavailable
+    inMemorySessions.set(token, payload);
   }
+}
+
+async function readSession(token) {
+  const mem = inMemorySessions.get(token);
+  if (mem) {
+    if (Date.now() > mem.expiresAt) {
+      inMemorySessions.delete(token);
+      return null;
+    }
+    return mem;
+  }
+  try {
+    const db = await getDb();
+    const session = db.get('auth_session', token);
+    if (!session) return null;
+    if (Date.now() > Number(session.expiresAt || 0)) {
+      db.remove('auth_session', token);
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
+
+async function deleteSession(token) {
+  inMemorySessions.delete(token);
+  try {
+    const db = await getDb();
+    db.remove('auth_session', token);
+  } catch {
+    // Ignore DB failures during logout cleanup
+  }
+}
+
+async function cleanupExpiredSessions() {
+  const now = Date.now();
+  for (const [token, session] of inMemorySessions.entries()) {
+    if (now > Number(session.expiresAt || 0)) inMemorySessions.delete(token);
+  }
+  try {
+    const db = await getDb();
+    const sessions = db.list('auth_session');
+    for (const session of sessions) {
+      if (now > Number(session.expiresAt || 0)) db.remove('auth_session', session.id);
+    }
+  } catch {
+    // DB may be unavailable briefly during startup/deploy
+  }
+}
+
+// تنظيف دوري للجلسات المنتهية ومحاولات الدخول القديمة
+setInterval(async () => {
+  const now = Date.now();
+  await cleanupExpiredSessions();
   for (const [ip, data] of loginAttempts.entries()) {
     if (now > data.lockedUntil + LOGIN_LOCKOUT_MS) loginAttempts.delete(ip);
   }
@@ -315,20 +380,27 @@ function entityToTable(name) {
   return name.replace(/([A-Z])/g, (_, c) => '_' + c.toLowerCase()).replace(/^_/, '');
 }
 
-function getAuthUser(req) {
+async function getAuthUser(req) {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (!token) return null;
-  const session = sessions.get(token);
+  const session = await readSession(token);
   if (!session) return null;
-  if (Date.now() > session.expiresAt) { sessions.delete(token); return null; }
+  if (Date.now() > Number(session.expiresAt || 0)) {
+    await deleteSession(token);
+    return null;
+  }
   return session.user;
 }
 
-function requireAuth(req, res, next) {
-  const user = getAuthUser(req);
-  if (!user) return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
-  req.currentUser = user;
-  next();
+async function requireAuth(req, res, next) {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
+    req.currentUser = user;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
+  }
 }
 
 function requireRole(...roles) {
@@ -449,7 +521,7 @@ app.post('/api/auth/login', async (req, res) => {
       national_id: member.national_id,
     };
     const token = randomBytes(32).toString('hex');
-    sessions.set(token, { user, expiresAt: Date.now() + SESSION_TTL_MS });
+    await saveSession(token, user, Date.now() + SESSION_TTL_MS);
     console.log(`[Auth] Login success: ${member.full_name} (${member.role}) IP: ${ip}`);
     res.json({ user, token });
   } catch (e) {
@@ -465,9 +537,9 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
   res.json(req.currentUser);
 });
 
-app.post('/api/auth/logout', requireAuth, (req, res) => {
+app.post('/api/auth/logout', requireAuth, async (req, res) => {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
-  if (token) sessions.delete(token);
+  if (token) await deleteSession(token);
   res.json({ ok: true });
 });
 

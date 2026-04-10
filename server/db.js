@@ -20,7 +20,7 @@ const TABLES = [
   'committee', 'team_member', 'settings', 'axis', 'standard', 'initiative',
   'initiative_kpi', 'task', 'budget', 'budget_allocation', 'transaction',
   'evidence', 'notification', 'file_upload', 'family_survey', 'user_preferences', 'verification_code',
-  'volunteer_opportunity', 'permission_override'
+  'volunteer_opportunity', 'permission_override', 'auth_session'
 ];
 
 let db = null;
