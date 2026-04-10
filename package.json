@@ -25,6 +25,8 @@
     "permissions-xlsx": "node scripts/generate-permissions-xlsx.js",
     "backup:auto": "node scripts/backup.js --auto",
     "seed-data": "node scripts/seed-sample-data.js",
+    "seed-volunteering": "node scripts/seed-volunteer-opportunities.js",
+    "enhance-volunteering": "node scripts/enhance-volunteer-opportunities.js",
     "persist-data": "node scripts/persist-current-data.js"
   },
   "dependencies": {
