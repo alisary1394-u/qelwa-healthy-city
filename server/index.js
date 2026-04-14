@@ -327,8 +327,6 @@ app.use((req, res, next) => {
     "base-uri 'self'; " +
     "form-action 'self'; " +
     "upgrade-insecure-requests;"
-    "base-uri 'self'; " +
-    "form-action 'self';"
   );
   // Permissions Policy — تقييد الوصول للمتصفح APIs
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), clipboard-read=(self)');
