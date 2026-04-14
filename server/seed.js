@@ -5,7 +5,7 @@
 import * as db from './db.js';
 import bcrypt from 'bcryptjs';
 
-const PASS = '123456';
+const PASS = process.env.DEFAULT_ADMIN_PASSWORD || '123456';
 const DEFAULT_COORDINATOR_EMAIL = (process.env.DEFAULT_COORDINATOR_EMAIL || 'coordinator@local').trim().toLowerCase();
 const DEFAULT_COORDINATOR_PASSWORD = process.env.DEFAULT_COORDINATOR_PASSWORD || PASS;
 const DEFAULT_COORDINATOR_PHONE = process.env.DEFAULT_COORDINATOR_PHONE || '0500000001';

@@ -156,6 +156,9 @@ const auth = {
     }
     return data; // { user, token }
   },
+  async verifyPassword(password) {
+    return api('POST', '/api/auth/verify-password', { password });
+  },
 };
 
 const functions = {

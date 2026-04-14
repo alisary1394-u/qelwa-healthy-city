@@ -121,7 +121,7 @@ setInterval(async () => {
   for (const [token, data] of humanChallenges.entries()) {
     if (now > Number(data.expiresAt || 0)) humanChallenges.delete(token);
   }
-}, 30 * 60 * 1000);
+}, 10 * 60 * 1000); // تنظيف كل 10 دقائق بدلاً من 30
 let backupSnapshotInFlight = false;
 let lastMutationBackupAt = 0;
 
@@ -177,15 +177,20 @@ function enqueueMutationBackup(reason) {
     });
 }
 
-const ALLOWED_ORIGINS = [
+const PRODUCTION_ORIGINS = [
   'https://www.qeelwah.com',
   'https://qelwa-healthy-city.railway.app',
-  // localhost مسموح دائماً (للتطوير المحلي) — لا خطر أمني لأن Bearer tokens تُستخدم بدل cookies
+];
+const DEV_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:4173',
   'http://localhost:8080',
   'http://localhost:3000',
 ];
+// في بيئة الإنتاج: نطاقات الإنتاج فقط. في التطوير: نضيف localhost
+const ALLOWED_ORIGINS = isRailwayRuntime()
+  ? PRODUCTION_ORIGINS
+  : [...PRODUCTION_ORIGINS, ...DEV_ORIGINS];
 app.use(cors({
   origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
   credentials: true
@@ -297,6 +302,10 @@ app.get('/api/trap', (req, res) => {
 
 // رؤوس أمان شاملة للتطبيق المنشور
 app.use((req, res, next) => {
+  // HSTS — فرض HTTPS دائمًا (سنة كاملة)
+  if (isRailwayRuntime()) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   // منع تضمين الموقع في iframe
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   // منع MIME sniffing
@@ -306,6 +315,7 @@ app.use((req, res, next) => {
   // منع الإحالة
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Content Security Policy — منع تحميل المحتوى من مصادر خارجية غير مصرح بها
+  // ملاحظة: unsafe-inline مطلوب حالياً لأن Vite يولّد سكربتات مضمّنة و Radix UI يستخدم أنماط مضمّنة
   res.setHeader('Content-Security-Policy', 
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; " +
@@ -314,6 +324,9 @@ app.use((req, res, next) => {
     "img-src 'self' data: blob: https:; " +
     "connect-src 'self' https://www.qeelwah.com https://*.railway.app https://*.supabase.co wss://*.supabase.co https://api.mymemory.translated.net; " +
     "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "upgrade-insecure-requests;"
     "base-uri 'self'; " +
     "form-action 'self';"
   );
@@ -349,7 +362,7 @@ app.get('/api/bootstrap', async (req, res) => {
     enqueueMutationBackup('bootstrap');
     res.status(200).json({
       ok: true,
-      message: `تم إنشاء ${teamCount} عضو. سجّل الدخول برقم الهوية 1 وكلمة المرور 123456`,
+      message: `تم إنشاء ${teamCount} عضو. سجّل الدخول ببيانات المشرف الافتراضية.`,
       teamCount,
     });
   } catch (e) {
@@ -631,6 +644,31 @@ app.post('/api/auth/logout', requireAuth, async (req, res) => {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (token) await deleteSession(token);
   res.json({ ok: true });
+});
+
+// التحقق من كلمة مرور المستخدم الحالي (للعمليات الحساسة مثل الحذف)
+app.post('/api/auth/verify-password', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ ok: false, error: 'كلمة المرور مطلوبة' });
+    const db = await getDb();
+    const members = db.list('team_member');
+    const member = members.find((m) => m.id === req.currentUser.id);
+    if (!member) return res.status(404).json({ ok: false, error: 'المستخدم غير موجود' });
+    let isValid = false;
+    if (member.password?.startsWith('$2b$') || member.password?.startsWith('$2a$')) {
+      isValid = await bcrypt.compare(String(password), member.password);
+    } else {
+      isValid = member.password === String(password);
+      if (isValid) {
+        const hashed = await bcrypt.hash(String(password), 12);
+        db.update('team_member', member.id, { password: hashed });
+      }
+    }
+    res.json({ ok: isValid });
+  } catch (e) {
+    return safeError(res, e);
+  }
 });
 
 // كيانات: list, get, create, update, delete
@@ -1191,7 +1229,7 @@ async function ensureMinimalSeedOnStartup() {
     const { runSeed } = await import('./seed.js');
     await runSeed({ forceSampleTeam: true });
     const after = db.list('team_member').length;
-    console.log('[Qelwa] تم إنشاء', after, 'عضو. الدخول: رقم الهوية 1 وكلمة المرور 123456');
+    console.log('[Qelwa] تم إنشاء', after, 'عضو. الدخول: رقم الهوية 1 وكلمة المرور الافتراضية');
   } catch (e) {
     console.error('[Qelwa] فشل البذر التلقائي:', e?.message || e);
   }

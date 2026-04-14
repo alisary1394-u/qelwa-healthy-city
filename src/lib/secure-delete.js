@@ -139,19 +139,12 @@ function openSecureDialog({
 }
 
 async function verifyCurrentUserPassword(password) {
-  const currentUser = await api.auth.me();
-  const nationalId = String(currentUser?.national_id || '').trim();
-  const email = String(currentUser?.email || '').trim().toLowerCase();
-
-  const members = await api.entities.TeamMember.list();
-  const member = members.find((m) => {
-    const byNationalId = nationalId && String(m.national_id || '').trim() === nationalId;
-    const byEmail = email && String(m.email || '').trim().toLowerCase() === email;
-    return byNationalId || byEmail;
-  });
-
-  if (!member) return false;
-  return String(member.password || '') === String(password || '');
+  try {
+    const result = await api.auth.verifyPassword(password);
+    return result?.ok === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function requireSecureDeleteConfirmation(itemLabel = 'هذا العنصر') {
