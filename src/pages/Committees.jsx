@@ -504,7 +504,14 @@ export default function Committees() {
                             {subCommittees.length} {t('committees.subCommittee')}
                           </span>
                           <span className="text-muted-foreground truncate">
-                            ({subCommittees.map(s => s.name).join('، ')})
+                            (
+                            {subCommittees.map((s, index) => (
+                              <span key={s.id || `${committee.id}-${index}`}>
+                                {index > 0 ? (rtl ? '، ' : ', ') : ''}
+                                <T>{s.name}</T>
+                              </span>
+                            ))}
+                            )
                           </span>
                         </div>
                       ) : null;
