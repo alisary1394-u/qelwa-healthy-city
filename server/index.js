@@ -458,11 +458,31 @@ function sanitizeMember(member) {
   return safe;
 }
 
+function createCaptchaSvg(code) {
+  const colors = ['#166534', '#1d4ed8', '#7c3aed', '#b45309', '#be123c'];
+  const pick = (i) => colors[i % colors.length];
+  const chars = String(code).split('');
+  const text = chars.map((ch, i) => {
+    const x = 22 + i * 22;
+    const y = 34 + (i % 2 === 0 ? -2 : 4);
+    const rotate = (i % 2 === 0 ? -10 : 8);
+    return `<text x="${x}" y="${y}" font-size="24" font-family="Arial" font-weight="700" fill="${pick(i)}" transform="rotate(${rotate} ${x} ${y})">${ch}</text>`;
+  }).join('');
+  const noise = Array.from({ length: 6 }, (_, i) => {
+    const x1 = 8 + i * 20;
+    const x2 = 24 + i * 18;
+    const y1 = 12 + (i % 3) * 10;
+    const y2 = 38 - (i % 3) * 8;
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="1" opacity="0.6" />`;
+  }).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="48" viewBox="0 0 140 48"><rect width="140" height="48" rx="10" fill="#f8fafc" stroke="#cbd5e1" />${noise}${text}</svg>`;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
 function createHumanChallenge(ip) {
-  const left = Math.floor(Math.random() * 8) + 1;
-  const right = Math.floor(Math.random() * 8) + 1;
   const token = randomBytes(24).toString('hex');
-  const answer = String(left + right);
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const answer = Array.from({ length: 5 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
   humanChallenges.set(token, {
     answer,
     ip,
@@ -470,8 +490,9 @@ function createHumanChallenge(ip) {
   });
   return {
     token,
-    question_ar: `كم ناتج ${left} + ${right} ؟`,
-    question_en: `What is ${left} + ${right}?`,
+    prompt_ar: 'اكتب الرموز الظاهرة في الصورة',
+    prompt_en: 'Enter the characters shown in the image',
+    image: createCaptchaSvg(answer),
     expires_in_seconds: Math.floor(HUMAN_CHALLENGE_TTL_MS / 1000),
   };
 }
@@ -503,8 +524,8 @@ function validateHumanChallenge(req) {
     return { ok: false, status: 400, error: 'انتهت صلاحية التحقق البشري. أعد المحاولة.' };
   }
 
-  if (String(challenge.answer).trim() !== String(humanAnswer).trim()) {
-    return { ok: false, status: 400, error: 'إجابة التحقق البشري غير صحيحة.' };
+  if (String(challenge.answer).trim().toUpperCase() !== String(humanAnswer).trim().toUpperCase()) {
+    return { ok: false, status: 400, error: 'رمز التحقق من الصورة غير صحيح.' };
   }
 
   humanChallenges.delete(String(humanToken));

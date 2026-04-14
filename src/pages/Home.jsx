@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { createPageUrl } from '@/utils';
 import { getNavItemsForRole } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
@@ -25,9 +24,8 @@ export default function Home() {
   const [verificationCode, setVerificationCode] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
-  const [humanChallenge, setHumanChallenge] = useState({ token: '', question: '', answer: '' });
+  const [humanChallenge, setHumanChallenge] = useState({ token: '', prompt: '', image: '', answer: '' });
   const [humanAnswer, setHumanAnswer] = useState('');
-  const [isHumanChecked, setIsHumanChecked] = useState(false);
   const [website, setWebsite] = useState('');
 
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
@@ -62,18 +60,33 @@ export default function Home() {
   }, [resendTimer]);
 
   const buildClientChallenge = React.useCallback(() => {
-    const left = Math.floor(Math.random() * 8) + 1;
-    const right = Math.floor(Math.random() * 8) + 1;
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const answer = Array.from({ length: 5 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+    const colors = ['#166534', '#1d4ed8', '#7c3aed', '#b45309', '#be123c'];
+    const text = answer.split('').map((ch, i) => {
+      const x = 22 + i * 22;
+      const y = 34 + (i % 2 === 0 ? -2 : 4);
+      const rotate = (i % 2 === 0 ? -10 : 8);
+      return `<text x="${x}" y="${y}" font-size="24" font-family="Arial" font-weight="700" fill="${colors[i % colors.length]}" transform="rotate(${rotate} ${x} ${y})">${ch}</text>`;
+    }).join('');
+    const noise = Array.from({ length: 6 }, (_, i) => {
+      const x1 = 8 + i * 20;
+      const x2 = 24 + i * 18;
+      const y1 = 12 + (i % 3) * 10;
+      const y2 = 38 - (i % 3) * 8;
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="1" opacity="0.6" />`;
+    }).join('');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="48" viewBox="0 0 140 48"><rect width="140" height="48" rx="10" fill="#f8fafc" stroke="#cbd5e1" />${noise}${text}</svg>`;
     return {
       token: '',
-      question: rtl ? `كم ناتج ${left} + ${right} ؟` : `What is ${left} + ${right}?`,
-      answer: String(left + right),
+      prompt: rtl ? 'اكتب الرموز الظاهرة في الصورة' : 'Enter the characters shown in the image',
+      image: `data:image/svg+xml;base64,${window.btoa(unescape(encodeURIComponent(svg)))}`,
+      answer,
     };
   }, [rtl]);
 
   const refreshHumanChallenge = React.useCallback(async () => {
     setHumanAnswer('');
-    setIsHumanChecked(false);
     setWebsite('');
 
     if (!apiBaseUrl) {
@@ -87,13 +100,15 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       setHumanChallenge({
         token: String(data.token || ''),
-        question: rtl ? (data.question_ar || '') : (data.question_en || data.question_ar || ''),
+        prompt: rtl ? (data.prompt_ar || '') : (data.prompt_en || data.prompt_ar || ''),
+        image: String(data.image || ''),
         answer: '',
       });
     } catch {
       setHumanChallenge({
         token: '',
-        question: rtl ? 'تعذر تحميل التحقق البشري. حدّث الصفحة ثم أعد المحاولة.' : 'Human verification is unavailable. Please refresh the page.',
+        prompt: rtl ? 'تعذر تحميل صورة التحقق. حدّث الصفحة ثم أعد المحاولة.' : 'Captcha image is unavailable. Please refresh the page.',
+        image: '',
         answer: '',
       });
     }
@@ -135,21 +150,15 @@ export default function Home() {
         return;
       }
 
-      if (!isHumanChecked) {
-        setError(rtl ? 'يرجى تأكيد أنك لست روبوتاً.' : 'Please confirm you are not a robot.');
-        setLoading(false);
-        return;
-      }
-
-      const normalizedHumanAnswer = String(humanAnswer || '').trim();
+      const normalizedHumanAnswer = String(humanAnswer || '').trim().toUpperCase();
       if (!normalizedHumanAnswer) {
-        setError(rtl ? 'يرجى حل سؤال التحقق البشري.' : 'Please solve the human verification challenge.');
+        setError(rtl ? 'يرجى إدخال رمز الصورة.' : 'Please enter the captcha code.');
         setLoading(false);
         return;
       }
 
       if (!apiBaseUrl && humanChallenge.answer && normalizedHumanAnswer !== humanChallenge.answer) {
-        setError(rtl ? 'إجابة التحقق البشري غير صحيحة.' : 'Human verification answer is incorrect.');
+        setError(rtl ? 'رمز التحقق من الصورة غير صحيح.' : 'Captcha code is incorrect.');
         setLoading(false);
         refreshHumanChallenge();
         return;
@@ -398,38 +407,36 @@ export default function Home() {
                       </div>
 
                       <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            id="human-check"
-                            checked={isHumanChecked}
-                            onCheckedChange={(checked) => setIsHumanChecked(checked === true)}
-                          />
-                          <div className="space-y-1">
-                            <Label htmlFor="human-check" className="text-sm font-medium cursor-pointer">
-                              {rtl ? 'نحتاج التحقق أنك لست روبوتاً' : 'We need to check if you are a robot'}
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                              {rtl ? 'فعّل الخيار ثم أجب على السؤال البسيط أدناه.' : 'Tick the box and answer the simple challenge below.'}
-                            </p>
-                          </div>
+                        <div className="space-y-1">
+                          <Label className="text-sm font-medium">
+                            {rtl ? 'التحقق من خلال صورة' : 'Image captcha verification'}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {humanChallenge.prompt || (rtl ? 'اكتب الحروف والأرقام الظاهرة في الصورة.' : 'Enter the letters and numbers shown in the image.')}
+                          </p>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label className="text-sm">{humanChallenge.question || (rtl ? 'جارٍ تجهيز سؤال التحقق...' : 'Preparing verification challenge...')}</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="text"
-                              value={humanAnswer}
-                              onChange={(e) => setHumanAnswer(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                              placeholder={rtl ? 'اكتب الناتج' : 'Enter answer'}
-                              inputMode="numeric"
-                              className="h-11 text-base"
-                            />
-                            <Button type="button" variant="outline" onClick={refreshHumanChallenge} className="shrink-0">
-                              {rtl ? 'تحديث' : 'Refresh'}
-                            </Button>
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg border bg-white p-2 min-w-[140px] h-[48px] flex items-center justify-center overflow-hidden">
+                            {humanChallenge.image ? (
+                              <img src={humanChallenge.image} alt={rtl ? 'صورة تحقق' : 'Captcha image'} className="h-full w-full object-contain" />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{rtl ? 'جارٍ تحميل الصورة...' : 'Loading image...'}</span>
+                            )}
                           </div>
+                          <Button type="button" variant="outline" onClick={refreshHumanChallenge} className="shrink-0">
+                            {rtl ? 'تحديث الصورة' : 'Refresh image'}
+                          </Button>
                         </div>
+
+                        <Input
+                          type="text"
+                          value={humanAnswer}
+                          onChange={(e) => setHumanAnswer(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
+                          placeholder={rtl ? 'اكتب الرمز كما يظهر' : 'Enter the code as shown'}
+                          autoCapitalize="characters"
+                          className="h-11 text-base tracking-[0.25em] text-center"
+                        />
 
                         <input
                           type="text"
@@ -451,7 +458,7 @@ export default function Home() {
 
                       <Button
                         type="submit"
-                        disabled={loading || !isHumanChecked || !humanAnswer.trim()}
+                        disabled={loading || !humanAnswer.trim() || !humanChallenge.image}
                         className="w-full h-12 text-base font-semibold gradient-primary hover:opacity-90 transition-opacity"
                       >
                         {loading && <Loader2 className={`w-5 h-5 ${rtl ? 'ml-2' : 'mr-2'} animate-spin`} />}
