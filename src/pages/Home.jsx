@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createPageUrl } from '@/utils';
 import { getNavItemsForRole } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
@@ -24,6 +25,10 @@ export default function Home() {
   const [verificationCode, setVerificationCode] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
+  const [humanChallenge, setHumanChallenge] = useState({ token: '', question: '', answer: '' });
+  const [humanAnswer, setHumanAnswer] = useState('');
+  const [isHumanChecked, setIsHumanChecked] = useState(false);
+  const [website, setWebsite] = useState('');
 
   const [displayedVerificationCode, setDisplayedVerificationCode] = useState('');
   const [pendingAuth, setPendingAuth] = useState(null);
@@ -56,6 +61,48 @@ export default function Home() {
     }
   }, [resendTimer]);
 
+  const buildClientChallenge = React.useCallback(() => {
+    const left = Math.floor(Math.random() * 8) + 1;
+    const right = Math.floor(Math.random() * 8) + 1;
+    return {
+      token: '',
+      question: rtl ? `كم ناتج ${left} + ${right} ؟` : `What is ${left} + ${right}?`,
+      answer: String(left + right),
+    };
+  }, [rtl]);
+
+  const refreshHumanChallenge = React.useCallback(async () => {
+    setHumanAnswer('');
+    setIsHumanChecked(false);
+    setWebsite('');
+
+    if (!apiBaseUrl) {
+      setHumanChallenge(buildClientChallenge());
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/auth/human-check`);
+      if (!res.ok) throw new Error('challenge_failed');
+      const data = await res.json().catch(() => ({}));
+      setHumanChallenge({
+        token: String(data.token || ''),
+        question: rtl ? (data.question_ar || '') : (data.question_en || data.question_ar || ''),
+        answer: '',
+      });
+    } catch {
+      setHumanChallenge({
+        token: '',
+        question: rtl ? 'تعذر تحميل التحقق البشري. حدّث الصفحة ثم أعد المحاولة.' : 'Human verification is unavailable. Please refresh the page.',
+        answer: '',
+      });
+    }
+  }, [apiBaseUrl, buildClientChallenge, rtl]);
+
+  React.useEffect(() => {
+    refreshHumanChallenge();
+  }, [refreshHumanChallenge]);
+
   const completeLogin = (member, token) => {
     if (!member) return false;
     const navItems = getNavItemsForRole(member.role || 'volunteer');
@@ -87,7 +134,38 @@ export default function Home() {
         setLoading(false);
         return;
       }
-      const { user, token } = await api.auth.login(nationalId, password);
+
+      if (!isHumanChecked) {
+        setError(rtl ? 'يرجى تأكيد أنك لست روبوتاً.' : 'Please confirm you are not a robot.');
+        setLoading(false);
+        return;
+      }
+
+      const normalizedHumanAnswer = String(humanAnswer || '').trim();
+      if (!normalizedHumanAnswer) {
+        setError(rtl ? 'يرجى حل سؤال التحقق البشري.' : 'Please solve the human verification challenge.');
+        setLoading(false);
+        return;
+      }
+
+      if (!apiBaseUrl && humanChallenge.answer && normalizedHumanAnswer !== humanChallenge.answer) {
+        setError(rtl ? 'إجابة التحقق البشري غير صحيحة.' : 'Human verification answer is incorrect.');
+        setLoading(false);
+        refreshHumanChallenge();
+        return;
+      }
+
+      if (apiBaseUrl && !humanChallenge.token) {
+        setError(rtl ? 'تعذر تهيئة التحقق البشري. حدّث الصفحة ثم أعد المحاولة.' : 'Unable to initialize human verification. Refresh the page and try again.');
+        setLoading(false);
+        return;
+      }
+
+      const { user, token } = await api.auth.login(nationalId, password, {
+        humanToken: humanChallenge.token,
+        humanAnswer: normalizedHumanAnswer,
+        website,
+      });
 
       if (isEmailVerificationTemporarilyDisabled) {
         completeLogin(user, token);
@@ -115,6 +193,7 @@ export default function Home() {
       const msg = (err && (err.message || err.error_description || err.details)) || t('login.errors.generalError');
       setError(String(msg));
       setLoading(false);
+      refreshHumanChallenge();
     }
   };
 
@@ -318,6 +397,51 @@ export default function Home() {
                         />
                       </div>
 
+                      <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id="human-check"
+                            checked={isHumanChecked}
+                            onCheckedChange={(checked) => setIsHumanChecked(checked === true)}
+                          />
+                          <div className="space-y-1">
+                            <Label htmlFor="human-check" className="text-sm font-medium cursor-pointer">
+                              {rtl ? 'نحتاج التحقق أنك لست روبوتاً' : 'We need to check if you are a robot'}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {rtl ? 'فعّل الخيار ثم أجب على السؤال البسيط أدناه.' : 'Tick the box and answer the simple challenge below.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">{humanChallenge.question || (rtl ? 'جارٍ تجهيز سؤال التحقق...' : 'Preparing verification challenge...')}</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              value={humanAnswer}
+                              onChange={(e) => setHumanAnswer(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                              placeholder={rtl ? 'اكتب الناتج' : 'Enter answer'}
+                              inputMode="numeric"
+                              className="h-11 text-base"
+                            />
+                            <Button type="button" variant="outline" onClick={refreshHumanChallenge} className="shrink-0">
+                              {rtl ? 'تحديث' : 'Refresh'}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <input
+                          type="text"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={website}
+                          onChange={(e) => setWebsite(e.target.value)}
+                          className="hidden"
+                          aria-hidden="true"
+                        />
+                      </div>
+
                       {error && (
                         <div className="bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-xl text-sm flex items-start gap-2">
                           <Shield className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -327,7 +451,7 @@ export default function Home() {
 
                       <Button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !isHumanChecked || !humanAnswer.trim()}
                         className="w-full h-12 text-base font-semibold gradient-primary hover:opacity-90 transition-opacity"
                       >
                         {loading && <Loader2 className={`w-5 h-5 ${rtl ? 'ml-2' : 'mr-2'} animate-spin`} />}

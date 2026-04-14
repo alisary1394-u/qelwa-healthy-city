@@ -141,12 +141,12 @@ const auth = {
     if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
     else localStorage.removeItem(AUTH_TOKEN_KEY);
   },
-  async login(national_id, password) {
+  async login(national_id, password, security = {}) {
     const base = getBaseUrl();
     const res = await fetch(base + '/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ national_id, password }),
+      body: JSON.stringify({ national_id, password, ...security }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status >= 400) {

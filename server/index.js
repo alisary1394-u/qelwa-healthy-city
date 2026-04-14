@@ -33,11 +33,13 @@ const inMemorySessions = new Map();
 const verificationCodes = new Map(); // email -> { code, expires_at }
 const loginAttempts = new Map(); // ip -> { count, lockedUntil }
 const verifyCodeRequests = new Map(); // email -> { count, windowStart }
+const humanChallenges = new Map(); // token -> { answer, expiresAt, ip }
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 دقيقة
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 ساعات
 const VERIFY_CODE_MAX = 3;
 const VERIFY_CODE_WINDOW = 10 * 60 * 1000; // 10 دقائق
+const HUMAN_CHALLENGE_TTL_MS = 10 * 60 * 1000; // 10 دقائق
 
 async function saveSession(token, user, expiresAt) {
   const payload = {
@@ -115,6 +117,9 @@ setInterval(async () => {
   }
   for (const [email, data] of verifyCodeRequests.entries()) {
     if (now - data.windowStart > VERIFY_CODE_WINDOW * 2) verifyCodeRequests.delete(email);
+  }
+  for (const [token, data] of humanChallenges.entries()) {
+    if (now > Number(data.expiresAt || 0)) humanChallenges.delete(token);
   }
 }, 30 * 60 * 1000);
 let backupSnapshotInFlight = false;
@@ -453,6 +458,64 @@ function sanitizeMember(member) {
   return safe;
 }
 
+function createHumanChallenge(ip) {
+  const left = Math.floor(Math.random() * 8) + 1;
+  const right = Math.floor(Math.random() * 8) + 1;
+  const token = randomBytes(24).toString('hex');
+  const answer = String(left + right);
+  humanChallenges.set(token, {
+    answer,
+    ip,
+    expiresAt: Date.now() + HUMAN_CHALLENGE_TTL_MS,
+  });
+  return {
+    token,
+    question_ar: `كم ناتج ${left} + ${right} ؟`,
+    question_en: `What is ${left} + ${right}?`,
+    expires_in_seconds: Math.floor(HUMAN_CHALLENGE_TTL_MS / 1000),
+  };
+}
+
+function validateHumanChallenge(req) {
+  const { humanToken, humanAnswer, website } = req.body || {};
+
+  if (String(website || '').trim() !== '') {
+    return { ok: false, status: 400, error: 'فشل التحقق الأمني.' };
+  }
+
+  if (!humanToken || humanAnswer == null || String(humanAnswer).trim() === '') {
+    return { ok: false, status: 400, error: 'يرجى إكمال التحقق البشري.' };
+  }
+
+  const challenge = humanChallenges.get(String(humanToken));
+  if (!challenge) {
+    return { ok: false, status: 400, error: 'انتهت صلاحية التحقق البشري. أعد المحاولة.' };
+  }
+
+  const ip = getRateLimitKey(req);
+  if (challenge.ip && challenge.ip !== ip) {
+    humanChallenges.delete(String(humanToken));
+    return { ok: false, status: 400, error: 'رمز التحقق البشري غير صالح لهذه الجلسة.' };
+  }
+
+  if (Date.now() > Number(challenge.expiresAt || 0)) {
+    humanChallenges.delete(String(humanToken));
+    return { ok: false, status: 400, error: 'انتهت صلاحية التحقق البشري. أعد المحاولة.' };
+  }
+
+  if (String(challenge.answer).trim() !== String(humanAnswer).trim()) {
+    return { ok: false, status: 400, error: 'إجابة التحقق البشري غير صحيحة.' };
+  }
+
+  humanChallenges.delete(String(humanToken));
+  return { ok: true };
+}
+
+app.get('/api/auth/human-check', (req, res) => {
+  const ip = getRateLimitKey(req);
+  res.json(createHumanChallenge(ip));
+});
+
 // تسجيل الدخول
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -466,11 +529,17 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(429).json({ error: `تم تجاوز عدد محاولات الدخول. حاول بعد ${remaining} دقيقة.` });
     }
 
-    const db = await getDb();
     const { national_id, password } = req.body || {};
     if (!national_id || !password) {
       return res.status(400).json({ error: 'رقم الهوية وكلمة المرور مطلوبان' });
     }
+
+    const humanCheck = validateHumanChallenge(req);
+    if (!humanCheck.ok) {
+      return res.status(humanCheck.status || 400).json({ error: humanCheck.error });
+    }
+
+    const db = await getDb();
 
     const members = db.list('team_member');
     const member = members.find((m) => m.national_id === String(national_id));
