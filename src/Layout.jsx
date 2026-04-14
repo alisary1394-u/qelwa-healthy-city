@@ -31,6 +31,7 @@ import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '@/i18n';
 import T from '@/components/T';
+import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 
@@ -76,6 +77,9 @@ export default function Layout({ children }) {
     queryKey: ['currentUser'],
     queryFn: () => api.auth.me()
   });
+  const { translated: translatedUserName } = useAutoTranslate(currentUser?.full_name || '');
+  const displayUserName = translatedUserName || currentUser?.full_name || '';
+  const displayUserInitial = displayUserName.trim().charAt(0) || '?';
 
   const currentSetting = appSetting;
 
@@ -190,10 +194,10 @@ export default function Layout({ children }) {
               <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-sidebar-border">
                 <div className="flex items-center gap-3 p-2">
                   <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-sm">
-                    {currentUser.full_name?.charAt(0) || '?'}
+                    {displayUserInitial}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-sidebar-foreground truncate">{currentUser.full_name}</p>
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">{displayUserName}</p>
                     <p className="text-xs text-sidebar-foreground/50 truncate">{currentUser.email}</p>
                   </div>
                   <button onClick={() => logout(true)} className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400" title={t('nav.logout')}>
@@ -344,11 +348,11 @@ export default function Layout({ children }) {
                 <DropdownMenuTrigger asChild>
                   <button className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-2 py-2'} rounded-xl hover:bg-sidebar-accent transition-colors`}>
                     <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {currentUser.full_name?.charAt(0) || '?'}
+                      {displayUserInitial}
                     </div>
                     {!sidebarCollapsed && (
-                      <div className="flex-1 min-w-0 text-right">
-                        <p className="text-sm font-medium text-sidebar-foreground truncate">{currentUser.full_name}</p>
+                      <div className={`flex-1 min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
+                        <p className="text-sm font-medium text-sidebar-foreground truncate">{displayUserName}</p>
                         <p className="text-[11px] text-sidebar-foreground/50 truncate">{currentUser.email}</p>
                       </div>
                     )}
