@@ -49,17 +49,21 @@ export function usePermissions() {
   const { data: members = [] } = useQuery({
     queryKey: ['teamMembers'],
     queryFn: () => api.entities.TeamMember.list(),
+    select: (data) => Array.isArray(data) ? data : []
   });
 
   const { data: permissionOverrides = [] } = useQuery({
     queryKey: ['permissionOverrides'],
     queryFn: () => api.entities.PermissionOverride.list(),
+    select: (data) => Array.isArray(data) ? data : []
   });
 
   return useMemo(() => {
+    const membersList = Array.isArray(members) ? members : [];
+    const overridesList = Array.isArray(permissionOverrides) ? permissionOverrides : [];
     const currentMember = (currentUser?.national_id != null
-      ? members.find((m) => String(m.national_id) === String(currentUser.national_id))
-      : null) || members.find((m) => m.email === currentUser?.email);
+      ? membersList.find((m) => String(m.national_id) === String(currentUser.national_id))
+      : null) || membersList.find((m) => m.email === currentUser?.email);
     // الصلاحيات تعتمد فقط على دور العضو في الفريق: إن وُجد في الفريق نستخدم دوره، وإلا نعامله كمتطوع (لا نعتمد user_role من النظام حتى لا يحصل غير المسجلين على صلاحيات المشرف)
     const role = (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
       ? 'governor'
@@ -68,8 +72,8 @@ export function usePermissions() {
     // دمج الصلاحيات الافتراضية مع التخصيصات من قاعدة البيانات
     let permissions = getPermissions(role);
     
-    if (permissionOverrides.length > 0) {
-      const roleOverrides = permissionOverrides.filter((o) => o.role === role);
+    if (overridesList.length > 0) {
+      const roleOverrides = overridesList.filter((o) => o.role === role);
       if (roleOverrides.length > 0) {
         const customPermissions = { ...permissions };
         roleOverrides.forEach((override) => {

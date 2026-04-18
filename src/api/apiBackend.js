@@ -75,10 +75,12 @@ function createEntityHandler(entityName) {
   return {
     async list(orderBy) {
       const q = orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : '';
-      return api('GET', path + q);
+      const result = await api('GET', path + q);
+      return Array.isArray(result) ? result : [];
     },
     async filter(query, orderBy, limit) {
       let list = await api('GET', path + (orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : ''));
+      if (!Array.isArray(list)) list = [];
       if (query && typeof query === 'object') {
         list = list.filter((item) => Object.entries(query).every(([k, v]) => item[k] === v));
       }
@@ -180,7 +182,7 @@ const functions = {
     }
     if (name === 'createFirstGovernor') {
       const members = await entities.TeamMember.list();
-      if (members.length > 0) return { success: false, message: 'يوجد أعضاء مسجلون بالفعل.' };
+      if (Array.isArray(members) && members.length > 0) return { success: false, message: 'يوجد أعضاء مسجلون بالفعل.' };
       const { full_name, national_id, email, password } = data || {};
       if (!full_name || !national_id || !email || !password) return { success: false, message: 'جميع الحقول مطلوبة.' };
       await entities.TeamMember.create({
@@ -200,9 +202,10 @@ const functions = {
 async function seedDefaultGovernorIfNeeded() {
   if (!allowServerReseed) return null;
   const members = await entities.TeamMember.list();
-  if (members.length > 0) return getStoredUser();
+  if (Array.isArray(members) && members.length > 0) return getStoredUser();
   await api('POST', '/api/seed');
   const after = await entities.TeamMember.list();
+  if (!Array.isArray(after)) return null;
   const governor = after.find((m) => m.role === 'governor' || m.national_id === '1');
   if (governor) {
     const user = { email: governor.email, full_name: governor.full_name, user_role: governor.role === 'governor' ? 'admin' : 'user' };
@@ -229,7 +232,7 @@ async function syncStandardsFromCsv() {
     try { await api('POST', '/api/restore-axes'); } catch {}
     try { await api('POST', '/api/deduplicate-standards'); } catch {}
     const standards = await entities.Standard.list();
-    if (!standards || standards.length === 0) return;
+    if (!Array.isArray(standards) || standards.length === 0) return;
     let updated = 0;
     for (const standard of standards) {
       const code = (standard.code || '').trim().replace(/\s+/g, '');
@@ -262,7 +265,7 @@ async function syncStandardsFromCsv() {
 async function seedAxesAndStandardsIfNeeded() {
   if (allowServerReseed) {
     const axes = await entities.Axis.list();
-    if (axes.length === 0) await api('POST', '/api/seed');
+    if (!Array.isArray(axes) || axes.length === 0) await api('POST', '/api/seed');
   }
   await syncStandardsFromCsv();
 }
@@ -270,7 +273,7 @@ async function seedAxesAndStandardsIfNeeded() {
 async function seedCommitteesTeamInitiativesTasksIfNeeded() {
   if (!allowServerReseed) return;
   const committees = await entities.Committee.list();
-  if (committees.length === 0) await api('POST', '/api/seed');
+  if (!Array.isArray(committees) || committees.length === 0) await api('POST', '/api/seed');
 }
 
 async function clearLocalDataAndReseed() {

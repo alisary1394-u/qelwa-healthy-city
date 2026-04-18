@@ -49,9 +49,10 @@ export default function Layout({ children }) {
   // السماح بلقطات الشاشة للمشرف العام فقط — أو إذا عطّلها المشرف من الإعدادات
   const { data: settingsList = [] } = useQuery({
     queryKey: ['settings'],
-    queryFn: () => api.entities.Settings.list()
+    queryFn: () => api.entities.Settings.list(),
+    select: (data) => Array.isArray(data) ? data : []
   });
-  const appSetting = settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) || {};
+  const appSetting = (Array.isArray(settingsList) ? settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) : null) || {};
   const { theme, setTheme, systemTheme } = useTheme();
 
   // جلسة الخمول: تسجيل خروج تلقائي بعد 20 دقيقة من عدم النشاط
