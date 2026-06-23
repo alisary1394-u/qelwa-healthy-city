@@ -107,8 +107,9 @@ function applyCityScopeToList(entityName, list) {
   if (!isCityScopedEntity(entityName)) return list;
   const { isMinistryAdmin, cityId } = getUserScope();
   if (isMinistryAdmin) return list;
-  if (!cityId) return [];
-  return list.filter((item) => item?.city_id === cityId);
+  // توافق رجعي: البيانات القديمة بدون city_id يجب أن تبقى مرئية.
+  if (!cityId) return list.filter((item) => item?.city_id == null);
+  return list.filter((item) => item?.city_id == null || item?.city_id === cityId);
 }
 
 function createEntityHandler(entityName) {
@@ -136,7 +137,8 @@ function createEntityHandler(entityName) {
       if (!isCityScopedEntity(entityName)) return row;
       const { isMinistryAdmin, cityId } = getUserScope();
       if (isMinistryAdmin) return row;
-      if (!cityId || row?.city_id !== cityId) return null;
+      if (!cityId && row?.city_id != null) return null;
+      if (cityId && row?.city_id != null && row?.city_id !== cityId) return null;
       return row;
     },
     async create(data) {
@@ -144,8 +146,7 @@ function createEntityHandler(entityName) {
       if (isCityScopedEntity(entityName)) {
         const { isMinistryAdmin, cityId } = getUserScope();
         if (!isMinistryAdmin) {
-          if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
-          payload = { ...(data || {}), city_id: cityId };
+          payload = cityId ? { ...(data || {}), city_id: cityId } : { ...(data || {}) };
         }
       }
       return api('POST', path, payload);
@@ -154,7 +155,10 @@ function createEntityHandler(entityName) {
       if (isCityScopedEntity(entityName)) {
         const existing = await api('GET', path + '/' + encodeURIComponent(id));
         const { isMinistryAdmin, cityId } = getUserScope();
-        if (!isMinistryAdmin && (!cityId || existing?.city_id !== cityId)) return null;
+        if (!isMinistryAdmin) {
+          if (!cityId && existing?.city_id != null) return null;
+          if (cityId && existing?.city_id != null && existing?.city_id !== cityId) return null;
+        }
         const payload = !isMinistryAdmin && cityId ? { ...(data || {}), city_id: cityId } : data;
         return api('PATCH', path + '/' + encodeURIComponent(id), payload);
       }
@@ -164,7 +168,10 @@ function createEntityHandler(entityName) {
       if (isCityScopedEntity(entityName)) {
         const existing = await api('GET', path + '/' + encodeURIComponent(id));
         const { isMinistryAdmin, cityId } = getUserScope();
-        if (!isMinistryAdmin && (!cityId || existing?.city_id !== cityId)) return null;
+        if (!isMinistryAdmin) {
+          if (!cityId && existing?.city_id != null) return null;
+          if (cityId && existing?.city_id != null && existing?.city_id !== cityId) return null;
+        }
       }
       return api('DELETE', path + '/' + encodeURIComponent(id));
     },

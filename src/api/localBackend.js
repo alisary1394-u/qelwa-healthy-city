@@ -103,8 +103,9 @@ function applyCityScopeToList(entityName, arr) {
   if (!isCityScopedEntity(entityName)) return arr;
   const { isMinistryAdmin, cityId } = getUserScope();
   if (isMinistryAdmin) return arr;
-  if (!cityId) return [];
-  return arr.filter((item) => item?.city_id === cityId);
+  // توافق رجعي: البيانات القديمة كانت بدون city_id.
+  if (!cityId) return arr.filter((item) => item?.city_id == null);
+  return arr.filter((item) => item?.city_id == null || item?.city_id === cityId);
 }
 
 function createEntityHandler(entityName) {
@@ -152,8 +153,8 @@ function createEntityHandler(entityName) {
       const { isMinistryAdmin, cityId } = getUserScope();
       const record = { ...data, id };
       if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
-        if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
-        record.city_id = cityId;
+        // إن لم يوجد city_id للمستخدم نُبقي السجل legacy للتوافق مع البيانات القديمة.
+        if (cityId) record.city_id = cityId;
       }
       arr.push(record);
       setStore(entityName, arr);
@@ -165,7 +166,8 @@ function createEntityHandler(entityName) {
       if (i === -1) return null;
       const { isMinistryAdmin, cityId } = getUserScope();
       if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
-        if (!cityId || arr[i]?.city_id !== cityId) return null;
+        if (!cityId && arr[i]?.city_id != null) return null;
+        if (cityId && arr[i]?.city_id != null && arr[i]?.city_id !== cityId) return null;
       }
       const next = { ...arr[i], ...data, id };
       if (isCityScopedEntity(entityName) && !isMinistryAdmin && cityId) {
@@ -182,7 +184,8 @@ function createEntityHandler(entityName) {
         if (x.id !== id) return true;
         if (!isCityScopedEntity(entityName)) return false;
         if (isMinistryAdmin) return false;
-        return !(cityId && x.city_id === cityId);
+        if (!cityId) return x.city_id != null;
+        return !((x.city_id == null) || x.city_id === cityId);
       });
       setStore(entityName, arr);
     },

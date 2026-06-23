@@ -103,8 +103,9 @@ function applyCityScopeToList(entityName, list) {
   if (!isCityScopedEntity(entityName)) return list;
   const { isMinistryAdmin, cityId } = getUserScope();
   if (isMinistryAdmin) return list;
-  if (!cityId) return [];
-  return list.filter((item) => item?.city_id === cityId);
+  // توافق رجعي: إظهار البيانات القديمة بدون city_id.
+  if (!cityId) return list.filter((item) => item?.city_id == null);
+  return list.filter((item) => item?.city_id == null || item?.city_id === cityId);
 }
 
 let supabase = null;
@@ -151,7 +152,8 @@ function createEntityHandler(entityName) {
       if (!isCityScopedEntity(entityName)) return row;
       const { isMinistryAdmin, cityId } = getUserScope();
       if (isMinistryAdmin) return row;
-      if (!cityId || row?.city_id !== cityId) return null;
+      if (!cityId && row?.city_id != null) return null;
+      if (cityId && row?.city_id != null && row?.city_id !== cityId) return null;
       return row;
     },
     async create(data) {
@@ -160,8 +162,7 @@ function createEntityHandler(entityName) {
       const { isMinistryAdmin, cityId } = getUserScope();
       const body = { ...data };
       if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
-        if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
-        body.city_id = cityId;
+        if (cityId) body.city_id = cityId;
       }
       delete body.id;
       const { data: inserted, error } = await sb.from(table).insert({ id, body }).select('id, body').single();
@@ -175,7 +176,8 @@ function createEntityHandler(entityName) {
       const existingRecord = rowToRecord(existing);
       const { isMinistryAdmin, cityId } = getUserScope();
       if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
-        if (!cityId || existingRecord?.city_id !== cityId) return null;
+        if (!cityId && existingRecord?.city_id != null) return null;
+        if (cityId && existingRecord?.city_id != null && existingRecord?.city_id !== cityId) return null;
       }
       const body = { ...(existing.body || {}), ...data };
       if (isCityScopedEntity(entityName) && !isMinistryAdmin && cityId) {
@@ -192,7 +194,10 @@ function createEntityHandler(entityName) {
         const { data: existing } = await sb.from(table).select('id, body').eq('id', id).single();
         const existingRecord = rowToRecord(existing);
         const { isMinistryAdmin, cityId } = getUserScope();
-        if (!isMinistryAdmin && (!cityId || existingRecord?.city_id !== cityId)) return null;
+        if (!isMinistryAdmin) {
+          if (!cityId && existingRecord?.city_id != null) return null;
+          if (cityId && existingRecord?.city_id != null && existingRecord?.city_id !== cityId) return null;
+        }
       }
       const { error } = await sb.from(table).delete().eq('id', id);
       if (error) throw error;
