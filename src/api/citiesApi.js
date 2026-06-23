@@ -61,6 +61,45 @@ async function listLegacyDerivedCities() {
   }
 }
 
+async function createLegacyCityFromSettings(cityData) {
+  if (!api?.entities?.Settings?.create) {
+    throw new Error('تعذر تسجيل المدينة: كيان المدن غير متاح حالياً');
+  }
+
+  const existingSettingsRaw = await api?.entities?.Settings?.list?.();
+  const existingSettings = Array.isArray(existingSettingsRaw) ? existingSettingsRaw : [];
+
+  const normalizedName = normalizeCityName(cityData?.name);
+  const duplicate = existingSettings.find(
+    (s) => !s?.city_id && normalizeCityName(s?.city_name) === normalizedName
+  );
+  if (duplicate) {
+    throw new Error('هذه المدينة مسجلة مسبقاً');
+  }
+
+  const now = new Date().toISOString();
+  await api.entities.Settings.create({
+    city_name: cityData.name,
+    city_location: cityData.region || '',
+    contact_email: cityData.contact_email || '',
+    contact_phone: cityData.contact_phone || '',
+    status: cityData.status || 'active',
+    registered_at: now,
+    legacy_city_registration: true,
+  });
+
+  return {
+    id: toLegacyCityId(cityData.name),
+    name: cityData.name,
+    region: cityData.region || '',
+    contact_email: cityData.contact_email || null,
+    contact_phone: cityData.contact_phone || null,
+    status: cityData.status || 'active',
+    registered_at: now,
+    is_legacy_derived: true,
+  };
+}
+
 async function attachLegacyDataToCity(cityId, legacySetting, members) {
   try {
     if (legacySetting?.id && !legacySetting?.city_id && api?.entities?.Settings?.update) {
@@ -203,22 +242,36 @@ export async function createCity(cityData) {
   };
 
   if (api?.entities?.City) {
-    const city = await api.entities.City.create(record);
-    // تهيئة إعدادات المدينة مباشرة بعد التسجيل
     try {
-      if (api?.entities?.Settings) {
-        await api.entities.Settings.create({
-          city_id: city.id,
-          city_name: city.name,
-          city_location: city.region || '',
-          contact_email: city.contact_email || '',
-          contact_phone: city.contact_phone || '',
-        });
+      const city = await api.entities.City.create(record);
+      // تهيئة إعدادات المدينة مباشرة بعد التسجيل
+      try {
+        if (api?.entities?.Settings) {
+          await api.entities.Settings.create({
+            city_id: city.id,
+            city_name: city.name,
+            city_location: city.region || '',
+            contact_email: city.contact_email || '',
+            contact_phone: city.contact_phone || '',
+          });
+        }
+      } catch {
+        // لا نوقف إنشاء المدينة إذا فشلت تهيئة الإعدادات
       }
-    } catch {
-      // لا نوقف إنشاء المدينة إذا فشلت تهيئة الإعدادات
+      return city;
+    } catch (err) {
+      const msg = String(err?.message || '').toLowerCase();
+      const isUnknownEntity =
+        msg.includes('unknown entity') ||
+        msg.includes('كيان غير معروف') ||
+        msg.includes('entity');
+
+      // fallback للأنظمة التي لا تحتوي كيان City بعد
+      if (isUnknownEntity && api?.entities?.Settings?.create) {
+        return await createLegacyCityFromSettings(record);
+      }
+      throw err;
     }
-    return city;
   }
 
   const supabase = getSupabaseClient();
@@ -237,6 +290,11 @@ export async function createCity(cityData) {
       // best-effort
     }
     return data;
+  }
+
+  // fallback إضافي: في حال عدم وجود City ولكن توجد Settings
+  if (api?.entities?.Settings?.create) {
+    return await createLegacyCityFromSettings(record);
   }
 
   // local mock
