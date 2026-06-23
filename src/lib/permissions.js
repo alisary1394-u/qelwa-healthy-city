@@ -6,6 +6,7 @@
 
 /** أسماء المناصب — مفاتيح ترجمة + أسماء عربية كاحتياط */
 export const ROLE_LABELS = {
+  ministry_admin: 'مدير وزارة الصحة',
   governor: 'المشرف العام (المحافظ)',
   coordinator: 'منسق المدينة الصحية',
   committee_head: 'رئيس لجنة',
@@ -22,6 +23,7 @@ export const ROLE_LABELS = {
 
 /** مفاتيح ترجمة المناصب */
 export const ROLE_LABEL_KEYS = {
+  ministry_admin: 'roles.ministry_admin',
   governor: 'roles.governor',
   coordinator: 'roles.coordinator',
   committee_head: 'roles.committee_head',
@@ -476,6 +478,54 @@ export const PERMISSIONS_BY_ROLE = {
 // admin يُعامل كـ governor
 PERMISSIONS_BY_ROLE.admin = PERMISSIONS_BY_ROLE.governor;
 
+/** دور وزارة الصحة — صلاحيات إشرافية شاملة على جميع المدن */
+PERMISSIONS_BY_ROLE.ministry_admin = {
+  label: ROLE_LABELS.ministry_admin,
+  isMinistryAdmin: true,
+  canManageSettings: true,
+  canManageTeam: true,
+  canAddTeamMember: true,
+  canEditTeamMember: true,
+  canDeleteTeamMember: true,
+  canAddOrEditGovernor: true,
+  canAddOrEditCoordinator: true,
+  canManageCommittees: true,
+  canManageStandards: true,
+  canApproveEvidence: true,
+  canManageBudget: true,
+  canApproveTransactions: true,
+  canCreateTransactions: true,
+  canViewFinancials: true,
+  canManageInitiatives: true,
+  canVerifySurvey: true,
+  canCreateSurvey: true,
+  canViewReports: true,
+  canManageTasks: true,
+  canViewFiles: true,
+  canUploadFiles: true,
+  canManagePermissions: true,
+  canManageVolunteering: true,
+  canSeeDashboard: true,
+  canSeeSettings: true,
+  canSeeReports: true,
+  canSeeStandards: true,
+  canSeeInitiatives: true,
+  canSeeTasks: true,
+  canSeeBudget: true,
+  canSeeCommittees: true,
+  canSeeSurvey: true,
+  canSeeVolunteering: true,
+  canSeeTeam: true,
+  canSeeFiles: true,
+  canSeePermissions: true,
+  // صلاحيات حصرية للوزارة
+  canManageCities: true,
+  canSeeMinistryDashboard: true,
+  canRegisterCity: true,
+  canSuspendCity: true,
+  canViewAllCities: true,
+};
+
 /**
  * أعمدة جدول "مراجعة الصلاحيات حسب المنصب" — مصدر واحد للحقيقة مع PERMISSIONS_BY_ROLE.
  */
@@ -520,7 +570,7 @@ export const PERMISSION_REVIEW_KEYS = [
 
 /** ترتيب المناصب في جدول مراجعة الصلاحيات */
 export const PERMISSIONS_REVIEW_ROLE_ORDER = [
-  'governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor',
+  'ministry_admin', 'governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor',
   'committee_member', 'budget_manager', 'accountant', 'financial_officer', 'member', 'volunteer'
 ];
 
@@ -531,11 +581,13 @@ export const PERMISSIONS_REVIEW_ROLE_ORDER = [
  */
 export function getPermissions(role) {
   const r = role === 'admin' ? 'governor' : (role || 'volunteer');
+  if (r === 'ministry_admin') return PERMISSIONS_BY_ROLE.ministry_admin;
   return PERMISSIONS_BY_ROLE[r] ?? PERMISSIONS_BY_ROLE.volunteer;
 }
 
 /** عناصر القائمة الافتراضية مع مفتاح الصلاحية ومفتاح الترجمة لكل عنصر */
 export const NAV_ITEMS = [
+  { name: 'MinistryDashboard', label: 'لوحة وزارة الصحة', labelKey: 'nav.ministryDashboard', icon: 'Building2', permission: 'canSeeMinistryDashboard' },
   { name: 'Dashboard', label: 'لوحة التحكم', labelKey: 'nav.dashboard', icon: 'LayoutDashboard', permission: 'canSeeDashboard' },
   { name: 'Reports', label: 'التقارير', labelKey: 'nav.reports', icon: 'BarChart3', permission: 'canSeeReports' },
   { name: 'Standards', label: 'المعايير', labelKey: 'nav.standards', icon: 'Target', permission: 'canSeeStandards' },

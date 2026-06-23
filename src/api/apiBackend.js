@@ -63,11 +63,53 @@ function uploadFileToDataUrl(file) {
 }
 
 const ENTITY_NAMES = [
+  'City',
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',
   'PermissionOverride',
 ];
+
+const CITY_SCOPED_ENTITIES = new Set([
+  'TeamMember',
+  'Settings',
+  'Committee',
+  'Task',
+  'Notification',
+  'Standard',
+  'Evidence',
+  'KpiEvidence',
+  'Initiative',
+  'InitiativeKPI',
+  'Budget',
+  'BudgetAllocation',
+  'Transaction',
+  'FileUpload',
+  'FamilySurvey',
+  'UserPreferences',
+  'VolunteerOpportunity',
+  'PermissionOverride',
+]);
+
+function isCityScopedEntity(entityName) {
+  return CITY_SCOPED_ENTITIES.has(entityName);
+}
+
+function getUserScope() {
+  const user = getStoredUser();
+  const role = user?.role || user?.user_role;
+  const isMinistryAdmin = role === 'ministry_admin';
+  const cityId = user?.city_id || null;
+  return { isMinistryAdmin, cityId };
+}
+
+function applyCityScopeToList(entityName, list) {
+  if (!isCityScopedEntity(entityName)) return list;
+  const { isMinistryAdmin, cityId } = getUserScope();
+  if (isMinistryAdmin) return list;
+  if (!cityId) return [];
+  return list.filter((item) => item?.city_id === cityId);
+}
 
 function createEntityHandler(entityName) {
   const table = entityToTable(entityName);
@@ -76,11 +118,13 @@ function createEntityHandler(entityName) {
     async list(orderBy) {
       const q = orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : '';
       const result = await api('GET', path + q);
-      return Array.isArray(result) ? result : [];
+      const list = Array.isArray(result) ? result : [];
+      return applyCityScopeToList(entityName, list);
     },
     async filter(query, orderBy, limit) {
       let list = await api('GET', path + (orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : ''));
       if (!Array.isArray(list)) list = [];
+      list = applyCityScopeToList(entityName, list);
       if (query && typeof query === 'object') {
         list = list.filter((item) => Object.entries(query).every(([k, v]) => item[k] === v));
       }
@@ -88,15 +132,40 @@ function createEntityHandler(entityName) {
       return list;
     },
     async get(id) {
-      return api('GET', path + '/' + encodeURIComponent(id));
+      const row = await api('GET', path + '/' + encodeURIComponent(id));
+      if (!isCityScopedEntity(entityName)) return row;
+      const { isMinistryAdmin, cityId } = getUserScope();
+      if (isMinistryAdmin) return row;
+      if (!cityId || row?.city_id !== cityId) return null;
+      return row;
     },
     async create(data) {
-      return api('POST', path, data);
+      let payload = data;
+      if (isCityScopedEntity(entityName)) {
+        const { isMinistryAdmin, cityId } = getUserScope();
+        if (!isMinistryAdmin) {
+          if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
+          payload = { ...(data || {}), city_id: cityId };
+        }
+      }
+      return api('POST', path, payload);
     },
     async update(id, data) {
+      if (isCityScopedEntity(entityName)) {
+        const existing = await api('GET', path + '/' + encodeURIComponent(id));
+        const { isMinistryAdmin, cityId } = getUserScope();
+        if (!isMinistryAdmin && (!cityId || existing?.city_id !== cityId)) return null;
+        const payload = !isMinistryAdmin && cityId ? { ...(data || {}), city_id: cityId } : data;
+        return api('PATCH', path + '/' + encodeURIComponent(id), payload);
+      }
       return api('PATCH', path + '/' + encodeURIComponent(id), data);
     },
     async delete(id) {
+      if (isCityScopedEntity(entityName)) {
+        const existing = await api('GET', path + '/' + encodeURIComponent(id));
+        const { isMinistryAdmin, cityId } = getUserScope();
+        if (!isMinistryAdmin && (!cityId || existing?.city_id !== cityId)) return null;
+      }
       return api('DELETE', path + '/' + encodeURIComponent(id));
     },
   };

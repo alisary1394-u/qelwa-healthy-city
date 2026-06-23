@@ -17,6 +17,7 @@ import {
   HandHelping,
   MapPinned,
   Settings,
+  Building2,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -33,6 +34,7 @@ const ICON_MAP = {
   HandHelping,
   MapPinned,
   SettingsIcon: Settings,
+  Building2,
 };
 
 /**
@@ -65,7 +67,9 @@ export function usePermissions() {
       ? membersList.find((m) => String(m.national_id) === String(currentUser.national_id))
       : null) || membersList.find((m) => m.email === currentUser?.email);
     // الصلاحيات تعتمد فقط على دور العضو في الفريق: إن وُجد في الفريق نستخدم دوره، وإلا نعامله كمتطوع (لا نعتمد user_role من النظام حتى لا يحصل غير المسجلين على صلاحيات المشرف)
-    const role = (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
+    const role = (currentUser?.role === 'ministry_admin' || currentUser?.user_role === 'ministry_admin')
+      ? 'ministry_admin'
+      : (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
       ? 'governor'
       : (currentMember?.role || 'volunteer');
     
@@ -87,6 +91,7 @@ export function usePermissions() {
     }
     
     const isGovernor = role === 'governor';
+  const isMinistryAdmin = role === 'ministry_admin';
 
     // بناء عناصر القائمة بناءً على الصلاحيات المدمجة (الافتراضية + التخصيصات)
     const navItemsFromPerms = getNavItemsForRole(role);
@@ -103,6 +108,7 @@ export function usePermissions() {
       navItems,
       isGovernor,
       currentMember: currentMember ?? null,
+      isMinistryAdmin,
     };
   }, [currentUser, members, permissionOverrides]);
 }

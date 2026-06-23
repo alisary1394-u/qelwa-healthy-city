@@ -20,7 +20,7 @@ import {
 import { 
   LogOut, User, Menu, Settings as SettingsIcon, AlertTriangle, 
   Moon, Sun, Monitor, Check, ChevronRight, PanelLeftClose, PanelLeft, X,
-  Clock, ShieldAlert, Globe
+  Clock, ShieldAlert, Globe, Building2
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBackendConfigured, appParams } from '@/lib/app-params';
@@ -38,7 +38,7 @@ const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { navItems, permissions, isGovernor } = usePermissions();
+  const { navItems, permissions, isGovernor, isMinistryAdmin } = usePermissions();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
@@ -228,7 +228,13 @@ export default function Layout({ children }) {
               {!sidebarCollapsed && (
                 <div className="min-w-0">
                   <p className="font-bold text-sidebar-foreground text-sm truncate"><T>{currentSetting.city_name || t('home.healthyCity')}</T></p>
-                  <p className="text-[10px] text-sidebar-foreground/50 truncate"><T>{currentSetting.city_location || t('layout.defaultCity')}</T></p>
+                  {isMinistryAdmin ? (
+                    <p className="text-[10px] text-primary font-semibold flex items-center gap-1">
+                      <Building2 className="w-3 h-3" />وزارة الصحة
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-sidebar-foreground/50 truncate"><T>{currentSetting.city_location || t('layout.defaultCity')}</T></p>
+                  )}
                 </div>
               )}
             </Link>

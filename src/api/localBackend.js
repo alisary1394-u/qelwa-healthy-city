@@ -66,10 +66,51 @@ function uploadFileToDataUrl(file) {
   });
 }
 
+const CITY_SCOPED_ENTITIES = new Set([
+  'TeamMember',
+  'Settings',
+  'Committee',
+  'Task',
+  'Notification',
+  'Standard',
+  'Evidence',
+  'KpiEvidence',
+  'Initiative',
+  'InitiativeKPI',
+  'Budget',
+  'BudgetAllocation',
+  'Transaction',
+  'FileUpload',
+  'FamilySurvey',
+  'UserPreferences',
+  'VolunteerOpportunity',
+  'PermissionOverride',
+]);
+
+function getUserScope() {
+  const user = getCurrentUser();
+  const role = user?.role || user?.user_role;
+  const isMinistryAdmin = role === 'ministry_admin';
+  const cityId = user?.city_id || null;
+  return { isMinistryAdmin, cityId };
+}
+
+function isCityScopedEntity(entityName) {
+  return CITY_SCOPED_ENTITIES.has(entityName);
+}
+
+function applyCityScopeToList(entityName, arr) {
+  if (!isCityScopedEntity(entityName)) return arr;
+  const { isMinistryAdmin, cityId } = getUserScope();
+  if (isMinistryAdmin) return arr;
+  if (!cityId) return [];
+  return arr.filter((item) => item?.city_id === cityId);
+}
+
 function createEntityHandler(entityName) {
   return {
     list(orderBy) {
-      const arr = getStore(entityName);
+      const arr = applyCityScopeToList(entityName, getStore(entityName));
       if (!orderBy || typeof orderBy !== 'string') return [...arr];
       const [field, dir] = orderBy.startsWith('-') ? [orderBy.slice(1), -1] : [orderBy, 1];
       return [...arr].sort((a, b) => {
@@ -83,7 +124,7 @@ function createEntityHandler(entityName) {
       });
     },
     filter(query, orderBy, limit) {
-      let arr = getStore(entityName);
+      let arr = applyCityScopeToList(entityName, getStore(entityName));
       if (query && typeof query === 'object') {
         arr = arr.filter((item) => {
           return Object.entries(query).every(([k, v]) => item[k] === v);
@@ -102,13 +143,18 @@ function createEntityHandler(entityName) {
       return arr;
     },
     get(id) {
-      const arr = getStore(entityName);
+      const arr = applyCityScopeToList(entityName, getStore(entityName));
       return arr.find((x) => x.id === id) ?? null;
     },
     create(data) {
       const arr = getStore(entityName);
       const id = data.id || getId();
+      const { isMinistryAdmin, cityId } = getUserScope();
       const record = { ...data, id };
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
+        if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
+        record.city_id = cityId;
+      }
       arr.push(record);
       setStore(entityName, arr);
       return record;
@@ -117,18 +163,34 @@ function createEntityHandler(entityName) {
       const arr = getStore(entityName);
       const i = arr.findIndex((x) => x.id === id);
       if (i === -1) return null;
-      arr[i] = { ...arr[i], ...data, id };
+      const { isMinistryAdmin, cityId } = getUserScope();
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
+        if (!cityId || arr[i]?.city_id !== cityId) return null;
+      }
+      const next = { ...arr[i], ...data, id };
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin && cityId) {
+        next.city_id = cityId;
+      }
+      arr[i] = next;
       setStore(entityName, arr);
       return arr[i];
     },
     delete(id) {
-      const arr = getStore(entityName).filter((x) => x.id !== id);
+      const all = getStore(entityName);
+      const { isMinistryAdmin, cityId } = getUserScope();
+      const arr = all.filter((x) => {
+        if (x.id !== id) return true;
+        if (!isCityScopedEntity(entityName)) return false;
+        if (isMinistryAdmin) return false;
+        return !(cityId && x.city_id === cityId);
+      });
       setStore(entityName, arr);
     },
   };
 }
 
 const ENTITY_NAMES = [
+  'City',
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',

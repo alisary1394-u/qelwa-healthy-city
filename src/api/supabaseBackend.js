@@ -59,11 +59,53 @@ function uploadFileToDataUrl(file) {
 }
 
 const ENTITY_NAMES = [
+  'City',
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',
   'PermissionOverride',
 ];
+
+const CITY_SCOPED_ENTITIES = new Set([
+  'TeamMember',
+  'Settings',
+  'Committee',
+  'Task',
+  'Notification',
+  'Standard',
+  'Evidence',
+  'KpiEvidence',
+  'Initiative',
+  'InitiativeKPI',
+  'Budget',
+  'BudgetAllocation',
+  'Transaction',
+  'FileUpload',
+  'FamilySurvey',
+  'UserPreferences',
+  'VolunteerOpportunity',
+  'PermissionOverride',
+]);
+
+function isCityScopedEntity(entityName) {
+  return CITY_SCOPED_ENTITIES.has(entityName);
+}
+
+function getUserScope() {
+  const user = getCurrentUser();
+  const role = user?.role || user?.user_role;
+  const isMinistryAdmin = role === 'ministry_admin';
+  const cityId = user?.city_id || null;
+  return { isMinistryAdmin, cityId };
+}
+
+function applyCityScopeToList(entityName, list) {
+  if (!isCityScopedEntity(entityName)) return list;
+  const { isMinistryAdmin, cityId } = getUserScope();
+  if (isMinistryAdmin) return list;
+  if (!cityId) return [];
+  return list.filter((item) => item?.city_id === cityId);
+}
 
 let supabase = null;
 
@@ -86,14 +128,14 @@ function createEntityHandler(entityName) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;
-      const arr = (data || []).map(rowToRecord);
+      const arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord));
       return sortBy(arr, orderBy);
     },
     async filter(query, orderBy, limit) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;
-      let arr = (data || []).map(rowToRecord);
+      let arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord));
       if (query && typeof query === 'object') {
         arr = arr.filter((item) => Object.entries(query).every(([k, v]) => item[k] === v));
       }
@@ -105,12 +147,22 @@ function createEntityHandler(entityName) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body').eq('id', id).single();
       if (error || !data) return null;
-      return rowToRecord(data);
+      const row = rowToRecord(data);
+      if (!isCityScopedEntity(entityName)) return row;
+      const { isMinistryAdmin, cityId } = getUserScope();
+      if (isMinistryAdmin) return row;
+      if (!cityId || row?.city_id !== cityId) return null;
+      return row;
     },
     async create(data) {
       const sb = getSupabase();
       const id = data.id || getId();
+      const { isMinistryAdmin, cityId } = getUserScope();
       const body = { ...data };
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
+        if (!cityId) throw new Error('لا يمكن إنشاء بيانات بدون city_id للمستخدم.');
+        body.city_id = cityId;
+      }
       delete body.id;
       const { data: inserted, error } = await sb.from(table).insert({ id, body }).select('id, body').single();
       if (error) throw error;
@@ -120,7 +172,15 @@ function createEntityHandler(entityName) {
       const sb = getSupabase();
       const { data: existing, error: eError } = await sb.from(table).select('id, body').eq('id', id).single();
       if (eError || !existing) return null;
+      const existingRecord = rowToRecord(existing);
+      const { isMinistryAdmin, cityId } = getUserScope();
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
+        if (!cityId || existingRecord?.city_id !== cityId) return null;
+      }
       const body = { ...(existing.body || {}), ...data };
+      if (isCityScopedEntity(entityName) && !isMinistryAdmin && cityId) {
+        body.city_id = cityId;
+      }
       delete body.id;
       const { data: updated, error } = await sb.from(table).update({ body }).eq('id', id).select('id, body').single();
       if (error) throw error;
@@ -128,6 +188,12 @@ function createEntityHandler(entityName) {
     },
     async delete(id) {
       const sb = getSupabase();
+      if (isCityScopedEntity(entityName)) {
+        const { data: existing } = await sb.from(table).select('id, body').eq('id', id).single();
+        const existingRecord = rowToRecord(existing);
+        const { isMinistryAdmin, cityId } = getUserScope();
+        if (!isMinistryAdmin && (!cityId || existingRecord?.city_id !== cityId)) return null;
+      }
       const { error } = await sb.from(table).delete().eq('id', id);
       if (error) throw error;
     },

@@ -74,6 +74,7 @@ export const PAGES = {
     "Files": lazyRetry(() => import('./pages/Files')),
     "Home": lazyRetry(() => import('./pages/Home')),
     "Initiatives": lazyRetry(() => import('./pages/Initiatives')),
+    "MinistryDashboard": lazyRetry(() => import('./pages/MinistryDashboard')),
     "Reports": lazyRetry(() => import('./pages/Reports')),
     "Settings": lazyRetry(() => import('./pages/Settings')),
     "Standards": lazyRetry(() => import('./pages/Standards')),
