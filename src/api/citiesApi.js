@@ -16,6 +16,11 @@ function normalizeCityName(value) {
     .toLowerCase();
 }
 
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function toLegacyCityId(name) {
   const slug = normalizeCityName(name).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
   return `legacy-${slug || 'city'}`;
@@ -299,20 +304,65 @@ export async function deleteCity(cityId) {
 /**
  * جلب ملخص أداء مدينة (مؤشرات سريعة)
  */
-export async function getCitySummary(cityId) {
+export async function getCitySummary(cityOrId) {
+  const cityId = typeof cityOrId === 'object' ? cityOrId?.id : cityOrId;
+  const isLegacyDerivedCity =
+    typeof cityOrId === 'object' &&
+    (cityOrId?.is_legacy_derived === true || String(cityOrId?.id || '').startsWith('legacy-'));
+
   if (!cityId) return null;
 
   try {
-    // نحاول جلب المعايير الخاصة بالمدينة
-    let standards = [];
-    if (api?.entities?.Standard) {
-      standards = (await api.entities.Standard.list()) ?? [];
-      standards = standards.filter(s => s.city_id === cityId);
-    }
+    const [
+      standardsRaw,
+      teamRaw,
+      initiativesRaw,
+      surveysRaw,
+      budgetsRaw,
+      allocationsRaw,
+      transactionsRaw,
+      committeesRaw,
+      tasksRaw,
+      evidenceRaw,
+    ] = await Promise.all([
+      api?.entities?.Standard?.list?.() ?? [],
+      api?.entities?.TeamMember?.list?.() ?? [],
+      api?.entities?.Initiative?.list?.() ?? [],
+      api?.entities?.FamilySurvey?.list?.() ?? [],
+      api?.entities?.Budget?.list?.() ?? [],
+      api?.entities?.BudgetAllocation?.list?.() ?? [],
+      api?.entities?.Transaction?.list?.() ?? [],
+      api?.entities?.Committee?.list?.() ?? [],
+      api?.entities?.Task?.list?.() ?? [],
+      api?.entities?.Evidence?.list?.() ?? [],
+    ]);
+
+    const byCity = (rows) => {
+      const list = Array.isArray(rows) ? rows : [];
+      if (isLegacyDerivedCity) return list.filter((r) => r?.city_id == null || String(r?.city_id) === String(cityId));
+      return list.filter((r) => String(r?.city_id || '') === String(cityId));
+    };
+
+    const standards = byCity(standardsRaw);
+    const teamMembers = byCity(teamRaw);
+    const initiatives = byCity(initiativesRaw);
+    const surveys = byCity(surveysRaw);
+    const budgets = byCity(budgetsRaw);
+    const allocations = byCity(allocationsRaw);
+    const transactions = byCity(transactionsRaw);
+    const committees = byCity(committeesRaw);
+    const tasks = byCity(tasksRaw);
+    const evidences = byCity(evidenceRaw);
 
     const total = standards.length;
-    const completed = standards.filter(s => s.status === 'completed' || s.completion_percentage >= 100).length;
-    const inProgress = standards.filter(s => s.status === 'in_progress' || (s.completion_percentage > 0 && s.completion_percentage < 100)).length;
+    const completed = standards.filter((s) => s.status === 'completed' || toNumber(s.completion_percentage) >= 100).length;
+    const inProgress = standards.filter((s) => s.status === 'in_progress' || (toNumber(s.completion_percentage) > 0 && toNumber(s.completion_percentage) < 100)).length;
+
+    const totalBudget = budgets.reduce((sum, b) => sum + toNumber(b.total_budget ?? b.budget ?? b.amount), 0);
+    const allocatedBudget = allocations.reduce((sum, a) => sum + toNumber(a.allocated_amount ?? a.amount), 0);
+    const spentBudget =
+      allocations.reduce((sum, a) => sum + toNumber(a.spent_amount), 0) +
+      transactions.reduce((sum, t) => sum + toNumber(t.amount), 0);
 
     return {
       cityId,
@@ -320,9 +370,35 @@ export async function getCitySummary(cityId) {
       completedStandards: completed,
       inProgressStandards: inProgress,
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+      teamMembersCount: teamMembers.length,
+      initiativesCount: initiatives.length,
+      surveysCount: surveys.length,
+      committeesCount: committees.length,
+      tasksCount: tasks.length,
+      evidencesCount: evidences.length,
+      budgetsCount: budgets.length,
+      totalBudget,
+      allocatedBudget,
+      spentBudget,
     };
   } catch {
-    return { cityId, totalStandards: 0, completedStandards: 0, inProgressStandards: 0, completionRate: 0 };
+    return {
+      cityId,
+      totalStandards: 0,
+      completedStandards: 0,
+      inProgressStandards: 0,
+      completionRate: 0,
+      teamMembersCount: 0,
+      initiativesCount: 0,
+      surveysCount: 0,
+      committeesCount: 0,
+      tasksCount: 0,
+      evidencesCount: 0,
+      budgetsCount: 0,
+      totalBudget: 0,
+      allocatedBudget: 0,
+      spentBudget: 0,
+    };
   }
 }
 

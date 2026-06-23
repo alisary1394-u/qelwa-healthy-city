@@ -26,6 +26,11 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+function formatCurrency(value) {
+  const amount = Number(value || 0);
+  return amount.toLocaleString('ar-SA');
+}
+
 // -------------------------------------------------------
 // مكون بطاقة مدينة
 // -------------------------------------------------------
@@ -40,7 +45,7 @@ function CityCard({ city, onAction }) {
 
   const { data: summary } = useQuery({
     queryKey: ['city-summary', city.id],
-    queryFn: () => getCitySummary(city.id),
+    queryFn: () => getCitySummary(city),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -108,6 +113,52 @@ function CityCard({ city, onAction }) {
           <div className="text-center p-2 rounded-lg bg-muted/50">
             <p className="text-lg font-bold">{summary?.inProgressStandards ?? '—'}</p>
             <p className="text-[10px] text-muted-foreground">جارية</p>
+          </div>
+        </div>
+
+        {/* مؤشرات تشغيل المدينة */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.teamMembersCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">أعضاء الفريق</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.initiativesCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">المبادرات</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.surveysCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">المسح الميداني</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.committeesCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">اللجان</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.tasksCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">المهام</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-base font-bold">{summary?.evidencesCount ?? 0}</p>
+            <p className="text-[11px] text-muted-foreground">الأدلة</p>
+          </div>
+        </div>
+
+        {/* مؤشرات الميزانية */}
+        <div className="grid grid-cols-1 gap-2">
+          <div className="rounded-lg border bg-muted/20 p-2">
+            <p className="text-[11px] text-muted-foreground">إجمالي الميزانية</p>
+            <p className="text-base font-bold text-primary">{formatCurrency(summary?.totalBudget)} ريال</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border p-2">
+              <p className="text-[11px] text-muted-foreground">المخصص</p>
+              <p className="text-sm font-semibold">{formatCurrency(summary?.allocatedBudget)} ريال</p>
+            </div>
+            <div className="rounded-lg border p-2">
+              <p className="text-[11px] text-muted-foreground">المصروف</p>
+              <p className="text-sm font-semibold">{formatCurrency(summary?.spentBudget)} ريال</p>
+            </div>
           </div>
         </div>
 
