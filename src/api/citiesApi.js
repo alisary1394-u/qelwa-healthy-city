@@ -5,6 +5,7 @@
 
 import { api } from '@/api/apiClient';
 import { appParams } from '@/lib/app-params';
+import { getAllHostCityTemplates } from '@/lib/city-hosts';
 import { createClient } from '@supabase/supabase-js';
 
 let ensureLegacyCityPromise = null;
@@ -26,12 +27,24 @@ function toLegacyCityId(name) {
   return `legacy-${slug || 'city'}`;
 }
 
+function toVirtualCityId(key) {
+  return `virtual-${String(key || 'city').trim().toLowerCase()}`;
+}
+
 function isLegacyDerivedCity(cityOrId) {
   if (!cityOrId) return false;
   if (typeof cityOrId === 'object') {
     return cityOrId?.is_legacy_derived === true || String(cityOrId?.id || '').startsWith('legacy-');
   }
   return String(cityOrId).startsWith('legacy-');
+}
+
+function isVirtualCity(cityOrId) {
+  if (!cityOrId) return false;
+  if (typeof cityOrId === 'object') {
+    return cityOrId?.is_virtual_city === true || String(cityOrId?.id || '').startsWith('virtual-');
+  }
+  return String(cityOrId).startsWith('virtual-');
 }
 
 function matchesCity(cityId, row, includeLegacyNull = false) {
@@ -91,6 +104,47 @@ async function listLegacyDerivedCities() {
   } catch {
     return [];
   }
+}
+
+function mergeConfiguredHostCities(cities) {
+  const list = Array.isArray(cities) ? [...cities] : [];
+  const configured = getAllHostCityTemplates();
+
+  for (const template of configured) {
+    const exists = list.some((city) => normalizeCityName(city?.name) === normalizeCityName(template.cityName));
+    if (!exists) {
+      list.push({
+        id: toVirtualCityId(template.key),
+        name: template.cityName,
+        region: template.region || 'غير محدد',
+        contact_email: null,
+        contact_phone: null,
+        status: 'active',
+        registered_at: null,
+        logo_text: template.logoText || '',
+        is_virtual_city: true,
+        hostnames: template.hostnames,
+      });
+    }
+  }
+
+  return list;
+}
+
+async function ensureConcreteCity(city) {
+  if (!city || (!isVirtualCity(city) && !isLegacyDerivedCity(city))) return city;
+
+  const existingCities = await listCities();
+  const existing = existingCities.find((item) => normalizeCityName(item?.name) === normalizeCityName(city?.name) && !isVirtualCity(item));
+  if (existing) return existing;
+
+  return await createCity({
+    name: city.name,
+    region: city.region || '',
+    contact_email: city.contact_email || '',
+    contact_phone: city.contact_phone || '',
+    status: city.status || 'active',
+  });
 }
 
 async function createLegacyCityFromSettings(cityData) {
@@ -229,10 +283,10 @@ export async function listCities({ status } = {}) {
       await ensureLegacyCityRegistered();
       if (status) {
         const byStatus = await api.entities.City.filter({ status }, '-created_at');
-        if (Array.isArray(byStatus)) return byStatus;
+        if (Array.isArray(byStatus)) return mergeConfiguredHostCities(byStatus);
       } else {
         const allCities = await api.entities.City.list('-created_at');
-        if (Array.isArray(allCities) && allCities.length > 0) return allCities;
+        if (Array.isArray(allCities) && allCities.length > 0) return mergeConfiguredHostCities(allCities);
       }
     } catch {
       // نتابع إلى مسارات fallback
@@ -246,7 +300,7 @@ export async function listCities({ status } = {}) {
       let query = supabase.from('cities').select('*').order('created_at', { ascending: false });
       if (status) query = query.eq('status', status);
       const { data, error } = await query;
-      if (!error && Array.isArray(data) && data.length > 0) return data;
+      if (!error && Array.isArray(data) && data.length > 0) return mergeConfiguredHostCities(data);
     } catch {
       // نتابع إلى fallback التالي
     }
@@ -255,12 +309,14 @@ export async function listCities({ status } = {}) {
   // fallback: اشتقاق المدن من الإعدادات القديمة (قبل تفعيل city_id)
   const legacyDerivedCities = await listLegacyDerivedCities();
   if (legacyDerivedCities.length > 0) {
-    return status ? legacyDerivedCities.filter((c) => c.status === status) : legacyDerivedCities;
+    const merged = mergeConfiguredHostCities(legacyDerivedCities);
+    return status ? merged.filter((c) => c.status === status) : merged;
   }
 
   // local mock
   const stored = JSON.parse(localStorage.getItem('mock_cities') || '[]');
-  return status ? stored.filter(c => c.status === status) : stored;
+  const merged = mergeConfiguredHostCities(stored);
+  return status ? merged.filter(c => c.status === status) : merged;
 }
 
 /**
@@ -355,6 +411,10 @@ export async function createCity(cityData) {
  */
 export async function updateCity(cityId, updates) {
   const cityRef = typeof cityId === 'object' ? cityId : { id: cityId };
+  if (isVirtualCity(cityRef)) {
+    const concreteCity = await ensureConcreteCity(cityRef);
+    return updateCity(concreteCity, updates);
+  }
   const resolvedCityId = cityRef?.id;
 
   if (isLegacyDerivedCity(cityRef)) {
@@ -440,8 +500,31 @@ export async function deleteCity(cityId) {
 export async function getCitySummary(cityOrId) {
   const cityId = typeof cityOrId === 'object' ? cityOrId?.id : cityOrId;
   const legacyDerived = isLegacyDerivedCity(cityOrId);
+  const virtualCity = isVirtualCity(cityOrId);
 
   if (!cityId) return null;
+
+  if (virtualCity) {
+    return {
+      cityId,
+      totalStandards: 0,
+      completedStandards: 0,
+      inProgressStandards: 0,
+      completionRate: 0,
+      teamMembersCount: 0,
+      initiativesCount: 0,
+      surveysCount: 0,
+      committeesCount: 0,
+      tasksCount: 0,
+      evidencesCount: 0,
+      budgetsCount: 0,
+      totalBudget: 0,
+      allocatedBudget: 0,
+      spentBudget: 0,
+      governor: null,
+      coordinator: null,
+    };
+  }
 
   try {
     const [
@@ -544,6 +627,8 @@ export async function saveCityLeadership(city, payload) {
     throw new Error('بيانات الدور أو المدينة غير مكتملة');
   }
 
+  const targetCity = await ensureConcreteCity(city);
+
   if (!api?.entities?.TeamMember) {
     throw new Error('إدارة أعضاء الفريق غير متاحة حالياً');
   }
@@ -555,7 +640,7 @@ export async function saveCityLeadership(city, payload) {
 
   const membersRaw = await api.entities.TeamMember.list();
   const members = Array.isArray(membersRaw) ? membersRaw : [];
-  const existing = members.find((member) => member.role === role && matchesCity(city.id, member, isLegacyDerivedCity(city)));
+  const existing = members.find((member) => member.role === role && matchesCity(targetCity.id, member, isLegacyDerivedCity(targetCity)));
 
   const nextData = {
     ...(existing || {}),
@@ -564,8 +649,8 @@ export async function saveCityLeadership(city, payload) {
     email: String(payload.email || '').trim(),
     phone: String(payload.phone || '').trim(),
     role,
-    city_id: city.id,
-    department: payload.department || city.name,
+    city_id: targetCity.id,
+    department: payload.department || targetCity.name,
     status: payload.status || 'active',
     join_date: payload.join_date || existing?.join_date || new Date().toISOString().split('T')[0],
   };
