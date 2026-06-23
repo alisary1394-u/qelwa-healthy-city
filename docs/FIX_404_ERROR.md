@@ -41,7 +41,7 @@ VITE_BASE44_APP_BASE_URL=https://xxxx-xxxx.base44.app
    ```bash
    base44 entities push
    ```
-   لرفع تعريفات الكيانات من مجلد `base44/entities/` إلى Base44.
+   لرفع تعريفات الكيانات من مجلد `backend-platform/entities/` إلى Base44.
 
 بعد ذلك جرّب "إضافة عضو" مرة أخرى.
 
@@ -55,4 +55,4 @@ VITE_BASE44_APP_BASE_URL=https://xxxx-xxxx.base44.app
 | رابط الباكند خاطئ أو قديم | تصحيح `VITE_BASE44_APP_BASE_URL` في `.env.local` |
 | الكيانات غير منشأة على Base44 | تنفيذ `base44 link` ثم `base44 entities push` |
 
-تفاصيل رفع الكيانات: [BASE44_DEPLOY_ENTITIES.md](BASE44_DEPLOY_ENTITIES.md)
+تفاصيل رفع الكيانات: [ENTITIES_DEPLOY_GUIDE.md](ENTITIES_DEPLOY_GUIDE.md)
