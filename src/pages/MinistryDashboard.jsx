@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import {
-  listCities, createCity, setCityStatus, deleteCity, getCitySummary
+  listCities, createCity, updateCity, setCityStatus, deleteCity, getCitySummary, saveCityLeadership
 } from '@/api/citiesApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Building2, Plus, Search, MoreVertical, CheckCircle2, PauseCircle,
-  Trash2, MapPin, AlertTriangle, Activity, Globe, Phone, Mail, RefreshCw
+  Trash2, MapPin, AlertTriangle, Activity, Globe, Phone, Mail, RefreshCw, Edit3, Crown, UserCog
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -162,6 +162,17 @@ function CityCard({ city, onAction }) {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border p-2">
+            <p className="text-[11px] text-muted-foreground">المحافظ</p>
+            <p className="text-sm font-semibold truncate">{summary?.governor?.full_name || 'غير محدد'}</p>
+          </div>
+          <div className="rounded-lg border p-2">
+            <p className="text-[11px] text-muted-foreground">المنسق</p>
+            <p className="text-sm font-semibold truncate">{summary?.coordinator?.full_name || 'غير محدد'}</p>
+          </div>
+        </div>
+
         {/* معلومات التواصل */}
         <div className="space-y-1 text-xs text-muted-foreground">
           {city.contact_email && (
@@ -194,6 +205,18 @@ function CityCard({ city, onAction }) {
             </div>
           </div>
         )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          <Button variant="outline" size="sm" onClick={() => onAction('editCity', city)}>
+            <Edit3 className="w-3.5 h-3.5 ml-1" />تعديل المدينة
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onAction('assignGovernor', city, summary?.governor || null)}>
+            <Crown className="w-3.5 h-3.5 ml-1" />المحافظ
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onAction('assignCoordinator', city, summary?.coordinator || null)}>
+            <UserCog className="w-3.5 h-3.5 ml-1" />المنسق
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -202,12 +225,26 @@ function CityCard({ city, onAction }) {
 // -------------------------------------------------------
 // نموذج إضافة مدينة
 // -------------------------------------------------------
-function AddCityDialog({ open, onClose, onSave }) {
+function CityFormDialog({ open, onClose, onSave, initialData = null, title, submitLabel }) {
   const [form, setForm] = useState({
     name: '', region: '', contact_email: '', contact_phone: '',
     population: '', area_km2: '', notes: '',
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({
+      name: initialData?.name || '',
+      region: initialData?.region || '',
+      contact_email: initialData?.contact_email || '',
+      contact_phone: initialData?.contact_phone || '',
+      population: initialData?.population || '',
+      area_km2: initialData?.area_km2 || '',
+      notes: initialData?.notes || '',
+    });
+    setErrors({});
+  }, [open, initialData]);
 
   function validate() {
     const e = {};
@@ -230,7 +267,6 @@ function AddCityDialog({ open, onClose, onSave }) {
       population: form.population ? parseInt(form.population) : null,
       area_km2: form.area_km2 ? parseFloat(form.area_km2) : null,
     });
-    setForm({ name: '', region: '', contact_email: '', contact_phone: '', population: '', area_km2: '', notes: '' });
   }
 
   return (
@@ -239,7 +275,7 @@ function AddCityDialog({ open, onClose, onSave }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
-            تسجيل مدينة صحية جديدة
+            {title}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -316,8 +352,97 @@ function AddCityDialog({ open, onClose, onSave }) {
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
           <Button onClick={handleSubmit}>
-            <Plus className="w-4 h-4 ml-1" />تسجيل المدينة
+            <Plus className="w-4 h-4 ml-1" />{submitLabel}
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LeadershipDialog({ open, onClose, onSave, city, role, initialMember }) {
+  const [form, setForm] = useState({
+    full_name: '',
+    national_id: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({
+      full_name: initialMember?.full_name || '',
+      national_id: initialMember?.national_id || '',
+      email: initialMember?.email || '',
+      phone: initialMember?.phone || '',
+      password: '',
+    });
+    setErrors({});
+  }, [open, initialMember]);
+
+  function validate() {
+    const nextErrors = {};
+    if (!String(form.full_name || '').trim()) nextErrors.full_name = 'الاسم مطلوب';
+    if (!/^\d{10}$/.test(String(form.national_id || ''))) nextErrors.national_id = 'رقم الهوية يجب أن يتكون من 10 أرقام';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(form.email || ''))) nextErrors.email = 'البريد الإلكتروني غير صحيح';
+    if (form.phone && !/^05\d{8}$/.test(String(form.phone || ''))) nextErrors.phone = 'رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام';
+    if (!initialMember?.id && String(form.password || '').length < 4) nextErrors.password = 'كلمة المرور مطلوبة ويجب ألا تقل عن 4 أحرف';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function handleSubmit() {
+    if (!validate()) return;
+    onSave({
+      ...form,
+      role,
+      city,
+    });
+  }
+
+  const roleLabel = role === 'governor' ? 'المحافظ' : 'المنسق';
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="sm:max-w-md" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {role === 'governor' ? <Crown className="w-5 h-5 text-primary" /> : <UserCog className="w-5 h-5 text-primary" />}
+            {initialMember?.id ? `تعديل ${roleLabel} ${city?.name || ''}` : `تعيين ${roleLabel} ${city?.name || ''}`}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>الاسم الكامل</Label>
+            <Input value={form.full_name} onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))} />
+            {errors.full_name && <p className="text-xs text-destructive">{errors.full_name}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label>رقم الهوية</Label>
+            <Input dir="ltr" maxLength={10} value={form.national_id} onChange={(e) => setForm((prev) => ({ ...prev, national_id: e.target.value.replace(/\D/g, '').slice(0, 10) }))} />
+            {errors.national_id && <p className="text-xs text-destructive">{errors.national_id}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label>البريد الإلكتروني</Label>
+            <Input dir="ltr" type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
+            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label>رقم الجوال</Label>
+            <Input dir="ltr" maxLength={10} value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))} />
+            {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label>{initialMember?.id ? 'كلمة المرور الجديدة' : 'كلمة المرور'}</Label>
+            <Input type="password" value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder={initialMember?.id ? 'اتركها فارغة للإبقاء على الحالية' : '4 أحرف على الأقل'} />
+            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={handleSubmit}>{initialMember?.id ? 'حفظ التعديلات' : `تعيين ${roleLabel}`}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -335,6 +460,8 @@ export default function MinistryDashboard() {
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingCity, setEditingCity] = useState(null);
+  const [leadershipDialog, setLeadershipDialog] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // { type, city }
 
   // التحقق من الصلاحية
@@ -372,6 +499,32 @@ export default function MinistryDashboard() {
     },
   });
 
+  const updateCityMutation = useMutation({
+    mutationFn: ({ city, updates }) => updateCity(city, updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['cities'] });
+      queryClient.invalidateQueries({ queryKey: ['city-summary', variables?.city?.id] });
+      setEditingCity(null);
+      toast({ title: 'تم تحديث بيانات المدينة' });
+    },
+    onError: (err) => {
+      toast({ title: 'تعذر تحديث المدينة', description: err?.message || 'حدث خطأ غير متوقع', variant: 'destructive' });
+    },
+  });
+
+  const leadershipMutation = useMutation({
+    mutationFn: ({ city, data }) => saveCityLeadership(city, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['city-summary', variables?.city?.id] });
+      queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      setLeadershipDialog(null);
+      toast({ title: 'تم حفظ بيانات القيادة بنجاح' });
+    },
+    onError: (err) => {
+      toast({ title: 'تعذر حفظ بيانات القيادة', description: err?.message || 'حدث خطأ غير متوقع', variant: 'destructive' });
+    },
+  });
+
   // تغيير حالة المدينة
   const statusMutation = useMutation({
     mutationFn: ({ id, status }) => setCityStatus(id, status),
@@ -392,9 +545,21 @@ export default function MinistryDashboard() {
     },
   });
 
-  function handleCityAction(type, city) {
+  function handleCityAction(type, city, member = null) {
     if (type === 'suspend' || type === 'activate' || type === 'delete') {
       setConfirmAction({ type, city });
+      return;
+    }
+    if (type === 'editCity') {
+      setEditingCity(city);
+      return;
+    }
+    if (type === 'assignGovernor' || type === 'assignCoordinator') {
+      setLeadershipDialog({
+        city,
+        role: type === 'assignGovernor' ? 'governor' : 'coordinator',
+        member,
+      });
     }
   }
 
@@ -508,10 +673,30 @@ export default function MinistryDashboard() {
       )}
 
       {/* نموذج إضافة مدينة */}
-      <AddCityDialog
+      <CityFormDialog
         open={showAddDialog}
         onClose={() => setShowAddDialog(false)}
+        title="تسجيل مدينة صحية جديدة"
+        submitLabel="تسجيل المدينة"
         onSave={data => createMutation.mutate(data)}
+      />
+
+      <CityFormDialog
+        open={!!editingCity}
+        onClose={() => setEditingCity(null)}
+        initialData={editingCity}
+        title={`تعديل بيانات ${editingCity?.name || 'المدينة'}`}
+        submitLabel="حفظ التعديلات"
+        onSave={(data) => updateCityMutation.mutate({ city: editingCity, updates: data })}
+      />
+
+      <LeadershipDialog
+        open={!!leadershipDialog}
+        onClose={() => setLeadershipDialog(null)}
+        city={leadershipDialog?.city}
+        role={leadershipDialog?.role}
+        initialMember={leadershipDialog?.member}
+        onSave={(data) => leadershipMutation.mutate({ city: leadershipDialog?.city, data })}
       />
 
       {/* تأكيد الإجراء */}

@@ -26,6 +26,38 @@ function toLegacyCityId(name) {
   return `legacy-${slug || 'city'}`;
 }
 
+function isLegacyDerivedCity(cityOrId) {
+  if (!cityOrId) return false;
+  if (typeof cityOrId === 'object') {
+    return cityOrId?.is_legacy_derived === true || String(cityOrId?.id || '').startsWith('legacy-');
+  }
+  return String(cityOrId).startsWith('legacy-');
+}
+
+function matchesCity(cityId, row, includeLegacyNull = false) {
+  if (!row) return false;
+  if (includeLegacyNull && row?.city_id == null) return true;
+  return String(row?.city_id || '') === String(cityId);
+}
+
+async function findLegacyCitySetting(cityOrId) {
+  const targetName = typeof cityOrId === 'object' ? cityOrId?.name : null;
+  const settingsRaw = await api?.entities?.Settings?.list?.();
+  const settings = Array.isArray(settingsRaw) ? settingsRaw : [];
+
+  if (typeof cityOrId === 'object' && cityOrId?.id && !isLegacyDerivedCity(cityOrId)) {
+    return settings.find((s) => String(s?.city_id || '') === String(cityOrId.id)) || null;
+  }
+
+  if (targetName) {
+    return settings.find(
+      (s) => !s?.city_id && normalizeCityName(s?.city_name) === normalizeCityName(targetName)
+    ) || null;
+  }
+
+  return null;
+}
+
 async function listLegacyDerivedCities() {
   try {
     const settingsRaw = await api?.entities?.Settings?.list?.();
@@ -322,8 +354,51 @@ export async function createCity(cityData) {
  * تحديث بيانات مدينة
  */
 export async function updateCity(cityId, updates) {
+  const cityRef = typeof cityId === 'object' ? cityId : { id: cityId };
+  const resolvedCityId = cityRef?.id;
+
+  if (isLegacyDerivedCity(cityRef)) {
+    const legacySetting = await findLegacyCitySetting(cityRef);
+    if (!legacySetting?.id || !api?.entities?.Settings?.update) {
+      throw new Error('تعذر تعديل بيانات المدينة الحالية');
+    }
+    await api.entities.Settings.update(legacySetting.id, {
+      city_name: updates.name ?? updates.city_name ?? legacySetting.city_name,
+      city_location: updates.region ?? updates.city_location ?? legacySetting.city_location,
+      contact_email: updates.contact_email ?? legacySetting.contact_email,
+      contact_phone: updates.contact_phone ?? legacySetting.contact_phone,
+      status: updates.status ?? legacySetting.status ?? 'active',
+      updated_at: new Date().toISOString(),
+    });
+    return {
+      ...cityRef,
+      name: updates.name ?? updates.city_name ?? cityRef.name,
+      region: updates.region ?? updates.city_location ?? cityRef.region,
+      contact_email: updates.contact_email ?? cityRef.contact_email ?? null,
+      contact_phone: updates.contact_phone ?? cityRef.contact_phone ?? null,
+      status: updates.status ?? cityRef.status ?? 'active',
+      is_legacy_derived: true,
+    };
+  }
+
   if (api?.entities?.City) {
-    return await api.entities.City.update(cityId, updates);
+    const updatedCity = await api.entities.City.update(resolvedCityId, updates);
+    try {
+      const settingsRaw = await api?.entities?.Settings?.list?.();
+      const settings = Array.isArray(settingsRaw) ? settingsRaw : [];
+      const citySetting = settings.find((s) => String(s?.city_id || '') === String(resolvedCityId));
+      if (citySetting?.id && api?.entities?.Settings?.update) {
+        await api.entities.Settings.update(citySetting.id, {
+          city_name: updates.name ?? citySetting.city_name,
+          city_location: updates.region ?? citySetting.city_location,
+          contact_email: updates.contact_email ?? citySetting.contact_email,
+          contact_phone: updates.contact_phone ?? citySetting.contact_phone,
+        });
+      }
+    } catch {
+      // best-effort
+    }
+    return updatedCity;
   }
 
   const supabase = getSupabaseClient();
@@ -331,7 +406,7 @@ export async function updateCity(cityId, updates) {
     const { data, error } = await supabase
       .from('cities')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', cityId)
+      .eq('id', resolvedCityId)
       .select()
       .single();
     if (error) throw error;
@@ -340,9 +415,9 @@ export async function updateCity(cityId, updates) {
 
   // local mock
   const stored = JSON.parse(localStorage.getItem('mock_cities') || '[]');
-  const updated = stored.map(c => c.id === cityId ? { ...c, ...updates } : c);
+  const updated = stored.map(c => c.id === resolvedCityId ? { ...c, ...updates } : c);
   localStorage.setItem('mock_cities', JSON.stringify(updated));
-  return updated.find(c => c.id === cityId);
+  return updated.find(c => c.id === resolvedCityId);
 }
 
 /**
@@ -364,9 +439,7 @@ export async function deleteCity(cityId) {
  */
 export async function getCitySummary(cityOrId) {
   const cityId = typeof cityOrId === 'object' ? cityOrId?.id : cityOrId;
-  const isLegacyDerivedCity =
-    typeof cityOrId === 'object' &&
-    (cityOrId?.is_legacy_derived === true || String(cityOrId?.id || '').startsWith('legacy-'));
+  const legacyDerived = isLegacyDerivedCity(cityOrId);
 
   if (!cityId) return null;
 
@@ -397,8 +470,8 @@ export async function getCitySummary(cityOrId) {
 
     const byCity = (rows) => {
       const list = Array.isArray(rows) ? rows : [];
-      if (isLegacyDerivedCity) return list.filter((r) => r?.city_id == null || String(r?.city_id) === String(cityId));
-      return list.filter((r) => String(r?.city_id || '') === String(cityId));
+      if (legacyDerived) return list.filter((r) => matchesCity(cityId, r, true));
+      return list.filter((r) => matchesCity(cityId, r, false));
     };
 
     const standards = byCity(standardsRaw);
@@ -411,6 +484,8 @@ export async function getCitySummary(cityOrId) {
     const committees = byCity(committeesRaw);
     const tasks = byCity(tasksRaw);
     const evidences = byCity(evidenceRaw);
+    const governor = teamMembers.find((m) => m?.role === 'governor') || null;
+    const coordinator = teamMembers.find((m) => m?.role === 'coordinator') || null;
 
     const total = standards.length;
     const completed = standards.filter((s) => s.status === 'completed' || toNumber(s.completion_percentage) >= 100).length;
@@ -438,6 +513,8 @@ export async function getCitySummary(cityOrId) {
       totalBudget,
       allocatedBudget,
       spentBudget,
+      governor,
+      coordinator,
     };
   } catch {
     return {
@@ -456,8 +533,62 @@ export async function getCitySummary(cityOrId) {
       totalBudget: 0,
       allocatedBudget: 0,
       spentBudget: 0,
+      governor: null,
+      coordinator: null,
     };
   }
+}
+
+export async function saveCityLeadership(city, payload) {
+  if (!city?.id || !payload?.role) {
+    throw new Error('بيانات الدور أو المدينة غير مكتملة');
+  }
+
+  if (!api?.entities?.TeamMember) {
+    throw new Error('إدارة أعضاء الفريق غير متاحة حالياً');
+  }
+
+  const role = payload.role;
+  if (!['governor', 'coordinator'].includes(role)) {
+    throw new Error('الدور غير مدعوم');
+  }
+
+  const membersRaw = await api.entities.TeamMember.list();
+  const members = Array.isArray(membersRaw) ? membersRaw : [];
+  const existing = members.find((member) => member.role === role && matchesCity(city.id, member, isLegacyDerivedCity(city)));
+
+  const nextData = {
+    ...(existing || {}),
+    full_name: String(payload.full_name || '').trim(),
+    national_id: String(payload.national_id || '').trim(),
+    email: String(payload.email || '').trim(),
+    phone: String(payload.phone || '').trim(),
+    role,
+    city_id: city.id,
+    department: payload.department || city.name,
+    status: payload.status || 'active',
+    join_date: payload.join_date || existing?.join_date || new Date().toISOString().split('T')[0],
+  };
+
+  if (!nextData.full_name || !nextData.national_id || !nextData.email) {
+    throw new Error('الاسم ورقم الهوية والبريد الإلكتروني مطلوبة');
+  }
+
+  if (payload.password) {
+    nextData.password = String(payload.password);
+  } else if (!existing?.id) {
+    throw new Error('كلمة المرور مطلوبة عند إنشاء الحساب');
+  } else {
+    delete nextData.password;
+  }
+
+  delete nextData.id;
+
+  if (existing?.id) {
+    return await api.entities.TeamMember.update(existing.id, nextData);
+  }
+
+  return await api.entities.TeamMember.create(nextData);
 }
 
 /**
