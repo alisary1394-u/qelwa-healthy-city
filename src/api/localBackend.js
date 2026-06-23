@@ -310,7 +310,9 @@ function buildUserFromMember(member) {
     email: member.email || (member.role === 'governor' ? 'admin@qeelwah.com' : `member-${member.national_id}@local`),
     full_name: member.full_name || 'المشرف',
     user_role: member.role === 'governor' ? 'admin' : 'user',
+    role: member.role,
     national_id: member.national_id,
+    city_id: member.city_id || null,
   };
 }
 

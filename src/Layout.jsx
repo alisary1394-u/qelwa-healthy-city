@@ -25,6 +25,7 @@ import {
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { isBackendConfigured, appParams } from '@/lib/app-params';
 import { usePermissions } from '@/hooks/usePermissions';
+import { pickCurrentCitySetting } from '@/lib/city-settings';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
@@ -52,7 +53,6 @@ export default function Layout({ children }) {
     queryFn: () => api.entities.Settings.list(),
     select: (data) => Array.isArray(data) ? data : []
   });
-  const appSetting = (Array.isArray(settingsList) ? settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) : null) || {};
   const { theme, setTheme, systemTheme } = useTheme();
 
   // جلسة الخمول: تسجيل خروج تلقائي بعد 20 دقيقة من عدم النشاط
@@ -78,6 +78,7 @@ export default function Layout({ children }) {
     queryKey: ['currentUser'],
     queryFn: () => api.auth.me()
   });
+  const appSetting = pickCurrentCitySetting(settingsList, currentUser);
   const { translated: translatedUserName } = useAutoTranslate(currentUser?.full_name || '');
   const displayUserName = translatedUserName || currentUser?.full_name || '';
   const displayUserInitial = displayUserName.trim().charAt(0) || '?';

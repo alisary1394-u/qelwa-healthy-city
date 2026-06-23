@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import WHOStandardsReport from '@/components/reports/WHOStandardsReport';
 import { AXIS_COUNTS_CSV, STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { usePermissions } from '@/hooks/usePermissions';
+import { pickCurrentCitySetting } from '@/lib/city-settings';
 import { useToast } from '@/components/ui/use-toast';
 import T from '@/components/T';
 import { translateTextSync } from '@/utils/translationService';
@@ -132,8 +133,9 @@ export default function Reports() {
   const { data: standards = [] } = useQuery({ queryKey: ['standards'], queryFn: () => api.entities.Standard.list() });
   const { data: axes = [] } = useQuery({ queryKey: ['axes'], queryFn: () => api.entities.Axis.list('order') });
   const { data: evidence = [] } = useQuery({ queryKey: ['evidence'], queryFn: () => api.entities.Evidence.list() });
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => api.auth.me() });
   const { data: settings = [] } = useQuery({ queryKey: ['settings'], queryFn: () => api.entities.Settings.list() });
-  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
+  const currentSetting = pickCurrentCitySetting(settings, currentUser);
   const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.entities.Transaction.list('-date') });
   const { data: budgets = [] } = useQuery({ queryKey: ['budgets'], queryFn: () => api.entities.Budget.list('-created_date') });
   const { data: allocations = [] } = useQuery({ queryKey: ['allocations'], queryFn: () => api.entities.BudgetAllocation.list() });

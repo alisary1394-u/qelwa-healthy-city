@@ -17,6 +17,7 @@ import {
 import { usePermissions } from '@/hooks/usePermissions';
 import { PERMISSIONS_BY_ROLE, ROLE_LABELS, ROLE_LABEL_KEYS, PERMISSION_REVIEW_KEYS } from '@/lib/permissions';
 import { appParams } from '@/lib/app-params';
+import { pickCurrentCitySetting } from '@/lib/city-settings';
 import { useTranslation } from 'react-i18next';
 import T from '@/components/T';
 
@@ -87,7 +88,7 @@ export default function Settings() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
+  const currentSetting = pickCurrentCitySetting(settings, currentUser);
 
   useEffect(() => {
     if (currentSetting.id) {
@@ -102,7 +103,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (settings.length > 0) {
-      const appSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key);
+      const appSetting = pickCurrentCitySetting(settings, currentUser);
       const saved = appSetting?.districts;
       if (saved && Array.isArray(saved) && saved.length > 0) {
         setDistrictsList(saved);

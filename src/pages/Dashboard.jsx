@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/hooks/usePermissions';
+import { pickCurrentCitySetting } from '@/lib/city-settings';
 import { STANDARDS_CSV, sortAndDeduplicateStandardsByCode } from '@/api/standardsFromCsv';
 import { 
   BarChart3, Target, Users, FileCheck, MapPinned, LayoutDashboard,
@@ -119,7 +120,7 @@ export default function Dashboard() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const currentSetting = settingsList.find(s => s.city_name || s.logo_text || s.districts) || settingsList.find(s => !s.key) || {};
+  const currentSetting = pickCurrentCitySetting(settingsList, currentUser);
 
 
 

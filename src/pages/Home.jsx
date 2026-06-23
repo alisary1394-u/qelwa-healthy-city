@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { createPageUrl } from '@/utils';
 import { getNavItemsForRole } from '@/lib/permissions';
+import { pickCurrentCitySetting } from '@/lib/city-settings';
 import { appParams } from '@/lib/app-params';
 import { Loader2, MapPin, Users, Target, Heart, Leaf, Shield, ArrowLeft, ArrowRight, Building2, Globe } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +51,7 @@ export default function Home() {
     queryFn: () => api.entities.Settings.list()
   });
 
-  const currentSetting = settings.find(s => s.city_name || s.logo_text || s.districts) || settings.find(s => !s.key) || {};
+  const currentSetting = pickCurrentCitySetting(settings, currentUser);
 
   React.useEffect(() => {
     if (resendTimer > 0) {
@@ -130,6 +131,7 @@ export default function Home() {
         user_role: member.role === 'governor' ? 'admin' : 'user',
         role: member.role,
         national_id: member.national_id,
+        city_id: member.city_id || null,
       }, token);
       window.location.href = createPageUrl(firstPage);
     } else {
