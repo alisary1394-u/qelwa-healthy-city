@@ -1,10 +1,10 @@
 const CITY_HOSTS = [
   {
-    key: 'mandaq',
+    key: 'qeelwah',
     cityName: 'قلوة الصحية',
     region: 'محافظة قلوة',
     logoText: 'ق',
-    hostnames: ['dfapro.com', 'www.dfapro.com'],
+    hostnames: ['qeelwah.com', 'www.qeelwah.com'],
     fallback: true,
   },
   {
@@ -12,7 +12,7 @@ const CITY_HOSTS = [
     cityName: 'المندق الصحية',
     region: 'محافظة المندق',
     logoText: 'م',
-    hostnames: ['mandaq.dfapro.com', 'www.mandaq.dfapro.com', 'almandaq.dfapro.com'],
+    hostnames: ['mandaq.qeelwah.com', 'www.mandaq.qeelwah.com', 'almandaq.qeelwah.com'],
     fallback: false,
   },
 ];
