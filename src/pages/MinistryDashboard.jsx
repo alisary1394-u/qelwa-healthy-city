@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import {
@@ -277,6 +278,7 @@ function AddCityDialog({ open, onClose, onSave }) {
 // -------------------------------------------------------
 export default function MinistryDashboard() {
   const { user } = useAuth();
+  const { isMinistryAdmin } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -285,7 +287,10 @@ export default function MinistryDashboard() {
   const [confirmAction, setConfirmAction] = useState(null); // { type, city }
 
   // التحقق من الصلاحية
-  if (user && user.role !== 'ministry_admin' && user.role !== 'admin') {
+  const canAccessMinistryDashboard =
+    isMinistryAdmin || user?.role === 'admin' || user?.user_role === 'admin';
+
+  if (user && !canAccessMinistryDashboard) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4" dir="rtl">
         <AlertTriangle className="w-12 h-12 text-destructive" />

@@ -120,6 +120,7 @@
   },
 
   "nav": {
+    "ministryDashboard": "Ministry Dashboard",
     "dashboard": "Dashboard",
     "reports": "Reports",
     "standards": "Standards",
@@ -299,6 +300,7 @@
   },
 
   "roles": {
+    "ministry_admin": "Ministry of Health Admin",
     "governor": "General Supervisor",
     "coordinator": "Healthy City Coordinator",
     "committee_head": "Committee Head",

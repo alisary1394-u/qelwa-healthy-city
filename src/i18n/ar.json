@@ -120,6 +120,7 @@
   },
 
   "nav": {
+    "ministryDashboard": "لوحة وزارة الصحة",
     "dashboard": "لوحة التحكم",
     "reports": "التقارير",
     "standards": "المعايير",
@@ -299,6 +300,7 @@
   },
 
   "roles": {
+    "ministry_admin": "مدير وزارة الصحة",
     "governor": "المشرف العام",
     "coordinator": "منسق المدينة الصحية",
     "committee_head": "رئيس لجنة",
