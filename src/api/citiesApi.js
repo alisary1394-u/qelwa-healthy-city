@@ -7,6 +7,86 @@ import { api } from '@/api/apiClient';
 import { appParams } from '@/lib/app-params';
 import { createClient } from '@supabase/supabase-js';
 
+let ensureLegacyCityPromise = null;
+
+function normalizeCityName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+async function attachLegacyDataToCity(cityId, legacySetting, members) {
+  try {
+    if (legacySetting?.id && !legacySetting?.city_id && api?.entities?.Settings?.update) {
+      await api.entities.Settings.update(legacySetting.id, { city_id: cityId });
+    }
+  } catch {
+    // best-effort
+  }
+
+  try {
+    if (!api?.entities?.TeamMember?.update || !Array.isArray(members)) return;
+    const legacyMembers = members.filter((m) => !m?.city_id);
+    if (legacyMembers.length === 0) return;
+    await Promise.allSettled(
+      legacyMembers.map((m) => api.entities.TeamMember.update(m.id, { city_id: cityId }))
+    );
+  } catch {
+    // best-effort
+  }
+}
+
+async function ensureLegacyCityRegistered() {
+  if (!api?.entities?.City?.list) return;
+  if (!ensureLegacyCityPromise) {
+    ensureLegacyCityPromise = (async () => {
+      const [citiesRaw, settingsRaw, membersRaw] = await Promise.all([
+        api.entities.City.list('-created_at'),
+        api?.entities?.Settings?.list?.() ?? [],
+        api?.entities?.TeamMember?.list?.() ?? [],
+      ]);
+
+      const cities = Array.isArray(citiesRaw) ? citiesRaw : [];
+      const settings = Array.isArray(settingsRaw) ? settingsRaw : [];
+      const members = Array.isArray(membersRaw) ? membersRaw : [];
+
+      const legacySetting = settings.find(
+        (s) => s?.city_name && !s?.city_id && s?.scope !== 'ministry' && s?.is_ministry !== true
+      ) || settings.find((s) => s?.city_name && !s?.city_id);
+
+      if (!legacySetting?.city_name) return;
+
+      const existing = cities.find(
+        (c) => normalizeCityName(c?.name) === normalizeCityName(legacySetting.city_name)
+      );
+
+      if (existing?.id) {
+        await attachLegacyDataToCity(existing.id, legacySetting, members);
+        return;
+      }
+
+      const created = await api.entities.City.create({
+        name: legacySetting.city_name,
+        region: legacySetting.city_location || 'غير محدد',
+        contact_email: legacySetting.contact_email || null,
+        contact_phone: legacySetting.contact_phone || null,
+        status: 'active',
+        registered_at: new Date().toISOString(),
+        settings: { migrated_from_legacy: true },
+      });
+
+      if (created?.id) {
+        await attachLegacyDataToCity(created.id, legacySetting, members);
+      }
+    })().finally(() => {
+      ensureLegacyCityPromise = null;
+    });
+  }
+
+  await ensureLegacyCityPromise;
+}
+
 // =============================================
 // Supabase helper — تعامل مباشر مع جدول cities
 // =============================================
@@ -29,6 +109,7 @@ function getSupabaseClient() {
 export async function listCities({ status } = {}) {
   // إذا كانت الخلفية Supabase
   if (api?.entities?.City) {
+    await ensureLegacyCityRegistered();
     if (status) return await api.entities.City.filter({ status }, '-created_at');
     return await api.entities.City.list('-created_at');
   }
