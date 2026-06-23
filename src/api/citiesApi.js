@@ -16,6 +16,46 @@ function normalizeCityName(value) {
     .toLowerCase();
 }
 
+function toLegacyCityId(name) {
+  const slug = normalizeCityName(name).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+  return `legacy-${slug || 'city'}`;
+}
+
+async function listLegacyDerivedCities() {
+  try {
+    const settingsRaw = await api?.entities?.Settings?.list?.();
+    const settings = Array.isArray(settingsRaw) ? settingsRaw : [];
+
+    const legacySettings = settings.filter(
+      (s) => s?.city_name && !s?.city_id && s?.scope !== 'ministry' && s?.is_ministry !== true
+    );
+
+    if (legacySettings.length === 0) return [];
+
+    const dedup = new Map();
+    for (const setting of legacySettings) {
+      const normalized = normalizeCityName(setting.city_name);
+      if (!normalized) continue;
+      if (!dedup.has(normalized)) {
+        dedup.set(normalized, {
+          id: toLegacyCityId(setting.city_name),
+          name: setting.city_name,
+          region: setting.city_location || 'غير محدد',
+          contact_email: setting.contact_email || null,
+          contact_phone: setting.contact_phone || null,
+          status: 'active',
+          registered_at: setting.created_at || setting.updated_at || new Date().toISOString(),
+          is_legacy_derived: true,
+        });
+      }
+    }
+
+    return [...dedup.values()];
+  } catch {
+    return [];
+  }
+}
+
 async function attachLegacyDataToCity(cityId, legacySetting, members) {
   try {
     if (legacySetting?.id && !legacySetting?.city_id && api?.entities?.Settings?.update) {
@@ -107,21 +147,39 @@ function getSupabaseClient() {
  * جلب قائمة المدن (وزارة الصحة فقط)
  */
 export async function listCities({ status } = {}) {
-  // إذا كانت الخلفية Supabase
+  // المسار الأساسي عبر الكيان City (إذا كان متاحًا)
   if (api?.entities?.City) {
-    await ensureLegacyCityRegistered();
-    if (status) return await api.entities.City.filter({ status }, '-created_at');
-    return await api.entities.City.list('-created_at');
+    try {
+      await ensureLegacyCityRegistered();
+      if (status) {
+        const byStatus = await api.entities.City.filter({ status }, '-created_at');
+        if (Array.isArray(byStatus)) return byStatus;
+      } else {
+        const allCities = await api.entities.City.list('-created_at');
+        if (Array.isArray(allCities) && allCities.length > 0) return allCities;
+      }
+    } catch {
+      // نتابع إلى مسارات fallback
+    }
   }
 
-  // fallback: طلب مباشر لـ supabase
+  // fallback: طلب مباشر لـ supabase (جدول cities)
   const supabase = getSupabaseClient();
   if (supabase) {
-    let query = supabase.from('cities').select('*').order('created_at', { ascending: false });
-    if (status) query = query.eq('status', status);
-    const { data, error } = await query;
-    if (error) throw error;
-    return data ?? [];
+    try {
+      let query = supabase.from('cities').select('*').order('created_at', { ascending: false });
+      if (status) query = query.eq('status', status);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data) && data.length > 0) return data;
+    } catch {
+      // نتابع إلى fallback التالي
+    }
+  }
+
+  // fallback: اشتقاق المدن من الإعدادات القديمة (قبل تفعيل city_id)
+  const legacyDerivedCities = await listLegacyDerivedCities();
+  if (legacyDerivedCities.length > 0) {
+    return status ? legacyDerivedCities.filter((c) => c.status === status) : legacyDerivedCities;
   }
 
   // local mock
