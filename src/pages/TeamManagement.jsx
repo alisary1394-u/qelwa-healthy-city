@@ -90,14 +90,27 @@ export default function TeamManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
-  const { permissions, role: userRole, currentMember: authMember } = usePermissions();
+  const { permissions, role: userRole, currentMember: authMember, isMinistryAdmin } = usePermissions();
   const canAdd = permissions.canAddTeamMember === true;
   const canDelete = permissions.canDeleteTeamMember === true;
   const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
   const canAddOrEditCoordinator = permissions.canAddOrEditCoordinator === true;
   const isGovernor = userRole === 'governor' || userRole === 'admin';
-  const canEditMember = (member) => canAdd && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
-  const canDeleteMember = (member) => canDelete && (isGovernor || (member.role !== 'governor' && member.role !== 'coordinator'));
+  const canManageProtectedRole = (role) => {
+    if (role === 'governor') return isMinistryAdmin || canAddOrEditGovernor;
+    if (role === 'coordinator') return isMinistryAdmin || canAddOrEditCoordinator;
+    return true;
+  };
+  const canEditMember = (member) => {
+    if (!canAdd) return false;
+    if (!canManageProtectedRole(member?.role)) return false;
+    return isMinistryAdmin || isGovernor || (member.role !== 'governor' && member.role !== 'coordinator');
+  };
+  const canDeleteMember = (member) => {
+    if (!canDelete) return false;
+    if (!canManageProtectedRole(member?.role)) return false;
+    return isMinistryAdmin || isGovernor || (member.role !== 'governor' && member.role !== 'coordinator');
+  };
 
   const authMemberCommitteeId = String(authMember?.committee_id || '');
   const isGlobalTeamScope = userRole === 'governor' || userRole === 'coordinator';
@@ -164,6 +177,15 @@ export default function TeamManagement() {
     if (editingMember) {
       if (!canEditMember(editingMember)) return;
     } else if (!canAdd) {
+      return;
+    }
+
+    if (!canManageProtectedRole(data?.role)) {
+      toast({
+        title: t('common.error'),
+        description: 'تسجيل أو تعديل المحافظ والمنسق متاح لوزارة الصحة فقط',
+        variant: 'destructive'
+      });
       return;
     }
 
