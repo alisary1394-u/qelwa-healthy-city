@@ -120,8 +120,6 @@ function getSelectedMinistryCityScope() {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
   const hostCity = getHostCityTemplate();
   if (hostCity?.isMinistry !== true) return null;
-  const path = String(window.location?.pathname || '').toLowerCase();
-  if (path === '/ministrydashboard') return null;
   try {
     const rawScope = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
     if (rawScope) {

@@ -218,7 +218,20 @@ export default function TeamManagement() {
       return;
     }
 
+    // عند إضافة عضو جديد من لوحة الوزارة، تعيين city_id بناءً على المدينة المختارة
     let payload = { ...data };
+    if (!editingMember && !payload.city_id) {
+      try {
+        const scopeJson = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+        if (scopeJson) {
+          const scope = JSON.parse(scopeJson);
+          if (scope?.cityId) {
+            payload.city_id = scope.cityId;
+          }
+        }
+      } catch {}
+    }
+
     let latestMember = editingMember || null;
 
     if (editingMember?.id) {
