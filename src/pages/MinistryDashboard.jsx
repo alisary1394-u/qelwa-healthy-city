@@ -527,7 +527,7 @@ export default function MinistryDashboard() {
 
   // تغيير حالة المدينة
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }) => setCityStatus(id, status),
+    mutationFn: ({ city, status }) => setCityStatus(city, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cities'] });
       setConfirmAction(null);
@@ -537,7 +537,7 @@ export default function MinistryDashboard() {
 
   // حذف مدينة
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteCity(id),
+    mutationFn: (city) => deleteCity(city),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cities'] });
       setConfirmAction(null);
@@ -567,11 +567,11 @@ export default function MinistryDashboard() {
     if (!confirmAction) return;
     const { type, city } = confirmAction;
     if (type === 'delete') {
-      deleteMutation.mutate(city.id);
+      deleteMutation.mutate(city);
     } else if (type === 'suspend') {
-      statusMutation.mutate({ id: city.id, status: 'suspended' });
+      statusMutation.mutate({ city, status: 'suspended' });
     } else if (type === 'activate') {
-      statusMutation.mutate({ id: city.id, status: 'active' });
+      statusMutation.mutate({ city, status: 'active' });
     }
   }
 
