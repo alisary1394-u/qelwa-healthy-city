@@ -4,8 +4,9 @@ const CITY_HOSTS = [
     cityName: 'قلوة الصحية',
     region: 'محافظة قلوة',
     logoText: 'ق',
-    hostnames: ['qilwah.qeelwah.com', 'www.qilwah.qeelwah.com', 'qeelwah.com', 'www.qeelwah.com'],
-    fallback: true,
+    hostnames: ['qilwah.qeelwah.com', 'www.qilwah.qeelwah.com'],
+    fallback: false,
+    hasLegacyData: true,
   },
   {
     key: 'al-mandaq',

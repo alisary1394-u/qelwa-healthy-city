@@ -105,7 +105,7 @@ function applyCityScopeToList(entityName, arr) {
   const { isMinistryAdmin, cityId } = getUserScope();
   if (isMinistryAdmin) return arr;
   const hostCity = getHostCityTemplate();
-  if (!cityId && hostCity && hostCity.fallback !== true) return [];
+  if (!cityId && hostCity && !hostCity.hasLegacyData) return [];
   // توافق رجعي: البيانات القديمة كانت بدون city_id.
   if (!cityId) return arr.filter((item) => item?.city_id == null);
   return arr.filter((item) => item?.city_id == null || item?.city_id === cityId);
