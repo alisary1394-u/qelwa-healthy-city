@@ -166,14 +166,14 @@ function getSupabase() {
 function createEntityHandler(entityName) {
   const table = entityToTable(entityName);
   return {
-    async list(orderBy) {
+    async list(orderBy, cityId) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;
       const arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord));
       return sortBy(arr, orderBy);
     },
-    async filter(query, orderBy, limit) {
+    async filter(query, orderBy, limit, cityId) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;

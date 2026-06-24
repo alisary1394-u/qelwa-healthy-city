@@ -518,16 +518,16 @@ export async function getCitySummary(cityOrId) {
       tasksRaw,
       evidenceRaw,
     ] = await Promise.all([
-      api?.entities?.Standard?.list?.() ?? [],
-      api?.entities?.TeamMember?.list?.() ?? [],
-      api?.entities?.Initiative?.list?.() ?? [],
-      api?.entities?.FamilySurvey?.list?.() ?? [],
-      api?.entities?.Budget?.list?.() ?? [],
-      api?.entities?.BudgetAllocation?.list?.() ?? [],
-      api?.entities?.Transaction?.list?.() ?? [],
-      api?.entities?.Committee?.list?.() ?? [],
-      api?.entities?.Task?.list?.() ?? [],
-      api?.entities?.Evidence?.list?.() ?? [],
+      api?.entities?.Standard?.list?.(undefined, cityId) ?? [],
+      api?.entities?.TeamMember?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Initiative?.list?.(undefined, cityId) ?? [],
+      api?.entities?.FamilySurvey?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Budget?.list?.(undefined, cityId) ?? [],
+      api?.entities?.BudgetAllocation?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Transaction?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Committee?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Task?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Evidence?.list?.(undefined, cityId) ?? [],
     ]);
 
     const byCity = (rows) => {

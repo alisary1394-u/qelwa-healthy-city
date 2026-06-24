@@ -151,7 +151,7 @@ function applyCityScopeToList(entityName, arr) {
 
 function createEntityHandler(entityName) {
   return {
-    list(orderBy) {
+    list(orderBy, cityId) {
       const arr = applyCityScopeToList(entityName, getStore(entityName));
       if (!orderBy || typeof orderBy !== 'string') return [...arr];
       const [field, dir] = orderBy.startsWith('-') ? [orderBy.slice(1), -1] : [orderBy, 1];
@@ -165,7 +165,7 @@ function createEntityHandler(entityName) {
         return dir * (cmp || 0);
       });
     },
-    filter(query, orderBy, limit) {
+    filter(query, orderBy, limit, cityId) {
       let arr = applyCityScopeToList(entityName, getStore(entityName));
       if (query && typeof query === 'object') {
         arr = arr.filter((item) => {

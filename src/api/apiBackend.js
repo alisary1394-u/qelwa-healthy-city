@@ -157,14 +157,23 @@ function createEntityHandler(entityName) {
   const table = entityToTable(entityName);
   const path = '/api/entities/' + entityName;
   return {
-    async list(orderBy) {
-      const q = orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : '';
+    async list(orderBy, cityId) {
+      let q = '';
+      const params = new URLSearchParams();
+      if (orderBy) params.append('orderBy', orderBy);
+      if (cityId) params.append('cityId', cityId);
+      if (params.toString()) q = '?' + params.toString();
       const result = await api('GET', path + q);
       const list = Array.isArray(result) ? result : [];
       return applyCityScopeToList(entityName, list);
     },
-    async filter(query, orderBy, limit) {
-      let list = await api('GET', path + (orderBy ? `?orderBy=${encodeURIComponent(orderBy)}` : ''));
+    async filter(query, orderBy, limit, cityId) {
+      let q = '';
+      const params = new URLSearchParams();
+      if (orderBy) params.append('orderBy', orderBy);
+      if (cityId) params.append('cityId', cityId);
+      if (params.toString()) q = '?' + params.toString();
+      let list = await api('GET', path + q);
       if (!Array.isArray(list)) list = [];
       list = applyCityScopeToList(entityName, list);
       if (query && typeof query === 'object') {
