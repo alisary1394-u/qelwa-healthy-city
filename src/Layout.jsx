@@ -37,6 +37,19 @@ import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
+
+function getSelectedMinistryCityName() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return '';
+  try {
+    const raw = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+    if (!raw) return '';
+    const parsed = JSON.parse(raw);
+    return String(parsed?.cityName || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -79,6 +92,7 @@ export default function Layout({ children }) {
       return '';
     }
   });
+  const [selectedMinistryCityName, setSelectedMinistryCityName] = useState(getSelectedMinistryCityName);
 
   const effectiveTheme = theme === 'system' ? systemTheme : theme;
   const isActive = (pageName) => currentPath === createPageUrl(pageName);
@@ -126,7 +140,9 @@ export default function Layout({ children }) {
   useEffect(() => {
     const handleMinistryCitySelected = (event) => {
       const nextId = String(event?.detail?.cityId || '');
+      const nextName = String(event?.detail?.cityName || '').trim();
       setSelectedMinistryCityId(nextId);
+      setSelectedMinistryCityName(nextName || getSelectedMinistryCityName());
     };
     window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
     return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
@@ -442,6 +458,12 @@ export default function Layout({ children }) {
           <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Link to={createPageUrl('Dashboard')} className="hover:text-foreground transition-colors">{t('nav.dashboard')}</Link>
+              {!!selectedMinistryCityName && (
+                <>
+                  <ChevronRight className={`w-3.5 h-3.5 ${rtl ? 'rotate-180' : ''}`} />
+                  <span className="text-foreground/80 font-medium">{selectedMinistryCityName}</span>
+                </>
+              )}
               {currentPath !== '/' && currentPath !== '/Dashboard' && (
                 <>
                   <ChevronRight className={`w-3.5 h-3.5 ${rtl ? 'rotate-180' : ''}`} />

@@ -597,10 +597,11 @@ export default function MinistryDashboard() {
     if (type === 'selectCity') {
       try {
         const cityId = String(city?.id || '');
+        const cityName = String(city?.name || '').trim();
         const includeLegacyNull = resolveIncludeLegacyNullForCity(city);
         localStorage.setItem(MINISTRY_SELECTED_CITY_KEY, cityId);
-        localStorage.setItem(MINISTRY_SELECTED_CITY_SCOPE_KEY, JSON.stringify({ cityId, includeLegacyNull }));
-        window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId, includeLegacyNull } }));
+        localStorage.setItem(MINISTRY_SELECTED_CITY_SCOPE_KEY, JSON.stringify({ cityId, cityName, includeLegacyNull }));
+        window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId, cityName, includeLegacyNull } }));
       } catch {}
       setSelectedCityId(String(city?.id || ''));
       toast({ title: `تم اختيار ${city?.name || 'المدينة'}`, description: 'تم إظهار القائمة اليمنى وفتح لوحة التحكم.' });
@@ -668,7 +669,7 @@ export default function MinistryDashboard() {
                 try {
                   localStorage.removeItem(MINISTRY_SELECTED_CITY_KEY);
                   localStorage.removeItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
-                  window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '', includeLegacyNull: false } }));
+                  window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '', cityName: '', includeLegacyNull: false } }));
                 } catch {}
                 setSelectedCityId('');
                 toast({ title: 'تم إلغاء اختيار المدينة', description: 'تم إخفاء القائمة اليمنى حتى يتم اختيار مدينة مرة أخرى.' });
