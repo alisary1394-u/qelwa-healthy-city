@@ -46,6 +46,7 @@ export const ROLE_LABEL_KEYS = {
 export const PERMISSIONS_BY_ROLE = {
   governor: {
     label: ROLE_LABELS.governor,
+    canSeeMinistryDashboard: false,
     canManageSettings: true,
     canManageTeam: true,
     canAddTeamMember: true,
@@ -85,6 +86,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   coordinator: {
     label: ROLE_LABELS.coordinator,
+    canSeeMinistryDashboard: false,
     canManageSettings: true,
     canManageTeam: true,
     canAddTeamMember: true,
@@ -123,6 +125,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   committee_head: {
     label: ROLE_LABELS.committee_head,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -162,6 +165,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   committee_coordinator: {
     label: ROLE_LABELS.committee_coordinator,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -201,6 +205,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   committee_supervisor: {
     label: ROLE_LABELS.committee_supervisor,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -240,6 +245,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   budget_manager: {
     label: ROLE_LABELS.budget_manager,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -279,6 +285,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   accountant: {
     label: ROLE_LABELS.accountant,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -318,6 +325,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   financial_officer: {
     label: ROLE_LABELS.financial_officer,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -357,6 +365,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   member: {
     label: ROLE_LABELS.member,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -396,6 +405,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   volunteer: {
     label: ROLE_LABELS.volunteer,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,
@@ -436,6 +446,7 @@ export const PERMISSIONS_BY_ROLE = {
   },
   committee_member: {
     label: ROLE_LABELS.committee_member,
+    canSeeMinistryDashboard: false,
     canManageSettings: false,
     canManageTeam: false,
     canAddTeamMember: false,

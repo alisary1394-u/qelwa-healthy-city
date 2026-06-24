@@ -9,9 +9,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Suspense } from 'react';
 import { ThemeProvider } from 'next-themes';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const { Pages, Layout, mainPage } = pagesConfig;
-const mainPageKey = mainPage ?? Object.keys(Pages)[0];
+// على الدومين الرئيسي (وزارة) الصفحة الرئيسية هي MinistryDashboard، على سب دومينات المدن هي Dashboard
+const _hostCity = getHostCityTemplate();
+const _isMinistryHost = _hostCity?.fallback === true;
+const mainPageKey = _isMinistryHost ? 'MinistryDashboard' : (mainPage ?? Object.keys(Pages)[0]);
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 const HomePage = Pages['Home'];
 
