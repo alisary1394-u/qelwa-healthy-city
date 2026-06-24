@@ -172,7 +172,7 @@ function createEntityHandler(entityName) {
       if (params.toString()) q = '?' + params.toString();
       const result = await api('GET', path + q);
       const list = Array.isArray(result) ? result : [];
-      return applyCityScopeToList(entityName, list);
+      return applyCityScopeToList(entityName, list, cityId);
     },
     async filter(query, orderBy, limit, cityId) {
       let q = '';
@@ -182,7 +182,7 @@ function createEntityHandler(entityName) {
       if (params.toString()) q = '?' + params.toString();
       let list = await api('GET', path + q);
       if (!Array.isArray(list)) list = [];
-      list = applyCityScopeToList(entityName, list);
+      list = applyCityScopeToList(entityName, list, cityId);
       if (query && typeof query === 'object') {
         list = list.filter((item) => Object.entries(query).every(([k, v]) => item[k] === v));
       }

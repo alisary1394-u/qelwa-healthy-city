@@ -189,6 +189,16 @@ export default function Layout({ children }) {
           </Link>
           <div className="flex items-center gap-1">
             {currentUser && <NotificationBell userEmail={currentUser.email} />}
+            {currentUser && hideSidebarUntilCitySelection && (
+              <button
+                onClick={() => logout(true)}
+                className="p-2 rounded-lg hover:bg-red-500/10 text-red-500"
+                title={t('nav.logout')}
+                aria-label={t('nav.logout')}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -475,6 +485,17 @@ export default function Layout({ children }) {
             </div>
             <div className="flex items-center gap-2">
               {currentUser && <NotificationBell userEmail={currentUser.email} />}
+              {currentUser && hideSidebarUntilCitySelection && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logout(true)}
+                  className="h-8 px-2 text-destructive border-destructive/30 hover:bg-destructive/5"
+                >
+                  <LogOut className={`w-4 h-4 ${rtl ? 'ml-1' : 'mr-1'}`} />
+                  {t('nav.logout')}
+                </Button>
+              )}
             </div>
           </header>
 
