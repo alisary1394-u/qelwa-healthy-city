@@ -442,16 +442,16 @@ function safeError(res, e, status = 500) {
  * الجداول غير المذكورة: يمكن لأي مستخدم مصادق عليه الكتابة.
  */
 const WRITE_PERMISSION_MAP = {
-  settings:          ['governor'],
-  axis:              ['governor', 'coordinator'],
-  standard:          ['governor', 'coordinator'],
-  team_member:       ['governor'],
-  committee:         ['governor', 'coordinator', 'committee_head'],
-  initiative:        ['governor', 'coordinator', 'committee_head'],
-  initiative_kpi:    ['governor', 'coordinator', 'committee_head'],
-  budget:            ['governor', 'coordinator', 'budget_manager'],
-  budget_allocation: ['governor', 'coordinator', 'budget_manager', 'accountant'],
-  transaction:       ['governor', 'coordinator', 'budget_manager', 'accountant', 'financial_officer'],
+  settings:          ['governor', 'ministry_admin', 'ministry_it_admin'],
+  axis:              ['governor', 'coordinator', 'ministry_admin', 'ministry_staff'],
+  standard:          ['governor', 'coordinator', 'ministry_admin', 'ministry_staff'],
+  team_member:       ['governor', 'ministry_admin', 'ministry_staff', 'ministry_regional_staff'],
+  committee:         ['governor', 'coordinator', 'committee_head', 'ministry_admin', 'ministry_staff', 'ministry_regional_staff'],
+  initiative:        ['governor', 'coordinator', 'committee_head', 'ministry_admin', 'ministry_staff', 'ministry_regional_staff'],
+  initiative_kpi:    ['governor', 'coordinator', 'committee_head', 'ministry_admin', 'ministry_staff', 'ministry_regional_staff'],
+  budget:            ['governor', 'coordinator', 'budget_manager', 'ministry_admin', 'ministry_staff'],
+  budget_allocation: ['governor', 'coordinator', 'budget_manager', 'accountant', 'ministry_admin', 'ministry_staff'],
+  transaction:       ['governor', 'coordinator', 'budget_manager', 'accountant', 'financial_officer', 'ministry_admin', 'ministry_staff'],
 };
 
 /** يعيد true إذا كان المستخدم مسموحاً له بالكتابة على هذا الجدول */
@@ -620,6 +620,9 @@ app.post('/api/auth/login', async (req, res) => {
       user_role: member.role === 'governor' ? 'admin' : 'user',
       role: member.role,
       national_id: member.national_id,
+      city_id: member.city_id || null,
+      ministry_region: member.ministry_region || member.region || null,
+      ministry_region_scope: member.ministry_region_scope || member.region_scope || null,
     };
     const token = randomBytes(32).toString('hex');
     await saveSession(token, user, Date.now() + SESSION_TTL_MS);

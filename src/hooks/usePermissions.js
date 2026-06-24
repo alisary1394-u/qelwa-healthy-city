@@ -53,6 +53,18 @@ function getSelectedScopeToken() {
   return 'default';
 }
 
+function parseRegionScope(user) {
+  const raw = user?.ministry_region_scope ?? user?.region_scope ?? user?.ministry_region ?? user?.region;
+  if (Array.isArray(raw)) return raw.map((v) => String(v || '').trim()).filter(Boolean);
+  if (typeof raw === 'string') {
+    return raw
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 /**
  * خطاف صلاحيات المستخدم الحالي.
  * يعتمد على currentUser و currentMember (TeamMember المطابق للبريد).
@@ -95,12 +107,15 @@ export function usePermissions() {
     const currentMember = (currentUser?.national_id != null
       ? membersList.find((m) => String(m.national_id) === String(currentUser.national_id))
       : null) || membersList.find((m) => m.email === currentUser?.email);
-    // الصلاحيات تعتمد فقط على دور العضو في الفريق: إن وُجد في الفريق نستخدم دوره، وإلا نعامله كمتطوع (لا نعتمد user_role من النظام حتى لا يحصل غير المسجلين على صلاحيات المشرف)
-    const role = (currentUser?.role === 'ministry_admin' || currentUser?.user_role === 'ministry_admin')
-      ? 'ministry_admin'
+    const ministryRoles = new Set(['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff']);
+    const explicitRole = currentUser?.role || currentUser?.user_role;
+    // الدور الوزاري الصريح له الأولوية على دور الفريق
+    const role = ministryRoles.has(explicitRole)
+      ? explicitRole
       : (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
       ? 'governor'
       : (currentMember?.role || 'volunteer');
+    const ministryRegionScope = parseRegionScope(currentUser);
     
     // دمج الصلاحيات الافتراضية مع التخصيصات من قاعدة البيانات
     let permissions = getPermissions(role);
@@ -120,18 +135,19 @@ export function usePermissions() {
     }
     
     const isGovernor = role === 'governor';
-  const isMinistryAdmin = role === 'ministry_admin';
+    const isMinistryAdmin = role === 'ministry_admin';
+    const isMinistryRole = ministryRoles.has(role);
 
     // بناء عناصر القائمة بناءً على الصلاحيات المدمجة (الافتراضية + التخصيصات)
     const navItemsFromPerms = getNavItemsForRole(role);
     const ministryNavOrder = ['MinistryDashboard', 'Reports', 'TeamManagement', 'Files', 'Settings'];
     const navItems = navItemsFromPerms
       .filter((item) => {
-        if (role !== 'ministry_admin') return true;
+        if (!isMinistryRole) return true;
         return ministryNavOrder.includes(item.name);
       })
       .sort((a, b) => {
-        if (role !== 'ministry_admin') return 0;
+        if (!isMinistryRole) return 0;
         return ministryNavOrder.indexOf(a.name) - ministryNavOrder.indexOf(b.name);
       })
       .filter((item) => permissions[item.permission] !== false)
@@ -147,6 +163,8 @@ export function usePermissions() {
       isGovernor,
       currentMember: currentMember ?? null,
       isMinistryAdmin,
+      isMinistryRole,
+      ministryRegionScope,
     };
   }, [currentUser, members, permissionOverrides]);
 }

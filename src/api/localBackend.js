@@ -362,6 +362,8 @@ function buildUserFromMember(member) {
     role: member.role,
     national_id: member.national_id,
     city_id: member.city_id || null,
+    ministry_region: member.ministry_region || member.region || null,
+    ministry_region_scope: member.ministry_region_scope || member.region_scope || null,
   };
 }
 

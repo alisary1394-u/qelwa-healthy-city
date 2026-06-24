@@ -7,6 +7,9 @@
 /** أسماء المناصب — مفاتيح ترجمة + أسماء عربية كاحتياط */
 export const ROLE_LABELS = {
   ministry_admin: 'مدير وزارة الصحة',
+  ministry_it_admin: 'موظف تقنية المعلومات (الوزارة)',
+  ministry_staff: 'موظف وزارة الصحة (مركزي)',
+  ministry_regional_staff: 'موظف وزارة الصحة (إقليمي)',
   governor: 'المشرف العام (المحافظ)',
   coordinator: 'منسق المدينة الصحية',
   committee_head: 'رئيس لجنة',
@@ -24,6 +27,9 @@ export const ROLE_LABELS = {
 /** مفاتيح ترجمة المناصب */
 export const ROLE_LABEL_KEYS = {
   ministry_admin: 'roles.ministry_admin',
+  ministry_it_admin: 'roles.ministry_it_admin',
+  ministry_staff: 'roles.ministry_staff',
+  ministry_regional_staff: 'roles.ministry_regional_staff',
   governor: 'roles.governor',
   coordinator: 'roles.coordinator',
   committee_head: 'roles.committee_head',
@@ -537,6 +543,46 @@ PERMISSIONS_BY_ROLE.ministry_admin = {
   canViewAllCities: true,
 };
 
+/** موظف تقنية المعلومات — يدير الصلاحيات والإعدادات التقنية بدون صلاحيات تشغيلية كاملة للمدن */
+PERMISSIONS_BY_ROLE.ministry_it_admin = {
+  ...PERMISSIONS_BY_ROLE.ministry_admin,
+  label: ROLE_LABELS.ministry_it_admin,
+  canManageCities: false,
+  canRegisterCity: false,
+  canSuspendCity: false,
+  canAddOrEditGovernor: false,
+  canAddOrEditCoordinator: false,
+  canManageBudget: false,
+  canApproveTransactions: false,
+  canCreateTransactions: false,
+  canVerifySurvey: false,
+  canManageInitiatives: false,
+  canManageStandards: false,
+  canManageTasks: false,
+  canViewFinancials: false,
+};
+
+/** موظف وزارة مركزي — متابعة وتشغيل على مستوى الوزارة بدون إدارة تقنية حساسة */
+PERMISSIONS_BY_ROLE.ministry_staff = {
+  ...PERMISSIONS_BY_ROLE.ministry_admin,
+  label: ROLE_LABELS.ministry_staff,
+  canManagePermissions: false,
+  canManageSettings: false,
+  canRegisterCity: false,
+  canSuspendCity: false,
+  canDeleteTeamMember: false,
+  canManageCities: false,
+  canViewAllCities: true,
+};
+
+/** موظف وزارة إقليمي — نفس الموظف المركزي لكن بنطاق مناطق محددة */
+PERMISSIONS_BY_ROLE.ministry_regional_staff = {
+  ...PERMISSIONS_BY_ROLE.ministry_staff,
+  label: ROLE_LABELS.ministry_regional_staff,
+  canViewAllCities: false,
+  canViewRegionalCities: true,
+};
+
 /**
  * أعمدة جدول "مراجعة الصلاحيات حسب المنصب" — مصدر واحد للحقيقة مع PERMISSIONS_BY_ROLE.
  */
@@ -581,7 +627,8 @@ export const PERMISSION_REVIEW_KEYS = [
 
 /** ترتيب المناصب في جدول مراجعة الصلاحيات */
 export const PERMISSIONS_REVIEW_ROLE_ORDER = [
-  'ministry_admin', 'governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor',
+  'ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff',
+  'governor', 'coordinator', 'committee_head', 'committee_coordinator', 'committee_supervisor',
   'committee_member', 'budget_manager', 'accountant', 'financial_officer', 'member', 'volunteer'
 ];
 
@@ -592,7 +639,9 @@ export const PERMISSIONS_REVIEW_ROLE_ORDER = [
  */
 export function getPermissions(role) {
   const r = role === 'admin' ? 'governor' : (role || 'volunteer');
-  if (r === 'ministry_admin') return PERMISSIONS_BY_ROLE.ministry_admin;
+  if (['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'].includes(r)) {
+    return PERMISSIONS_BY_ROLE[r];
+  }
   return PERMISSIONS_BY_ROLE[r] ?? PERMISSIONS_BY_ROLE.volunteer;
 }
 

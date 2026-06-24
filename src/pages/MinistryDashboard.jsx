@@ -48,7 +48,7 @@ function formatCurrency(value) {
 // -------------------------------------------------------
 // مكون بطاقة مدينة
 // -------------------------------------------------------
-function CityCard({ city, onAction, selectedCityId }) {
+function CityCard({ city, onAction, selectedCityId, canManageCities, canManageLeadership }) {
   const statusConfig = {
     active:    { label: 'نشطة',    color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
     suspended: { label: 'موقوفة',  color: 'bg-amber-100  text-amber-700  border-amber-200'  },
@@ -90,31 +90,33 @@ function CityCard({ city, onAction, selectedCityId }) {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`text-xs border px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {city.status !== 'suspended' && (
-                  <DropdownMenuItem onClick={() => onAction('suspend', city)}>
-                    <PauseCircle className="w-4 h-4 ml-2 text-amber-500" />تعليق المدينة
+            {canManageCities && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  {city.status !== 'suspended' && (
+                    <DropdownMenuItem onClick={() => onAction('suspend', city)}>
+                      <PauseCircle className="w-4 h-4 ml-2 text-amber-500" />تعليق المدينة
+                    </DropdownMenuItem>
+                  )}
+                  {city.status === 'suspended' && (
+                    <DropdownMenuItem onClick={() => onAction('activate', city)}>
+                      <CheckCircle2 className="w-4 h-4 ml-2 text-emerald-500" />تفعيل المدينة
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={() => onAction('delete', city)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 ml-2" />حذف المدينة
                   </DropdownMenuItem>
-                )}
-                {city.status === 'suspended' && (
-                  <DropdownMenuItem onClick={() => onAction('activate', city)}>
-                    <CheckCircle2 className="w-4 h-4 ml-2 text-emerald-500" />تفعيل المدينة
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={() => onAction('delete', city)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4 ml-2" />حذف المدينة
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -240,15 +242,21 @@ function CityCard({ city, onAction, selectedCityId }) {
         </Button>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={() => onAction('editCity', city)}>
-            <Edit3 className="w-3.5 h-3.5 ml-1" />تعديل المدينة
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onAction('assignGovernor', city, summary?.governor || null)}>
-            <Crown className="w-3.5 h-3.5 ml-1" />المحافظ
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onAction('assignCoordinator', city, summary?.coordinator || null)}>
-            <UserCog className="w-3.5 h-3.5 ml-1" />المنسق
-          </Button>
+          {canManageCities ? (
+            <Button variant="outline" size="sm" onClick={() => onAction('editCity', city)}>
+              <Edit3 className="w-3.5 h-3.5 ml-1" />تعديل المدينة
+            </Button>
+          ) : <div />}
+          {canManageLeadership ? (
+            <Button variant="outline" size="sm" onClick={() => onAction('assignGovernor', city, summary?.governor || null)}>
+              <Crown className="w-3.5 h-3.5 ml-1" />المحافظ
+            </Button>
+          ) : <div />}
+          {canManageLeadership ? (
+            <Button variant="outline" size="sm" onClick={() => onAction('assignCoordinator', city, summary?.coordinator || null)}>
+              <UserCog className="w-3.5 h-3.5 ml-1" />المنسق
+            </Button>
+          ) : <div />}
         </div>
       </CardContent>
     </Card>
@@ -487,7 +495,7 @@ function LeadershipDialog({ open, onClose, onSave, city, role, initialMember }) 
 // -------------------------------------------------------
 export default function MinistryDashboard() {
   const { user } = useAuth();
-  const { isMinistryAdmin } = usePermissions();
+  const { isMinistryAdmin, isMinistryRole, role, permissions, ministryRegionScope = [] } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -506,7 +514,13 @@ export default function MinistryDashboard() {
 
   // التحقق من الصلاحية
   const canAccessMinistryDashboard =
-    isMinistryAdmin || user?.role === 'admin' || user?.user_role === 'admin';
+    isMinistryRole || isMinistryAdmin || user?.role === 'admin' || user?.user_role === 'admin';
+
+  const canManageCities = permissions?.canManageCities === true || isMinistryAdmin;
+  const canManageLeadership = permissions?.canAddOrEditGovernor === true || permissions?.canAddOrEditCoordinator === true;
+
+  const normalizeRegion = (value) => String(value || '').trim().toLowerCase();
+  const regionScope = Array.isArray(ministryRegionScope) ? ministryRegionScope.map(normalizeRegion).filter(Boolean) : [];
 
   if (user && !canAccessMinistryDashboard) {
     return (
@@ -629,7 +643,13 @@ export default function MinistryDashboard() {
     }
   }
 
-  const activeCities = cities.filter(c => c.status !== 'deleted');
+  const regionScopedCities = role === 'ministry_regional_staff'
+    ? (regionScope.length > 0
+      ? cities.filter((c) => regionScope.some((r) => normalizeRegion(c?.region).includes(r)))
+      : [])
+    : cities;
+
+  const activeCities = regionScopedCities.filter(c => c.status !== 'deleted');
   const filteredCities = activeCities.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
     c.region?.toLowerCase().includes(search.toLowerCase())
@@ -688,9 +708,11 @@ export default function MinistryDashboard() {
           >
             <RefreshCw className="w-4 h-4 ml-1" />تحديث
           </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="w-4 h-4 ml-1" />تسجيل مدينة
-          </Button>
+          {canManageCities && (
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 ml-1" />تسجيل مدينة
+            </Button>
+          )}
         </div>
       </div>
       </div>
@@ -740,7 +762,7 @@ export default function MinistryDashboard() {
             <p className="text-muted-foreground">
               {search ? 'لا توجد مدن تطابق البحث' : 'لم يتم تسجيل أي مدينة بعد'}
             </p>
-            {!search && (
+            {!search && canManageCities && (
               <Button onClick={() => setShowAddDialog(true)}>
                 <Plus className="w-4 h-4 ml-1" />تسجيل أول مدينة
               </Button>
@@ -750,37 +772,50 @@ export default function MinistryDashboard() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCities.map(city => (
-            <CityCard key={city.id} city={city} onAction={handleCityAction} selectedCityId={selectedCityId} />
+            <CityCard
+              key={city.id}
+              city={city}
+              onAction={handleCityAction}
+              selectedCityId={selectedCityId}
+              canManageCities={canManageCities}
+              canManageLeadership={canManageLeadership}
+            />
           ))}
         </div>
       )}
 
       {/* نموذج إضافة مدينة */}
-      <CityFormDialog
-        open={showAddDialog}
-        onClose={() => setShowAddDialog(false)}
-        title="تسجيل مدينة صحية جديدة"
-        submitLabel="تسجيل المدينة"
-        onSave={data => createMutation.mutate(data)}
-      />
+      {canManageCities && (
+        <CityFormDialog
+          open={showAddDialog}
+          onClose={() => setShowAddDialog(false)}
+          title="تسجيل مدينة صحية جديدة"
+          submitLabel="تسجيل المدينة"
+          onSave={data => createMutation.mutate(data)}
+        />
+      )}
 
-      <CityFormDialog
-        open={!!editingCity}
-        onClose={() => setEditingCity(null)}
-        initialData={editingCity}
-        title={`تعديل بيانات ${editingCity?.name || 'المدينة'}`}
-        submitLabel="حفظ التعديلات"
-        onSave={(data) => updateCityMutation.mutate({ city: editingCity, updates: data })}
-      />
+      {canManageCities && (
+        <CityFormDialog
+          open={!!editingCity}
+          onClose={() => setEditingCity(null)}
+          initialData={editingCity}
+          title={`تعديل بيانات ${editingCity?.name || 'المدينة'}`}
+          submitLabel="حفظ التعديلات"
+          onSave={(data) => updateCityMutation.mutate({ city: editingCity, updates: data })}
+        />
+      )}
 
-      <LeadershipDialog
-        open={!!leadershipDialog}
-        onClose={() => setLeadershipDialog(null)}
-        city={leadershipDialog?.city}
-        role={leadershipDialog?.role}
-        initialMember={leadershipDialog?.member}
-        onSave={(data) => leadershipMutation.mutate({ city: leadershipDialog?.city, data })}
-      />
+      {canManageLeadership && (
+        <LeadershipDialog
+          open={!!leadershipDialog}
+          onClose={() => setLeadershipDialog(null)}
+          city={leadershipDialog?.city}
+          role={leadershipDialog?.role}
+          initialMember={leadershipDialog?.member}
+          onSave={(data) => leadershipMutation.mutate({ city: leadershipDialog?.city, data })}
+        />
+      )}
 
       {/* تأكيد الإجراء */}
       <Dialog open={!!confirmAction} onOpenChange={v => !v && setConfirmAction(null)}>
