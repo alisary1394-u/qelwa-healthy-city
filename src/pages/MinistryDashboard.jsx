@@ -540,6 +540,14 @@ export default function MinistryDashboard() {
     staleTime: 2 * 60 * 1000,
   });
 
+  const ministryRoleKeys = ['ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'];
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['teamMembers', 'ministry-dashboard'],
+    queryFn: () => api.entities.TeamMember.list(),
+    enabled: isMinistryRole,
+    select: (data) => Array.isArray(data) ? data : [],
+  });
+
   // إنشاء مدينة
   const createMutation = useMutation({
     mutationFn: createCity,
@@ -663,6 +671,14 @@ export default function MinistryDashboard() {
     pending: activeCities.filter(c => c.status === 'pending').length,
   };
 
+  const ministryMembers = teamMembers.filter((m) => ministryRoleKeys.includes(String(m?.role || '')));
+  const ministryRoleStats = {
+    total: ministryMembers.length,
+    it: ministryMembers.filter((m) => m.role === 'ministry_it_admin').length,
+    central: ministryMembers.filter((m) => m.role === 'ministry_staff').length,
+    regional: ministryMembers.filter((m) => m.role === 'ministry_regional_staff').length,
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* رأس الصفحة */}
@@ -738,6 +754,42 @@ export default function MinistryDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* قسم موظفي الوزارة (تحديث جديد ظاهر داخل لوحة الوزارة) */}
+      {isMinistryRole && (
+        <Card className="border border-blue-100 bg-gradient-to-l from-blue-50/50 to-white">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>إدارة موظفي الوزارة والصلاحيات الإقليمية</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(createPageUrl('TeamManagement'))}
+              >
+                <UserCog className="w-4 h-4 ml-1" />فتح إدارة الفريق
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border bg-white p-3">
+              <p className="text-xs text-muted-foreground">إجمالي موظفي الوزارة</p>
+              <p className="text-xl font-bold">{ministryRoleStats.total}</p>
+            </div>
+            <div className="rounded-lg border bg-white p-3">
+              <p className="text-xs text-muted-foreground">تقنية المعلومات</p>
+              <p className="text-xl font-bold">{ministryRoleStats.it}</p>
+            </div>
+            <div className="rounded-lg border bg-white p-3">
+              <p className="text-xs text-muted-foreground">موظفو الوزارة (مركزي)</p>
+              <p className="text-xl font-bold">{ministryRoleStats.central}</p>
+            </div>
+            <div className="rounded-lg border bg-white p-3">
+              <p className="text-xs text-muted-foreground">موظفو المناطق</p>
+              <p className="text-xl font-bold">{ministryRoleStats.regional}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* بحث */}
       <div className="relative rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
