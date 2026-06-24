@@ -95,7 +95,7 @@ export default function Layout({ children }) {
   const currentSetting = appSetting;
   const hostCity = getHostCityTemplate();
   const isMinistryHost = hostCity?.isMinistry === true;
-  const hideSidebarUntilCitySelection = isMinistryHost && isMinistryAdmin && !selectedMinistryCityId;
+  const hideSidebarUntilCitySelection = isMinistryHost && !selectedMinistryCityId;
 
   const toggleSidebar = () => {
     const next = !sidebarCollapsed;

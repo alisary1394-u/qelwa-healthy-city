@@ -2,10 +2,12 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { api } from '@/api/apiClient';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const AuthContext = createContext();
 
 const SEED_MARKER_KEY = 'app_seed_completed_v1';
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,6 +25,15 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
+
+      // على الدومين الوزاري نبدأ دائماً بلا اختيار مدينة حتى لا تظهر القائمة من جلسات سابقة.
+      try {
+        const hostCity = getHostCityTemplate();
+        if (hostCity?.isMinistry === true && typeof localStorage !== 'undefined') {
+          localStorage.removeItem(MINISTRY_SELECTED_CITY_KEY);
+          window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '' } }));
+        }
+      } catch {}
 
       const useSupabaseBackend = appParams.useSupabaseBackend && appParams.supabaseUrl && appParams.supabaseAnonKey;
       const useServerBackend = !!appParams.apiUrl;

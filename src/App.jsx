@@ -3,13 +3,15 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { getHostCityTemplate } from '@/lib/city-hosts';
+
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 // على الدومين الرئيسي (وزارة) الصفحة الرئيسية هي MinistryDashboard، على سب دومينات المدن هي Dashboard
@@ -25,6 +27,26 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const [selectedMinistryCityId, setSelectedMinistryCityId] = useState(() => {
+    try {
+      return localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    const handleMinistryCitySelected = (event) => {
+      const nextId = String(event?.detail?.cityId || '');
+      setSelectedMinistryCityId(nextId);
+    };
+    window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
+    return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
+  }, []);
+
+  const hostCity = getHostCityTemplate();
+  const isMinistryHost = hostCity?.isMinistry === true;
+  const shouldLockToMinistryDashboard = isMinistryHost && !selectedMinistryCityId;
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -75,9 +97,13 @@ const AuthenticatedApp = () => {
             key={path}
             path={`/${path}`}
             element={
-              <LayoutWrapper currentPageName={path}>
-                <Page />
-              </LayoutWrapper>
+              shouldLockToMinistryDashboard && path !== 'MinistryDashboard'
+                ? <Navigate to="/MinistryDashboard" replace />
+                : (
+                  <LayoutWrapper currentPageName={path}>
+                    <Page />
+                  </LayoutWrapper>
+                )
             }
           />
         ))}
