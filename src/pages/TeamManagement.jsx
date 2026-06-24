@@ -16,6 +16,7 @@ import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 import { useLocation } from 'react-router-dom';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const roleKeys = [
   'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff',
@@ -72,7 +73,9 @@ function getSelectedScopeToken() {
 export default function TeamManagement() {
   const location = useLocation();
   const urlParams = useMemo(() => new URLSearchParams(location.search || ''), [location.search]);
-  const forceMinistryTeamMode = urlParams.get('view') === 'ministry';
+  const requestedView = String(urlParams.get('view') || '').toLowerCase();
+  const hostCity = getHostCityTemplate();
+  const isMinistryHostContext = hostCity?.isMinistry === true;
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
   const [activeRole, setActiveRole] = useState('all');
@@ -80,7 +83,7 @@ export default function TeamManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, member: null });
-  const [scopeToken, setScopeToken] = useState(() => (forceMinistryTeamMode ? 'ministry:forced' : getSelectedScopeToken()));
+  const [scopeToken, setScopeToken] = useState(getSelectedScopeToken);
 
   const selectedCommitteeId = urlParams.get('committee') || '';
   const [activeCommittee, setActiveCommittee] = useState(selectedCommitteeId);
@@ -117,6 +120,10 @@ export default function TeamManagement() {
     queryKey: ['currentUser'],
     queryFn: () => api.auth.me()
   });
+
+  const currentUserRole = String(currentUser?.role || currentUser?.user_role || '').trim();
+  const isCurrentUserMinistryRole = ['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'].includes(currentUserRole);
+  const forceMinistryTeamMode = requestedView === 'ministry' || (requestedView !== 'city' && (isCurrentUserMinistryRole || isMinistryHostContext));
 
   const { data: cityMembers = [], isLoading: cityMembersLoading } = useQuery({
     queryKey: ['teamMembers', scopeToken],
