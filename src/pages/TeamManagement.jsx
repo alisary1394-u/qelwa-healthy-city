@@ -17,12 +17,16 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
 
 const roleKeys = [
+  'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff',
   'all', 'governor', 'coordinator', 'committee_head',
   'committee_coordinator', 'committee_supervisor', 'committee_member',
   'member', 'volunteer', 'budget_manager', 'accountant', 'financial_officer'
 ];
 
 const roleIcons = {
+  ministry_it_admin: Briefcase,
+  ministry_staff: Building,
+  ministry_regional_staff: Building,
   governor: Crown,
   coordinator: UserCog,
   committee_head: Users,
@@ -119,7 +123,7 @@ export default function TeamManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
   });
 
-  const { permissions, role: userRole, currentMember: authMember, isMinistryAdmin } = usePermissions();
+  const { permissions, role: userRole, currentMember: authMember, isMinistryAdmin, isMinistryRole } = usePermissions();
   const canAdd = permissions.canAddTeamMember === true;
   const canDelete = permissions.canDeleteTeamMember === true;
   const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
@@ -142,7 +146,7 @@ export default function TeamManagement() {
   };
 
   const authMemberCommitteeId = String(authMember?.committee_id || '');
-  const isGlobalTeamScope = userRole === 'governor' || userRole === 'coordinator';
+  const isGlobalTeamScope = isMinistryRole || userRole === 'governor' || userRole === 'coordinator';
 
   const scopedMembers = useMemo(() => {
     if (isGlobalTeamScope) return members;
@@ -220,12 +224,18 @@ export default function TeamManagement() {
 
     // عند إضافة عضو جديد من لوحة الوزارة، تعيين city_id بناءً على المدينة المختارة
     let payload = { ...data };
+    const isMinistryTargetRole = String(payload?.role || '').startsWith('ministry_');
+    if (isMinistryTargetRole) {
+      delete payload.city_id;
+      delete payload.committee_id;
+      delete payload.committee_name;
+    }
     if (!editingMember && !payload.city_id) {
       try {
         const scopeJson = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
         if (scopeJson) {
           const scope = JSON.parse(scopeJson);
-          if (scope?.cityId) {
+          if (scope?.cityId && !isMinistryTargetRole) {
             payload.city_id = scope.cityId;
           }
         }
@@ -468,7 +478,13 @@ export default function TeamManagement() {
         committees={committees}
         selectedCommitteeId={activeCommittee}
         existingDepartments={[...new Set((scopedMembers || []).map(m => m.department).filter(Boolean))]}
-        restrictedRoles={[!(canAddOrEditGovernor) && 'governor', !(canAddOrEditCoordinator) && 'coordinator'].filter(Boolean)}
+        restrictedRoles={[
+          !(canAddOrEditGovernor) && 'governor',
+          !(canAddOrEditCoordinator) && 'coordinator',
+          !isMinistryAdmin && 'ministry_it_admin',
+          !isMinistryAdmin && 'ministry_staff',
+          !isMinistryAdmin && 'ministry_regional_staff',
+        ].filter(Boolean)}
       />
 
       {/* Delete Confirmation */}

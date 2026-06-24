@@ -10,6 +10,9 @@ import { Loader2 } from "lucide-react";
 import T from "@/components/T";
 
 const ALL_ROLES = [
+  { value: "ministry_it_admin", label: "موظف تقنية المعلومات (الوزارة)" },
+  { value: "ministry_staff", label: "موظف وزارة الصحة (مركزي)" },
+  { value: "ministry_regional_staff", label: "موظف وزارة الصحة (إقليمي)" },
   { value: "governor", label: "المشرف العام (المحافظ)" },
   { value: "coordinator", label: "منسق المدينة الصحية" },
   { value: "committee_head", label: "رئيس لجنة" },
@@ -38,6 +41,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     phone: '',
     email: '',
     department: '',
+    ministry_region: '',
+    ministry_region_scope: '',
     supervisor_id: '',
     status: 'active',
     join_date: new Date().toISOString().split('T')[0],
@@ -61,6 +66,10 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         phone: member.phone || '',
         email: member.email || '',
         department: member.department || '',
+        ministry_region: member.ministry_region || member.region || '',
+        ministry_region_scope: Array.isArray(member.ministry_region_scope)
+          ? member.ministry_region_scope.join(', ')
+          : (member.ministry_region_scope || member.region_scope || ''),
         supervisor_id: member.supervisor_id || '',
         status: member.status || 'active',
         join_date: member.join_date || new Date().toISOString().split('T')[0],
@@ -81,6 +90,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         phone: '',
         email: '',
         department: '',
+        ministry_region: '',
+        ministry_region_scope: '',
         supervisor_id: '',
         status: 'active',
         join_date: new Date().toISOString().split('T')[0],
@@ -134,7 +145,13 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
     setValidationErrors({});
     setLoading(true);
     try {
-      await onSave({ ...formData, department: formData.department?.trim() || '' });
+      const payload = {
+        ...formData,
+        department: formData.department?.trim() || '',
+        ministry_region: formData.ministry_region?.trim() || '',
+        ministry_region_scope: formData.ministry_region_scope?.trim() || '',
+      };
+      await onSave(payload);
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -257,6 +274,30 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 placeholder="أدخل القسم أو الجهة"
               />
             </div>
+
+            {formData.role === 'ministry_regional_staff' && (
+              <>
+                <div className="space-y-2">
+                  <Label><T>المنطقة الأساسية</T></Label>
+                  <Input
+                    value={formData.ministry_region}
+                    onChange={(e) => setFormData({ ...formData, ministry_region: e.target.value })}
+                    placeholder="مثال: الباحة"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label><T>نطاق المناطق (مفصولة بفاصلة)</T></Label>
+                  <Input
+                    value={formData.ministry_region_scope}
+                    onChange={(e) => setFormData({ ...formData, ministry_region_scope: e.target.value })}
+                    placeholder="مثال: الباحة, عسير, مكة المكرمة"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    <T>سيتم تقييد ظهور المدن في لوحة الوزارة حسب هذه المناطق.</T>
+                  </p>
+                </div>
+              </>
+            )}
             
             {(formData.role === 'volunteer' || formData.role === 'member') && (
               <div className="space-y-2">
