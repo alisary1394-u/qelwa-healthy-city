@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { getPermissions, getNavItemsForRole, PERMISSIONS_BY_ROLE } from '@/lib/permissions';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 import {
   LayoutDashboard,
   BarChart3,
@@ -109,11 +110,14 @@ export function usePermissions() {
       : null) || membersList.find((m) => m.email === currentUser?.email);
     const ministryRoles = new Set(['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff']);
     const explicitRole = currentUser?.role || currentUser?.user_role;
+    const hostCity = getHostCityTemplate();
+    const isMinistryHost = hostCity?.isMinistry === true;
+    const isLegacyAdmin = (currentUser?.user_role === 'admin' || currentUser?.role === 'admin');
     // الدور الوزاري الصريح له الأولوية على دور الفريق
     const role = ministryRoles.has(explicitRole)
       ? explicitRole
-      : (currentUser?.user_role === 'admin' || currentUser?.role === 'admin')
-      ? 'governor'
+      : isLegacyAdmin
+      ? (isMinistryHost ? 'ministry_admin' : 'governor')
       : (currentMember?.role || 'volunteer');
     const ministryRegionScope = parseRegionScope(currentUser);
     
