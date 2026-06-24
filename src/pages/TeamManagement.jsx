@@ -76,6 +76,18 @@ export default function TeamManagement() {
   const requestedView = String(urlParams.get('view') || '').toLowerCase();
   const hostCity = getHostCityTemplate();
   const isMinistryHostContext = hostCity?.isMinistry === true;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => api.auth.me()
+  });
+
+  const currentUserRole = String(currentUser?.role || currentUser?.user_role || '').trim();
+  const isCurrentUserMinistryRole = ['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'].includes(currentUserRole);
+  const forceMinistryTeamMode = requestedView === 'ministry' || (requestedView !== 'city' && (isCurrentUserMinistryRole || isMinistryHostContext));
+
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
   const [activeRole, setActiveRole] = useState('all');
@@ -83,7 +95,11 @@ export default function TeamManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, member: null });
-  const [scopeToken, setScopeToken] = useState(getSelectedScopeToken);
+  const [scopeToken, setScopeToken] = useState(() => (
+    requestedView === 'ministry' || (requestedView !== 'city' && isMinistryHostContext)
+      ? 'ministry:forced'
+      : getSelectedScopeToken()
+  ));
 
   const selectedCommitteeId = urlParams.get('committee') || '';
   const [activeCommittee, setActiveCommittee] = useState(selectedCommitteeId);
@@ -113,18 +129,6 @@ export default function TeamManagement() {
     return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
   }, [forceMinistryTeamMode]);
   
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const { data: currentUser } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => api.auth.me()
-  });
-
-  const currentUserRole = String(currentUser?.role || currentUser?.user_role || '').trim();
-  const isCurrentUserMinistryRole = ['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'].includes(currentUserRole);
-  const forceMinistryTeamMode = requestedView === 'ministry' || (requestedView !== 'city' && (isCurrentUserMinistryRole || isMinistryHostContext));
-
   const { data: cityMembers = [], isLoading: cityMembersLoading } = useQuery({
     queryKey: ['teamMembers', scopeToken],
     queryFn: () => api.entities.TeamMember.list()
