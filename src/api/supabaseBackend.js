@@ -8,6 +8,7 @@ import { appParams } from '@/lib/app-params';
 import { AXES_SEED, buildStandardsSeed, AXIS_COUNTS, getAxisOrderFromStandardIndex, getDefaultRequiredDocumentsForAxis } from '@/api/seedAxesAndStandards';
 import { STANDARDS_CSV, getStandardCodeFromIndex } from '@/api/standardsFromCsv';
 import { COMMITTEES_SEED, seedCommitteesTeamInitiativesTasks } from '@/api/seedCommitteesTeamInitiativesTasks';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const AUTH_KEY = 'local_current_user';
 const SEEDED_KEY = 'local_seeded_governor';
@@ -103,6 +104,8 @@ function applyCityScopeToList(entityName, list) {
   if (!isCityScopedEntity(entityName)) return list;
   const { isMinistryAdmin, cityId } = getUserScope();
   if (isMinistryAdmin) return list;
+  const hostCity = getHostCityTemplate();
+  if (!cityId && hostCity && hostCity.fallback !== true) return [];
   // توافق رجعي: إظهار البيانات القديمة بدون city_id.
   if (!cityId) return list.filter((item) => item?.city_id == null);
   return list.filter((item) => item?.city_id == null || item?.city_id === cityId);
