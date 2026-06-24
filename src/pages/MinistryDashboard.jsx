@@ -25,8 +25,20 @@ import {
   Trash2, MapPin, AlertTriangle, Activity, Globe, Phone, Mail, RefreshCw, Edit3, Crown, UserCog
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { getAllHostCityTemplates } from '@/lib/city-hosts';
 
 const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
+
+function normalizeCityName(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveIncludeLegacyNullForCity(city) {
+  const templates = getAllHostCityTemplates();
+  const matched = templates.find((item) => normalizeCityName(item?.cityName) === normalizeCityName(city?.name));
+  return matched?.hasLegacyData === true;
+}
 
 function formatCurrency(value) {
   const amount = Number(value || 0);
@@ -584,8 +596,11 @@ export default function MinistryDashboard() {
     }
     if (type === 'selectCity') {
       try {
-        localStorage.setItem(MINISTRY_SELECTED_CITY_KEY, String(city?.id || ''));
-        window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: String(city?.id || '') } }));
+        const cityId = String(city?.id || '');
+        const includeLegacyNull = resolveIncludeLegacyNullForCity(city);
+        localStorage.setItem(MINISTRY_SELECTED_CITY_KEY, cityId);
+        localStorage.setItem(MINISTRY_SELECTED_CITY_SCOPE_KEY, JSON.stringify({ cityId, includeLegacyNull }));
+        window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId, includeLegacyNull } }));
       } catch {}
       setSelectedCityId(String(city?.id || ''));
       toast({ title: `تم اختيار ${city?.name || 'المدينة'}`, description: 'تم إظهار القائمة اليمنى وفتح لوحة التحكم.' });
@@ -652,7 +667,8 @@ export default function MinistryDashboard() {
               onClick={() => {
                 try {
                   localStorage.removeItem(MINISTRY_SELECTED_CITY_KEY);
-                  window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '' } }));
+                  localStorage.removeItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+                  window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '', includeLegacyNull: false } }));
                 } catch {}
                 setSelectedCityId('');
                 toast({ title: 'تم إلغاء اختيار المدينة', description: 'تم إخفاء القائمة اليمنى حتى يتم اختيار مدينة مرة أخرى.' });

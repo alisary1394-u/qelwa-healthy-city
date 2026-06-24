@@ -12,6 +12,8 @@ const AUTH_TOKEN_KEY = 'api_auth_token';
 const CSV_SYNC_VERSION = '6';
 const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const LEGACY_FILES_MIGRATION_KEY = 'legacy_local_to_api_files_migrated_v1';
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
 
 function entityToTable(name) {
   return String(name || '')
@@ -100,19 +102,57 @@ function getUserScope() {
   const user = getStoredUser();
   const role = user?.role || user?.user_role;
   const isMinistryAdmin = role === 'ministry_admin';
+  const selectedScope = getSelectedMinistryCityScope();
+  if (selectedScope?.cityId) {
+    return {
+      isMinistryAdmin: false,
+      cityId: selectedScope.cityId,
+      includeLegacyNull: selectedScope.includeLegacyNull === true,
+    };
+  }
   const cityId = user?.city_id || null;
-  return { isMinistryAdmin, cityId };
+  const hostCity = getHostCityTemplate();
+  const includeLegacyNull = cityId ? hostCity?.hasLegacyData === true : true;
+  return { isMinistryAdmin, cityId, includeLegacyNull };
+}
+
+function getSelectedMinistryCityScope() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+  const hostCity = getHostCityTemplate();
+  if (hostCity?.isMinistry !== true) return null;
+  const path = String(window.location?.pathname || '').toLowerCase();
+  if (path === '/ministrydashboard') return null;
+  try {
+    const rawScope = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+    if (rawScope) {
+      const parsed = JSON.parse(rawScope);
+      const cityId = String(parsed?.cityId || '').trim();
+      if (cityId) return { cityId, includeLegacyNull: parsed?.includeLegacyNull === true };
+    }
+  } catch {}
+  try {
+    const cityId = String(localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '').trim();
+    if (cityId) return { cityId, includeLegacyNull: false };
+  } catch {}
+  return null;
+}
+
+function canAccessCityScopedRecord(record, cityId, includeLegacyNull) {
+  if (!cityId) return record?.city_id == null;
+  if (record?.city_id == null) return includeLegacyNull === true;
+  return String(record?.city_id) === String(cityId);
 }
 
 function applyCityScopeToList(entityName, list) {
   if (!isCityScopedEntity(entityName)) return list;
-  const { isMinistryAdmin, cityId } = getUserScope();
+  const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
   if (isMinistryAdmin) return list;
   const hostCity = getHostCityTemplate();
   if (!cityId && hostCity && hostCity.isMinistry !== true && !hostCity.hasLegacyData) return [];
   // توافق رجعي: البيانات القديمة بدون city_id يجب أن تبقى مرئية.
   if (!cityId) return list.filter((item) => item?.city_id == null);
-  return list.filter((item) => item?.city_id == null || item?.city_id === cityId);
+  if (includeLegacyNull) return list.filter((item) => item?.city_id == null || String(item?.city_id) === String(cityId));
+  return list.filter((item) => String(item?.city_id || '') === String(cityId));
 }
 
 function createEntityHandler(entityName) {
@@ -138,10 +178,9 @@ function createEntityHandler(entityName) {
     async get(id) {
       const row = await api('GET', path + '/' + encodeURIComponent(id));
       if (!isCityScopedEntity(entityName)) return row;
-      const { isMinistryAdmin, cityId } = getUserScope();
+      const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
       if (isMinistryAdmin) return row;
-      if (!cityId && row?.city_id != null) return null;
-      if (cityId && row?.city_id != null && row?.city_id !== cityId) return null;
+      if (!canAccessCityScopedRecord(row, cityId, includeLegacyNull)) return null;
       return row;
     },
     async create(data) {
@@ -157,10 +196,9 @@ function createEntityHandler(entityName) {
     async update(id, data) {
       if (isCityScopedEntity(entityName)) {
         const existing = await api('GET', path + '/' + encodeURIComponent(id));
-        const { isMinistryAdmin, cityId } = getUserScope();
+        const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
         if (!isMinistryAdmin) {
-          if (!cityId && existing?.city_id != null) return null;
-          if (cityId && existing?.city_id != null && existing?.city_id !== cityId) return null;
+          if (!canAccessCityScopedRecord(existing, cityId, includeLegacyNull)) return null;
         }
         const payload = !isMinistryAdmin && cityId ? { ...(data || {}), city_id: cityId } : data;
         return api('PATCH', path + '/' + encodeURIComponent(id), payload);
@@ -170,10 +208,9 @@ function createEntityHandler(entityName) {
     async delete(id) {
       if (isCityScopedEntity(entityName)) {
         const existing = await api('GET', path + '/' + encodeURIComponent(id));
-        const { isMinistryAdmin, cityId } = getUserScope();
+        const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
         if (!isMinistryAdmin) {
-          if (!cityId && existing?.city_id != null) return null;
-          if (cityId && existing?.city_id != null && existing?.city_id !== cityId) return null;
+          if (!canAccessCityScopedRecord(existing, cityId, includeLegacyNull)) return null;
         }
       }
       return api('DELETE', path + '/' + encodeURIComponent(id));

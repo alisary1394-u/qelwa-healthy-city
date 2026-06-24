@@ -15,6 +15,8 @@ const CSV_SYNC_KEY = 'qelwa_csv_sync_v';
 const WEB_SYNC_KEY = 'local_web_sync_version';
 const WEB_SYNC_VERSION = '2026-03-02-2';
 const DEFAULT_WEB_SYNC_BASE = String(import.meta.env.VITE_WEB_SYNC_URL || 'https://www.qeelwah.com').replace(/\/$/, '');
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
 
 function hasSufficientLocalDataset() {
   const standardsCount = getStore('Standard').length;
@@ -92,8 +94,45 @@ function getUserScope() {
   const user = getCurrentUser();
   const role = user?.role || user?.user_role;
   const isMinistryAdmin = role === 'ministry_admin';
+  const selectedScope = getSelectedMinistryCityScope();
+  if (selectedScope?.cityId) {
+    return {
+      isMinistryAdmin: false,
+      cityId: selectedScope.cityId,
+      includeLegacyNull: selectedScope.includeLegacyNull === true,
+    };
+  }
   const cityId = user?.city_id || null;
-  return { isMinistryAdmin, cityId };
+  const hostCity = getHostCityTemplate();
+  const includeLegacyNull = cityId ? hostCity?.hasLegacyData === true : true;
+  return { isMinistryAdmin, cityId, includeLegacyNull };
+}
+
+function getSelectedMinistryCityScope() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+  const hostCity = getHostCityTemplate();
+  if (hostCity?.isMinistry !== true) return null;
+  const path = String(window.location?.pathname || '').toLowerCase();
+  if (path === '/ministrydashboard') return null;
+  try {
+    const rawScope = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+    if (rawScope) {
+      const parsed = JSON.parse(rawScope);
+      const cityId = String(parsed?.cityId || '').trim();
+      if (cityId) return { cityId, includeLegacyNull: parsed?.includeLegacyNull === true };
+    }
+  } catch {}
+  try {
+    const cityId = String(localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '').trim();
+    if (cityId) return { cityId, includeLegacyNull: false };
+  } catch {}
+  return null;
+}
+
+function canAccessCityScopedRecord(record, cityId, includeLegacyNull) {
+  if (!cityId) return record?.city_id == null;
+  if (record?.city_id == null) return includeLegacyNull === true;
+  return String(record?.city_id) === String(cityId);
 }
 
 function isCityScopedEntity(entityName) {
@@ -102,13 +141,14 @@ function isCityScopedEntity(entityName) {
 
 function applyCityScopeToList(entityName, arr) {
   if (!isCityScopedEntity(entityName)) return arr;
-  const { isMinistryAdmin, cityId } = getUserScope();
+  const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
   if (isMinistryAdmin) return arr;
   const hostCity = getHostCityTemplate();
   if (!cityId && hostCity && hostCity.isMinistry !== true && !hostCity.hasLegacyData) return [];
   // توافق رجعي: البيانات القديمة كانت بدون city_id.
   if (!cityId) return arr.filter((item) => item?.city_id == null);
-  return arr.filter((item) => item?.city_id == null || item?.city_id === cityId);
+  if (includeLegacyNull) return arr.filter((item) => item?.city_id == null || String(item?.city_id) === String(cityId));
+  return arr.filter((item) => String(item?.city_id || '') === String(cityId));
 }
 
 function createEntityHandler(entityName) {
@@ -167,10 +207,9 @@ function createEntityHandler(entityName) {
       const arr = getStore(entityName);
       const i = arr.findIndex((x) => x.id === id);
       if (i === -1) return null;
-      const { isMinistryAdmin, cityId } = getUserScope();
+      const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
       if (isCityScopedEntity(entityName) && !isMinistryAdmin) {
-        if (!cityId && arr[i]?.city_id != null) return null;
-        if (cityId && arr[i]?.city_id != null && arr[i]?.city_id !== cityId) return null;
+        if (!canAccessCityScopedRecord(arr[i], cityId, includeLegacyNull)) return null;
       }
       const next = { ...arr[i], ...data, id };
       if (isCityScopedEntity(entityName) && !isMinistryAdmin && cityId) {
@@ -182,13 +221,12 @@ function createEntityHandler(entityName) {
     },
     delete(id) {
       const all = getStore(entityName);
-      const { isMinistryAdmin, cityId } = getUserScope();
+      const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
       const arr = all.filter((x) => {
         if (x.id !== id) return true;
         if (!isCityScopedEntity(entityName)) return false;
         if (isMinistryAdmin) return false;
-        if (!cityId) return x.city_id != null;
-        return !((x.city_id == null) || x.city_id === cityId);
+        return !canAccessCityScopedRecord(x, cityId, includeLegacyNull);
       });
       setStore(entityName, arr);
     },

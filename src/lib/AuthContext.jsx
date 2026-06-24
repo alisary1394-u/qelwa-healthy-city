@@ -8,6 +8,7 @@ const AuthContext = createContext();
 
 const SEED_MARKER_KEY = 'app_seed_completed_v1';
 const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }) => {
         const hostCity = getHostCityTemplate();
         if (hostCity?.isMinistry === true && typeof localStorage !== 'undefined') {
           localStorage.removeItem(MINISTRY_SELECTED_CITY_KEY);
+          localStorage.removeItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
           window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '' } }));
         }
       } catch {}
