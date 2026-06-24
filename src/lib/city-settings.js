@@ -28,6 +28,19 @@ export function pickCurrentCitySetting(settings, currentUser) {
 
   // زائر أو مستخدم غير مرتبط بمدينة: نعتمد السب دومين إن كان معروفاً.
   if (hostCity) {
+    if (hostCity.isMinistry === true) {
+      return (
+        list.find((s) => !s?.city_id && hasBranding(s) && (s?.scope === 'ministry' || s?.is_ministry === true)) ||
+        {
+          city_name: 'وزارة الصحة',
+          city_location: 'المملكة العربية السعودية',
+          logo_text: 'و',
+          districts: [],
+          is_ministry: true,
+          is_host_city_fallback: true,
+        }
+      );
+    }
     return (
       list.find((s) => !s?.city_id && hasBranding(s) && String(s?.city_name || '').trim() === hostCity.cityName) ||
       {

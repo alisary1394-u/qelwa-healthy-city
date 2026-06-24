@@ -1,5 +1,14 @@
 const CITY_HOSTS = [
   {
+    key: 'ministry',
+    cityName: 'وزارة الصحة',
+    region: 'المملكة العربية السعودية',
+    logoText: 'و',
+    hostnames: ['qeelwah.com', 'www.qeelwah.com'],
+    isMinistry: true,
+    fallback: false,
+  },
+  {
     key: 'qeelwah',
     cityName: 'قلوة الصحية',
     region: 'محافظة قلوة',
@@ -33,5 +42,5 @@ export function getHostCityTemplate(hostname = getCurrentHostname()) {
 }
 
 export function getAllHostCityTemplates() {
-  return CITY_HOSTS.filter((item) => item.fallback !== true);
+  return CITY_HOSTS.filter((item) => item.fallback !== true && item.isMinistry !== true);
 }
