@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+
 function formatCurrency(value) {
   const amount = Number(value || 0);
   return amount.toLocaleString('ar-SA');
@@ -34,7 +36,7 @@ function formatCurrency(value) {
 // -------------------------------------------------------
 // مكون بطاقة مدينة
 // -------------------------------------------------------
-function CityCard({ city, onAction }) {
+function CityCard({ city, onAction, selectedCityId }) {
   const statusConfig = {
     active:    { label: 'نشطة',    color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
     suspended: { label: 'موقوفة',  color: 'bg-amber-100  text-amber-700  border-amber-200'  },
@@ -52,6 +54,7 @@ function CityCard({ city, onAction }) {
   const spentRatio = Number(summary?.totalBudget || 0) > 0
     ? Math.min(100, Math.round((Number(summary?.spentBudget || 0) / Number(summary?.totalBudget || 0)) * 100))
     : 0;
+  const isSelected = String(selectedCityId || '') === String(city?.id || '');
 
   return (
     <Card className="group border border-slate-200/80 bg-white/90 shadow-sm hover:shadow-xl transition-all duration-300">
@@ -213,6 +216,16 @@ function CityCard({ city, onAction }) {
             </div>
           </div>
         )}
+
+        <Button
+          variant={isSelected ? 'default' : 'secondary'}
+          size="sm"
+          className="w-full"
+          onClick={() => onAction('selectCity', city)}
+        >
+          <Building2 className="w-3.5 h-3.5 ml-1" />
+          {isSelected ? 'المدينة المختارة حالياً' : 'اختيار المدينة وفتح لوحة التحكم'}
+        </Button>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
           <Button variant="outline" size="sm" onClick={() => onAction('editCity', city)}>
@@ -471,6 +484,13 @@ export default function MinistryDashboard() {
   const [editingCity, setEditingCity] = useState(null);
   const [leadershipDialog, setLeadershipDialog] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // { type, city }
+  const [selectedCityId, setSelectedCityId] = useState(() => {
+    try {
+      return localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
 
   // التحقق من الصلاحية
   const canAccessMinistryDashboard =
@@ -562,6 +582,16 @@ export default function MinistryDashboard() {
       setEditingCity(city);
       return;
     }
+    if (type === 'selectCity') {
+      try {
+        localStorage.setItem(MINISTRY_SELECTED_CITY_KEY, String(city?.id || ''));
+        window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: String(city?.id || '') } }));
+      } catch {}
+      setSelectedCityId(String(city?.id || ''));
+      toast({ title: `تم اختيار ${city?.name || 'المدينة'}`, description: 'تم إظهار القائمة اليمنى وفتح لوحة التحكم.' });
+      navigate(createPageUrl('Dashboard'));
+      return;
+    }
     if (type === 'assignGovernor' || type === 'assignCoordinator') {
       setLeadershipDialog({
         city,
@@ -610,8 +640,27 @@ export default function MinistryDashboard() {
           <p className="text-slate-600 text-sm mt-1">
             إشراف مركزي على أداء المدن الصحية
           </p>
+          {!!selectedCityId && (
+            <p className="text-xs text-emerald-700 mt-2 font-medium">تم اختيار مدينة. القائمة اليمنى مفعلة.</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {!!selectedCityId && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(MINISTRY_SELECTED_CITY_KEY);
+                  window.dispatchEvent(new CustomEvent('ministry-city-selected', { detail: { cityId: '' } }));
+                } catch {}
+                setSelectedCityId('');
+                toast({ title: 'تم إلغاء اختيار المدينة', description: 'تم إخفاء القائمة اليمنى حتى يتم اختيار مدينة مرة أخرى.' });
+              }}
+            >
+              إلغاء اختيار المدينة
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4 ml-1" />تحديث
           </Button>
@@ -677,7 +726,7 @@ export default function MinistryDashboard() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCities.map(city => (
-            <CityCard key={city.id} city={city} onAction={handleCityAction} />
+            <CityCard key={city.id} city={city} onAction={handleCityAction} selectedCityId={selectedCityId} />
           ))}
         </div>
       )}

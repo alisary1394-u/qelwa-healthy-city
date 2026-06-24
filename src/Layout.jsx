@@ -33,8 +33,10 @@ import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '@/i18n';
 import T from '@/components/T';
 import { useAutoTranslate } from '@/hooks/useAutoTranslate';
+import { getHostCityTemplate } from '@/lib/city-hosts';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -70,6 +72,13 @@ export default function Layout({ children }) {
     try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'; } catch { return false; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedMinistryCityId, setSelectedMinistryCityId] = useState(() => {
+    try {
+      return localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
 
   const effectiveTheme = theme === 'system' ? systemTheme : theme;
   const isActive = (pageName) => currentPath === createPageUrl(pageName);
@@ -84,6 +93,9 @@ export default function Layout({ children }) {
   const displayUserInitial = displayUserName.trim().charAt(0) || '?';
 
   const currentSetting = appSetting;
+  const hostCity = getHostCityTemplate();
+  const isMinistryHost = hostCity?.isMinistry === true;
+  const hideSidebarUntilCitySelection = isMinistryHost && isMinistryAdmin && !selectedMinistryCityId;
 
   const toggleSidebar = () => {
     const next = !sidebarCollapsed;
@@ -111,6 +123,19 @@ export default function Layout({ children }) {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const handleMinistryCitySelected = (event) => {
+      const nextId = String(event?.detail?.cityId || '');
+      setSelectedMinistryCityId(nextId);
+    };
+    window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
+    return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
+  }, []);
+
+  useEffect(() => {
+    if (hideSidebarUntilCitySelection && mobileMenuOpen) setMobileMenuOpen(false);
+  }, [hideSidebarUntilCitySelection, mobileMenuOpen]);
+
   const backendReady = appParams.useLocalBackend || appParams.apiUrl || appParams.useSupabaseBackend || isBackendConfigured();
 
   const sidebarWidth = sidebarCollapsed ? 'w-[68px]' : 'w-64';
@@ -127,13 +152,15 @@ export default function Layout({ children }) {
       {/* ===== Mobile Top Bar — in normal flow, never scrolls ===== */}
       <header className="md:hidden shrink-0 bg-card border-b shadow-sm z-50">
         <div className="flex items-center justify-between h-14 px-4">
-          <button 
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-muted"
-            aria-label={t('nav.expand')}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {hideSidebarUntilCitySelection ? <div className="w-9" /> : (
+            <button 
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 rounded-lg hover:bg-muted"
+              aria-label={t('nav.expand')}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
           <Link to={createPageUrl('Home')} className="flex items-center gap-2">
             {currentSetting.logo_url ? (
               <img src={currentSetting.logo_url} alt={t('common.name')} className="w-8 h-8 rounded-lg object-cover" />
@@ -151,7 +178,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* ===== Mobile Overlay Menu ===== */}
-      {mobileMenuOpen && (
+      {mobileMenuOpen && !hideSidebarUntilCitySelection && (
         <>
           <div className="fixed inset-0 bg-black/40 z-[70] md:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
           <aside className="fixed top-0 right-0 bottom-0 w-72 bg-sidebar z-[80] md:hidden shadow-2xl animate-slide-in-right">
@@ -215,6 +242,7 @@ export default function Layout({ children }) {
       {/* ===== Main scrollable area (mobile: overflow-y-auto, desktop: normal) ===== */}
       <div className="flex-1 overflow-y-auto md:overflow-visible md:flex">
         {/* ===== Desktop Sidebar ===== */}
+        {!hideSidebarUntilCitySelection && (
         <aside className={`hidden md:flex flex-col fixed top-0 ${rtl ? 'right-0' : 'left-0'} bottom-0 ${sidebarWidth} bg-sidebar ${rtl ? 'border-l' : 'border-r'} border-sidebar-border z-40 transition-all duration-300`}>
           {/* Logo */}
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} h-16 px-4 border-b border-sidebar-border`}>
@@ -406,9 +434,10 @@ export default function Layout({ children }) {
             )}
           </div>
         </aside>
+        )}
 
         {/* ===== Main Content ===== */}
-        <main className={`flex-1 md:min-h-screen transition-all duration-300 ${sidebarCollapsed ? (rtl ? 'md:mr-[68px]' : 'md:ml-[68px]') : (rtl ? 'md:mr-64' : 'md:ml-64')}`}>
+        <main className={`flex-1 md:min-h-screen transition-all duration-300 ${hideSidebarUntilCitySelection ? 'md:mr-0 md:ml-0' : (sidebarCollapsed ? (rtl ? 'md:mr-[68px]' : 'md:ml-[68px]') : (rtl ? 'md:mr-64' : 'md:ml-64'))}`}>
           {/* Top bar for desktop — breadcrumb + notifications */}
           <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
