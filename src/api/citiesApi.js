@@ -9,6 +9,7 @@ import { getAllHostCityTemplates } from '@/lib/city-hosts';
 import { createClient } from '@supabase/supabase-js';
 
 let ensureLegacyCityPromise = null;
+const DEFAULT_TOTAL_STANDARDS = 80;
 
 function normalizeCityName(value) {
   return String(value || '')
@@ -508,7 +509,7 @@ export async function getCitySummary(cityOrId) {
   if (virtualCity) {
     return {
       cityId,
-      totalStandards: 0,
+      totalStandards: DEFAULT_TOTAL_STANDARDS,
       completedStandards: 0,
       inProgressStandards: 0,
       completionRate: 0,
@@ -571,7 +572,8 @@ export async function getCitySummary(cityOrId) {
     const governor = teamMembers.find((m) => m?.role === 'governor') || null;
     const coordinator = teamMembers.find((m) => m?.role === 'coordinator') || null;
 
-    const total = standards.length;
+    // عدد المعايير مرجعي وثابت على مستوى الوزارة لجميع المدن.
+    const total = DEFAULT_TOTAL_STANDARDS;
     const completed = standards.filter((s) => s.status === 'completed' || toNumber(s.completion_percentage) >= 100).length;
     const inProgress = standards.filter((s) => s.status === 'in_progress' || (toNumber(s.completion_percentage) > 0 && toNumber(s.completion_percentage) < 100)).length;
 
@@ -603,7 +605,7 @@ export async function getCitySummary(cityOrId) {
   } catch {
     return {
       cityId,
-      totalStandards: 0,
+      totalStandards: DEFAULT_TOTAL_STANDARDS,
       completedStandards: 0,
       inProgressStandards: 0,
       completionRate: 0,
