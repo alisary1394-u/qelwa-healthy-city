@@ -49,8 +49,12 @@ function CityCard({ city, onAction }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const spentRatio = Number(summary?.totalBudget || 0) > 0
+    ? Math.min(100, Math.round((Number(summary?.spentBudget || 0) / Number(summary?.totalBudget || 0)) * 100))
+    : 0;
+
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 border border-border/60">
+    <Card className="group border border-slate-200/80 bg-white/90 shadow-sm hover:shadow-xl transition-all duration-300">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
@@ -99,77 +103,81 @@ function CityCard({ city, onAction }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0">
+      <CardContent className="space-y-4 pt-0">
         {/* مؤشرات الأداء */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="text-center p-2 rounded-lg bg-muted/50">
-            <p className="text-lg font-bold text-primary">{summary?.completionRate ?? '—'}%</p>
-            <p className="text-[10px] text-muted-foreground">الإنجاز</p>
+          <div className="text-center p-2.5 rounded-xl bg-blue-50 border border-blue-100">
+            <p className="text-xl font-extrabold text-blue-700">{summary?.completionRate ?? '—'}%</p>
+            <p className="text-[11px] text-blue-700/80">الإنجاز</p>
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50">
-            <p className="text-lg font-bold">{summary?.totalStandards ?? '—'}</p>
-            <p className="text-[10px] text-muted-foreground">المعايير</p>
+          <div className="text-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <p className="text-xl font-extrabold text-slate-800">{summary?.totalStandards ?? '—'}</p>
+            <p className="text-[11px] text-slate-600">المعايير</p>
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50">
-            <p className="text-lg font-bold">{summary?.inProgressStandards ?? '—'}</p>
-            <p className="text-[10px] text-muted-foreground">جارية</p>
+          <div className="text-center p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+            <p className="text-xl font-extrabold text-emerald-700">{summary?.inProgressStandards ?? '—'}</p>
+            <p className="text-[11px] text-emerald-700/80">جارية</p>
           </div>
         </div>
 
         {/* مؤشرات تشغيل المدينة */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.teamMembersCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">أعضاء الفريق</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.teamMembersCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">أعضاء الفريق</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.initiativesCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">المبادرات</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.initiativesCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">المبادرات</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.surveysCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">المسح الميداني</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.surveysCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">المسح الميداني</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.committeesCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">اللجان</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.committeesCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">اللجان</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.tasksCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">المهام</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.tasksCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">المهام</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-base font-bold">{summary?.evidencesCount ?? 0}</p>
-            <p className="text-[11px] text-muted-foreground">الأدلة</p>
+          <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50/50">
+            <p className="text-lg font-bold text-slate-900">{summary?.evidencesCount ?? 0}</p>
+            <p className="text-[11px] text-slate-600">الأدلة</p>
           </div>
         </div>
 
         {/* مؤشرات الميزانية */}
-        <div className="grid grid-cols-1 gap-2">
-          <div className="rounded-lg border bg-muted/20 p-2">
-            <p className="text-[11px] text-muted-foreground">إجمالي الميزانية</p>
-            <p className="text-base font-bold text-primary">{formatCurrency(summary?.totalBudget)} ريال</p>
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 space-y-2">
+          <div>
+            <p className="text-[11px] text-blue-800/70">إجمالي الميزانية</p>
+            <p className="text-lg font-extrabold text-blue-800">{formatCurrency(summary?.totalBudget)} ريال</p>
           </div>
+          <div className="h-2 w-full rounded-full bg-blue-100 overflow-hidden">
+            <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${spentRatio}%` }} />
+          </div>
+          <p className="text-[11px] text-blue-800/70">نسبة الصرف: {spentRatio}%</p>
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-lg border p-2">
-              <p className="text-[11px] text-muted-foreground">المخصص</p>
-              <p className="text-sm font-semibold">{formatCurrency(summary?.allocatedBudget)} ريال</p>
+            <div className="rounded-lg border border-blue-100 bg-white p-2">
+              <p className="text-[11px] text-slate-600">المخصص</p>
+              <p className="text-sm font-semibold text-slate-900">{formatCurrency(summary?.allocatedBudget)} ريال</p>
             </div>
-            <div className="rounded-lg border p-2">
-              <p className="text-[11px] text-muted-foreground">المصروف</p>
-              <p className="text-sm font-semibold">{formatCurrency(summary?.spentBudget)} ريال</p>
+            <div className="rounded-lg border border-blue-100 bg-white p-2">
+              <p className="text-[11px] text-slate-600">المصروف</p>
+              <p className="text-sm font-semibold text-slate-900">{formatCurrency(summary?.spentBudget)} ريال</p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg border p-2">
-            <p className="text-[11px] text-muted-foreground">المحافظ</p>
-            <p className="text-sm font-semibold truncate">{summary?.governor?.full_name || 'غير محدد'}</p>
+          <div className="rounded-xl border border-slate-200 p-2.5">
+            <p className="text-[11px] text-slate-500">المحافظ</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{summary?.governor?.full_name || 'غير محدد'}</p>
           </div>
-          <div className="rounded-lg border p-2">
-            <p className="text-[11px] text-muted-foreground">المنسق</p>
-            <p className="text-sm font-semibold truncate">{summary?.coordinator?.full_name || 'غير محدد'}</p>
+          <div className="rounded-xl border border-slate-200 p-2.5">
+            <p className="text-[11px] text-slate-500">المنسق</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{summary?.coordinator?.full_name || 'غير محدد'}</p>
           </div>
         </div>
 
@@ -592,13 +600,14 @@ export default function MinistryDashboard() {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto" dir="rtl">
       {/* رأس الصفحة */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-l from-slate-50 to-white p-4 md:p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center gap-2 text-slate-900">
             <Globe className="w-6 h-6 text-primary" />
             لوحة تحكم وزارة الصحة
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <p className="text-slate-600 text-sm mt-1">
             إشراف مركزي على أداء المدن الصحية
           </p>
         </div>
@@ -610,6 +619,7 @@ export default function MinistryDashboard() {
             <Plus className="w-4 h-4 ml-1" />تسجيل مدينة
           </Button>
         </div>
+      </div>
       </div>
 
       {/* إحصائيات */}
@@ -635,13 +645,13 @@ export default function MinistryDashboard() {
       </div>
 
       {/* بحث */}
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="relative rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <Search className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <Input
           placeholder="ابحث عن مدينة..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="pr-9"
+          className="pr-10 border-0 shadow-none focus-visible:ring-0"
         />
       </div>
 

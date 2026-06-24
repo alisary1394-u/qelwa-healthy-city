@@ -95,7 +95,16 @@ export function usePermissions() {
 
     // بناء عناصر القائمة بناءً على الصلاحيات المدمجة (الافتراضية + التخصيصات)
     const navItemsFromPerms = getNavItemsForRole(role);
+    const ministryNavOrder = ['MinistryDashboard', 'Reports', 'TeamManagement', 'Files', 'Settings'];
     const navItems = navItemsFromPerms
+      .filter((item) => {
+        if (role !== 'ministry_admin') return true;
+        return ministryNavOrder.includes(item.name);
+      })
+      .sort((a, b) => {
+        if (role !== 'ministry_admin') return 0;
+        return ministryNavOrder.indexOf(a.name) - ministryNavOrder.indexOf(b.name);
+      })
       .filter((item) => permissions[item.permission] !== false)
       .map((item) => ({
         ...item,
