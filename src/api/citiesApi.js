@@ -28,10 +28,6 @@ function toLegacyCityId(name) {
   return `legacy-${slug || 'city'}`;
 }
 
-function toVirtualCityId(key) {
-  return `virtual-${String(key || 'city').trim().toLowerCase()}`;
-}
-
 function isLegacyDerivedCity(cityOrId) {
   if (!cityOrId) return false;
   if (typeof cityOrId === 'object') {
@@ -109,35 +105,16 @@ async function listLegacyDerivedCities() {
 }
 
 function mergeConfiguredHostCities(cities) {
-  const list = Array.isArray(cities) ? [...cities] : [];
-  const configured = getAllHostCityTemplates();
-
-  for (const template of configured) {
-    const exists = list.some((city) => normalizeCityName(city?.name) === normalizeCityName(template.cityName));
-    if (!exists) {
-      list.push({
-        id: toVirtualCityId(template.key),
-        name: template.cityName,
-        region: template.region || 'غير محدد',
-        contact_email: null,
-        contact_phone: null,
-        status: 'active',
-        registered_at: null,
-        logo_text: template.logoText || '',
-        is_virtual_city: true,
-        hostnames: template.hostnames,
-      });
-    }
-  }
-
-  return list;
+  // No longer merging virtual cities. All cities must be real database entries.
+  // The configured cities (Qelwa, Mandaq) must exist as concrete City records.
+  return Array.isArray(cities) ? [...cities] : [];
 }
 
 async function ensureConcreteCity(city) {
-  if (!city || (!isVirtualCity(city) && !isLegacyDerivedCity(city))) return city;
+  if (!city || !isLegacyDerivedCity(city)) return city;
 
   const existingCities = await listCities();
-  const existing = existingCities.find((item) => normalizeCityName(item?.name) === normalizeCityName(city?.name) && !isVirtualCity(item));
+  const existing = existingCities.find((item) => normalizeCityName(item?.name) === normalizeCityName(city?.name));
   if (existing) return existing;
 
   return await createCity({
@@ -322,6 +299,33 @@ export async function listCities({ status } = {}) {
 }
 
 /**
+ * التأكد من وجود المدن المُعددة كمدن حقيقية (قلوة والمندق)
+ * يتم استدعاء هذه الدالة عند بدء التطبيق لإنشاء المدن الأساسية إذا لم تكن موجودة
+ */
+export async function ensureConfiguredCitiesExist() {
+  try {
+    const cities = await listCities();
+    const configured = getAllHostCityTemplates();
+
+    for (const template of configured) {
+      const exists = cities.some((city) => normalizeCityName(city?.name) === normalizeCityName(template.cityName));
+      if (!exists) {
+        await createCity({
+          name: template.cityName,
+          region: template.region || 'غير محدد',
+          contact_email: '',
+          contact_phone: '',
+          status: 'active',
+        });
+      }
+    }
+  } catch (err) {
+    // Log error but don't fail app startup
+    console.error('Error ensuring configured cities exist:', err);
+  }
+}
+
+/**
  * إنشاء مدينة جديدة (من لوحة الوزارة)
  */
 export async function createCity(cityData) {
@@ -413,10 +417,6 @@ export async function createCity(cityData) {
  */
 export async function updateCity(cityId, updates) {
   const cityRef = typeof cityId === 'object' ? cityId : { id: cityId };
-  if (isVirtualCity(cityRef)) {
-    const concreteCity = await ensureConcreteCity(cityRef);
-    return updateCity(concreteCity, updates);
-  }
   const resolvedCityId = cityRef?.id;
 
   if (isLegacyDerivedCity(cityRef)) {
@@ -502,31 +502,8 @@ export async function deleteCity(cityId) {
 export async function getCitySummary(cityOrId) {
   const cityId = typeof cityOrId === 'object' ? cityOrId?.id : cityOrId;
   const legacyDerived = isLegacyDerivedCity(cityOrId);
-  const virtualCity = isVirtualCity(cityOrId);
 
   if (!cityId) return null;
-
-  if (virtualCity) {
-    return {
-      cityId,
-      totalStandards: DEFAULT_TOTAL_STANDARDS,
-      completedStandards: 0,
-      inProgressStandards: 0,
-      completionRate: 0,
-      teamMembersCount: 0,
-      initiativesCount: 0,
-      surveysCount: 0,
-      committeesCount: 0,
-      tasksCount: 0,
-      evidencesCount: 0,
-      budgetsCount: 0,
-      totalBudget: 0,
-      allocatedBudget: 0,
-      spentBudget: 0,
-      governor: null,
-      coordinator: null,
-    };
-  }
 
   try {
     const [

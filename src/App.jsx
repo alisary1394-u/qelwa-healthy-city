@@ -10,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Suspense, useEffect, useState } from 'react';
 import { ThemeProvider } from 'next-themes';
 import { getHostCityTemplate } from '@/lib/city-hosts';
+import { ensureConfiguredCitiesExist } from '@/api/citiesApi';
 
 const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
 
@@ -42,6 +43,11 @@ const AuthenticatedApp = () => {
     };
     window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
     return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
+  }, []);
+
+  // Initialize configured cities (Qelwa, Mandaq) as real database entries on app startup
+  useEffect(() => {
+    ensureConfiguredCitiesExist();
   }, []);
 
   const hostCity = getHostCityTemplate();
