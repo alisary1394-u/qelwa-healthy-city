@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import T from '@/components/T';
 import { api } from '@/api/apiClient';
@@ -44,6 +44,22 @@ function isLocalSeedEmail(value) {
   return typeof value === 'string' && /@local$/i.test(value.trim());
 }
 
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
+
+function getSelectedScopeToken() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'default';
+  try {
+    const scope = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+    if (scope) return `scope:${scope}`;
+  } catch {}
+  try {
+    const cityId = localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '';
+    if (cityId) return `city:${cityId}`;
+  } catch {}
+  return 'default';
+}
+
 export default function TeamManagement() {
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
@@ -52,10 +68,23 @@ export default function TeamManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, member: null });
+  const [scopeToken, setScopeToken] = useState(getSelectedScopeToken);
   
   const urlParams = new URLSearchParams(window.location.search);
   const selectedCommitteeId = urlParams.get('committee') || '';
   const [activeCommittee, setActiveCommittee] = useState(selectedCommitteeId);
+
+  useEffect(() => {
+    const handleMinistryCitySelected = (event) => {
+      const cityId = String(event?.detail?.cityId || '');
+      const includeLegacyNull = event?.detail?.includeLegacyNull === true;
+      const next = cityId ? `city:${cityId}|legacy:${includeLegacyNull ? '1' : '0'}` : 'default';
+      setScopeToken(next);
+      setActiveCommittee('');
+    };
+    window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
+    return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
+  }, []);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -66,12 +95,12 @@ export default function TeamManagement() {
   });
 
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ['teamMembers'],
+    queryKey: ['teamMembers', scopeToken],
     queryFn: () => api.entities.TeamMember.list()
   });
 
   const { data: committees = [] } = useQuery({
-    queryKey: ['committees'],
+    queryKey: ['committees', scopeToken],
     queryFn: () => api.entities.Committee.list()
   });
 

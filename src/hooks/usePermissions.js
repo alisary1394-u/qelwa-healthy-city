@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/apiClient';
 import { getPermissions, getNavItemsForRole, PERMISSIONS_BY_ROLE } from '@/lib/permissions';
 import {
@@ -37,25 +37,54 @@ const ICON_MAP = {
   Building2,
 };
 
+const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
+const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
+
+function getSelectedScopeToken() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'default';
+  try {
+    const scope = localStorage.getItem(MINISTRY_SELECTED_CITY_SCOPE_KEY);
+    if (scope) return `scope:${scope}`;
+  } catch {}
+  try {
+    const cityId = localStorage.getItem(MINISTRY_SELECTED_CITY_KEY) || '';
+    if (cityId) return `city:${cityId}`;
+  } catch {}
+  return 'default';
+}
+
 /**
  * خطاف صلاحيات المستخدم الحالي.
  * يعتمد على currentUser و currentMember (TeamMember المطابق للبريد).
  * @returns {{ role: string, permissions: Object, navItems: Array, isGovernor: boolean, currentMember: Object|null }}
  */
 export function usePermissions() {
+  const [scopeToken, setScopeToken] = useState(getSelectedScopeToken);
+
+  useEffect(() => {
+    const handleMinistryCitySelected = (event) => {
+      const cityId = String(event?.detail?.cityId || '');
+      const includeLegacyNull = event?.detail?.includeLegacyNull === true;
+      const next = cityId ? `city:${cityId}|legacy:${includeLegacyNull ? '1' : '0'}` : 'default';
+      setScopeToken(next);
+    };
+    window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
+    return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
+  }, []);
+
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => api.auth.me(),
   });
 
   const { data: members = [] } = useQuery({
-    queryKey: ['teamMembers'],
+    queryKey: ['teamMembers', scopeToken],
     queryFn: () => api.entities.TeamMember.list(),
     select: (data) => Array.isArray(data) ? data : []
   });
 
   const { data: permissionOverrides = [] } = useQuery({
-    queryKey: ['permissionOverrides'],
+    queryKey: ['permissionOverrides', scopeToken],
     queryFn: () => api.entities.PermissionOverride.list(),
     select: (data) => Array.isArray(data) ? data : []
   });
