@@ -87,13 +87,14 @@ async function listLegacyDerivedCities() {
       const normalized = normalizeCityName(setting.city_name);
       if (!normalized) continue;
       if (!dedup.has(normalized)) {
+        const status = String(setting.status || 'active').toLowerCase();
         dedup.set(normalized, {
           id: toLegacyCityId(setting.city_name),
           name: setting.city_name,
           region: setting.city_location || 'غير محدد',
           contact_email: setting.contact_email || null,
           contact_phone: setting.contact_phone || null,
-          status: 'active',
+          status: ['active', 'pending', 'suspended', 'deleted'].includes(status) ? status : 'active',
           registered_at: setting.created_at || setting.updated_at || new Date().toISOString(),
           is_legacy_derived: true,
         });
