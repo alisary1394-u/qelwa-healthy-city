@@ -141,8 +141,15 @@ function canAccessCityScopedRecord(record, cityId, includeLegacyNull) {
   return String(record?.city_id) === String(cityId);
 }
 
-function applyCityScopeToList(entityName, list) {
+function applyCityScopeToList(entityName, list, overrideCityId) {
   if (!isCityScopedEntity(entityName)) return list;
+  
+  // إذا تم تمرير cityId مباشرة (من getCitySummary)، استخدمه
+  if (overrideCityId) {
+    const includeLegacyNull = false;
+    return list.filter((item) => String(item?.city_id || '') === String(overrideCityId));
+  }
+  
   const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
   if (isMinistryAdmin) return list;
   const hostCity = getHostCityTemplate();
@@ -243,7 +250,7 @@ const auth = {
   async me() {
     const user = getStoredUser();
     if (!user) {
-      const err = new Error('غير مسجل الدخول');
+      return applyCityScopeToList(entityName, list, cityId);
       err.status = 401;
       throw err;
     }
@@ -253,7 +260,7 @@ const auth = {
     return !!(getStoredUser() && getStoredToken());
   },
   logout(redirectUrl) {
-    localStorage.removeItem(AUTH_USER_KEY);
+      list = applyCityScopeToList(entityName, list, cityId);
     localStorage.removeItem(AUTH_TOKEN_KEY);
     if (redirectUrl && typeof window !== 'undefined') window.location.href = redirectUrl;
   },

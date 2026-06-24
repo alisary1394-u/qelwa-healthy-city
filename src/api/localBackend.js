@@ -137,8 +137,11 @@ function isCityScopedEntity(entityName) {
   return CITY_SCOPED_ENTITIES.has(entityName);
 }
 
-function applyCityScopeToList(entityName, arr) {
+function applyCityScopeToList(entityName, arr, overrideCityId) {
   if (!isCityScopedEntity(entityName)) return arr;
+  if (overrideCityId) {
+    return arr.filter((item) => String(item?.city_id || '') === String(overrideCityId));
+  }
   const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
   if (isMinistryAdmin) return arr;
   const hostCity = getHostCityTemplate();
@@ -152,8 +155,9 @@ function applyCityScopeToList(entityName, arr) {
 function createEntityHandler(entityName) {
   return {
     list(orderBy, cityId) {
-      const arr = applyCityScopeToList(entityName, getStore(entityName));
+      const arr = applyCityScopeToList(entityName, getStore(entityName), cityId);
       if (!orderBy || typeof orderBy !== 'string') return [...arr];
+      
       const [field, dir] = orderBy.startsWith('-') ? [orderBy.slice(1), -1] : [orderBy, 1];
       return [...arr].sort((a, b) => {
         const va = a[field];
@@ -166,8 +170,9 @@ function createEntityHandler(entityName) {
       });
     },
     filter(query, orderBy, limit, cityId) {
-      let arr = applyCityScopeToList(entityName, getStore(entityName));
+      let arr = applyCityScopeToList(entityName, getStore(entityName), cityId);
       if (query && typeof query === 'object') {
+
         arr = arr.filter((item) => {
           return Object.entries(query).every(([k, v]) => item[k] === v);
         });

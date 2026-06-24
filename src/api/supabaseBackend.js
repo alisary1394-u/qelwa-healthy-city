@@ -137,8 +137,11 @@ function canAccessCityScopedRecord(record, cityId, includeLegacyNull) {
   return String(record?.city_id) === String(cityId);
 }
 
-function applyCityScopeToList(entityName, list) {
+function applyCityScopeToList(entityName, list, overrideCityId) {
   if (!isCityScopedEntity(entityName)) return list;
+  if (overrideCityId) {
+    return list.filter((item) => String(item?.city_id || '') === String(overrideCityId));
+  }
   const { isMinistryAdmin, cityId, includeLegacyNull } = getUserScope();
   if (isMinistryAdmin) return list;
   const hostCity = getHostCityTemplate();
@@ -170,14 +173,15 @@ function createEntityHandler(entityName) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;
-      const arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord));
+      const arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord), cityId);
       return sortBy(arr, orderBy);
+
     },
     async filter(query, orderBy, limit, cityId) {
       const sb = getSupabase();
       const { data, error } = await sb.from(table).select('id, body');
       if (error) throw error;
-      let arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord));
+      let arr = applyCityScopeToList(entityName, (data || []).map(rowToRecord), cityId);
       if (query && typeof query === 'object') {
         arr = arr.filter((item) => Object.entries(query).every(([k, v]) => item[k] === v));
       }
