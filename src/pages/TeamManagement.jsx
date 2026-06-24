@@ -15,6 +15,7 @@ import MemberCard from "@/components/team/MemberCard";
 import MemberForm from "@/components/team/MemberForm";
 import { usePermissions } from '@/hooks/usePermissions';
 import { requireSecureDeleteConfirmation } from '@/lib/secure-delete';
+import { useLocation } from 'react-router-dom';
 
 const roleKeys = [
   'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff',
@@ -48,6 +49,10 @@ function isLocalSeedEmail(value) {
   return typeof value === 'string' && /@local$/i.test(value.trim());
 }
 
+function isMinistryRoleKey(role) {
+  return String(role || '').startsWith('ministry_');
+}
+
 const MINISTRY_SELECTED_CITY_KEY = 'ministry_selected_city_id';
 const MINISTRY_SELECTED_CITY_SCOPE_KEY = 'ministry_selected_city_scope';
 
@@ -65,6 +70,9 @@ function getSelectedScopeToken() {
 }
 
 export default function TeamManagement() {
+  const location = useLocation();
+  const urlParams = useMemo(() => new URLSearchParams(location.search || ''), [location.search]);
+  const forceMinistryTeamMode = urlParams.get('view') === 'ministry';
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
   const [activeRole, setActiveRole] = useState('all');
@@ -72,14 +80,26 @@ export default function TeamManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, member: null });
-  const [scopeToken, setScopeToken] = useState(getSelectedScopeToken);
-  
-  const urlParams = new URLSearchParams(window.location.search);
+  const [scopeToken, setScopeToken] = useState(() => (forceMinistryTeamMode ? 'ministry:forced' : getSelectedScopeToken()));
+
   const selectedCommitteeId = urlParams.get('committee') || '';
   const [activeCommittee, setActiveCommittee] = useState(selectedCommitteeId);
 
   useEffect(() => {
+    setActiveCommittee(selectedCommitteeId);
+  }, [selectedCommitteeId]);
+
+  useEffect(() => {
+    if (forceMinistryTeamMode) {
+      setScopeToken('ministry:forced');
+      return;
+    }
+    setScopeToken(getSelectedScopeToken());
+  }, [forceMinistryTeamMode]);
+
+  useEffect(() => {
     const handleMinistryCitySelected = (event) => {
+      if (forceMinistryTeamMode) return;
       const cityId = String(event?.detail?.cityId || '');
       const includeLegacyNull = event?.detail?.includeLegacyNull === true;
       const next = cityId ? `city:${cityId}|legacy:${includeLegacyNull ? '1' : '0'}` : 'default';
@@ -88,7 +108,7 @@ export default function TeamManagement() {
     };
     window.addEventListener('ministry-city-selected', handleMinistryCitySelected);
     return () => window.removeEventListener('ministry-city-selected', handleMinistryCitySelected);
-  }, []);
+  }, [forceMinistryTeamMode]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -98,9 +118,15 @@ export default function TeamManagement() {
     queryFn: () => api.auth.me()
   });
 
-  const { data: members = [], isLoading } = useQuery({
+  const { data: cityMembers = [], isLoading: cityMembersLoading } = useQuery({
     queryKey: ['teamMembers', scopeToken],
     queryFn: () => api.entities.TeamMember.list()
+  });
+
+  const { data: ministryMembers = [], isLoading: ministryMembersLoading } = useQuery({
+    queryKey: ['ministryTeamMembers'],
+    queryFn: () => api.entities.MinistryTeamMember.list(),
+    select: (data) => Array.isArray(data) ? data : []
   });
 
   const { data: committees = [] } = useQuery({
@@ -109,21 +135,42 @@ export default function TeamManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => api.entities.TeamMember.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+    mutationFn: ({ data, entityName }) => api.entities[entityName].create(data),
+    onSuccess: (_, variables) => {
+      if (variables?.entityName === 'MinistryTeamMember') {
+        queryClient.invalidateQueries({ queryKey: ['ministryTeamMembers'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      }
+    }
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => api.entities.TeamMember.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+    mutationFn: ({ id, data, entityName }) => api.entities[entityName].update(id, data),
+    onSuccess: (_, variables) => {
+      if (variables?.entityName === 'MinistryTeamMember') {
+        queryClient.invalidateQueries({ queryKey: ['ministryTeamMembers'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      }
+    }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.entities.TeamMember.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+    mutationFn: ({ id, entityName }) => api.entities[entityName].delete(id),
+    onSuccess: (_, variables) => {
+      if (variables?.entityName === 'MinistryTeamMember') {
+        queryClient.invalidateQueries({ queryKey: ['ministryTeamMembers'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      }
+    }
   });
 
   const { permissions, role: userRole, currentMember: authMember, isMinistryAdmin, isMinistryRole } = usePermissions();
+  const isCityScopedMinistryContext = isMinistryRole && !forceMinistryTeamMode && scopeToken.startsWith('city:');
+  const members = isMinistryRole && !isCityScopedMinistryContext ? ministryMembers : cityMembers;
+  const isLoading = isMinistryRole && !isCityScopedMinistryContext ? ministryMembersLoading : cityMembersLoading;
   const canAdd = permissions.canAddTeamMember === true;
   const canDelete = permissions.canDeleteTeamMember === true;
   const canAddOrEditGovernor = permissions.canAddOrEditGovernor === true;
@@ -193,6 +240,9 @@ export default function TeamManagement() {
 
   const stats = {
     total: scopedMembers.length,
+    ministry_it_admin: scopedMembers.filter(m => m.role === 'ministry_it_admin').length,
+    ministry_staff: scopedMembers.filter(m => m.role === 'ministry_staff').length,
+    ministry_regional_staff: scopedMembers.filter(m => m.role === 'ministry_regional_staff').length,
     governor: scopedMembers.filter(m => m.role === 'governor').length,
     coordinator: scopedMembers.filter(m => m.role === 'coordinator').length,
     committee_head: scopedMembers.filter(m => m.role === 'committee_head').length,
@@ -224,7 +274,8 @@ export default function TeamManagement() {
 
     // عند إضافة عضو جديد من لوحة الوزارة، تعيين city_id بناءً على المدينة المختارة
     let payload = { ...data };
-    const isMinistryTargetRole = String(payload?.role || '').startsWith('ministry_');
+    const isMinistryTargetRole = isMinistryRoleKey(payload?.role);
+    const targetEntityName = isMinistryTargetRole ? 'MinistryTeamMember' : 'TeamMember';
     if (isMinistryTargetRole) {
       delete payload.city_id;
       delete payload.committee_id;
@@ -246,7 +297,8 @@ export default function TeamManagement() {
 
     if (editingMember?.id) {
       try {
-        latestMember = await api.entities.TeamMember.get(editingMember.id);
+        const latestEntityName = isMinistryRoleKey(editingMember?.role) ? 'MinistryTeamMember' : 'TeamMember';
+        latestMember = await api.entities[latestEntityName].get(editingMember.id);
       } catch (_) {
         latestMember = editingMember;
       }
@@ -285,10 +337,11 @@ export default function TeamManagement() {
     }
     try {
       if (editingMember) {
-        await updateMutation.mutateAsync({ id: editingMember.id, data: payload });
+        const updateEntityName = isMinistryRoleKey(editingMember?.role) ? 'MinistryTeamMember' : 'TeamMember';
+        await updateMutation.mutateAsync({ id: editingMember.id, data: payload, entityName: updateEntityName });
         toast({ title: t('team.memberUpdated'), description: t('team.memberUpdatedDesc') });
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync({ data: payload, entityName: targetEntityName });
         toast({ title: t('team.memberAdded'), description: t('team.memberAddedDesc') });
       }
       setEditingMember(null);
@@ -309,7 +362,8 @@ export default function TeamManagement() {
     setFormOpen(true);
 
     try {
-      const fullMember = await api.entities.TeamMember.get(member.id);
+      const entityName = isMinistryRoleKey(member?.role) ? 'MinistryTeamMember' : 'TeamMember';
+      const fullMember = await api.entities[entityName].get(member.id);
       if (fullMember) setEditingMember(fullMember);
     } catch (_) {
       // نتابع ببيانات القائمة عند تعذر جلب التفاصيل.
@@ -322,7 +376,8 @@ export default function TeamManagement() {
       const confirmed = await requireSecureDeleteConfirmation(`${t('team.member')} "${deleteDialog.member.full_name}"`);
       if (!confirmed) return;
 
-      await deleteMutation.mutateAsync(deleteDialog.member.id);
+      const entityName = isMinistryRoleKey(deleteDialog.member?.role) ? 'MinistryTeamMember' : 'TeamMember';
+      await deleteMutation.mutateAsync({ id: deleteDialog.member.id, entityName });
       setDeleteDialog({ open: false, member: null });
     }
   };
@@ -416,6 +471,9 @@ export default function TeamManagement() {
         <Tabs value={activeRole} onValueChange={setActiveRole} className="mb-6">
           <TabsList className="flex-wrap h-auto gap-1 bg-card p-1">
             <TabsTrigger value="all">{t('team.allRoles')} ({stats.total})</TabsTrigger>
+            <TabsTrigger value="ministry_it_admin">{t('roles.ministry_it_admin')} ({stats.ministry_it_admin})</TabsTrigger>
+            <TabsTrigger value="ministry_staff">{t('roles.ministry_staff')} ({stats.ministry_staff})</TabsTrigger>
+            <TabsTrigger value="ministry_regional_staff">{t('roles.ministry_regional_staff')} ({stats.ministry_regional_staff})</TabsTrigger>
             <TabsTrigger value="governor">{t('roles.governor')} ({stats.governor})</TabsTrigger>
             <TabsTrigger value="coordinator">{t('roles.coordinator')} ({stats.coordinator})</TabsTrigger>
             <TabsTrigger value="committee_head">{t('roles.committee_head')} ({stats.committee_head})</TabsTrigger>
@@ -475,7 +533,7 @@ export default function TeamManagement() {
         member={editingMember}
         onSave={handleSave}
         supervisors={supervisors}
-        committees={committees}
+        committees={scopedCommittees}
         selectedCommitteeId={activeCommittee}
         existingDepartments={[...new Set((scopedMembers || []).map(m => m.department).filter(Boolean))]}
         restrictedRoles={[

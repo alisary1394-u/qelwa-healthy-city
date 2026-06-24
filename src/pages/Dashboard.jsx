@@ -73,7 +73,7 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
   const ArrowIcon = rtl ? ArrowLeft : ArrowRight;
-  const { permissions } = usePermissions();
+  const { permissions, isMinistryRole } = usePermissions();
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => api.auth.me()
@@ -432,7 +432,11 @@ export default function Dashboard() {
                 { href: 'Tasks', icon: CheckCircle2, label: t('dashboard.tasks'), color: 'text-amber-700 dark:text-amber-400', bg: 'group-hover:bg-amber-600/10' },
                 { href: 'TeamManagement', icon: Users, label: t('dashboard.team'), color: 'text-slate-700 dark:text-slate-400', bg: 'group-hover:bg-slate-600/10' },
               ].map((action) => (
-                <Link key={action.href} to={createPageUrl(action.href)} className="group">
+                <Link
+                  key={action.href}
+                  to={action.href === 'TeamManagement' && isMinistryRole ? `${createPageUrl(action.href)}?view=ministry` : createPageUrl(action.href)}
+                  className="group"
+                >
                   <div className="border border-border rounded-xl p-4 text-center hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer">
                     <div className={`w-12 h-12 rounded-xl bg-muted ${action.bg} flex items-center justify-center mx-auto mb-2 transition-colors`}>
                       <action.icon className={`w-6 h-6 ${action.color}`} />

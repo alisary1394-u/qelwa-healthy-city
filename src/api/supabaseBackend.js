@@ -63,6 +63,7 @@ function uploadFileToDataUrl(file) {
 
 const ENTITY_NAMES = [
   'City',
+  'MinistryTeamMember',
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',

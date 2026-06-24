@@ -96,6 +96,12 @@ export function usePermissions() {
     select: (data) => Array.isArray(data) ? data : []
   });
 
+  const { data: ministryMembers = [] } = useQuery({
+    queryKey: ['ministryTeamMembers'],
+    queryFn: () => api.entities.MinistryTeamMember.list(),
+    select: (data) => Array.isArray(data) ? data : []
+  });
+
   const { data: permissionOverrides = [] } = useQuery({
     queryKey: ['permissionOverrides', scopeToken],
     queryFn: () => api.entities.PermissionOverride.list(),
@@ -103,13 +109,15 @@ export function usePermissions() {
   });
 
   return useMemo(() => {
-    const membersList = Array.isArray(members) ? members : [];
+    const cityMembersList = Array.isArray(members) ? members : [];
+    const ministryMembersList = Array.isArray(ministryMembers) ? ministryMembers : [];
     const overridesList = Array.isArray(permissionOverrides) ? permissionOverrides : [];
-    const currentMember = (currentUser?.national_id != null
-      ? membersList.find((m) => String(m.national_id) === String(currentUser.national_id))
-      : null) || membersList.find((m) => m.email === currentUser?.email);
     const ministryRoles = new Set(['ministry_admin', 'ministry_it_admin', 'ministry_staff', 'ministry_regional_staff']);
     const explicitRole = currentUser?.role || currentUser?.user_role;
+    const baseListForMember = ministryRoles.has(explicitRole) ? ministryMembersList : cityMembersList;
+    const currentMember = (currentUser?.national_id != null
+      ? baseListForMember.find((m) => String(m.national_id) === String(currentUser.national_id))
+      : null) || baseListForMember.find((m) => m.email === currentUser?.email);
     const hostCity = getHostCityTemplate();
     const isMinistryHost = hostCity?.isMinistry === true;
     const isLegacyAdmin = (currentUser?.user_role === 'admin' || currentUser?.role === 'admin');
@@ -170,5 +178,5 @@ export function usePermissions() {
       isMinistryRole,
       ministryRegionScope,
     };
-  }, [currentUser, members, permissionOverrides]);
+  }, [currentUser, members, ministryMembers, permissionOverrides]);
 }

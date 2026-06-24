@@ -452,6 +452,7 @@ const WRITE_PERMISSION_MAP = {
   budget:            ['governor', 'coordinator', 'budget_manager', 'ministry_admin', 'ministry_staff'],
   budget_allocation: ['governor', 'coordinator', 'budget_manager', 'accountant', 'ministry_admin', 'ministry_staff'],
   transaction:       ['governor', 'coordinator', 'budget_manager', 'accountant', 'financial_officer', 'ministry_admin', 'ministry_staff'],
+  ministry_team_member: ['ministry_admin', 'ministry_it_admin', 'ministry_staff'],
 };
 
 /** يعيد true إذا كان المستخدم مسموحاً له بالكتابة على هذا الجدول */
@@ -573,8 +574,12 @@ app.post('/api/auth/login', async (req, res) => {
 
     const db = await getDb();
 
-    const members = db.list('team_member');
-    const member = members.find((m) => m.national_id === String(national_id));
+    const cityMembers = db.list('team_member');
+    const ministryMembers = db.list('ministry_team_member');
+    const ministryMember = ministryMembers.find((m) => m.national_id === String(national_id));
+    const cityMember = cityMembers.find((m) => m.national_id === String(national_id));
+    const member = ministryMember || cityMember;
+    const sourceTable = ministryMember ? 'ministry_team_member' : 'team_member';
 
     // دالة تسجيل محاولة فاشلة
     const recordFailedAttempt = () => {
@@ -601,7 +606,7 @@ app.post('/api/auth/login', async (req, res) => {
       isValid = member.password === String(password);
       if (isValid) {
         const hashed = await bcrypt.hash(String(password), 12);
-        db.update('team_member', member.id, { password: hashed });
+        db.update(sourceTable, member.id, { password: hashed });
       }
     }
 
@@ -623,6 +628,7 @@ app.post('/api/auth/login', async (req, res) => {
       city_id: member.city_id || null,
       ministry_region: member.ministry_region || member.region || null,
       ministry_region_scope: member.ministry_region_scope || member.region_scope || null,
+      source_table: sourceTable,
     };
     const token = randomBytes(32).toString('hex');
     await saveSession(token, user, Date.now() + SESSION_TTL_MS);
@@ -653,8 +659,12 @@ app.post('/api/auth/verify-password', requireAuth, async (req, res) => {
     const { password } = req.body || {};
     if (!password) return res.status(400).json({ ok: false, error: 'كلمة المرور مطلوبة' });
     const db = await getDb();
-    const members = db.list('team_member');
-    const member = members.find((m) => m.id === req.currentUser.id);
+    const cityMembers = db.list('team_member');
+    const ministryMembers = db.list('ministry_team_member');
+    const cityMember = cityMembers.find((m) => m.id === req.currentUser.id);
+    const ministryMember = ministryMembers.find((m) => m.id === req.currentUser.id);
+    const member = cityMember || ministryMember;
+    const sourceTable = ministryMember ? 'ministry_team_member' : 'team_member';
     if (!member) return res.status(404).json({ ok: false, error: 'المستخدم غير موجود' });
     let isValid = false;
     if (member.password?.startsWith('$2b$') || member.password?.startsWith('$2a$')) {
@@ -663,7 +673,7 @@ app.post('/api/auth/verify-password', requireAuth, async (req, res) => {
       isValid = member.password === String(password);
       if (isValid) {
         const hashed = await bcrypt.hash(String(password), 12);
-        db.update('team_member', member.id, { password: hashed });
+        db.update(sourceTable, member.id, { password: hashed });
       }
     }
     res.json({ ok: isValid });
@@ -680,7 +690,7 @@ app.get('/api/entities/:name', requireAuth, async (req, res) => {
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     let list = db.list(table);
     // إخفاء كلمات المرور من نتائج قائمة الأعضاء
-    if (table === 'team_member') list = list.map(sanitizeMember);
+    if (table === 'team_member' || table === 'ministry_team_member') list = list.map(sanitizeMember);
     const orderBy = req.query.orderBy;
     if (orderBy && typeof orderBy === 'string') {
       const [field, dir] = orderBy.startsWith('-') ? [orderBy.slice(1), -1] : [orderBy, 1];
@@ -707,7 +717,7 @@ app.get('/api/entities/:name/:id', requireAuth, async (req, res) => {
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     const row = db.get(table, req.params.id);
     if (!row) return res.status(404).json({ error: 'غير موجود' });
-    res.json(table === 'team_member' ? sanitizeMember(row) : row);
+    res.json((table === 'team_member' || table === 'ministry_team_member') ? sanitizeMember(row) : row);
   } catch (e) {
     return safeError(res, e);
   }
@@ -727,15 +737,15 @@ app.post('/api/entities/:name', requireAuth, async (req, res) => {
     const body = { ...data };
     delete body.id;
     // تشفير كلمة المرور عند إنشاء عضو جديد
-    if (table === 'team_member' && body.password &&
+    if ((table === 'team_member' || table === 'ministry_team_member') && body.password &&
         !body.password.startsWith('$2b$') && !body.password.startsWith('$2a$')) {
       body.password = await bcrypt.hash(String(body.password).trim(), 12);
     }
     const record = db.create(table, id, body);
-    if (table === 'team_member' || table === 'task') {
+    if (table === 'team_member' || table === 'ministry_team_member' || table === 'task') {
       enqueueMutationBackup(`entity_create:${table}`);
     }
-    res.status(201).json(table === 'team_member' ? sanitizeMember(record) : record);
+    res.status(201).json((table === 'team_member' || table === 'ministry_team_member') ? sanitizeMember(record) : record);
   } catch (e) {
     return safeError(res, e);
   }
@@ -747,7 +757,7 @@ app.patch('/api/entities/:name/:id', requireAuth, async (req, res) => {
     const table = entityToTable(req.params.name);
     if (!db.TABLES.includes(table)) return res.status(404).json({ error: 'كيان غير معروف' });
     let body = { ...(req.body || {}) };
-    if (table === 'team_member') {
+    if (table === 'team_member' || table === 'ministry_team_member') {
       const existing = db.get(table, req.params.id);
       if (!existing) return res.status(404).json({ error: 'غير موجود' });
 
@@ -783,10 +793,10 @@ app.patch('/api/entities/:name/:id', requireAuth, async (req, res) => {
     }
     const updated = db.update(table, req.params.id, body);
     if (!updated) return res.status(404).json({ error: 'غير موجود' });
-    if (table === 'team_member' || table === 'task') {
+    if (table === 'team_member' || table === 'ministry_team_member' || table === 'task') {
       enqueueMutationBackup(`entity_update:${table}`);
     }
-    res.json(table === 'team_member' ? sanitizeMember(updated) : updated);
+    res.json((table === 'team_member' || table === 'ministry_team_member') ? sanitizeMember(updated) : updated);
   } catch (e) {
     return safeError(res, e);
   }
@@ -802,7 +812,7 @@ app.delete('/api/entities/:name/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'ليس لديك صلاحية حذف هذا العنصر' });
     }
     db.remove(table, req.params.id);
-    if (table === 'team_member' || table === 'task') {
+    if (table === 'team_member' || table === 'ministry_team_member' || table === 'task') {
       enqueueMutationBackup(`entity_delete:${table}`);
     }
     res.status(204).send();

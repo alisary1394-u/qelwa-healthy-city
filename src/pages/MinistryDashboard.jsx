@@ -541,9 +541,9 @@ export default function MinistryDashboard() {
   });
 
   const ministryRoleKeys = ['ministry_it_admin', 'ministry_staff', 'ministry_regional_staff'];
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['teamMembers', 'ministry-dashboard'],
-    queryFn: () => api.entities.TeamMember.list(),
+  const { data: ministryTeamMembers = [] } = useQuery({
+    queryKey: ['ministryTeamMembers', 'ministry-dashboard'],
+    queryFn: () => api.entities.MinistryTeamMember.list(),
     enabled: isMinistryRole,
     select: (data) => Array.isArray(data) ? data : [],
   });
@@ -671,7 +671,7 @@ export default function MinistryDashboard() {
     pending: activeCities.filter(c => c.status === 'pending').length,
   };
 
-  const ministryMembers = teamMembers.filter((m) => ministryRoleKeys.includes(String(m?.role || '')));
+  const ministryMembers = ministryTeamMembers.filter((m) => ministryRoleKeys.includes(String(m?.role || '')));
   const ministryRoleStats = {
     total: ministryMembers.length,
     it: ministryMembers.filter((m) => m.role === 'ministry_it_admin').length,
@@ -764,7 +764,7 @@ export default function MinistryDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate(createPageUrl('TeamManagement'))}
+                onClick={() => navigate(`${createPageUrl('TeamManagement')}?view=ministry`)}
               >
                 <UserCog className="w-4 h-4 ml-1" />فتح إدارة الفريق
               </Button>

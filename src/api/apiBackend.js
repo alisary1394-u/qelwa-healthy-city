@@ -67,6 +67,7 @@ function uploadFileToDataUrl(file) {
 
 const ENTITY_NAMES = [
   'City',
+  'MinistryTeamMember',
   'TeamMember', 'Settings', 'Committee', 'Task', 'Notification', 'Axis', 'Standard',
   'Evidence', 'KpiEvidence', 'Initiative', 'InitiativeKPI', 'Budget', 'BudgetAllocation', 'Transaction',
   'FileUpload', 'FamilySurvey', 'UserPreferences', 'VerificationCode', 'VolunteerOpportunity',
@@ -252,7 +253,7 @@ const auth = {
   async me() {
     const user = getStoredUser();
     if (!user) {
-      return applyCityScopeToList(entityName, list, cityId);
+      const err = new Error('غير مسجل الدخول');
       err.status = 401;
       throw err;
     }
@@ -262,7 +263,7 @@ const auth = {
     return !!(getStoredUser() && getStoredToken());
   },
   logout(redirectUrl) {
-      list = applyCityScopeToList(entityName, list, cityId);
+    localStorage.removeItem(AUTH_USER_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);
     if (redirectUrl && typeof window !== 'undefined') window.location.href = redirectUrl;
   },

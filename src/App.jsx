@@ -53,6 +53,7 @@ const AuthenticatedApp = () => {
   const hostCity = getHostCityTemplate();
   const isMinistryHost = hostCity?.isMinistry === true;
   const shouldLockToMinistryDashboard = isMinistryHost && !selectedMinistryCityId;
+  const allowedWithoutCitySelection = new Set(['MinistryDashboard', 'TeamManagement']);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -103,7 +104,7 @@ const AuthenticatedApp = () => {
             key={path}
             path={`/${path}`}
             element={
-              shouldLockToMinistryDashboard && path !== 'MinistryDashboard'
+              shouldLockToMinistryDashboard && !allowedWithoutCitySelection.has(path)
                 ? <Navigate to="/MinistryDashboard" replace />
                 : (
                   <LayoutWrapper currentPageName={path}>

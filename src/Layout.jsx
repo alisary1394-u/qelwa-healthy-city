@@ -54,7 +54,7 @@ function getSelectedMinistryCityName() {
 export default function Layout({ children }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { navItems, permissions, isGovernor, isMinistryAdmin } = usePermissions();
+  const { navItems, permissions, isGovernor, isMinistryAdmin, isMinistryRole } = usePermissions();
   const { logout } = useAuth();
   const { t, i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
@@ -96,6 +96,11 @@ export default function Layout({ children }) {
 
   const effectiveTheme = theme === 'system' ? systemTheme : theme;
   const isActive = (pageName) => currentPath === createPageUrl(pageName);
+  const getNavTarget = (pageName) => {
+    const base = createPageUrl(pageName);
+    if (isMinistryRole && pageName === 'TeamManagement') return `${base}?view=ministry`;
+    return base;
+  };
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -230,7 +235,7 @@ export default function Layout({ children }) {
               {navItems.map(item => {
                 const active = isActive(item.name);
                 return (
-                  <Link key={item.name} to={createPageUrl(item.name)}>
+                  <Link key={item.name} to={getNavTarget(item.name)}>
                     <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                       active 
                         ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md' 
@@ -319,7 +324,7 @@ export default function Layout({ children }) {
                   return (
                     <Tooltip key={item.name}>
                       <TooltipTrigger asChild>
-                        <Link to={createPageUrl(item.name)}>
+                        <Link to={getNavTarget(item.name)}>
                           <div className={`flex items-center justify-center p-2.5 rounded-xl mb-1 transition-colors ${
                             active 
                               ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md' 
@@ -338,7 +343,7 @@ export default function Layout({ children }) {
             {!sidebarCollapsed && navItems.map(item => {
               const active = isActive(item.name);
               return (
-                <Link key={item.name} to={createPageUrl(item.name)}>
+                <Link key={item.name} to={getNavTarget(item.name)}>
                   <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     active 
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md' 
