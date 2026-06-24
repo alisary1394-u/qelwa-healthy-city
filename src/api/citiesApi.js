@@ -50,6 +50,16 @@ function matchesCity(cityId, row, includeLegacyNull = false) {
   return String(row?.city_id || '') === String(cityId);
 }
 
+function shouldIncludeLegacyNullForCity(cityOrId, legacyDerived) {
+  if (!legacyDerived || !cityOrId || typeof cityOrId !== 'object') return false;
+  const cityName = normalizeCityName(cityOrId?.name);
+  if (!cityName) return false;
+  const template = getAllHostCityTemplates().find(
+    (item) => normalizeCityName(item?.cityName) === cityName
+  );
+  return template?.hasLegacyData === true;
+}
+
 async function findLegacyCitySetting(cityOrId) {
   const targetName = typeof cityOrId === 'object' ? cityOrId?.name : null;
   const settingsRaw = await api?.entities?.Settings?.list?.();
@@ -502,6 +512,8 @@ export async function deleteCity(cityId) {
 export async function getCitySummary(cityOrId) {
   const cityId = typeof cityOrId === 'object' ? cityOrId?.id : cityOrId;
   const legacyDerived = isLegacyDerivedCity(cityOrId);
+  const includeLegacyNullForCity = shouldIncludeLegacyNullForCity(cityOrId, legacyDerived);
+  const scopedCityId = includeLegacyNullForCity ? undefined : cityId;
 
   if (!cityId) return null;
 
@@ -518,21 +530,21 @@ export async function getCitySummary(cityOrId) {
       tasksRaw,
       evidenceRaw,
     ] = await Promise.all([
-      api?.entities?.Standard?.list?.(undefined, cityId) ?? [],
-      api?.entities?.TeamMember?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Initiative?.list?.(undefined, cityId) ?? [],
-      api?.entities?.FamilySurvey?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Budget?.list?.(undefined, cityId) ?? [],
-      api?.entities?.BudgetAllocation?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Transaction?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Committee?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Task?.list?.(undefined, cityId) ?? [],
-      api?.entities?.Evidence?.list?.(undefined, cityId) ?? [],
+      api?.entities?.Standard?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.TeamMember?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Initiative?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.FamilySurvey?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Budget?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.BudgetAllocation?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Transaction?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Committee?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Task?.list?.(undefined, scopedCityId) ?? [],
+      api?.entities?.Evidence?.list?.(undefined, scopedCityId) ?? [],
     ]);
 
     const byCity = (rows) => {
       const list = Array.isArray(rows) ? rows : [];
-      if (legacyDerived) return list.filter((r) => matchesCity(cityId, r, true));
+      if (includeLegacyNullForCity) return list.filter((r) => matchesCity(cityId, r, true));
       return list.filter((r) => matchesCity(cityId, r, false));
     };
 

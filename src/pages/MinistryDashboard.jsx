@@ -60,7 +60,7 @@ function CityCard({ city, onAction, selectedCityId }) {
   const { data: summary } = useQuery({
     queryKey: ['city-summary', city.id],
     queryFn: () => getCitySummary(city),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   const spentRatio = Number(summary?.totalBudget || 0) > 0
@@ -678,7 +678,14 @@ export default function MinistryDashboard() {
               إلغاء اختيار المدينة
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ['city-summary'] });
+              refetch();
+            }}
+          >
             <RefreshCw className="w-4 h-4 ml-1" />تحديث
           </Button>
           <Button onClick={() => setShowAddDialog(true)}>
