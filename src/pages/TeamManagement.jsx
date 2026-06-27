@@ -396,45 +396,84 @@ export default function TeamManagement() {
   return (
     <div className="min-h-screen bg-muted/50" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className="bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600 text-white">
+      <div className={`text-white ${
+        forceMinistryTeamMode
+          ? 'bg-gradient-to-l from-[#0f2d5b] via-[#1a56db] to-[#0ea5e9]'
+          : 'bg-gradient-to-l from-blue-700 via-blue-600 to-emerald-600'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <Users className="w-7 h-7" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                <Users className="w-7 h-7" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  {forceMinistryTeamMode ? 'إدارة فريق وزارة الصحة' : t('team.title')}
+                </h1>
+                <p className="text-blue-100 text-sm mt-1">
+                  {forceMinistryTeamMode
+                    ? 'إدارة موظفي الوزارة وصلاحياتهم على مستوى المملكة'
+                    : t('team.subtitle')}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">{t('team.title')}</h1>
-              <p className="text-blue-100 text-sm mt-1">{t('team.subtitle')}</p>
-            </div>
+            {forceMinistryTeamMode && (
+              <div className="flex items-center gap-2 text-sm bg-white/10 border border-white/20 rounded-xl px-4 py-2">
+                <Briefcase className="w-4 h-4 text-sky-300" />
+                <span className="text-blue-100">وضع فريق الوزارة</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <Card className="bg-card shadow-sm border-0 overflow-hidden">
-            <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] p-4 text-white text-center">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm opacity-90">{t('team.totalMembers')}</p>
-              </div>
-            </CardContent>
-          </Card>
-          {Object.entries(roleIcons).map(([role, Icon]) => (
-            <Card key={role} className="bg-card shadow-sm border-0 overflow-hidden">
-              <CardContent className="p-4 text-center hover:shadow-md transition-shadow">
-                <Icon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xl font-bold">{stats[role]}</p>
-                <p className="text-xs text-muted-foreground">{t('roles.' + role)}</p>
+        {forceMinistryTeamMode ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { role: null, label: 'إجمالي موظفي الوزارة', val: stats.total, Icon: Users, bg: 'bg-gradient-to-br from-[#0f2d5b] to-[#1a56db]', white: true },
+              { role: 'ministry_it_admin',       label: 'تقنية المعلومات',  val: stats.ministry_it_admin,       Icon: Briefcase,  bg: 'bg-violet-50', textCls: 'text-violet-700' },
+              { role: 'ministry_staff',          label: 'موظفون مركزيون', val: stats.ministry_staff,          Icon: Building,   bg: 'bg-indigo-50',  textCls: 'text-indigo-700' },
+              { role: 'ministry_regional_staff', label: 'موظفو المناطق',   val: stats.ministry_regional_staff, Icon: Building,   bg: 'bg-teal-50',    textCls: 'text-teal-700'   },
+            ].map(({ role: r, label, val, Icon, bg, white, textCls }) => (
+              <Card key={label} className="shadow-sm border-0 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className={`${bg} p-4 ${white ? 'text-white' : ''} text-center`}>
+                    <Icon className={`w-7 h-7 mx-auto mb-2 ${white ? 'opacity-90' : textCls + ' opacity-80'}`} />
+                    <p className={`text-2xl font-bold ${white ? '' : textCls}`}>{val}</p>
+                    <p className={`text-xs mt-0.5 ${white ? 'opacity-90' : textCls + '/70'}`}>{label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <Card className="bg-card shadow-sm border-0 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a8e] p-4 text-white text-center">
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-90" />
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-sm opacity-90">{t('team.totalMembers')}</p>
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            {Object.entries(roleIcons).map(([role, Icon]) => (
+              <Card key={role} className="bg-card shadow-sm border-0 overflow-hidden">
+                <CardContent className="p-4 text-center hover:shadow-md transition-shadow">
+                  <Icon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xl font-bold">{stats[role]}</p>
+                  <p className="text-xs text-muted-foreground">{t('roles.' + role)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Committee Filter */}
-        {scopedCommittees.length > 0 && (
+        {!forceMinistryTeamMode && scopedCommittees.length > 0 && (
           <div className="mb-4 flex items-center gap-3">
             <Building className="w-5 h-5 text-muted-foreground" />
             <Select value={activeCommittee} onValueChange={setActiveCommittee}>
@@ -485,17 +524,19 @@ export default function TeamManagement() {
             <TabsTrigger value="ministry_it_admin">{t('roles.ministry_it_admin')} ({stats.ministry_it_admin})</TabsTrigger>
             <TabsTrigger value="ministry_staff">{t('roles.ministry_staff')} ({stats.ministry_staff})</TabsTrigger>
             <TabsTrigger value="ministry_regional_staff">{t('roles.ministry_regional_staff')} ({stats.ministry_regional_staff})</TabsTrigger>
-            <TabsTrigger value="governor">{t('roles.governor')} ({stats.governor})</TabsTrigger>
-            <TabsTrigger value="coordinator">{t('roles.coordinator')} ({stats.coordinator})</TabsTrigger>
-            <TabsTrigger value="committee_head">{t('roles.committee_head')} ({stats.committee_head})</TabsTrigger>
-            <TabsTrigger value="committee_coordinator">{t('roles.committee_coordinator')} ({stats.committee_coordinator})</TabsTrigger>
-            <TabsTrigger value="committee_supervisor">{t('roles.committee_supervisor')} ({stats.committee_supervisor})</TabsTrigger>
-            <TabsTrigger value="committee_member">{t('roles.committee_member')} ({stats.committee_member})</TabsTrigger>
-            <TabsTrigger value="member">{t('roles.member')} ({stats.member})</TabsTrigger>
-            <TabsTrigger value="volunteer">{t('roles.volunteer')} ({stats.volunteer})</TabsTrigger>
-            <TabsTrigger value="budget_manager">{t('roles.budget_manager')} ({stats.budget_manager})</TabsTrigger>
-            <TabsTrigger value="accountant">{t('roles.accountant')} ({stats.accountant})</TabsTrigger>
-            <TabsTrigger value="financial_officer">{t('roles.financial_officer')} ({stats.financial_officer})</TabsTrigger>
+            {!forceMinistryTeamMode && (<>
+              <TabsTrigger value="governor">{t('roles.governor')} ({stats.governor})</TabsTrigger>
+              <TabsTrigger value="coordinator">{t('roles.coordinator')} ({stats.coordinator})</TabsTrigger>
+              <TabsTrigger value="committee_head">{t('roles.committee_head')} ({stats.committee_head})</TabsTrigger>
+              <TabsTrigger value="committee_coordinator">{t('roles.committee_coordinator')} ({stats.committee_coordinator})</TabsTrigger>
+              <TabsTrigger value="committee_supervisor">{t('roles.committee_supervisor')} ({stats.committee_supervisor})</TabsTrigger>
+              <TabsTrigger value="committee_member">{t('roles.committee_member')} ({stats.committee_member})</TabsTrigger>
+              <TabsTrigger value="member">{t('roles.member')} ({stats.member})</TabsTrigger>
+              <TabsTrigger value="volunteer">{t('roles.volunteer')} ({stats.volunteer})</TabsTrigger>
+              <TabsTrigger value="budget_manager">{t('roles.budget_manager')} ({stats.budget_manager})</TabsTrigger>
+              <TabsTrigger value="accountant">{t('roles.accountant')} ({stats.accountant})</TabsTrigger>
+              <TabsTrigger value="financial_officer">{t('roles.financial_officer')} ({stats.financial_officer})</TabsTrigger>
+            </>)}
           </TabsList>
         </Tabs>
 
@@ -546,6 +587,7 @@ export default function TeamManagement() {
         supervisors={supervisors}
         committees={scopedCommittees}
         selectedCommitteeId={activeCommittee}
+        ministryOnlyMode={forceMinistryTeamMode}
         existingDepartments={[...new Set((scopedMembers || []).map(m => m.department).filter(Boolean))]}
         restrictedRoles={[
           !(canAddOrEditGovernor) && 'governor',

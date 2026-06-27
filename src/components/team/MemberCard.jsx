@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import T from "@/components/T";
 
 const roleColors = {
+  ministry_it_admin: "bg-violet-100 text-violet-800 border-violet-200",
+  ministry_staff: "bg-blue-100 text-blue-800 border-blue-200",
+  ministry_regional_staff: "bg-teal-100 text-teal-800 border-teal-200",
   governor: "bg-purple-100 text-purple-800 border-purple-200",
   coordinator: "bg-blue-100 text-blue-800 border-blue-200",
   committee_head: "bg-green-100 text-green-800 border-green-200",

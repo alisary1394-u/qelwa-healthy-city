@@ -26,10 +26,13 @@ const ALL_ROLES = [
   { value: "financial_officer", label: "موظف مالي" }
 ];
 
-export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], restrictedRoles = [] }) {
+export default function MemberForm({ open, onOpenChange, member, onSave, supervisors, committees, selectedCommitteeId, existingDepartments = [], restrictedRoles = [], ministryOnlyMode = false }) {
   const { i18n } = useTranslation();
   const rtl = i18n.language === 'ar';
-  const roles = (restrictedRoles && restrictedRoles.length) ? ALL_ROLES.filter((r) => !restrictedRoles.includes(r.value)) : ALL_ROLES;
+  const MINISTRY_ROLES = ALL_ROLES.filter(r => r.value.startsWith('ministry_'));
+  const baseRoles = ministryOnlyMode ? MINISTRY_ROLES : ALL_ROLES;
+  const roles = (restrictedRoles && restrictedRoles.length) ? baseRoles.filter((r) => !restrictedRoles.includes(r.value)) : baseRoles;
+  const defaultRole = ministryOnlyMode ? 'ministry_staff' : 'volunteer';
   const [formData, setFormData] = useState({
     full_name: '',
     national_id: '',
@@ -59,7 +62,7 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         full_name: member.full_name || '',
         national_id: member.national_id || '',
         password: member.password || '',
-        role: member.role || 'volunteer',
+    role: member.role || defaultRole,
         committee_id: member.committee_id || '',
         committee_name: member.committee_name || '',
         specialization: member.specialization || '',
@@ -83,9 +86,9 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
         full_name: '',
         national_id: '',
         password: '',
-        role: 'volunteer',
-        committee_id: selectedCommitteeId || '',
-        committee_name: defaultCommittee?.name || '',
+        role: defaultRole,
+        committee_id: ministryOnlyMode ? '' : (selectedCommitteeId || ''),
+        committee_name: ministryOnlyMode ? '' : (defaultCommittee?.name || ''),
         specialization: '',
         phone: '',
         email: '',
@@ -196,8 +199,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
               )}
             </div>
             
-            <div className="space-y-2">
-              <Label><T>الدور</T> *</Label>
+          <div className="space-y-2">
+            <Label><T>الدور</T> *</Label>
               <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
                 <SelectTrigger>
                   <SelectValue />
@@ -251,9 +254,10 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
               </p>
             </div>
             
-          <div className="space-y-2">
-            <Label><T>اللجنة</T></Label>
-            <Select value={formData.committee_id} onValueChange={handleCommitteeChange}>
+          {!ministryOnlyMode && (
+            <div className="space-y-2">
+              <Label><T>اللجنة</T></Label>
+              <Select value={formData.committee_id} onValueChange={handleCommitteeChange}>
                 <SelectTrigger>
                   <SelectValue placeholder={rtl ? 'اختر اللجنة' : 'Select committee'} />
                 </SelectTrigger>
@@ -265,7 +269,8 @@ export default function MemberForm({ open, onOpenChange, member, onSave, supervi
                 </SelectContent>
               </Select>
             </div>
-            
+          )}
+
             <div className="space-y-2">
               <Label><T>القسم/الجهة</T></Label>
               <Input
