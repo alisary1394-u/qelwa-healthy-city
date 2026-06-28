@@ -15,15 +15,15 @@ Module Program
 
         ' Cookie Authentication
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme) _
-            .AddCookie(Sub(opts)
-                opts.LoginPath = "/Account/Login"
-                opts.LogoutPath = "/Account/Logout"
-                opts.Cookie.Name = "QelwaAuth"
-                opts.ExpireTimeSpan = TimeSpan.FromHours(8)
-                opts.SlidingExpiration = True
-                opts.Cookie.HttpOnly = True
-                opts.Cookie.SecurePolicy = Http.CookieSecurePolicy.SameAsRequest
-            End Sub)
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, _
+                Sub(opts As CookieAuthenticationOptions)
+                    opts.LoginPath = "/Account/Login"
+                    opts.LogoutPath = "/Account/Logout"
+                    opts.Cookie.Name = "QelwaAuth"
+                    opts.ExpireTimeSpan = TimeSpan.FromHours(8)
+                    opts.SlidingExpiration = True
+                    opts.Cookie.HttpOnly = True
+                End Sub)
 
         builder.Services.AddAuthorization()
 

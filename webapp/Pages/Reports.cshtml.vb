@@ -34,8 +34,8 @@ Namespace Pages
 
             Dim allStds = _db.Standards.ToList()
             AvgCompletion = If(allStds.Any(), allStds.Average(Function(s) CDbl(s.CompletionPercentage)), 0)
-            ExcellentAxes = Axes.Count(Function(a) a.CompletionPercentage >= 80)
-            NeedsImprovementAxes = Axes.Count(Function(a) a.CompletionPercentage < 60)
+            ExcellentAxes = Axes.Where(Function(a) a.CompletionPercentage >= 80).Count()
+            NeedsImprovementAxes = Axes.Where(Function(a) a.CompletionPercentage < 60).Count()
 
             Dim labels = String.Join(",", Axes.Select(Function(a) $"""{EscJ(a.ShortName)}"""))
             Dim scores = String.Join(",", Axes.Select(Function(a) Math.Round(a.CompletionPercentage, 1).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)))

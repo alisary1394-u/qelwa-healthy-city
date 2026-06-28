@@ -60,10 +60,10 @@ Namespace Pages
             Dim all = _db.Tasks.ToList()
             Select Case filter
                 Case "all" : Return all.Count
-                Case "pending" : Return all.Count(Function(t) t.Status = "pending")
-                Case "in_progress" : Return all.Count(Function(t) t.Status = "in_progress")
-                Case "completed" : Return all.Count(Function(t) t.Status = "completed")
-                Case "overdue" : Return all.Count(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed")
+                Case "pending" : Return all.Where(Function(t) t.Status = "pending").Count()
+                Case "in_progress" : Return all.Where(Function(t) t.Status = "in_progress").Count()
+                Case "completed" : Return all.Where(Function(t) t.Status = "completed").Count()
+                Case "overdue" : Return all.Where(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed").Count()
                 Case Else : Return 0
             End Select
         End Function

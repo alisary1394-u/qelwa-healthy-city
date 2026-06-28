@@ -29,14 +29,14 @@ Namespace Pages
 
             Stats = New DashboardStats With {
                 .TotalStandards = allStandards.Count,
-                .CompletedStandards = allStandards.Count(Function(s) s.Status = "completed"),
-                .InProgressStandards = allStandards.Count(Function(s) s.Status = "in_progress"),
-                .NotStartedStandards = allStandards.Count(Function(s) s.Status = "not_started"),
+                .CompletedStandards = allStandards.Where(Function(s) s.Status = "completed").Count(),
+                .InProgressStandards = allStandards.Where(Function(s) s.Status = "in_progress").Count(),
+                .NotStartedStandards = allStandards.Where(Function(s) s.Status = "not_started").Count(),
                 .AvgCompletion = If(allStandards.Any(), allStandards.Average(Function(s) CDbl(s.CompletionPercentage)), 0),
-                .OpenTasks = allTasks.Count(Function(t) t.Status <> "completed"),
-                .CompletedTasks = allTasks.Count(Function(t) t.Status = "completed"),
-                .OverdueTasks = allTasks.Count(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed"),
-                .ActiveUsers = _db.Users.Count(Function(u) u.IsActive),
+                .OpenTasks = allTasks.Where(Function(t) t.Status <> "completed").Count(),
+                .CompletedTasks = allTasks.Where(Function(t) t.Status = "completed").Count(),
+                .OverdueTasks = allTasks.Where(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed").Count(),
+                .ActiveUsers = _db.Users.Where(Function(u) u.IsActive).Count(),
                 .TotalAxes = Axes.Count
             }
 
