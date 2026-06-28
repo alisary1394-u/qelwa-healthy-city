@@ -73,7 +73,6 @@ Module Program
         ' Health check endpoint (no auth required)
         app.MapGet("/health", Function() "OK")
 
-        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
-        app.Run($"http://0.0.0.0:{port}")
+        app.Run()
     End Sub
 End Module
