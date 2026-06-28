@@ -20,6 +20,7 @@ RUN mkdir -p /data && chmod 755 /data
 COPY --from=build /app/publish .
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "webapp.dll"]
 
