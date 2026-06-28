@@ -4,6 +4,7 @@ Imports Microsoft.EntityFrameworkCore
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
 Imports QelwaApp.Data
+Imports System.IO
 
 Module Program
     Sub Main(args As String())

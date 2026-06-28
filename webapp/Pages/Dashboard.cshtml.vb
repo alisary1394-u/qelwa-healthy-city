@@ -3,6 +3,7 @@ Imports Microsoft.AspNetCore.Mvc.RazorPages
 Imports Microsoft.EntityFrameworkCore
 Imports QelwaApp.Data
 Imports QelwaApp.Models
+Imports System.Linq
 
 Namespace Pages
 
@@ -39,9 +40,10 @@ Namespace Pages
                 .TotalAxes = Axes.Count
             }
 
-            OverdueTasks = _db.Tasks
-                .Where(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed")
-                .OrderBy(Function(t) t.DueDate)
+            OverdueTasks = _db.Tasks _
+                .Include(Function(t) t.AssignedUser) _
+                .Where(Function(t) t.DueDate.HasValue AndAlso t.DueDate.Value < DateTime.UtcNow AndAlso t.Status <> "completed") _
+                .OrderBy(Function(t) t.DueDate) _
                 .Take(5).ToList()
 
             BuildChartData()
@@ -51,7 +53,7 @@ Namespace Pages
             Dim labels = String.Join(",", Axes.Select(Function(a) $"""{EscJ(a.ShortName)}"""))
             Dim scores = String.Join(",", Axes.Select(Function(a) Math.Round(a.CompletionPercentage, 1).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)))
             Dim colors = String.Join(",", Axes.Select(Function(a) $"""{a.Color}"""))
-            ChartDataJson = $"{{""completed"":{Stats.CompletedStandards},""inProgress"":{Stats.InProgressStandards},""notStarted"":{Stats.NotStartedStandards},""axisLabels"":[{labels}],""axisScores"":[{scores}],""axisColors"":[{colors}]}}"
+            ChartDataJson = "{""completed"":" & Stats.CompletedStandards & ",""inProgress"":" & Stats.InProgressStandards & ",""notStarted"":" & Stats.NotStartedStandards & ",""axisLabels"":[" & labels & "],""axisScores"":[" & scores & "],""axisColors"":[" & colors & "]}"
         End Sub
 
         Private Shared Function EscJ(s As String) As String

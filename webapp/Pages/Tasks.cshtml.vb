@@ -4,6 +4,7 @@ Imports Microsoft.AspNetCore.Mvc.RazorPages
 Imports Microsoft.EntityFrameworkCore
 Imports QelwaApp.Data
 Imports QelwaApp.Models
+Imports System.Linq
 
 Namespace Pages
 
