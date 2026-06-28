@@ -42,11 +42,10 @@ Module Program
         Dim app = builder.Build()
 
         ' DB init AFTER server starts — never crash before app.Run()
-        AddHandler app.Lifetime.ApplicationStarted, Sub()
+        app.Lifetime.ApplicationStarted.Register(Sub()
             Try
                 Using scope = app.Services.CreateScope()
                     Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
-                    ' Check if Axes table exists
                     Dim hasTable = False
                     Try
                         db.Database.ExecuteSqlRaw("SELECT 1 FROM ""Axes"" LIMIT 1")
@@ -54,19 +53,16 @@ Module Program
                     Catch
                         hasTable = False
                     End Try
-
                     If Not hasTable Then
-                        ' Empty or corrupt DB file — delete and recreate
                         db.Database.EnsureDeleted()
                         db.Database.EnsureCreated()
                     End If
-
                     DbInitializer.Initialize(db)
                 End Using
             Catch ex As Exception
                 Console.Error.WriteLine($"[DB-INIT] {ex.Message}")
             End Try
-        End Sub
+        End Sub)
 
         app.UseStaticFiles()
         app.UseRouting()
