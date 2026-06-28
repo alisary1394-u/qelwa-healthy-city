@@ -5,7 +5,6 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "dotnet webapp.dll",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
