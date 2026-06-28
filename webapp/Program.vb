@@ -1,5 +1,6 @@
 Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Authentication.Cookies
+Imports Microsoft.Data.Sqlite
 Imports Microsoft.EntityFrameworkCore
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
@@ -41,20 +42,33 @@ Module Program
 
         Dim app = builder.Build()
 
-        ' Seed database — if tables missing (empty volume file), delete and recreate
+        ' Seed database — robust init for Docker volume
         Using scope = app.Services.CreateScope()
             Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
             Try
-                db.Database.EnsureCreated()
-                DbInitializer.Initialize(db)
-            Catch ex As Exception
+                ' Check if Axes table exists using raw SQL
+                Dim tableExists As Boolean = False
                 Try
-                    db.Database.EnsureDeleted()
-                    db.Database.EnsureCreated()
-                    DbInitializer.Initialize(db)
+                    Using rawConn = New Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}")
+                        rawConn.Open()
+                        Using cmd = rawConn.CreateCommand()
+                            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Axes'"
+                            tableExists = CInt(cmd.ExecuteScalar()) > 0
+                        End Using
+                    End Using
                 Catch
-                    ' سيستمر التطبيق وتُعالج الأخطاء لاحقاً
+                    tableExists = False
                 End Try
+
+                If Not tableExists Then
+                    ' File exists but has no schema — delete and recreate
+                    If File.Exists(dbPath) Then File.Delete(dbPath)
+                    db.Database.EnsureCreated()
+                End If
+
+                DbInitializer.Initialize(db)
+            Catch
+                ' App continues even if DB init fails
             End Try
         End Using
 
