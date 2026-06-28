@@ -1,6 +1,5 @@
 Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Authentication.Cookies
-Imports Microsoft.Data.Sqlite
 Imports Microsoft.EntityFrameworkCore
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
@@ -42,35 +41,32 @@ Module Program
 
         Dim app = builder.Build()
 
-        ' Seed database — robust init for Docker volume
-        Using scope = app.Services.CreateScope()
-            Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
+        ' DB init AFTER server starts — never crash before app.Run()
+        AddHandler app.Lifetime.ApplicationStarted, Sub()
             Try
-                ' Check if Axes table exists using raw SQL
-                Dim tableExists As Boolean = False
-                Try
-                    Using rawConn = New Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}")
-                        rawConn.Open()
-                        Using cmd = rawConn.CreateCommand()
-                            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Axes'"
-                            tableExists = CInt(cmd.ExecuteScalar()) > 0
-                        End Using
-                    End Using
-                Catch
-                    tableExists = False
-                End Try
+                Using scope = app.Services.CreateScope()
+                    Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
+                    ' Check if Axes table exists
+                    Dim hasTable = False
+                    Try
+                        db.Database.ExecuteSqlRaw("SELECT 1 FROM ""Axes"" LIMIT 1")
+                        hasTable = True
+                    Catch
+                        hasTable = False
+                    End Try
 
-                If Not tableExists Then
-                    ' File exists but has no schema — delete and recreate
-                    If File.Exists(dbPath) Then File.Delete(dbPath)
-                    db.Database.EnsureCreated()
-                End If
+                    If Not hasTable Then
+                        ' Empty or corrupt DB file — delete and recreate
+                        db.Database.EnsureDeleted()
+                        db.Database.EnsureCreated()
+                    End If
 
-                DbInitializer.Initialize(db)
-            Catch
-                ' App continues even if DB init fails
+                    DbInitializer.Initialize(db)
+                End Using
+            Catch ex As Exception
+                Console.Error.WriteLine($"[DB-INIT] {ex.Message}")
             End Try
-        End Using
+        End Sub
 
         app.UseStaticFiles()
         app.UseRouting()
