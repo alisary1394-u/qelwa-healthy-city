@@ -3,7 +3,7 @@ Imports Microsoft.AspNetCore.Authentication.Cookies
 Imports Microsoft.AspNetCore.Mvc
 Imports Microsoft.AspNetCore.Mvc.RazorPages
 
-Namespace QelwaApp.Pages.Account
+Namespace Pages.Account
 
     Public Class LogoutModel
         Inherits PageModel

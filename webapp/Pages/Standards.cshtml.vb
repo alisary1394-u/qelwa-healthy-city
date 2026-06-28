@@ -5,7 +5,7 @@ Imports Microsoft.EntityFrameworkCore
 Imports QelwaApp.Data
 Imports QelwaApp.Models
 
-Namespace QelwaApp.Pages
+Namespace Pages
 
     <Authorize>
     Public Class StandardsModel

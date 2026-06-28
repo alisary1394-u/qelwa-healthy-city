@@ -1,7 +1,7 @@
 Imports Microsoft.EntityFrameworkCore
 Imports QelwaApp.Models
 
-Namespace QelwaApp.Data
+Namespace Data
 
     Public Class AppDbContext
         Inherits DbContext

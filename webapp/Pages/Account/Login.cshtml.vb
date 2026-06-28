@@ -6,7 +6,7 @@ Imports System.ComponentModel.DataAnnotations
 Imports System.Security.Claims
 Imports QelwaApp.Data
 
-Namespace QelwaApp.Pages.Account
+Namespace Pages.Account
 
     Public Class LoginModel
         Inherits PageModel

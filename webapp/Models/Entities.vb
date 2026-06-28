@@ -1,7 +1,7 @@
 Imports System.ComponentModel.DataAnnotations
 Imports System.ComponentModel.DataAnnotations.Schema
 
-Namespace QelwaApp.Models
+Namespace Models
 
     Public Class Axis
         <Key> Public Property Id As Integer

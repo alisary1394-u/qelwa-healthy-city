@@ -2,7 +2,7 @@ Imports System.Security.Cryptography
 Imports System.Text
 Imports QelwaApp.Models
 
-Namespace QelwaApp.Data
+Namespace Data
 
     Public Module DbInitializer
 
