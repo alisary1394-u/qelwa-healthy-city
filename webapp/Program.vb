@@ -27,9 +27,9 @@ Module Program
 
         builder.Services.AddAuthorization()
 
-        ' SQLite - use /data volume on Railway, local path otherwise
+        ' SQLite path: use /data when running in container (Railway), local otherwise
         Dim dbPath As String
-        If Not String.IsNullOrEmpty(Environment.GetEnvironmentVariable("RAILWAY_ENVIRONMENT")) Then
+        If Not String.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")) Then
             Directory.CreateDirectory("/data")
             dbPath = "/data/qelwa.db"
         Else
@@ -41,11 +41,21 @@ Module Program
 
         Dim app = builder.Build()
 
-        ' Seed database
+        ' Seed database — if tables missing (empty volume file), delete and recreate
         Using scope = app.Services.CreateScope()
             Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
-            db.Database.EnsureCreated()
-            DbInitializer.Initialize(db)
+            Try
+                db.Database.EnsureCreated()
+                DbInitializer.Initialize(db)
+            Catch ex As Exception
+                Try
+                    db.Database.EnsureDeleted()
+                    db.Database.EnsureCreated()
+                    DbInitializer.Initialize(db)
+                Catch
+                    ' سيستمر التطبيق وتُعالج الأخطاء لاحقاً
+                End Try
+            End Try
         End Using
 
         app.UseStaticFiles()
