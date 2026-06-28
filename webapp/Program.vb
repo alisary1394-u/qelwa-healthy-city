@@ -36,8 +36,9 @@ Module Program
             dbPath = Path.Combine(AppContext.BaseDirectory, "qelwa.db")
         End If
 
-        builder.Services.AddDbContext(Of AppDbContext)(
-            Sub(opts) opts.UseSqlite($"Data Source={dbPath}"))
+        ' PORT env var for Railway — set before Build()
+        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
+        builder.WebHost.UseUrls($"http://0.0.0.0:{port}")
 
         Dim app = builder.Build()
 
@@ -48,19 +49,12 @@ Module Program
             DbInitializer.Initialize(db)
         End Using
 
-        If Not app.Environment.IsDevelopment() Then
-            app.UseExceptionHandler("/Error")
-            app.UseHsts()
-        End If
-
         app.UseStaticFiles()
         app.UseRouting()
         app.UseAuthentication()
         app.UseAuthorization()
         app.MapRazorPages()
 
-        ' PORT env var for Railway
-        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
-        app.Run($"http://0.0.0.0:{port}")
+        app.Run()
     End Sub
 End Module
