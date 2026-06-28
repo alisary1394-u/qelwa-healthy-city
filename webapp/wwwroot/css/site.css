@@ -1,0 +1,300 @@
+/* ================================================================
+   نظام المدينة الصحية - محافظة قلوة
+   ملف الأنماط المخصصة (HTML5 + Bootstrap 5 RTL)
+   ================================================================ */
+
+/* ===== الخط الأساسي ===== */
+* {
+    font-family: 'Tajawal', 'Segoe UI', Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+/* ===== المتغيرات ===== */
+:root {
+    --primary: #1e40af;
+    --primary-light: #3b82f6;
+    --sidebar-width: 260px;
+    --header-height: 58px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+    --shadow: 0 4px 16px rgba(0,0,0,.10);
+    --border-radius: 12px;
+    --transition: all 0.2s ease;
+}
+
+/* ===== الجسم العام ===== */
+html, body {
+    height: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    background: #f4f6fa;
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== شريط التنقل ===== */
+#mainNavbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+    min-height: var(--header-height);
+}
+
+.brand-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: 8px;
+    transition: var(--transition);
+    font-size: 0.9rem;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    background: rgba(255,255,255,0.15);
+    color: #fff !important;
+}
+
+/* ===== شريط التنقل الفرعي (Breadcrumb) ===== */
+#breadcrumbBar {
+    font-size: 0.82rem;
+}
+
+/* ===== المحتوى الرئيسي ===== */
+.main-content {
+    flex: 1;
+    min-height: calc(100vh - var(--header-height) - 50px);
+}
+
+/* ===== عنوان الصفحة ===== */
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* ===== البطاقات ===== */
+.card {
+    border-radius: var(--border-radius) !important;
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow) !important;
+}
+
+/* ===== بطاقات الإحصاء ===== */
+.stat-card {
+    border-radius: var(--border-radius) !important;
+    background: #fff;
+    overflow: hidden;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-value {
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+/* ===== بطاقات المحاور ===== */
+.axis-card {
+    background: #fff;
+    border-radius: var(--border-radius) !important;
+    transition: var(--transition);
+    cursor: default;
+}
+
+.axis-card:hover {
+    background: #f8faff;
+    transform: translateY(-2px);
+}
+
+/* ===== بطاقات المعايير ===== */
+.standard-card {
+    border-radius: var(--border-radius) !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: var(--transition);
+}
+
+.standard-card:hover {
+    border-color: #93c5fd !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.08), var(--shadow) !important;
+}
+
+.standard-axis-badge {
+    min-width: 52px;
+    text-align: center;
+}
+
+/* ===== بطاقات المهام ===== */
+.task-card {
+    border-radius: 10px !important;
+    background: #fff;
+    transition: var(--transition);
+}
+
+.task-card:hover {
+    background: #f8faff;
+}
+
+/* ===== التبويبات ===== */
+.tab-btn {
+    border-bottom: 3px solid transparent !important;
+    color: #64748b;
+    font-size: 0.88rem;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.tab-btn:hover {
+    color: #1e40af;
+    border-bottom-color: #93c5fd !important;
+}
+
+.tab-active, .tab-btn.tab-active {
+    color: #1e40af !important;
+    border-bottom-color: #1e40af !important;
+    font-weight: 600 !important;
+}
+
+/* ===== الجداول ===== */
+.table {
+    font-size: 0.875rem;
+}
+
+.table thead th {
+    font-weight: 600;
+    color: #475569;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+/* ===== شريط التقدم ===== */
+.progress {
+    background: #e2e8f0;
+    border-radius: 50px;
+}
+
+.progress-bar {
+    border-radius: 50px;
+    transition: width 0.6s ease;
+}
+
+/* ===== صفحة تسجيل الدخول ===== */
+.login-body {
+    min-height: 100vh;
+    background: #f0f4ff;
+}
+
+.login-bg {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 40%, #2563eb 70%, #3b82f6 100%);
+    position: relative;
+}
+
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.login-card {
+    border-radius: 20px !important;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.login-logo {
+    width: 72px;
+    height: 72px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+/* ===== أزرار ===== */
+.btn {
+    font-weight: 500;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    border-color: #1e40af;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d3f9f, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30,64,175,.3);
+}
+
+/* ===== شارات (Badges) ===== */
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+/* ===== التذييل ===== */
+.footer {
+    margin-top: auto;
+    font-size: 0.82rem;
+}
+
+/* ===== التحريك ===== */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+/* ===== التمرير ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ===== التجاوب (Responsive) ===== */
+@media (max-width: 768px) {
+    .page-title { font-size: 1.2rem; }
+    .stat-value { font-size: 1.5rem !important; }
+    .card-body { padding: 1rem !important; }
+}
+
+/* ===== طباعة ===== */
+@media print {
+    #mainNavbar, #breadcrumbBar, .footer, .btn, .modal { display: none !important; }
+    body { background: white !important; }
+    .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+}

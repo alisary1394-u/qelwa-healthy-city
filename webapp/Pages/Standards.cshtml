@@ -1,0 +1,221 @@
+@page
+@model QelwaApp.Pages.StandardsModel
+@{
+    ViewData["Title"] = "المعايير";
+    ViewData["Page"] = "Standards";
+}
+@section Breadcrumb { <li class="breadcrumb-item active">المعايير</li> }
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="page-title mb-1"><i class="bi bi-clipboard2-check text-primary me-2"></i>المعايير الصحية</h1>
+        <p class="text-muted mb-0">إدارة معايير المدينة الصحية للمحاور التسعة</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">
+        <i class="bi bi-plus-circle me-1"></i>إضافة معيار
+    </button>
+</div>
+
+<!-- فلاتر البحث -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-medium text-muted">بحث</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="@Model.SearchQuery" class="form-control border-start-0 ps-0" placeholder="ابحث بالعنوان أو الرمز..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-medium text-muted">المحور</label>
+                <select name="axis" class="form-select">
+                    <option value="">-- جميع المحاور --</option>
+                    @foreach (var ax in Model.AxesList)
+                    {
+                        <option value="@ax.AxisOrder" selected="@(Model.AxisFilter == ax.AxisOrder.ToString())">
+                            المحور @ax.AxisOrder: @ax.ShortName
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-medium text-muted">الحالة</label>
+                <select name="status" class="form-select">
+                    <option value="">-- الكل --</option>
+                    <option value="not_started" selected="@(Model.StatusFilter=="not_started")">لم يبدأ</option>
+                    <option value="in_progress" selected="@(Model.StatusFilter=="in_progress")">قيد التنفيذ</option>
+                    <option value="completed" selected="@(Model.StatusFilter=="completed")">مكتمل</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-funnel me-1"></i>فلترة
+                </button>
+                <a asp-page="/Standards" class="btn btn-outline-secondary">↺</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="text-muted small mb-3">عدد المعايير: <strong class="text-dark">@Model.Standards.Count</strong></div>
+
+@if (!Model.Standards.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-search text-muted d-block mb-2" style="font-size:3rem"></i>
+            <h5 class="text-muted">لا توجد معايير مطابقة</h5>
+        </div>
+    </div>
+}
+
+@foreach (var s in Model.Standards)
+{
+    <div class="card border-0 shadow-sm mb-3 standard-card">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start gap-3 flex-wrap">
+                <div class="rounded-3 p-2 flex-shrink-0 text-center" style="background:@(s.Axis?.Color ?? "#eee")22;min-width:52px">
+                    <div class="fw-bold small" style="color:@(s.Axis?.Color ?? "#333")">@s.Code</div>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                        <span class="fw-bold text-dark">@s.Title</span>
+                        <span class="badge bg-@s.StatusBadge">@s.StatusLabel</span>
+                        <span class="badge bg-@(s.PriorityBadge) bg-opacity-20 text-@s.PriorityBadge border border-@s.PriorityBadge">@s.Priority</span>
+                    </div>
+                    <div class="text-muted small mb-2"><i class="bi bi-diagram-3 me-1"></i>@s.Axis?.Name</div>
+                    @if (!string.IsNullOrEmpty(s.Description))
+                    {
+                        <p class="text-muted small mb-2 text-truncate" style="max-width:600px">@s.Description</p>
+                    }
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div class="progress flex-grow-1" style="height:8px;max-width:300px">
+                            <div class="progress-bar" style="width:@s.CompletionPercentage%;background:@(s.Axis?.Color ?? "#3B82F6")" role="progressbar"></div>
+                        </div>
+                        <span class="small fw-medium">@s.CompletionPercentage%</span>
+                    </div>
+                    <div class="d-flex gap-3" style="font-size:.78rem">
+                        <span class="text-muted"><i class="bi bi-clipboard2 me-1"></i>@s.KPIs.Count مؤشر</span>
+                        <span class="text-muted"><i class="bi bi-folder2 me-1"></i>@s.Documents.Count مستند</span>
+                        @if (s.DueDate.HasValue)
+                        {
+                            <span class="text-warning"><i class="bi bi-calendar me-1"></i>@s.DueDate.Value.ToString("yyyy/MM/dd")</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editStandard(@s.Id,'@Html.Raw(System.Text.Json.JsonSerializer.Serialize(s.Code))','@Html.Raw(System.Text.Json.JsonSerializer.Serialize(s.Title))','@s.AxisOrder','@s.Priority','@s.Status','@s.CompletionPercentage','@s.DueDate?.ToString("yyyy-MM-dd")','@Html.Raw(System.Text.Json.JsonSerializer.Serialize(s.Description))')">
+                        <i class="bi bi-pencil me-1"></i>تعديل
+                    </button>
+                    <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('حذف هذا المعيار؟')">
+                        <input type="hidden" name="id" value="@s.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>حذف</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal -->
+<div class="modal fade" id="stdModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle"><i class="bi bi-clipboard2-plus me-2"></i>معيار جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Save">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="fId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">رمز المعيار <span class="text-danger">*</span></label>
+                            <input type="text" name="Code" id="fCode" class="form-control" placeholder="H-1-01" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">المحور <span class="text-danger">*</span></label>
+                            <select name="AxisOrder" id="fAxis" class="form-select" required>
+                                <option value="">اختر المحور</option>
+                                @foreach (var ax in Model.AxesList)
+                                {
+                                    <option value="@ax.AxisOrder">@ax.AxisOrder. @ax.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الأولوية</label>
+                            <select name="Priority" id="fPriority" class="form-select">
+                                <option value="عالية">عالية</option>
+                                <option value="متوسطة" selected>متوسطة</option>
+                                <option value="منخفضة">منخفضة</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">العنوان <span class="text-danger">*</span></label>
+                            <input type="text" name="Title" id="fTitle" class="form-control" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">الوصف</label>
+                            <textarea name="Description" id="fDesc" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الحالة</label>
+                            <select name="Status" id="fStatus" class="form-select">
+                                <option value="not_started">لم يبدأ</option>
+                                <option value="in_progress">قيد التنفيذ</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">نسبة الإنجاز</label>
+                            <div class="input-group">
+                                <input type="number" name="CompletionPercentage" id="fPct" class="form-control" min="0" max="100" value="0" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">تاريخ الاستحقاق</label>
+                            <input type="date" name="DueDate" id="fDue" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var stdModal;
+    document.addEventListener('DOMContentLoaded', function() { stdModal = new bootstrap.Modal(document.getElementById('stdModal')); });
+    function openModal() {
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-clipboard2-plus me-2"></i>معيار جديد';
+        document.getElementById('fId').value = '0';
+        ['fCode','fTitle','fDesc','fDue'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('fAxis').value = '';
+        document.getElementById('fPriority').value = 'متوسطة';
+        document.getElementById('fStatus').value = 'not_started';
+        document.getElementById('fPct').value = '0';
+        stdModal.show();
+    }
+    function editStandard(id, code, title, axis, priority, status, pct, due, desc) {
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>تعديل معيار';
+        document.getElementById('fId').value = id;
+        document.getElementById('fCode').value = JSON.parse(code);
+        document.getElementById('fTitle').value = JSON.parse(title);
+        document.getElementById('fDesc').value = JSON.parse(desc || '""');
+        document.getElementById('fAxis').value = axis;
+        document.getElementById('fPriority').value = priority;
+        document.getElementById('fStatus').value = status;
+        document.getElementById('fPct').value = pct;
+        document.getElementById('fDue').value = due || '';
+        stdModal.show();
+    }
+</script>
+}

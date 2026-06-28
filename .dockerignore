@@ -1,12 +1,29 @@
-node_modules
-server/node_modules
-dist
-.git
-.env
-.env.*
-*.log
-.DS_Store
-.cursor
-.idea
-*.md
-!DEPLOY.md
+﻿# Node.js (ليست مطلوبة للـ .NET build)
+node_modules/
+npm-debug.log
+.npm
+
+# React build output
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# VS Code
+.vscode/
+
+# مشروع Web Forms المحلي
+QelwaHealthyCity-VBNet/
+
+# ملفات محلية
+*.local
+.env.local
+.env.*.local
+
+# EF migrations لن نحتاجها في build
+webapp/Migrations/
+
+# Android
+android/

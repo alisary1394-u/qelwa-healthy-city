@@ -1,0 +1,80 @@
+@page
+@model QelwaApp.Pages.Account.LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "تسجيل الدخول";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تسجيل الدخول - نظام المدينة الصحية</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="login-body">
+<div class="login-bg min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="card login-card shadow-lg border-0" style="max-width:440px;width:100%">
+        <div class="card-header text-center py-4 bg-primary border-0">
+            <div class="login-logo mb-3"><i class="bi bi-heart-pulse-fill text-white" style="font-size:2.8rem"></i></div>
+            <h1 class="text-white fw-bold mb-1" style="font-size:1.3rem">نظام المدينة الصحية</h1>
+            <p class="text-white-50 mb-0 small">محافظة قلوة</p>
+        </div>
+        <div class="card-body p-4">
+            <h2 class="text-center fw-bold mb-4" style="font-size:1.1rem">
+                <i class="bi bi-lock text-primary me-2"></i>تسجيل الدخول
+            </h2>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-medium" for="Email">
+                        <i class="bi bi-envelope me-1 text-primary"></i>البريد الإلكتروني
+                    </label>
+                    <input asp-for="Email" class="form-control form-control-lg"
+                           placeholder="example@qelwa.gov.sa" autocomplete="username" required />
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-medium" for="Password">
+                        <i class="bi bi-key me-1 text-primary"></i>كلمة المرور
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="Password" id="pwdInput" class="form-control form-control-lg"
+                               placeholder="أدخل كلمة المرور" autocomplete="current-password" required />
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePwd()">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>دخول
+                </button>
+            </form>
+        </div>
+        <div class="card-footer text-center py-3 bg-light">
+            <small class="text-muted"><i class="bi bi-shield-check text-success me-1"></i>اتصال آمن ومشفر</small>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script>
+    function togglePwd() {
+        var p = document.getElementById('pwdInput');
+        var i = document.getElementById('eyeIcon');
+        p.type = p.type === 'password' ? 'text' : 'password';
+        i.className = p.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+    window.addEventListener('load', function() { document.getElementById('Email')?.focus(); });
+</script>
+</body>
+</html>

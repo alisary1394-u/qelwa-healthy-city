@@ -1,0 +1,253 @@
+@page "{filter?}"
+@model QelwaApp.Pages.TasksModel
+@{
+    ViewData["Title"] = "المهام";
+    ViewData["Page"] = "Tasks";
+}
+@section Breadcrumb { <li class="breadcrumb-item active">المهام</li> }
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="page-title mb-1"><i class="bi bi-list-task text-primary me-2"></i>إدارة المهام</h1>
+        <p class="text-muted mb-0">متابعة وإدارة مهام المدينة الصحية</p>
+    </div>
+    <button class="btn btn-primary" onclick="openTaskModal()">
+        <i class="bi bi-plus-circle me-1"></i>مهمة جديدة
+    </button>
+</div>
+
+<!-- التبويبات -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body p-0">
+        <div class="d-flex flex-wrap border-bottom">
+            @{
+                var tabs = new[] {
+                    new { Key="all", Label="الكل", Icon="bi-list-ul", Color="secondary" },
+                    new { Key="pending", Label="انتظار", Icon="bi-hourglass", Color="warning" },
+                    new { Key="in_progress", Label="قيد التنفيذ", Icon="bi-arrow-repeat", Color="primary" },
+                    new { Key="completed", Label="مكتملة", Icon="bi-check-circle", Color="success" },
+                    new { Key="overdue", Label="متأخرة", Icon="bi-exclamation-triangle", Color="danger" }
+                };
+                foreach (var tab in tabs)
+                {
+                    var isActive = Model.ActiveFilter == tab.Key;
+                    var count = Model.GetCount(tab.Key);
+                    <a asp-page="/Tasks" asp-route-filter="@tab.Key"
+                       class="tab-btn px-3 py-3 text-decoration-none @(isActive ? "tab-active" : "")">
+                        <i class="bi @tab.Icon me-1 text-@tab.Color"></i>@tab.Label
+                        <span class="badge bg-@tab.Color @(tab.Color=="warning"?"text-dark":"") rounded-pill ms-1">@count</span>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<!-- بحث -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" asp-route-filter="@Model.ActiveFilter" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="@Model.SearchQuery" class="form-control border-start-0 ps-0" placeholder="بحث في المهام..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">-- الأولوية --</option>
+                    <option value="عالية" selected="@(Model.PriorityFilter=="عالية")">عالية</option>
+                    <option value="متوسطة" selected="@(Model.PriorityFilter=="متوسطة")">متوسطة</option>
+                    <option value="منخفضة" selected="@(Model.PriorityFilter=="منخفضة")">منخفضة</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">فلترة</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="text-muted small mb-3">@Model.Tasks.Count مهمة</div>
+
+@if (!Model.Tasks.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-clipboard2-x text-muted d-block mb-2" style="font-size:3rem"></i>
+            <h5 class="text-muted">لا توجد مهام</h5>
+        </div>
+    </div>
+}
+
+@foreach (var t in Model.Tasks)
+{
+    <div class="card border-0 shadow-sm mb-2 task-card @(t.IsOverdue ? "border-start border-danger border-3" : "")">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-circle-fill text-@t.StatusBadge mt-2 flex-shrink-0" style="font-size:.55rem"></i>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="fw-semibold small">@t.Title</span>
+                        <span class="badge bg-@(t.StatusBadge) bg-opacity-15 text-@t.StatusBadge">
+                            @(t.IsOverdue ? "⚠ متأخرة" : t.StatusLabel)
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary">@t.Priority</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(t.Description))
+                    {
+                        <p class="text-muted mb-1" style="font-size:.82rem">@t.Description</p>
+                    }
+                    <div class="d-flex gap-3 flex-wrap mt-1" style="font-size:.75rem">
+                        @if (t.AssignedUser != null)
+                        {
+                            <span class="text-muted"><i class="bi bi-person me-1"></i>@t.AssignedUser.FullName</span>
+                        }
+                        @if (t.Standard != null)
+                        {
+                            <span class="text-muted"><i class="bi bi-clipboard2 me-1"></i>@t.Standard.Code</span>
+                        }
+                        @if (t.DueDate.HasValue)
+                        {
+                            <span class="text-@(t.IsOverdue ? "danger" : "muted")">
+                                <i class="bi bi-calendar3 me-1"></i>@t.DueDate.Value.ToString("yyyy/MM/dd")
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-1 flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editTask(@t.Id,'@Html.Raw(System.Text.Json.JsonSerializer.Serialize(t.Title))','@Html.Raw(System.Text.Json.JsonSerializer.Serialize(t.Description))','@t.Priority','@t.Status','@t.DueDate?.ToString("yyyy-MM-dd")','@t.AssignedToId','@t.StandardId','@Html.Raw(System.Text.Json.JsonSerializer.Serialize(t.Notes))')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    @if (t.Status != "completed")
+                    {
+                        <form method="post" asp-page-handler="Complete" style="display:inline">
+                            <input type="hidden" name="id" value="@t.Id" />
+                            <input type="hidden" name="filter" value="@Model.ActiveFilter" />
+                            <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
+                        </form>
+                    }
+                    <form method="post" asp-page-handler="Delete" style="display:inline" onsubmit="return confirm('حذف هذه المهمة؟')">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <input type="hidden" name="filter" value="@Model.ActiveFilter" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal المهمة -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="taskModalTitle"><i class="bi bi-plus-circle me-2"></i>مهمة جديدة</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Save">
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="tId" value="0" />
+                    <input type="hidden" name="filter" value="@Model.ActiveFilter" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">عنوان المهمة <span class="text-danger">*</span></label>
+                            <input type="text" name="Title" id="tTitle" class="form-control" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">الوصف</label>
+                            <textarea name="Description" id="tDesc" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الأولوية</label>
+                            <select name="Priority" id="tPriority" class="form-select">
+                                <option value="عالية">عالية</option>
+                                <option value="متوسطة" selected>متوسطة</option>
+                                <option value="منخفضة">منخفضة</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">الحالة</label>
+                            <select name="Status" id="tStatus" class="form-select">
+                                <option value="pending">في الانتظار</option>
+                                <option value="in_progress">قيد التنفيذ</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">تاريخ الاستحقاق</label>
+                            <input type="date" name="DueDate" id="tDue" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المكلف بالمهمة</label>
+                            <select name="AssignedToId" id="tAssignee" class="form-select">
+                                <option value="">-- غير مكلف --</option>
+                                @foreach (var u in Model.Users)
+                                {
+                                    <option value="@u.Id">@u.FullName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المعيار المرتبط</label>
+                            <select name="StandardId" id="tStandard" class="form-select">
+                                <option value="">-- اختياري --</option>
+                                @foreach (var s in Model.StandardsList)
+                                {
+                                    <option value="@s.Id">@s.Code - @s.Title.Substring(0, Math.Min(40, s.Title.Length))</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea name="Notes" id="tNotes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var taskModal;
+    document.addEventListener('DOMContentLoaded', function() { taskModal = new bootstrap.Modal(document.getElementById('taskModal')); });
+    function openTaskModal() {
+        document.getElementById('taskModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>مهمة جديدة';
+        document.getElementById('tId').value = '0';
+        ['tTitle','tDesc','tNotes','tDue'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('tPriority').value = 'متوسطة';
+        document.getElementById('tStatus').value = 'pending';
+        document.getElementById('tAssignee').value = '';
+        document.getElementById('tStandard').value = '';
+        taskModal.show();
+    }
+    function editTask(id, title, desc, priority, status, due, assignee, standard, notes) {
+        document.getElementById('taskModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>تعديل مهمة';
+        document.getElementById('tId').value = id;
+        document.getElementById('tTitle').value = JSON.parse(title);
+        document.getElementById('tDesc').value = JSON.parse(desc || '""');
+        document.getElementById('tNotes').value = JSON.parse(notes || '""');
+        document.getElementById('tPriority').value = priority;
+        document.getElementById('tStatus').value = status;
+        document.getElementById('tDue').value = due || '';
+        document.getElementById('tAssignee').value = assignee || '';
+        document.getElementById('tStandard').value = standard || '';
+        taskModal.show();
+    }
+    // تمييز التبويب النشط
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        if (btn.classList.contains('tab-active')) {
+            btn.style.borderBottom = '3px solid #1e40af';
+            btn.style.color = '#1e40af';
+            btn.style.fontWeight = '600';
+        }
+    });
+</script>
+}

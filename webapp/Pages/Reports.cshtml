@@ -1,0 +1,162 @@
+@page
+@model QelwaApp.Pages.ReportsModel
+@{
+    ViewData["Title"] = "التقارير";
+    ViewData["Page"] = "Reports";
+}
+@section Breadcrumb { <li class="breadcrumb-item active">التقارير</li> }
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="page-title mb-1"><i class="bi bi-bar-chart-line text-primary me-2"></i>تقارير الأداء</h1>
+        <p class="text-muted mb-0">تقارير وإحصاءات المعايير والمحاور</p>
+    </div>
+    <form method="post" asp-page-handler="GenerateReport">
+        <div class="d-flex gap-2">
+            <select name="axisOrder" class="form-select form-select-sm" style="min-width:180px">
+                @foreach (var ax in Model.Axes)
+                {
+                    <option value="@ax.AxisOrder">@ax.Name</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i>توليد تقرير
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- بطاقات الملخص -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-primary fw-bold mb-1" style="font-size:2.5rem">@Math.Round(Model.AvgCompletion, 1)%</div>
+            <div class="text-muted small">نسبة الإنجاز الكلية</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-success fw-bold mb-1" style="font-size:2.5rem">@Model.ExcellentAxes</div>
+            <div class="text-muted small">محاور ممتازة (≥80%)</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-warning fw-bold mb-1" style="font-size:2.5rem">@Model.NeedsImprovementAxes</div>
+            <div class="text-muted small">محاور تحتاج تحسين</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-info fw-bold mb-1" style="font-size:2.5rem">@Model.Reports.Count</div>
+            <div class="text-muted small">إجمالي التقارير</div>
+        </div>
+    </div>
+</div>
+
+<!-- مخطط الأداء -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0">
+        <h5 class="card-title mb-0"><i class="bi bi-graph-up text-primary me-2"></i>الأداء حسب المحاور</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="chartAxesPerf" height="120" aria-label="مخطط أداء المحاور" role="img"></canvas>
+    </div>
+</div>
+
+<!-- جدول أداء المحاور -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0">
+        <h5 class="card-title mb-0"><i class="bi bi-table text-info me-2"></i>جدول أداء المحاور</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">المحور</th>
+                    <th class="text-center">المعايير</th>
+                    <th class="text-center">مكتملة</th>
+                    <th class="text-center">نسبة الإنجاز</th>
+                    <th class="text-center">التقييم</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ax in Model.Axes)
+                {
+                    var pct = ax.CompletionPercentage;
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle" style="width:12px;height:12px;background:@ax.Color"></div>
+                                <span class="fw-medium small">@ax.Name</span>
+                            </div>
+                        </td>
+                        <td class="text-center">@ax.Standards.Count</td>
+                        <td class="text-center text-success fw-medium">@ax.Standards.Count(s => s.Status == "completed")</td>
+                        <td style="min-width:180px">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:8px">
+                                    <div class="progress-bar" style="width:@Math.Round(pct,0)%;background:@ax.Color" role="progressbar"></div>
+                                </div>
+                                <span class="small fw-medium" style="min-width:40px">@Math.Round(pct,1)%</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge @Model.GetRatingBadge(pct)">@Model.GetRatingLabel(pct)</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- سجل التقارير -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0">
+        <h5 class="card-title mb-0"><i class="bi bi-clock-history text-secondary me-2"></i>سجل التقارير</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">المحور</th>
+                    <th class="text-center">النوع</th>
+                    <th class="text-center">النتيجة</th>
+                    <th class="text-center">التقييم</th>
+                    <th class="text-center">التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Reports.Any())
+                {
+                    <tr><td colspan="5" class="text-center py-4 text-muted">لا توجد تقارير بعد</td></tr>
+                }
+                @foreach (var r in Model.Reports)
+                {
+                    <tr>
+                        <td class="ps-4 small">المحور @r.AxisOrder</td>
+                        <td class="text-center"><span class="badge bg-info-subtle text-info">@r.ReportType</span></td>
+                        <td class="text-center fw-bold">@Math.Round(r.OverallScore, 1)%</td>
+                        <td class="text-center"><span class="badge @Model.GetRatingBadge(CDbl(r.OverallScore))">@r.Status</span></td>
+                        <td class="text-center text-muted small">@r.GeneratedAt.ToString("yyyy/MM/dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var cd = @Html.Raw(Model.ChartJson);
+    document.addEventListener('DOMContentLoaded', function() {
+        new Chart(document.getElementById('chartAxesPerf').getContext('2d'), {
+            type: 'bar',
+            data: { labels: cd.labels, datasets: [{ label:'%', data: cd.scores, backgroundColor: cd.colors, borderRadius: 8 }] },
+            options: { responsive:true, plugins:{ legend:{ display:false } },
+                       scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback: v => v+'%' }, grid:{ color:'#f0f0f0' } } } }
+        });
+    });
+</script>
+}
