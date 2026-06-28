@@ -5,6 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
+    "startCommand": "dotnet webapp.dll",
     "healthcheckPath": "/Account/Login",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
