@@ -45,7 +45,7 @@ Namespace QelwaApp.Pages
             Standards = query.OrderBy(Function(s) s.AxisOrder).ThenBy(Function(s) s.GlobalNum).ToList()
         End Sub
 
-        Public IActionResult Function OnPostSave(
+        Public Function OnPostSave(
             id As Integer, code As String, title As String, description As String,
             axisOrder As Integer, priority As String, status As String,
             completionPercentage As Integer, dueDate As DateTime?) As IActionResult
@@ -100,7 +100,7 @@ Namespace QelwaApp.Pages
             Return RedirectToPage()
         End Function
 
-        Public IActionResult Function OnPostDelete(id As Integer) As IActionResult
+        Public Function OnPostDelete(id As Integer) As IActionResult
             Dim std = _db.Standards.Find(id)
             If std IsNot Nothing Then
                 _db.Standards.Remove(std)

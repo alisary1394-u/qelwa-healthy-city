@@ -59,7 +59,7 @@ Module Program
         app.MapRazorPages()
 
         ' PORT env var for Railway
-        Dim port = Environment.GetEnvironmentVariable("PORT") ?? "8080"
+        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
         app.Run($"http://0.0.0.0:{port}")
     End Sub
 End Module

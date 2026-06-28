@@ -28,7 +28,7 @@ Namespace QelwaApp.Pages.Account
 
         Public Property ErrorMessage As String = ""
 
-        Public IActionResult Function OnGet() As IActionResult
+        Public Function OnGet() As IActionResult
             If User.Identity?.IsAuthenticated = True Then
                 Return RedirectToPage("/Dashboard")
             End If

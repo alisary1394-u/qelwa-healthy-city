@@ -67,7 +67,7 @@ Namespace QelwaApp.Pages
             End Select
         End Function
 
-        Public IActionResult Function OnPostSave(
+        Public Function OnPostSave(
             id As Integer, title As String, description As String,
             priority As String, status As String, dueDate As DateTime?,
             assignedToId As Integer?, standardId As Integer?, notes As String,
@@ -115,7 +115,7 @@ Namespace QelwaApp.Pages
             Return RedirectToPage(New With {.filter = filter})
         End Function
 
-        Public IActionResult Function OnPostComplete(id As Integer, filter As String) As IActionResult
+        Public Function OnPostComplete(id As Integer, filter As String) As IActionResult
             Dim task = _db.Tasks.Find(id)
             If task IsNot Nothing Then
                 task.Status = "completed"
@@ -127,7 +127,7 @@ Namespace QelwaApp.Pages
             Return RedirectToPage(New With {.filter = filter})
         End Function
 
-        Public IActionResult Function OnPostDelete(id As Integer, filter As String) As IActionResult
+        Public Function OnPostDelete(id As Integer, filter As String) As IActionResult
             Dim task = _db.Tasks.Find(id)
             If task IsNot Nothing Then
                 _db.Tasks.Remove(task)

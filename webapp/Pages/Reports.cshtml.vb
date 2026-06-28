@@ -39,10 +39,10 @@ Namespace QelwaApp.Pages
             Dim labels = String.Join(",", Axes.Select(Function(a) $"""{EscJ(a.ShortName)}"""))
             Dim scores = String.Join(",", Axes.Select(Function(a) Math.Round(a.CompletionPercentage, 1).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)))
             Dim colors = String.Join(",", Axes.Select(Function(a) $"""{a.Color}"""))
-            ChartJson = $"{{""labels"":[{labels}],""scores"":[{scores}],""colors"":[{colors}]}}"
+            ChartJson = "{""labels"":[" & labels & "],""scores"":[" & scores & "],""colors"":[" & colors & "]}"
         End Sub
 
-        Public IActionResult Function OnPostGenerateReport(axisOrder As Integer) As IActionResult
+        Public Function OnPostGenerateReport(axisOrder As Integer) As IActionResult
             Dim ax = _db.Axes.Include(Function(a) a.Standards).FirstOrDefault(Function(a) a.AxisOrder = axisOrder)
             If ax Is Nothing Then
                 TempData("Error") = "المحور غير موجود."
@@ -60,7 +60,7 @@ Namespace QelwaApp.Pages
                 .GeneratedAt = DateTime.UtcNow
             })
             _db.SaveChanges()
-            TempData("Success") = $"تم توليد تقرير المحور {axisOrder} بنجاح. النتيجة: {Math.Round(score, 1)}%"
+            TempData("Success") = "تم توليد تقرير المحور " & axisOrder.ToString() & " بنجاح. النتيجة: " & Math.Round(score, 1).ToString() & "%"
             Return RedirectToPage()
         End Function
 
