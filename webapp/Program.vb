@@ -36,9 +36,8 @@ Module Program
             dbPath = Path.Combine(AppContext.BaseDirectory, "qelwa.db")
         End If
 
-        ' PORT env var for Railway — set before Build()
-        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
-        builder.WebHost.UseUrls($"http://0.0.0.0:{port}")
+        builder.Services.AddDbContext(Of AppDbContext)(
+            Sub(opts) opts.UseSqlite($"Data Source={dbPath}"))
 
         Dim app = builder.Build()
 
@@ -55,6 +54,10 @@ Module Program
         app.UseAuthorization()
         app.MapRazorPages()
 
-        app.Run()
+        ' Health check endpoint (no auth required)
+        app.MapGet("/health", Function() "OK")
+
+        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
+        app.Run($"http://0.0.0.0:{port}")
     End Sub
 End Module
