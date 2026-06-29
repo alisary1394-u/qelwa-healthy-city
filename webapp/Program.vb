@@ -1,5 +1,6 @@
 Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Authentication.Cookies
+Imports Microsoft.AspNetCore.Hosting
 Imports Microsoft.EntityFrameworkCore
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
@@ -9,6 +10,10 @@ Imports System.IO
 Module Program
     Sub Main(args As String())
         Dim builder = WebApplication.CreateBuilder(args)
+
+        ' قراءة PORT من Railway وضبط الرابط
+        Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
+        builder.WebHost.UseUrls($"http://+:{port}")
 
         ' Razor Pages
         builder.Services.AddRazorPages()

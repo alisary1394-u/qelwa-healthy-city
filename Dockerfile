@@ -22,5 +22,5 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 EXPOSE 8080
-CMD ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet webapp.dll"]
+CMD ["dotnet", "webapp.dll"]
 
