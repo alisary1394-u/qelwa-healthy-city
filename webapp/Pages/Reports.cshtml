@@ -138,7 +138,7 @@
                         <td class="ps-4 small">المحور @r.AxisOrder</td>
                         <td class="text-center"><span class="badge bg-info-subtle text-info">@r.ReportType</span></td>
                         <td class="text-center fw-bold">@Math.Round(r.OverallScore, 1)%</td>
-                        <td class="text-center"><span class="badge @Model.GetRatingBadge(CDbl(r.OverallScore))">@r.Status</span></td>
+                        <td class="text-center"><span class="badge @Model.GetRatingBadge((double)r.OverallScore)">@r.Status</span></td>
                         <td class="text-center text-muted small">@r.GeneratedAt.ToString("yyyy/MM/dd")</td>
                     </tr>
                 }
