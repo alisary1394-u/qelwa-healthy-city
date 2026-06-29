@@ -3,6 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>QelwaApp</RootNamespace>
     <Nullable>enable</Nullable>
+    <RazorCompileOnBuild>true</RazorCompileOnBuild>
+    <RazorCompileOnPublish>true</RazorCompileOnPublish>
     <!-- Build: 2026-06-29 -->
   </PropertyGroup>
   <ItemGroup>

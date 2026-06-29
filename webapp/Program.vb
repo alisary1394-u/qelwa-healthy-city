@@ -77,16 +77,13 @@ Module Program
 
         app.MapGet("/health", Function() "OK")
 
-        ' Diagnostic: list all registered endpoints
-        app.MapGet("/debug/routes", Function(ctx As HttpContext) As Task
+        ' Diagnostic: list files in /app
+        app.MapGet("/debug/files", Function(ctx As HttpContext) As Task
             Dim sb = New System.Text.StringBuilder()
-            Dim ds = ctx.RequestServices.GetService(GetType(Microsoft.AspNetCore.Routing.EndpointDataSource))
-            If ds IsNot Nothing Then
-                Dim eds = CType(ds, Microsoft.AspNetCore.Routing.EndpointDataSource)
-                For Each ep In eds.Endpoints
-                    sb.AppendLine(ep.DisplayName)
-                Next
-            End If
+            sb.AppendLine($"BaseDir: {AppContext.BaseDirectory}")
+            For Each f In Directory.GetFiles(AppContext.BaseDirectory, "*.dll")
+                sb.AppendLine(Path.GetFileName(f))
+            Next
             ctx.Response.ContentType = "text/plain; charset=utf-8"
             Return ctx.Response.WriteAsync(sb.ToString())
         End Function)
