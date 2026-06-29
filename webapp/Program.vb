@@ -1,6 +1,7 @@
 ﻿Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Authentication.Cookies
 Imports Microsoft.AspNetCore.Hosting
+Imports Microsoft.AspNetCore.Http
 Imports Microsoft.EntityFrameworkCore
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
@@ -70,10 +71,15 @@ Module Program
         End Sub)
 
         app.UseStaticFiles()
+        app.UseRouting()
         app.UseAuthentication()
         app.UseAuthorization()
 
         app.MapGet("/health", Function() "OK")
+        app.MapGet("/", Function(ctx As HttpContext) As Task
+            ctx.Response.Redirect("/Account/Login")
+            Return Task.CompletedTask
+        End Function)
         app.MapRazorPages()
 
         app.Run()
