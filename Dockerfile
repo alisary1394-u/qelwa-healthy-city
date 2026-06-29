@@ -1,4 +1,5 @@
 # ===== نظام المدينة الصحية - ASP.NET Core 8 + VB.NET =====
+# v2026-06-29
 
 # ===== مرحلة البناء =====
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
