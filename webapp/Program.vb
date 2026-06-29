@@ -1,84 +1,22 @@
-Imports Microsoft.AspNetCore.Builder
-Imports Microsoft.AspNetCore.Authentication.Cookies
+﻿Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Hosting
-Imports Microsoft.EntityFrameworkCore
-Imports Microsoft.Extensions.DependencyInjection
-Imports Microsoft.Extensions.Hosting
-Imports QelwaApp.Data
-Imports System.IO
+Imports System
 
 Module Program
     Sub Main(args As String())
         Dim builder = WebApplication.CreateBuilder(args)
 
-        ' قراءة PORT من Railway وضبط الرابط
+        ' قراءة PORT من Railway
         Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
         builder.WebHost.UseUrls($"http://+:{port}")
 
-        ' Razor Pages
-        builder.Services.AddRazorPages()
-
-        ' Cookie Authentication
-        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme) _
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, _
-                Sub(opts As CookieAuthenticationOptions)
-                    opts.LoginPath = "/Account/Login"
-                    opts.LogoutPath = "/Account/Logout"
-                    opts.Cookie.Name = "QelwaAuth"
-                    opts.ExpireTimeSpan = TimeSpan.FromHours(8)
-                    opts.SlidingExpiration = True
-                    opts.Cookie.HttpOnly = True
-                End Sub)
-
-        builder.Services.AddAuthorization()
-
-        ' SQLite path: use /data when running in container (Railway), local otherwise
-        Dim dbPath As String
-        If Not String.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")) Then
-            Directory.CreateDirectory("/data")
-            dbPath = "/data/qelwa.db"
-        Else
-            dbPath = Path.Combine(AppContext.BaseDirectory, "qelwa.db")
-        End If
-
-        builder.Services.AddDbContext(Of AppDbContext)(
-            Sub(opts) opts.UseSqlite($"Data Source={dbPath}"))
-
         Dim app = builder.Build()
 
-        ' DB init AFTER server starts — never crash before app.Run()
-        app.Lifetime.ApplicationStarted.Register(Sub()
-            Try
-                Using scope = app.Services.CreateScope()
-                    Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
-                    Dim hasTable = False
-                    Try
-                        db.Database.ExecuteSqlRaw("SELECT 1 FROM ""Axes"" LIMIT 1")
-                        hasTable = True
-                    Catch
-                        hasTable = False
-                    End Try
-                    If Not hasTable Then
-                        db.Database.EnsureDeleted()
-                        db.Database.EnsureCreated()
-                    End If
-                    DbInitializer.Initialize(db)
-                End Using
-            Catch ex As Exception
-                Console.Error.WriteLine($"[DB-INIT] {ex.Message}")
-            End Try
-        End Sub)
-
-        app.UseStaticFiles()
-        app.UseAuthentication()
-        app.UseAuthorization()
-
-        ' Diagnostic test endpoint
-        app.MapGet("/test", Function() "App is running OK!")
+        app.MapGet("/", Function() "Hello from Railway! App is working!")
         app.MapGet("/health", Function() "OK")
+        app.MapGet("/test", Function() $"PORT={port} - Working!")
 
-        app.MapRazorPages()
-
+        Console.WriteLine($"[STARTUP] Listening on port {port}")
         app.Run()
     End Sub
 End Module
