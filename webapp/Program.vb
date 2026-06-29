@@ -70,13 +70,14 @@ Module Program
         End Sub)
 
         app.UseStaticFiles()
-        app.UseRouting()
         app.UseAuthentication()
         app.UseAuthorization()
-        app.MapRazorPages()
 
-        ' Health check endpoint (no auth required)
+        ' Diagnostic test endpoint
+        app.MapGet("/test", Function() "App is running OK!")
         app.MapGet("/health", Function() "OK")
+
+        app.MapRazorPages()
 
         app.Run()
     End Sub
