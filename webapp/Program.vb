@@ -76,10 +76,21 @@ Module Program
         app.UseAuthorization()
 
         app.MapGet("/health", Function() "OK")
-        app.MapGet("/", Function(ctx As HttpContext) As Task
-            ctx.Response.Redirect("/Account/Login")
-            Return Task.CompletedTask
+
+        ' Diagnostic: list all registered endpoints
+        app.MapGet("/debug/routes", Function(ctx As HttpContext) As Task
+            Dim sb = New System.Text.StringBuilder()
+            Dim ds = ctx.RequestServices.GetService(GetType(Microsoft.AspNetCore.Routing.EndpointDataSource))
+            If ds IsNot Nothing Then
+                Dim eds = CType(ds, Microsoft.AspNetCore.Routing.EndpointDataSource)
+                For Each ep In eds.Endpoints
+                    sb.AppendLine(ep.DisplayName)
+                Next
+            End If
+            ctx.Response.ContentType = "text/plain; charset=utf-8"
+            Return ctx.Response.WriteAsync(sb.ToString())
         End Function)
+
         app.MapRazorPages()
 
         app.Run()

@@ -12,7 +12,9 @@ COPY webapp/ ./webapp/
 RUN dotnet publish webapp/webapp.vbproj \
     -c Release \
     -o /app/publish \
-    --no-restore
+    --no-restore \
+    && echo "=== Published files ===" \
+    && ls -la /app/publish/
 
 # ===== مرحلة التشغيل =====
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
