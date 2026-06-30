@@ -16,9 +16,18 @@ Module Program
         Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
         builder.WebHost.UseUrls($"http://+:{port}")
 
-        ' Razor Pages + Runtime Compilation (reads .cshtml files from disk)
-        builder.Services.AddRazorPages()
-            .AddRazorRuntimeCompilation()
+        ' Razor Pages - تحميل webapp.Views.dll يدوياً لأنه لا يُكتشف تلقائياً في VB.NET
+        Dim viewsDllPath = Path.Combine(AppContext.BaseDirectory, "webapp.Views.dll")
+        builder.Services.AddRazorPages() _
+            .AddRazorRuntimeCompilation() _
+            .ConfigureApplicationPartManager(
+                Sub(pm)
+                    If File.Exists(viewsDllPath) Then
+                        Dim viewsAsm = System.Reflection.Assembly.LoadFrom(viewsDllPath)
+                        pm.ApplicationParts.Add(
+                            New Microsoft.AspNetCore.Mvc.ApplicationParts.CompiledRazorAssemblyPart(viewsAsm))
+                    End If
+                End Sub)
 
         ' Cookie Authentication
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme) _
