@@ -77,13 +77,26 @@ Module Program
 
         app.MapGet("/health", Function() "OK")
 
-        ' Diagnostic: list files in /app
-        app.MapGet("/debug/files", Function(ctx As HttpContext) As Task
+        ' Diagnostic: assembly types
+        app.MapGet("/debug/asm", Function(ctx As HttpContext) As Task
             Dim sb = New System.Text.StringBuilder()
-            sb.AppendLine($"BaseDir: {AppContext.BaseDirectory}")
-            For Each f In Directory.GetFiles(AppContext.BaseDirectory, "*.dll")
-                sb.AppendLine(Path.GetFileName(f))
-            Next
+            Try
+                Dim viewsPath = Path.Combine(AppContext.BaseDirectory, "webapp.Views.dll")
+                sb.AppendLine($"Views.dll exists: {File.Exists(viewsPath)}")
+                If File.Exists(viewsPath) Then
+                    Dim asm = System.Reflection.Assembly.LoadFrom(viewsPath)
+                    Dim types = asm.GetTypes()
+                    sb.AppendLine($"Types count: {types.Length}")
+                    For Each t In types.Take(20)
+                        sb.AppendLine($"  {t.FullName}")
+                    Next
+                End If
+            Catch ex As Exception
+                sb.AppendLine($"ERROR: {ex.GetType().Name}: {ex.Message}")
+                If ex.InnerException IsNot Nothing Then
+                    sb.AppendLine($"INNER: {ex.InnerException.Message}")
+                End If
+            End Try
             ctx.Response.ContentType = "text/plain; charset=utf-8"
             Return ctx.Response.WriteAsync(sb.ToString())
         End Function)
