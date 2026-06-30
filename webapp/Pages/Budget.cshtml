@@ -2,7 +2,7 @@
 @model BudgetModel
 @{
     ViewData["Title"] = "الميزانية";
-    ViewData["ActivePage"] = "Budget";
+    ViewData["Page"] = "Budget";
     var totalIncome = Model.Transactions.Where(t => t.Type == "income" && t.Status == "approved").Sum(t => t.TotalAmount);
     var totalExpense = Model.Transactions.Where(t => t.Type == "expense" && t.Status == "approved").Sum(t => t.TotalAmount);
     var balance = totalIncome - totalExpense;

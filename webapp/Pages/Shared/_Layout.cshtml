@@ -40,29 +40,29 @@
         </a>
 
         <div class="nav-section-title">الإدارة</div>
-        <a class="sidebar-link @(activePage == "Initiatives" ? "active" : "")" asp-page="/Initiatives">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Initiatives"?"active":"")" asp-page="/Initiatives">
             <i class="bi bi-lightbulb"></i><span>المبادرات</span>
         </a>
-        <a class="sidebar-link @(activePage == "Budget" ? "active" : "")" asp-page="/Budget">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Budget"?"active":"")" asp-page="/Budget">
             <i class="bi bi-currency-dollar"></i><span>الميزانية</span>
         </a>
-        <a class="sidebar-link @(activePage == "Committees" ? "active" : "")" asp-page="/Committees">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Committees"?"active":"")" asp-page="/Committees">
             <i class="bi bi-building"></i><span>اللجان</span>
         </a>
-        <a class="sidebar-link @(activePage == "Team" ? "active" : "")" asp-page="/Team">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Team"?"active":"")" asp-page="/Team">
             <i class="bi bi-people"></i><span>الفريق</span>
         </a>
         <a class="sidebar-link disabled-link" href="#" title="قريباً">
             <i class="bi bi-geo-alt"></i><span>المسح الميداني</span>
             <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link @(activePage == "Volunteering" ? "active" : "")" asp-page="/Volunteering">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Volunteering"?"active":"")" asp-page="/Volunteering">
             <i class="bi bi-hand-index-thumb"></i><span>التطوع</span>
         </a>
-        <a class="sidebar-link @(activePage == "Files" ? "active" : "")" asp-page="/Files">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Files"?"active":"")" asp-page="/Files">
             <i class="bi bi-folder2-open"></i><span>الملفات</span>
         </a>
-        <a class="sidebar-link @(activePage == "Settings" ? "active" : "")" asp-page="/Settings">
+        <a class="sidebar-link @(ViewData["Page"]?.ToString()=="Settings"?"active":"")" asp-page="/Settings">
             <i class="bi bi-gear"></i><span>الإعدادات</span>
         </a>
     </nav>
