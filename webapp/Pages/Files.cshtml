@@ -1,0 +1,146 @@
+@page
+@model FilesModel
+@{
+    ViewData["Title"] = "الملفات";
+    ViewData["ActivePage"] = "Files";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-folder-fill text-warning me-2"></i>الملفات والمستندات</h2>
+        <p class="text-muted mb-0">@Model.Documents.Count() مستند مرفوع</p>
+    </div>
+</div>
+
+<!-- بحث وتصفية -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="ابحث عن ملف...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="typeFilter" class="form-select">
+                    <option value="">جميع الأنواع</option>
+                    <option value="required">مطلوب</option>
+                    <option value="optional">اختياري</option>
+                    <option value="report">تقرير</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-select">
+                    <option value="">جميع الحالات</option>
+                    <option value="approved">معتمد</option>
+                    <option value="pending">في الانتظار</option>
+                    <option value="rejected">مرفوض</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">@Model.Documents.Count()</div>
+                <div class="small text-muted">إجمالي الملفات</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">@Model.Documents.Count(d => d.Status == "approved")</div>
+                <div class="small text-muted">معتمدة</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-warning">@Model.Documents.Count(d => d.Status == "pending")</div>
+                <div class="small text-muted">في الانتظار</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-danger">@Model.Documents.Count(d => d.Status == "rejected")</div>
+                <div class="small text-muted">مرفوضة</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول الملفات -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="filesTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">اسم الملف</th>
+                        <th class="py-3">النوع</th>
+                        <th class="py-3">المعيار</th>
+                        <th class="py-3">الحالة</th>
+                        <th class="py-3">تاريخ الرفع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.Documents)
+                    {
+                        var std = Model.Standards.FirstOrDefault(s => s.Id == doc.StandardId);
+                        var statusBadge = doc.Status == "approved" ? "success" : doc.Status == "rejected" ? "danger" : "warning";
+                        var statusLabel = doc.Status == "approved" ? "معتمد" : doc.Status == "rejected" ? "مرفوض" : "في الانتظار";
+                        var icon = doc.DocumentType == "report" ? "bi-file-text" : doc.DocumentType == "required" ? "bi-file-earmark-check" : "bi-file-earmark";
+                        <tr data-type="@doc.DocumentType" data-status="@doc.Status">
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi @icon fs-4 text-primary"></i>
+                                    <div>
+                                        <div class="fw-semibold">@doc.Name</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted small">
+                                @(doc.DocumentType == "required" ? "مطلوب" : doc.DocumentType == "optional" ? "اختياري" : doc.DocumentType == "report" ? "تقرير" : doc.DocumentType)
+                            </td>
+                            <td class="text-muted small">@(std != null ? $"{std.Code} - {std.Title}" : "—")</td>
+                            <td><span class="badge bg-@statusBadge">@statusLabel</span></td>
+                            <td class="text-muted small">@doc.CreatedAt.ToString("yyyy/MM/dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    function filterTable() {
+        const q = searchInput.value.toLowerCase();
+        const type = typeFilter.value;
+        const status = statusFilter.value;
+        document.querySelectorAll('#filesTable tbody tr').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const matchQ = !q || text.includes(q);
+            const matchType = !type || row.dataset.type === type;
+            const matchStatus = !status || row.dataset.status === status;
+            row.style.display = (matchQ && matchType && matchStatus) ? '' : 'none';
+        });
+    }
+    searchInput.addEventListener('input', filterTable);
+    typeFilter.addEventListener('change', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+</script>
+}

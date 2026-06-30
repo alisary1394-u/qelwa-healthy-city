@@ -1,0 +1,88 @@
+@page
+@model VolunteeringModel
+@{
+    ViewData["Title"] = "التطوع";
+    ViewData["ActivePage"] = "Volunteering";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-hand-thumbs-up-fill text-info me-2"></i>التطوع</h2>
+        <p class="text-muted mb-0">@Model.Opportunities.Count() فرصة تطوعية</p>
+    </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-info">@Model.Opportunities.Count()</div>
+                <div class="small text-muted">إجمالي الفرص</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">@Model.Opportunities.Count(o => o.Status == "open")</div>
+                <div class="small text-muted">مفتوحة</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">@Model.Opportunities.Sum(o => o.RegisteredCount)</div>
+                <div class="small text-muted">متطوعون مسجّلون</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-warning">@Model.Opportunities.Sum(o => o.RequiredCount)</div>
+                <div class="small text-muted">متطوعون مطلوبون</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة الفرص -->
+<div class="row g-3">
+    @foreach (var opp in Model.Opportunities)
+    {
+        var pct = opp.RequiredCount > 0 ? (int)((double)opp.RegisteredCount / opp.RequiredCount * 100) : 0;
+        pct = Math.Min(pct, 100);
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-@(opp.Status == "open" ? "success" : opp.Status == "completed" ? "primary" : "secondary")">@opp.StatusLabel</span>
+                        <span class="badge bg-light text-dark border small">@opp.Category</span>
+                    </div>
+                    <h6 class="fw-bold mb-2">@opp.Title</h6>
+                    @if (!string.IsNullOrEmpty(opp.Description))
+                    {
+                        <p class="text-muted small mb-3">@opp.Description</p>
+                    }
+                    @if (!string.IsNullOrEmpty(opp.Location))
+                    {
+                        <div class="small text-muted mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i>@opp.Location</div>
+                    }
+                    @if (opp.StartDate.HasValue)
+                    {
+                        <div class="small text-muted mb-3"><i class="bi bi-calendar3 me-1"></i>@opp.StartDate.Value.ToString("yyyy/MM/dd")</div>
+                    }
+                    <div class="mb-1 d-flex justify-content-between small">
+                        <span>المتطوعون: @opp.RegisteredCount / @opp.RequiredCount</span>
+                        <span>@pct%</span>
+                    </div>
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar bg-@(pct >= 100 ? "success" : "info")" style="width:@pct%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

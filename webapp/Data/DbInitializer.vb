@@ -93,6 +93,144 @@ Namespace Data
                 New AppTask With {.Title="رفع وثائق التحقق للمعيار الأول",       .Status="in_progress",.Priority="عالية",  .StandardId=std1.Id,.DueDate=DateTime.UtcNow.AddDays(3)}
             })
             db.SaveChanges()
+
+            ' ===== إعدادات المدينة =====
+            If Not db.CitySettings.Any() Then
+                db.CitySettings.Add(New CitySettings With {
+                    .CityName = "محافظة قلوة",
+                    .ProgramName = "برنامج المدينة الصحية",
+                    .Region = "منطقة عسير",
+                    .GovernorName = "صاحب السمو الأمير ...",
+                    .CoordinatorName = "مدير النظام",
+                    .Population = 45000,
+                    .EstablishedYear = 2024,
+                    .LogoText = "ق"
+                })
+                db.SaveChanges()
+            End If
+
+            ' ===== اللجان =====
+            If Not db.Committees.Any() Then
+                Dim axes9 = db.Axes.OrderBy(Function(a) a.AxisOrder).ToList()
+                Dim committees = New List(Of Committee) From {
+                    New Committee With {.Name="لجنة الشراكات والتعاون بين القطاعات", .Description="تنسيق الشراكات مع القطاعين العام والخاص", .AxisId=axes9(0).Id, .MembersCount=8, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-6)},
+                    New Committee With {.Name="لجنة تنظيم المجتمع",                 .Description="تعبئة المجتمع وتنظيمه للتنمية",              .AxisId=axes9(1).Id, .MembersCount=7, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-5)},
+                    New Committee With {.Name="لجنة المعلومات المجتمعية",           .Description="إدارة مركز المعلومات المجتمعي",               .AxisId=axes9(2).Id, .MembersCount=5, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-5)},
+                    New Committee With {.Name="لجنة البيئة والمياه وسلامة الغذاء",  .Description="الإشراف على جودة البيئة والمياه والغذاء",     .AxisId=axes9(3).Id, .MembersCount=9, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-4)},
+                    New Committee With {.Name="لجنة التنمية الصحية",                .Description="متابعة خدمات الرعاية الصحية",                 .AxisId=axes9(4).Id, .MembersCount=12,.Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-4)},
+                    New Committee With {.Name="لجنة الطوارئ والأزمات",             .Description="الاستعداد للطوارئ والاستجابة لها",             .AxisId=axes9(5).Id, .MembersCount=6, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-3)},
+                    New Committee With {.Name="لجنة التعليم ومحو الأمية",           .Description="متابعة المدارس ومبادرات محو الأمية",          .AxisId=axes9(6).Id, .MembersCount=7, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-3)},
+                    New Committee With {.Name="لجنة تنمية المهارات والتدريب",       .Description="الإشراف على مراكز التدريب المهني",            .AxisId=axes9(7).Id, .MembersCount=6, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-2)},
+                    New Committee With {.Name="لجنة القروض الصغيرة والتمويل",      .Description="إدارة برامج الإقراض وأنشطة كسب الرزق",       .AxisId=axes9(8).Id, .MembersCount=7, .Status="active", .CreatedAt=DateTime.UtcNow.AddMonths(-2)}
+                }
+                db.Committees.AddRange(committees)
+                db.SaveChanges()
+
+                ' ===== أعضاء الفريق =====
+                Dim comms = db.Committees.OrderBy(Function(c) c.Id).ToList()
+                Dim members = New List(Of TeamMember) From {
+                    New TeamMember With {.FullName="محمد بن سعد العمري",     .Email="governor@qelwa.gov.sa",   .Role="governor",              .Department="مكتب المحافظ",       .IsActive=True, .JoinDate=DateTime.UtcNow.AddMonths(-12)},
+                    New TeamMember With {.FullName="أحمد بن فهد القحطاني",   .Email="coordinator@qelwa.gov.sa",.Role="coordinator",            .Department="منسقية البرنامج",    .IsActive=True, .JoinDate=DateTime.UtcNow.AddMonths(-10)},
+                    New TeamMember With {.FullName="فهد بن خالد الشهري",     .Email="f.shahri@qelwa.gov.sa",   .Role="committee_head",         .CommitteeId=comms(0).Id, .Department="الشؤون الاجتماعية",.IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-8)},
+                    New TeamMember With {.FullName="سعد بن علي الغامدي",     .Email="s.ghamdi@qelwa.gov.sa",   .Role="committee_head",         .CommitteeId=comms(1).Id, .Department="شؤون المجتمع",    .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-7)},
+                    New TeamMember With {.FullName="نورة بنت عبدالله السهلي",.Email="n.sahli@qelwa.gov.sa",    .Role="committee_head",         .CommitteeId=comms(4).Id, .Department="الصحة",           .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-6)},
+                    New TeamMember With {.FullName="خالد بن محمد الزهراني",  .Email="k.zahrani@qelwa.gov.sa",  .Role="committee_head",         .CommitteeId=comms(5).Id, .Department="الدفاع المدني",   .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-6)},
+                    New TeamMember With {.FullName="عبدالرحمن بن سالم العسيري",.Email="a.asiri@qelwa.gov.sa", .Role="committee_head",         .CommitteeId=comms(6).Id, .Department="التعليم",         .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-5)},
+                    New TeamMember With {.FullName="ريم بنت ناصر البقمي",    .Email="r.baqami@qelwa.gov.sa",   .Role="budget_manager",         .Department="الشؤون المالية",    .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-9)},
+                    New TeamMember With {.FullName="يوسف بن إبراهيم المالكي",.Email="y.malki@qelwa.gov.sa",    .Role="accountant",             .Department="الشؤون المالية",    .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-9)},
+                    New TeamMember With {.FullName="منيرة بنت صالح الدوسري",.Email="m.dosari@qelwa.gov.sa",    .Role="committee_coordinator",  .CommitteeId=comms(2).Id, .Department="تقنية المعلومات",.IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-4)},
+                    New TeamMember With {.FullName="عمر بن حسن القرني",      .Email="o.qarani@qelwa.gov.sa",    .Role="committee_member",       .CommitteeId=comms(3).Id, .Department="البيئة",         .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-3)},
+                    New TeamMember With {.FullName="هند بنت راشد الشنقيطي", .Email="h.shinqiti@qelwa.gov.sa",  .Role="committee_member",       .CommitteeId=comms(7).Id, .Department="التدريب المهني", .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-3)},
+                    New TeamMember With {.FullName="طارق بن وليد العتيبي",   .Email="t.otaibi@qelwa.gov.sa",    .Role="committee_member",       .CommitteeId=comms(8).Id, .Department="التمويل الأصغر",.IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-2)},
+                    New TeamMember With {.FullName="لطيفة بنت يحيى المعمري",.Email="l.mamari@qelwa.gov.sa",    .Role="committee_supervisor",   .CommitteeId=comms(1).Id, .Department="شؤون المجتمع",  .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-4)},
+                    New TeamMember With {.FullName="بدر بن عوض المحيا",     .Email="b.mohaya@qelwa.gov.sa",     .Role="volunteer",              .Department="التطوع",            .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-1)},
+                    New TeamMember With {.FullName="سلمى بنت جابر الحارثي", .Email="s.harithi@qelwa.gov.sa",   .Role="volunteer",              .Department="التطوع",            .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-1)},
+                    New TeamMember With {.FullName="زيد بن عثمان السلمي",    .Email="z.sulami@qelwa.gov.sa",    .Role="member",                 .CommitteeId=comms(0).Id, .Department="الشراكات",       .IsActive=True,.JoinDate=DateTime.UtcNow.AddMonths(-6)},
+                    New TeamMember With {.FullName="وفاء بنت حمد البريكي",  .Email="w.braiki@qelwa.gov.sa",    .Role="committee_member",       .CommitteeId=comms(4).Id, .Department="الصحة العامة",  .IsActive=False,.JoinDate=DateTime.UtcNow.AddMonths(-8)}
+                }
+                db.TeamMembers.AddRange(members)
+                db.SaveChanges()
+            End If
+
+            ' ===== المبادرات =====
+            If Not db.Initiatives.Any() Then
+                Dim stds = db.Standards.OrderBy(Function(s) s.GlobalNum).ToList()
+                Dim initiatives = New List(Of Initiative) From {
+                    New Initiative With {.Title="مشروع مياه الشرب النظيفة",          .Description="توصيل مياه الشرب النظيفة لجميع أحياء المحافظة وضمان جودتها المستمرة",               .Status="completed",  .Priority="urgent", .Budget=850000,  .StandardId=stds(22).Id, .StartDate=DateTime.UtcNow.AddMonths(-8),.EndDate=DateTime.UtcNow.AddMonths(-2),.CreatedAt=DateTime.UtcNow.AddMonths(-10)},
+                    New Initiative With {.Title="حملة التطعيم الشامل للأطفال",       .Description="توفير اللقاحات الأساسية لجميع أطفال المحافظة دون الخامسة",                          .Status="in_progress",.Priority="urgent", .Budget=320000,  .StandardId=stds(39).Id, .StartDate=DateTime.UtcNow.AddMonths(-3),.EndDate=DateTime.UtcNow.AddMonths(3),.CreatedAt=DateTime.UtcNow.AddMonths(-4)},
+                    New Initiative With {.Title="مركز المعلومات المجتمعي",            .Description="إنشاء وتشغيل مركز معلومات مجتمعي متكامل يخدم سكان المحافظة",                      .Status="in_progress",.Priority="high",   .Budget=540000,  .StandardId=stds(14).Id, .StartDate=DateTime.UtcNow.AddMonths(-4),.EndDate=DateTime.UtcNow.AddMonths(2),.CreatedAt=DateTime.UtcNow.AddMonths(-5)},
+                    New Initiative With {.Title="برنامج محو الأمية للكبار",           .Description="تعليم القراءة والكتابة للبالغين الذين لم يتلقوا تعليماً رسمياً",                    .Status="approved",   .Priority="high",   .Budget=180000,  .StandardId=stds(63).Id, .StartDate=DateTime.UtcNow.AddMonths(1), .EndDate=DateTime.UtcNow.AddMonths(7), .CreatedAt=DateTime.UtcNow.AddMonths(-2)},
+                    New Initiative With {.Title="مشروع إدارة النفايات الصلبة",        .Description="إنشاء نظام متكامل لجمع ومعالجة النفايات الصلبة في المحافظة",                       .Status="planning",   .Priority="high",   .Budget=1200000, .StandardId=stds(20).Id, .StartDate=Nothing,                      .EndDate=Nothing,                      .CreatedAt=DateTime.UtcNow.AddMonths(-1)},
+                    New Initiative With {.Title="مراكز التدريب المهني للشباب",        .Description="إنشاء مراكز تدريب مهني تتوافق مع متطلبات سوق العمل المحلي",                       .Status="approved",   .Priority="medium", .Budget=650000,  .StandardId=stds(68).Id, .StartDate=DateTime.UtcNow.AddMonths(2), .EndDate=DateTime.UtcNow.AddMonths(14),.CreatedAt=DateTime.UtcNow.AddMonths(-2)},
+                    New Initiative With {.Title="شبكة الإسعاف والطوارئ",              .Description="تطوير شبكة استجابة للطوارئ تشمل تدريب المتطوعين وتوفير المعدات",                   .Status="in_progress",.Priority="urgent", .Budget=420000,  .StandardId=stds(56).Id, .StartDate=DateTime.UtcNow.AddMonths(-2),.EndDate=DateTime.UtcNow.AddMonths(4), .CreatedAt=DateTime.UtcNow.AddMonths(-3)},
+                    New Initiative With {.Title="مشروع الإقراض الأصغر للمرأة",       .Description="برنامج قروض صغيرة لدعم المشاريع النسائية وتمكين المرأة اقتصادياً",                  .Status="in_progress",.Priority="high",   .Budget=290000,  .StandardId=stds(73).Id, .StartDate=DateTime.UtcNow.AddMonths(-3),.EndDate=DateTime.UtcNow.AddMonths(9), .CreatedAt=DateTime.UtcNow.AddMonths(-4)},
+                    New Initiative With {.Title="حدائق ومساحات خضراء",               .Description="تطوير وإنشاء حدائق عامة ومساحات خضراء في أحياء المحافظة",                         .Status="planning",   .Priority="medium", .Budget=380000,  .StandardId=stds(19).Id, .StartDate=Nothing,                      .EndDate=Nothing,                      .CreatedAt=DateTime.UtcNow},
+                    New Initiative With {.Title="برنامج الصحة المدرسية",              .Description="تعزيز الصحة في المدارس من خلال الفحوصات الدورية والتوعية الصحية",                  .Status="completed",  .Priority="high",   .Budget=160000,  .StandardId=stds(53).Id, .StartDate=DateTime.UtcNow.AddMonths(-10),.EndDate=DateTime.UtcNow.AddMonths(-4),.CreatedAt=DateTime.UtcNow.AddMonths(-11)},
+                    New Initiative With {.Title="تحسين جودة هواء المدينة",            .Description="رصد جودة الهواء واتخاذ إجراءات للحد من التلوث",                                    .Status="planning",   .Priority="medium", .Budget=220000,  .StandardId=stds(27).Id, .StartDate=Nothing,                      .EndDate=Nothing,                      .CreatedAt=DateTime.UtcNow.AddDays(-15)},
+                    New Initiative With {.Title="توعية بالأمراض المزمنة",             .Description="حملات توعوية بالسكري وضغط الدم وأمراض القلب وطرق الوقاية",                        .Status="approved",   .Priority="high",   .Budget=95000,   .StandardId=stds(47).Id, .StartDate=DateTime.UtcNow.AddMonths(1), .EndDate=DateTime.UtcNow.AddMonths(6), .CreatedAt=DateTime.UtcNow.AddDays(-30)}
+                }
+                db.Initiatives.AddRange(initiatives)
+                db.SaveChanges()
+            End If
+
+            ' ===== معاملات الميزانية =====
+            If Not db.BudgetTransactions.Any() Then
+                Dim txns = New List(Of BudgetTransaction) From {
+                    New BudgetTransaction With {.Title="دعم حكومي للبرنامج السنوي",           .Type="income",  .Category="دعم حكومي",      .Amount=2000000,.VatRate=0,.VatAmount=0,.TotalAmount=2000000, .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddMonths(-6)},
+                    New BudgetTransaction With {.Title="رواتب فريق العمل – الربع الأول",       .Type="expense", .Category="رواتب",           .Amount=180000, .VatRate=0,.VatAmount=0,.TotalAmount=180000,  .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddMonths(-5)},
+                    New BudgetTransaction With {.Title="شراء معدات طبية للطوارئ",              .Type="expense", .Category="معدات",           .Amount=95000,  .VatRate=15,.VatAmount=14250,.TotalAmount=109250,.Status="approved",.PaymentMethod="شيك",         .TransactionDate=DateTime.UtcNow.AddMonths(-4)},
+                    New BudgetTransaction With {.Title="تجهيز مركز المعلومات المجتمعي",       .Type="expense", .Category="تجهيزات",         .Amount=75000,  .VatRate=15,.VatAmount=11250,.TotalAmount=86250, .Status="approved",.PaymentMethod="شيك",         .TransactionDate=DateTime.UtcNow.AddMonths(-4)},
+                    New BudgetTransaction With {.Title="تبرع من القطاع الخاص",                 .Type="income",  .Category="تبرعات",          .Amount=150000, .VatRate=0,.VatAmount=0,.TotalAmount=150000,  .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddMonths(-3)},
+                    New BudgetTransaction With {.Title="حملة التطعيم – لقاحات وادوية",        .Type="expense", .Category="الصحة",           .Amount=120000, .VatRate=0,.VatAmount=0,.TotalAmount=120000,  .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddMonths(-3)},
+                    New BudgetTransaction With {.Title="رواتب فريق العمل – الربع الثاني",      .Type="expense", .Category="رواتب",           .Amount=180000, .VatRate=0,.VatAmount=0,.TotalAmount=180000,  .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddMonths(-2)},
+                    New BudgetTransaction With {.Title="ورشة تدريبية لأعضاء الفريق",          .Type="expense", .Category="تدريب",           .Amount=28000,  .VatRate=15,.VatAmount=4200,.TotalAmount=32200, .Status="approved",.PaymentMethod="نقد",          .TransactionDate=DateTime.UtcNow.AddMonths(-2)},
+                    New BudgetTransaction With {.Title="مطبوعات ومواد توعوية",                 .Type="expense", .Category="مطبوعات",         .Amount=15000,  .VatRate=15,.VatAmount=2250,.TotalAmount=17250, .Status="approved",.PaymentMethod="نقد",          .TransactionDate=DateTime.UtcNow.AddMonths(-2)},
+                    New BudgetTransaction With {.Title="رسوم خدمات مجتمعية",                   .Type="income",  .Category="رسوم",            .Amount=35000,  .VatRate=0,.VatAmount=0,.TotalAmount=35000,   .Status="approved",.PaymentMethod="نقد",          .TransactionDate=DateTime.UtcNow.AddMonths(-1)},
+                    New BudgetTransaction With {.Title="صيانة مركز المعلومات",                 .Type="expense", .Category="صيانة",           .Amount=8500,   .VatRate=15,.VatAmount=1275,.TotalAmount=9775,  .Status="approved",.PaymentMethod="نقد",          .TransactionDate=DateTime.UtcNow.AddMonths(-1)},
+                    New BudgetTransaction With {.Title="رواتب فريق العمل – الربع الثالث",      .Type="expense", .Category="رواتب",           .Amount=180000, .VatRate=0,.VatAmount=0,.TotalAmount=180000,  .Status="approved",.PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddDays(-30)},
+                    New BudgetTransaction With {.Title="إيجار مقر البرنامج",                   .Type="expense", .Category="إيجار",           .Amount=45000,  .VatRate=15,.VatAmount=6750,.TotalAmount=51750, .Status="approved",.PaymentMethod="شيك",         .TransactionDate=DateTime.UtcNow.AddDays(-15)},
+                    New BudgetTransaction With {.Title="عقد شركة نظافة البيئة",                .Type="expense", .Category="عقود",            .Amount=60000,  .VatRate=15,.VatAmount=9000,.TotalAmount=69000, .Status="pending", .PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddDays(-7)},
+                    New BudgetTransaction With {.Title="دعم من مجلس المنطقة",                  .Type="income",  .Category="دعم حكومي",      .Amount=500000, .VatRate=0,.VatAmount=0,.TotalAmount=500000,  .Status="pending", .PaymentMethod="تحويل بنكي",  .TransactionDate=DateTime.UtcNow.AddDays(-5)}
+                }
+                db.BudgetTransactions.AddRange(txns)
+                db.SaveChanges()
+            End If
+
+            ' ===== فرص التطوع =====
+            If Not db.VolunteerOpportunities.Any() Then
+                Dim opps = New List(Of VolunteerOpportunity) From {
+                    New VolunteerOpportunity With {.Title="متطوعون للتوعية الصحية",          .Description="نشر التوعية الصحية في الأحياء والمدارس",             .Category="صحة",           .Location="أحياء المحافظة",         .RequiredCount=20,.RegisteredCount=15,.Status="open",      .StartDate=DateTime.UtcNow.AddDays(7),  .EndDate=DateTime.UtcNow.AddDays(37)},
+                    New VolunteerOpportunity With {.Title="دعم حملة التطعيم",                .Description="المساعدة في تنظيم حملة التطعيم الشامل للأطفال",       .Category="صحة",           .Location="المرافق الصحية",          .RequiredCount=10,.RegisteredCount=10,.Status="closed",    .StartDate=DateTime.UtcNow.AddDays(-14),.EndDate=DateTime.UtcNow.AddDays(-1)},
+                    New VolunteerOpportunity With {.Title="مساعدون في مركز المعلومات",       .Description="توفير المعلومات وتوجيه المجتمع في مركز المعلومات",   .Category="إدارة",         .Location="مركز المعلومات المجتمعي",.RequiredCount=5, .RegisteredCount=3, .Status="open",      .StartDate=DateTime.UtcNow.AddDays(3),  .EndDate=DateTime.UtcNow.AddDays(33)},
+                    New VolunteerOpportunity With {.Title="تنظيف أحياء المحافظة",            .Description="حملة نظافة شاملة لجميع أحياء المحافظة",               .Category="بيئة",          .Location="جميع الأحياء",            .RequiredCount=50,.RegisteredCount=42,.Status="open",      .StartDate=DateTime.UtcNow.AddDays(14), .EndDate=DateTime.UtcNow.AddDays(14)},
+                    New VolunteerOpportunity With {.Title="تعليم محو الأمية",                .Description="تعليم القراءة والكتابة للبالغين في المساجد",          .Category="تعليم",         .Location="مساجد المحافظة",          .RequiredCount=15,.RegisteredCount=8, .Status="open",      .StartDate=DateTime.UtcNow.AddDays(21), .EndDate=DateTime.UtcNow.AddDays(111)},
+                    New VolunteerOpportunity With {.Title="إرشاد التدريب المهني",            .Description="إرشاد الشباب في مراكز التدريب المهني",                .Category="تدريب",         .Location="مراكز التدريب",           .RequiredCount=8, .RegisteredCount=5, .Status="open",      .StartDate=DateTime.UtcNow.AddDays(7),  .EndDate=DateTime.UtcNow.AddDays(97)},
+                    New VolunteerOpportunity With {.Title="الاستجابة لحوادث الطوارئ",        .Description="تدريب وانتشار فرق الاستجابة الطارئة",                 .Category="طوارئ",         .Location="مراكز الطوارئ",           .RequiredCount=25,.RegisteredCount=20,.Status="open",      .StartDate=DateTime.UtcNow.AddDays(1),  .EndDate=DateTime.UtcNow.AddDays(31)},
+                    New VolunteerOpportunity With {.Title="دعم برامج المرأة",                .Description="دعم أنشطة المجموعات النسائية وتعزيز قدراتهن",         .Category="مجتمع",         .Location="مراكز المرأة",            .RequiredCount=12,.RegisteredCount=12,.Status="completed",  .StartDate=DateTime.UtcNow.AddMonths(-3),.EndDate=DateTime.UtcNow.AddMonths(-1)},
+                    New VolunteerOpportunity With {.Title="رقابة أسواق الغذاء",              .Description="مراقبة جودة وسلامة الغذاء في الأسواق المحلية",        .Category="سلامة غذاء",    .Location="الأسواق المحلية",         .RequiredCount=6, .RegisteredCount=4, .Status="open",      .StartDate=DateTime.UtcNow.AddDays(10), .EndDate=DateTime.UtcNow.AddDays(40)},
+                    New VolunteerOpportunity With {.Title="صديق المسن",                       .Description="دعم كبار السن وتقديم المساعدة لهم في أعمالهم اليومية",.Category="رعاية اجتماعية",.Location="المنازل والمراكز",       .RequiredCount=20,.RegisteredCount=7, .Status="open",      .StartDate=DateTime.UtcNow.AddDays(5),  .EndDate=DateTime.UtcNow.AddDays(95)}
+                }
+                db.VolunteerOpportunities.AddRange(opps)
+                db.SaveChanges()
+            End If
+
+            ' ===== وثائق تجريبية =====
+            If Not db.Documents.Any() Then
+                Dim stds2 = db.Standards.OrderBy(Function(s) s.GlobalNum).Take(20).ToList()
+                Dim docs = New List(Of Document)()
+                For Each std In stds2
+                    docs.Add(New Document With {
+                        .Name = $"وثيقة تحقق المعيار {std.Code}",
+                        .StandardId = std.Id,
+                        .DocumentType = If(std.GlobalNum Mod 3 = 0, "report", "required"),
+                        .Status = If(std.Status = "completed", "approved", If(std.Status = "in_progress", "pending", "pending")),
+                        .CreatedAt = DateTime.UtcNow.AddDays(-std.GlobalNum)
+                    })
+                Next
+                db.Documents.AddRange(docs)
+                db.SaveChanges()
+            End If
+
         End Sub
 
         Private Function GetAllStandardTitles() As String()

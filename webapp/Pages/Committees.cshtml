@@ -1,0 +1,116 @@
+@page
+@model CommitteesModel
+@{
+    ViewData["Title"] = "اللجان";
+    ViewData["ActivePage"] = "Committees";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-building text-primary me-2"></i>اللجان</h2>
+        <p class="text-muted mb-0">@Model.Committees.Count() لجنة مشكّلة</p>
+    </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">@Model.Committees.Count()</div>
+                <div class="small text-muted">إجمالي اللجان</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">@Model.Committees.Count(c => c.Status == "active")</div>
+                <div class="small text-muted">لجان نشطة</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-info">@Model.Committees.Sum(c => c.MembersCount)</div>
+                <div class="small text-muted">إجمالي الأعضاء</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-warning">@Model.Axes.Count()</div>
+                <div class="small text-muted">محاور مُغطّاة</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- بطاقات اللجان -->
+<div class="row g-3">
+    @foreach (var c in Model.Committees)
+    {
+        var axis = Model.Axes.FirstOrDefault(a => a.Id == c.AxisId);
+        var head = Model.Members.FirstOrDefault(m => m.Id == c.HeadId);
+        var axisMembers = Model.Members.Where(m => m.CommitteeId == c.Id).ToList();
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary bg-opacity-10 border-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="fw-bold text-primary mb-0">@c.Name</h6>
+                        @if (c.Status == "active")
+                        {
+                            <span class="badge bg-success">نشطة</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">غير نشطة</span>
+                        }
+                    </div>
+                    @if (axis != null)
+                    {
+                        <div class="small text-muted mt-1"><i class="bi bi-diagram-3 me-1"></i>@axis.Name</div>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(c.Description))
+                    {
+                        <p class="text-muted small mb-3">@c.Description</p>
+                    }
+                    @if (head != null)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-person-badge text-warning"></i>
+                            <span class="small"><strong>الرئيس:</strong> @head.FullName</span>
+                        </div>
+                    }
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-people text-info"></i>
+                        <span class="small"><strong>الأعضاء:</strong> @c.MembersCount عضو</span>
+                    </div>
+                    @if (axisMembers.Any())
+                    {
+                        <div class="mt-3">
+                            <div class="small text-muted mb-2">أعضاء اللجنة:</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var mem in axisMembers.Take(5))
+                                {
+                                    <span class="badge bg-light text-dark border">@mem.FullName</span>
+                                }
+                                @if (axisMembers.Count > 5)
+                                {
+                                    <span class="badge bg-secondary">+@(axisMembers.Count - 5)</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer bg-transparent border-top-0 small text-muted">
+                    <i class="bi bi-calendar3 me-1"></i>تأسست @c.CreatedAt.ToString("yyyy/MM/dd")
+                </div>
+            </div>
+        </div>
+    }
+</div>

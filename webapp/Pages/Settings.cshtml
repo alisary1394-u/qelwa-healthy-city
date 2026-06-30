@@ -1,0 +1,116 @@
+@page
+@model SettingsModel
+@{
+    ViewData["Title"] = "الإعدادات";
+    ViewData["ActivePage"] = "Settings";
+    var s = Model.Settings;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-gear-fill text-secondary me-2"></i>الإعدادات</h2>
+        <p class="text-muted mb-0">إعدادات النظام والمحافظة</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- معلومات المحافظة -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary bg-opacity-10 border-0">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-building me-2"></i>معلومات المحافظة</h6>
+            </div>
+            <div class="card-body">
+                @if (s != null)
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 text-muted">اسم المحافظة</dt>
+                        <dd class="col-sm-7 fw-semibold">@s.CityName</dd>
+
+                        <dt class="col-sm-5 text-muted">اسم البرنامج</dt>
+                        <dd class="col-sm-7">@s.ProgramName</dd>
+
+                        <dt class="col-sm-5 text-muted">المنطقة</dt>
+                        <dd class="col-sm-7">@s.Region</dd>
+
+                        <dt class="col-sm-5 text-muted">المحافظ</dt>
+                        <dd class="col-sm-7">@(string.IsNullOrEmpty(s.GovernorName) ? "—" : s.GovernorName)</dd>
+
+                        <dt class="col-sm-5 text-muted">منسق البرنامج</dt>
+                        <dd class="col-sm-7">@(string.IsNullOrEmpty(s.CoordinatorName) ? "—" : s.CoordinatorName)</dd>
+
+                        @if (s.Population > 0)
+                        {
+                            <dt class="col-sm-5 text-muted">عدد السكان</dt>
+                            <dd class="col-sm-7">@s.Population.ToString("N0")</dd>
+                        }
+
+                        <dt class="col-sm-5 text-muted">سنة التأسيس</dt>
+                        <dd class="col-sm-7">@s.EstablishedYear</dd>
+                    </dl>
+                }
+                else
+                {
+                    <p class="text-muted">لا توجد إعدادات محفوظة.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات النظام -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-success bg-opacity-10 border-0">
+                <h6 class="fw-bold text-success mb-0"><i class="bi bi-bar-chart me-2"></i>إحصائيات النظام</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-6 text-muted">عدد المعايير</dt>
+                    <dd class="col-sm-6 fw-semibold">@Model.TotalStandards</dd>
+
+                    <dt class="col-sm-6 text-muted">عدد المحاور</dt>
+                    <dd class="col-sm-6">@Model.TotalAxes</dd>
+
+                    <dt class="col-sm-6 text-muted">المهام المفتوحة</dt>
+                    <dd class="col-sm-6">@Model.OpenTasks</dd>
+
+                    <dt class="col-sm-6 text-muted">المبادرات</dt>
+                    <dd class="col-sm-6">@Model.TotalInitiatives</dd>
+
+                    <dt class="col-sm-6 text-muted">أعضاء الفريق</dt>
+                    <dd class="col-sm-6">@Model.TeamCount</dd>
+
+                    <dt class="col-sm-6 text-muted">المستخدمون النشطون</dt>
+                    <dd class="col-sm-6">@Model.ActiveUsers</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الحساب -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-warning bg-opacity-10 border-0">
+                <h6 class="fw-bold text-warning mb-0"><i class="bi bi-person-circle me-2"></i>معلومات الحساب</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.CurrentUser != null)
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3 text-muted">الاسم الكامل</dt>
+                        <dd class="col-sm-9 fw-semibold">@Model.CurrentUser.FullName</dd>
+
+                        <dt class="col-sm-3 text-muted">البريد الإلكتروني</dt>
+                        <dd class="col-sm-9">@Model.CurrentUser.Email</dd>
+
+                        <dt class="col-sm-3 text-muted">الدور</dt>
+                        <dd class="col-sm-9"><span class="badge bg-primary">@Model.CurrentUser.RoleLabel</span></dd>
+
+                        <dt class="col-sm-3 text-muted">القسم</dt>
+                        <dd class="col-sm-9">@(string.IsNullOrEmpty(Model.CurrentUser.Department) ? "—" : Model.CurrentUser.Department)</dd>
+                    </dl>
+                }
+            </div>
+        </div>
+    </div>
+</div>

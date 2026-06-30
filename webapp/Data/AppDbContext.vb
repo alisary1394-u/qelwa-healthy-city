@@ -18,6 +18,11 @@ Namespace Data
         Public Property Documents As DbSet(Of Document)
         Public Property PerformanceReports As DbSet(Of PerformanceReport)
         Public Property Initiatives As DbSet(Of Initiative)
+        Public Property TeamMembers As DbSet(Of TeamMember)
+        Public Property Committees As DbSet(Of Committee)
+        Public Property BudgetTransactions As DbSet(Of BudgetTransaction)
+        Public Property VolunteerOpportunities As DbSet(Of VolunteerOpportunity)
+        Public Property CitySettings As DbSet(Of CitySettings)
 
         Protected Overrides Sub OnModelCreating(modelBuilder As ModelBuilder)
             modelBuilder.Entity(Of Axis)(Sub(e)

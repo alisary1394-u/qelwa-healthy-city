@@ -40,37 +40,30 @@
         </a>
 
         <div class="nav-section-title">الإدارة</div>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Initiatives" ? "active" : "")" asp-page="/Initiatives">
             <i class="bi bi-lightbulb"></i><span>المبادرات</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Budget" ? "active" : "")" asp-page="/Budget">
             <i class="bi bi-currency-dollar"></i><span>الميزانية</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Committees" ? "active" : "")" asp-page="/Committees">
             <i class="bi bi-building"></i><span>اللجان</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Team" ? "active" : "")" asp-page="/Team">
             <i class="bi bi-people"></i><span>الفريق</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
         <a class="sidebar-link disabled-link" href="#" title="قريباً">
             <i class="bi bi-geo-alt"></i><span>المسح الميداني</span>
             <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Volunteering" ? "active" : "")" asp-page="/Volunteering">
             <i class="bi bi-hand-index-thumb"></i><span>التطوع</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Files" ? "active" : "")" asp-page="/Files">
             <i class="bi bi-folder2-open"></i><span>الملفات</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
-        <a class="sidebar-link disabled-link" href="#" title="قريباً">
+        <a class="sidebar-link @(activePage == "Settings" ? "active" : "")" asp-page="/Settings">
             <i class="bi bi-gear"></i><span>الإعدادات</span>
-            <span class="ms-auto badge bg-secondary" style="font-size:.6rem">قريباً</span>
         </a>
     </nav>
 

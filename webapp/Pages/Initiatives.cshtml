@@ -1,0 +1,84 @@
+@page
+@model InitiativesModel
+@{
+    ViewData["Title"] = "المبادرات";
+    ViewData["ActivePage"] = "Initiatives";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-lightbulb-fill text-warning me-2"></i>المبادرات</h2>
+        <p class="text-muted mb-0">@Model.Initiatives.Count() مبادرة مسجّلة</p>
+    </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+    @{
+        var byStatus = new[] {
+            new { Label="تخطيط", Status="planning", Badge="secondary" },
+            new { Label="معتمدة", Status="approved", Badge="primary" },
+            new { Label="قيد التنفيذ", Status="in_progress", Badge="warning" },
+            new { Label="مكتملة", Status="completed", Badge="success" },
+        };
+    }
+    @foreach (var s in byStatus)
+    {
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body py-3">
+                    <div class="fs-1 fw-bold text-@s.Badge">@Model.Initiatives.Count(i => i.Status == s.Status)</div>
+                    <div class="small text-muted">@s.Label</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- بطاقات المبادرات -->
+<div class="row g-3">
+    @foreach (var init in Model.Initiatives)
+    {
+        var std = Model.Standards.FirstOrDefault(s => s.Id == init.StandardId);
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-@init.StatusBadge">@init.StatusLabel</span>
+                        <span class="badge bg-light text-dark border small">@init.PriorityLabel</span>
+                    </div>
+                    <h6 class="fw-bold mb-2">@init.Title</h6>
+                    @if (!string.IsNullOrEmpty(init.Description))
+                    {
+                        <p class="text-muted small mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">@init.Description</p>
+                    }
+                    @if (std != null)
+                    {
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-bullseye me-1 text-info"></i>المعيار: @std.Code - @std.Title
+                        </div>
+                    }
+                    @if (init.Budget > 0)
+                    {
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-cash me-1 text-success"></i>الميزانية: @init.Budget.ToString("N0") ريال
+                        </div>
+                    }
+                    @if (init.StartDate.HasValue)
+                    {
+                        <div class="small text-muted">
+                            <i class="bi bi-calendar3 me-1"></i>@init.StartDate.Value.ToString("yyyy/MM/dd")
+                            @if (init.EndDate.HasValue)
+                            {
+                                <span> — @init.EndDate.Value.ToString("yyyy/MM/dd")</span>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="card-footer bg-transparent border-top-0 small text-muted">
+                    أُضيفت @init.CreatedAt.ToString("yyyy/MM/dd")
+                </div>
+            </div>
+        </div>
+    }
+</div>

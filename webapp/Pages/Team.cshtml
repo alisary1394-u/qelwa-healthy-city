@@ -1,0 +1,170 @@
+@page
+@model TeamModel
+@{
+    ViewData["Title"] = "إدارة الفريق";
+    ViewData["ActivePage"] = "Team";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>إدارة الفريق</h2>
+        <p class="text-muted mb-0">@Model.Members.Count() عضو في الفريق</p>
+    </div>
+</div>
+
+<!-- بطاقات الملخص -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">@Model.Members.Count()</div>
+                <div class="small text-muted">إجمالي الأعضاء</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">@Model.Members.Count(m => m.IsActive)</div>
+                <div class="small text-muted">أعضاء نشطون</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-warning">@Model.Committees.Count()</div>
+                <div class="small text-muted">لجان</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-info">@Model.Members.Count(m => m.Role == "volunteer")</div>
+                <div class="small text-muted">متطوعون</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تصفية وبحث -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="ابحث عن عضو...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="roleFilter" class="form-select">
+                    <option value="">جميع الأدوار</option>
+                    <option value="governor">المحافظ</option>
+                    <option value="coordinator">منسق</option>
+                    <option value="committee_head">رئيس لجنة</option>
+                    <option value="committee_member">عضو لجنة</option>
+                    <option value="member">عضو</option>
+                    <option value="volunteer">متطوع</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-select">
+                    <option value="">جميع الحالات</option>
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول الأعضاء -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="membersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">العضو</th>
+                        <th class="py-3">الدور</th>
+                        <th class="py-3">اللجنة</th>
+                        <th class="py-3">القسم</th>
+                        <th class="py-3">الهاتف</th>
+                        <th class="py-3">الحالة</th>
+                        <th class="py-3">تاريخ الانضمام</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Members)
+                    {
+                        var committee = Model.Committees.FirstOrDefault(c => c.Id == m.CommitteeId);
+                        <tr data-role="@m.Role" data-status="@(m.IsActive ? "active" : "inactive")">
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary fw-bold">
+                                        @m.FullName[0]
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">@m.FullName</div>
+                                        <div class="small text-muted">@m.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-@m.RoleBadge">@m.RoleLabel</span></td>
+                            <td class="text-muted">@(committee?.Name ?? "—")</td>
+                            <td class="text-muted">@(string.IsNullOrEmpty(m.Department) ? "—" : m.Department)</td>
+                            <td class="text-muted" dir="ltr">@(string.IsNullOrEmpty(m.Phone) ? "—" : m.Phone)</td>
+                            <td>
+                                @if (m.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success">نشط</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary">غير نشط</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@m.JoinDate.ToString("yyyy/MM/dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function filterTable() {
+        const q = searchInput.value.toLowerCase();
+        const role = roleFilter.value;
+        const status = statusFilter.value;
+        document.querySelectorAll('#membersTable tbody tr').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowRole = row.dataset.role;
+            const rowStatus = row.dataset.status;
+            const matchQ = !q || text.includes(q);
+            const matchRole = !role || rowRole === role;
+            const matchStatus = !status || rowStatus === status;
+            row.style.display = (matchQ && matchRole && matchStatus) ? '' : 'none';
+        });
+    }
+    searchInput.addEventListener('input', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+</script>
+<style>
+    .avatar-circle {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; flex-shrink: 0;
+    }
+</style>
+}

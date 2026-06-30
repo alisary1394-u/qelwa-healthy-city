@@ -187,10 +187,192 @@ Namespace Models
         <Key> Public Property Id As Integer
         <Required> Public Property Title As String = ""
         Public Property Description As String = ""
-        Public Property Status As String = "مقترحة"
-        Public Property Priority As String = "متوسطة"
+        Public Property Status As String = "planning"
+        Public Property Priority As String = "medium"
+        Public Property Impact As String = "medium"
+        Public Property Budget As Decimal = 0
         Public Property StandardId As Integer?
+        Public Property StartDate As DateTime?
+        Public Property EndDate As DateTime?
         Public Property CreatedAt As DateTime = DateTime.UtcNow
+        Public Overridable Property Standard As Standard
+
+        <NotMapped>
+        Public ReadOnly Property StatusLabel As String
+            Get
+                Select Case Status
+                    Case "planning" : Return "تخطيط"
+                    Case "approved" : Return "معتمدة"
+                    Case "in_progress" : Return "قيد التنفيذ"
+                    Case "completed" : Return "مكتملة"
+                    Case "on_hold" : Return "معلقة"
+                    Case "cancelled" : Return "ملغاة"
+                    Case Else : Return Status
+                End Select
+            End Get
+        End Property
+
+        <NotMapped>
+        Public ReadOnly Property StatusBadge As String
+            Get
+                Select Case Status
+                    Case "planning" : Return "secondary"
+                    Case "approved" : Return "primary"
+                    Case "in_progress" : Return "warning"
+                    Case "completed" : Return "success"
+                    Case "on_hold" : Return "info"
+                    Case "cancelled" : Return "danger"
+                    Case Else : Return "secondary"
+                End Select
+            End Get
+        End Property
+
+        <NotMapped>
+        Public ReadOnly Property PriorityLabel As String
+            Get
+                Select Case Priority
+                    Case "low" : Return "منخفضة"
+                    Case "medium" : Return "متوسطة"
+                    Case "high" : Return "عالية"
+                    Case "urgent" : Return "عاجلة"
+                    Case Else : Return Priority
+                End Select
+            End Get
+        End Property
+    End Class
+
+    Public Class TeamMember
+        <Key> Public Property Id As Integer
+        <Required> Public Property FullName As String = ""
+        Public Property Email As String = ""
+        Public Property Phone As String = ""
+        Public Property Role As String = "member"
+        Public Property Department As String = ""
+        Public Property CommitteeId As Integer?
+        Public Property NationalId As String = ""
+        Public Property IsActive As Boolean = True
+        Public Property JoinDate As DateTime = DateTime.UtcNow
+        Public Overridable Property Committee As Committee
+
+        <NotMapped>
+        Public ReadOnly Property RoleLabel As String
+            Get
+                Select Case Role
+                    Case "governor" : Return "المشرف العام (المحافظ)"
+                    Case "coordinator" : Return "منسق المدينة الصحية"
+                    Case "committee_head" : Return "رئيس لجنة"
+                    Case "committee_coordinator" : Return "منسق لجنة"
+                    Case "committee_supervisor" : Return "مشرف لجنة"
+                    Case "committee_member" : Return "عضو لجنة"
+                    Case "budget_manager" : Return "مدير الميزانية"
+                    Case "accountant" : Return "المحاسب"
+                    Case "member" : Return "عضو"
+                    Case "volunteer" : Return "متطوع"
+                    Case Else : Return Role
+                End Select
+            End Get
+        End Property
+
+        <NotMapped>
+        Public ReadOnly Property RoleBadge As String
+            Get
+                Select Case Role
+                    Case "governor" : Return "danger"
+                    Case "coordinator" : Return "primary"
+                    Case "committee_head" : Return "warning"
+                    Case "committee_coordinator", "committee_supervisor" : Return "info"
+                    Case "budget_manager", "accountant" : Return "success"
+                    Case "volunteer" : Return "secondary"
+                    Case Else : Return "secondary"
+                End Select
+            End Get
+        End Property
+    End Class
+
+    Public Class Committee
+        <Key> Public Property Id As Integer
+        <Required> Public Property Name As String = ""
+        Public Property Description As String = ""
+        Public Property AxisId As Integer?
+        Public Property HeadId As Integer?
+        Public Property MembersCount As Integer = 0
+        Public Property Status As String = "active"
+        Public Property CreatedAt As DateTime = DateTime.UtcNow
+        Public Overridable Property Axis As Axis
+        Public Overridable Property Members As ICollection(Of TeamMember) = New List(Of TeamMember)()
+    End Class
+
+    Public Class BudgetTransaction
+        <Key> Public Property Id As Integer
+        <Required> Public Property Title As String = ""
+        Public Property Description As String = ""
+        Public Property Type As String = "expense"
+        Public Property Category As String = ""
+        Public Property Amount As Decimal = 0
+        Public Property VatRate As Decimal = 0
+        Public Property VatAmount As Decimal = 0
+        Public Property TotalAmount As Decimal = 0
+        Public Property Status As String = "pending"
+        Public Property PaymentMethod As String = ""
+        Public Property TransactionDate As DateTime = DateTime.UtcNow
+        Public Property CreatedAt As DateTime = DateTime.UtcNow
+
+        <NotMapped>
+        Public ReadOnly Property TypeLabel As String
+            Get
+                Return If(Type = "income", "إيراد", "مصروف")
+            End Get
+        End Property
+
+        <NotMapped>
+        Public ReadOnly Property StatusLabel As String
+            Get
+                Select Case Status
+                    Case "approved" : Return "معتمدة"
+                    Case "rejected" : Return "مرفوضة"
+                    Case Else : Return "في الانتظار"
+                End Select
+            End Get
+        End Property
+    End Class
+
+    Public Class VolunteerOpportunity
+        <Key> Public Property Id As Integer
+        <Required> Public Property Title As String = ""
+        Public Property Description As String = ""
+        Public Property Category As String = ""
+        Public Property Location As String = ""
+        Public Property RequiredCount As Integer = 1
+        Public Property RegisteredCount As Integer = 0
+        Public Property StartDate As DateTime?
+        Public Property EndDate As DateTime?
+        Public Property Status As String = "open"
+        Public Property CreatedAt As DateTime = DateTime.UtcNow
+
+        <NotMapped>
+        Public ReadOnly Property StatusLabel As String
+            Get
+                Select Case Status
+                    Case "open" : Return "مفتوح"
+                    Case "closed" : Return "مغلق"
+                    Case "completed" : Return "منتهي"
+                    Case Else : Return Status
+                End Select
+            End Get
+        End Property
+    End Class
+
+    Public Class CitySettings
+        <Key> Public Property Id As Integer
+        Public Property CityName As String = "محافظة قلوة"
+        Public Property ProgramName As String = "نظام المدينة الصحية"
+        Public Property CoordinatorName As String = ""
+        Public Property GovernorName As String = ""
+        Public Property Region As String = "منطقة عسير"
+        Public Property Population As Integer = 0
+        Public Property EstablishedYear As Integer = 2024
+        Public Property LogoText As String = "ق"
+        Public Property UpdatedAt As DateTime = DateTime.UtcNow
     End Class
 
     ' ViewModels
