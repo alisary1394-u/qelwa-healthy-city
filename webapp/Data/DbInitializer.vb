@@ -7,8 +7,15 @@ Namespace Data
     Public Module DbInitializer
 
         Public Sub Initialize(db As AppDbContext)
-            ' تجنب إعادة الإدراج
-            If db.Axes.Any() Then Return
+            ' إذا كان عدد المعايير أقل من 80، احذف البيانات وأعد البذر
+            If db.Axes.Any() AndAlso db.Standards.Count() >= 80 Then Return
+            If db.Axes.Any() Then
+                ' إعادة البذر: حذف البيانات القديمة
+                db.Tasks.RemoveRange(db.Tasks)
+                db.Standards.RemoveRange(db.Standards)
+                db.Axes.RemoveRange(db.Axes)
+                db.SaveChanges()
+            End If
 
             ' ===== المحاور التسعة =====
             Dim axes = New List(Of Axis) From {
@@ -39,9 +46,13 @@ Namespace Data
             ' ===== معايير تجريبية (3 لكل محور) =====
             Dim standards = New List(Of Standard)()
             Dim globalNum = 1
+            ' 80 معيار: 9+9+9+9+9+9+9+9+8 = 80
+            Dim stdCounts = {9, 9, 9, 9, 9, 9, 9, 9, 8}
             For axisIdx = 0 To axes.Count - 1
                 Dim ax = db.Axes.OrderBy(Function(a) a.AxisOrder).Skip(axisIdx).First()
-                For stdIdx = 1 To 3
+                Dim count = stdCounts(axisIdx)
+                For stdIdx = 1 To count
+                    Dim pct = If(stdIdx <= count \ 3, 100, If(stdIdx <= count * 2 \ 3, 50, 0))
                     standards.Add(New Standard With {
                         .Code = $"H-{ax.AxisOrder}-{stdIdx:00}",
                         .Title = $"معيار {ax.ShortName} رقم {stdIdx}",
@@ -49,9 +60,9 @@ Namespace Data
                         .AxisId = ax.Id,
                         .AxisOrder = ax.AxisOrder,
                         .GlobalNum = globalNum,
-                        .Status = If(stdIdx = 1, "completed", If(stdIdx = 2, "in_progress", "not_started")),
-                        .CompletionPercentage = If(stdIdx = 1, 100, If(stdIdx = 2, 50, 0)),
-                        .Priority = If(stdIdx = 1, "عالية", "متوسطة"),
+                        .Status = If(pct = 100, "completed", If(pct = 50, "in_progress", "not_started")),
+                        .CompletionPercentage = pct,
+                        .Priority = If(stdIdx Mod 3 = 1, "عالية", If(stdIdx Mod 3 = 2, "متوسطة", "منخفضة")),
                         .LastUpdated = DateTime.UtcNow
                     })
                     globalNum += 1
