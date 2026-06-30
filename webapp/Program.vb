@@ -16,8 +16,9 @@ Module Program
         Dim port = If(Environment.GetEnvironmentVariable("PORT"), "8080")
         builder.WebHost.UseUrls($"http://+:{port}")
 
-        ' Razor Pages
+        ' Razor Pages + Runtime Compilation (reads .cshtml files from disk)
         builder.Services.AddRazorPages()
+            .AddRazorRuntimeCompilation()
 
         ' Cookie Authentication
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme) _
@@ -76,31 +77,6 @@ Module Program
         app.UseAuthorization()
 
         app.MapGet("/health", Function() "OK")
-
-        ' Diagnostic: assembly types
-        app.MapGet("/debug/asm", Function(ctx As HttpContext) As Task
-            Dim sb = New System.Text.StringBuilder()
-            Try
-                Dim viewsPath = Path.Combine(AppContext.BaseDirectory, "webapp.Views.dll")
-                sb.AppendLine($"Views.dll exists: {File.Exists(viewsPath)}")
-                If File.Exists(viewsPath) Then
-                    Dim asm = System.Reflection.Assembly.LoadFrom(viewsPath)
-                    Dim types = asm.GetTypes()
-                    sb.AppendLine($"Types count: {types.Length}")
-                    For Each t In types.Take(20)
-                        sb.AppendLine($"  {t.FullName}")
-                    Next
-                End If
-            Catch ex As Exception
-                sb.AppendLine($"ERROR: {ex.GetType().Name}: {ex.Message}")
-                If ex.InnerException IsNot Nothing Then
-                    sb.AppendLine($"INNER: {ex.InnerException.Message}")
-                End If
-            End Try
-            ctx.Response.ContentType = "text/plain; charset=utf-8"
-            Return ctx.Response.WriteAsync(sb.ToString())
-        End Function)
-
         app.MapRazorPages()
 
         app.Run()
