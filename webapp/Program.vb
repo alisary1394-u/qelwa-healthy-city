@@ -62,17 +62,33 @@ Module Program
             Try
                 Using scope = app.Services.CreateScope()
                     Dim db = scope.ServiceProvider.GetRequiredService(Of AppDbContext)()
-                    Dim hasTable = False
+
+                    ' التحقق من وجود الجداول الأساسية والجديدة
+                    Dim hasAxes = False
+                    Dim hasNewTables = False
                     Try
                         db.Database.ExecuteSqlRaw("SELECT 1 FROM ""Axes"" LIMIT 1")
-                        hasTable = True
+                        hasAxes = True
                     Catch
-                        hasTable = False
+                        hasAxes = False
                     End Try
-                    If Not hasTable Then
+
+                    If hasAxes Then
+                        ' تحقق من وجود الجداول الجديدة
+                        Try
+                            db.Database.ExecuteSqlRaw("SELECT 1 FROM ""TeamMembers"" LIMIT 1")
+                            hasNewTables = True
+                        Catch
+                            hasNewTables = False
+                        End Try
+                    End If
+
+                    ' إذا لم تكن قاعدة البيانات موجودة أو الجداول الجديدة مفقودة → أعد الإنشاء
+                    If Not hasAxes OrElse Not hasNewTables Then
                         db.Database.EnsureDeleted()
                         db.Database.EnsureCreated()
                     End If
+
                     DbInitializer.Initialize(db)
                 End Using
             Catch ex As Exception
