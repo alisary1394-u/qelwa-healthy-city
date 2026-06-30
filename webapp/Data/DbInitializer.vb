@@ -7,9 +7,13 @@ Namespace Data
     Public Module DbInitializer
 
         Public Sub Initialize(db As AppDbContext)
-            ' إذا كانت البيانات صحيحة بالفعل (80 معيار) تجاوز
-            If db.Axes.Any() AndAlso db.Standards.Count() >= 80 Then Return
-            ' إعادة البذر إذا كانت البيانات قديمة
+            ' تحقق من صحة البيانات: المحاور يجب أن تكون بالأسماء الجديدة
+            Dim firstAxis = db.Axes.OrderBy(Function(a) a.AxisOrder).FirstOrDefault()
+            Dim dataIsCorrect = firstAxis IsNot Nothing AndAlso
+                                firstAxis.Name = "التعاون، والشراكة والدعوة بين القطاعات" AndAlso
+                                db.Standards.Count() >= 80
+            If dataIsCorrect Then Return
+            ' إعادة البذر: حذف البيانات القديمة
             If db.Axes.Any() Then
                 db.Tasks.RemoveRange(db.Tasks)
                 db.Standards.RemoveRange(db.Standards)
